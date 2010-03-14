@@ -203,6 +203,7 @@ struct ocb_board_desc {
 	u32 unified_que;
 	u32 bars[3];
 	u32 reset_errcnt;	// Does board have support for resetting error counters?
+	u8 late_rx_enable;     // Does board support late RX enable?
 	struct attribute_group sysfs;
 };
 
@@ -302,6 +303,7 @@ static struct ocb_board_desc boards[] = {
 		.unified_que = 1,
 		.bars = { 1048576, 1048576 },
 		.reset_errcnt = 0,
+		.late_rx_enable = 0,
 	},
 	{
 		.type = BOARD_SNS_PCIX,
@@ -310,6 +312,7 @@ static struct ocb_board_desc boards[] = {
 		.unified_que = 0,
 		.bars = { 1048576, 1048576 },
 		.reset_errcnt = 0,
+		.late_rx_enable = 0,
 	},
 	{
 		.type = BOARD_SNS_PCIE,
@@ -318,6 +321,7 @@ static struct ocb_board_desc boards[] = {
 		.unified_que = 1,
 		.bars = { 4096, 32768, 16777216 },
 		.reset_errcnt = 1,
+		.late_rx_enable = 1,
 	},
 	{
 		.type = BOARD_SNS_PCIE,
@@ -326,6 +330,7 @@ static struct ocb_board_desc boards[] = {
 		.unified_que = 1,
 		.bars = { 4096, 32768, 16777216 },
 		.reset_errcnt = 1,
+		.late_rx_enable = 1,
 		.sysfs.attrs = (struct attribute **) (struct device_attribute *[]){
 			SNSOCB_DEVICE_ATTR("irq_coalescing", 0644, snsocb_sysfs_show_irq_coallesce, snsocb_sysfs_store_irq_coallesce),
 			SNSOCB_DEVICE_ATTR("dma_big_mem", 0644, snsocb_sysfs_show_dma_big_mem, snsocb_sysfs_store_dma_big_mem),
@@ -351,7 +356,8 @@ static void __snsocb_stalled(struct ocb *ocb, int type)
 	 */
 	ocb->stalled = type;
 	// Must change ocb->conf otherwise RX might get re-enabled automatically in TX thread
-	ocb->conf &= ~OCB_CONF_RX_ENABLE;
+	if (ocb->board->late_rx_enable)
+		ocb->conf &= ~OCB_CONF_RX_ENABLE;
 	iowrite32(ocb->conf, ocb->ioaddr + REG_CONFIG);
 	wake_up(&ocb->rx_wq);
 }
@@ -913,7 +919,12 @@ static void snsocb_reset(struct ocb *ocb)
 	else
 		iowrite32(0x0, ioaddr + REG_DQ_CONS_INDEX);
 
-	ocb->conf &= ~OCB_CONF_RX_ENABLE;
+	/* Legacy PCI-X does not like to get spontaneously enabled */
+	if (ocb->board->late_rx_enable)
+		ocb->conf &= ~OCB_CONF_RX_ENABLE;
+	else
+		ocb->conf |= OCB_CONF_RX_ENABLE;
+
 	iowrite32(ocb->conf, ocb->ioaddr + REG_CONFIG);
 	if (ocb->emulate_dq) {
 		ocb->dq_prod = ocb->dq_cons = 0;
@@ -1251,6 +1262,15 @@ static ssize_t snsocb_write(struct file *file, const char __user *buf,
 
 		if (copy_from_user(&val, buf, sizeof(u32)))
 			return -EFAULT;
+		if (!ocb->board->late_rx_enable) {
+			/* When board does not support enabling/disabling RX,
+			   it's always enabled. Skip re-enabling but scream if
+			   tried to disable. */
+			if (!val)
+				return -EINVAL;
+			break;
+		}
+
 
 		spin_lock_irq(&ocb->lock);
 		if (ocb->reset_in_progress) {
