@@ -1,6 +1,10 @@
 CFLAGS=-Wall -I../driver -fPIC
 #CFLAGS+=-DRX_DUMP_PATH="/tmp/occ.dump"
 #CFLAGS+=-DTX_DUMP_PATH="/tmp/occ_tx.dump"
+# Uncomment the next line to support larger packets,
+# default is 8192 bytes. DSP-T max packetsize is ~3600 bytes but
+# DSP before v6.3 allows configurable max packet size.
+#CFLAGS+=-DROLLOVER_BUFFER_SIZE=65536
 LDFLAGS=-shared -Wl,-soname,lib$(LIBNAME).so
 SRCS=occlib.c i2c.c
 PIPESRCS=occlib_pipe.c
