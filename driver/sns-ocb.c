@@ -1653,8 +1653,7 @@ static int __devexit snsocb_probe(struct pci_dev *pdev,
 		}
         }
 
-	err = devm_request_irq(dev, pdev->irq, snsocb_interrupt, IRQF_SHARED,
-			       KBUILD_MODNAME, ocb);
+	err = request_irq(pdev->irq, snsocb_interrupt, IRQF_SHARED, KBUILD_MODNAME, ocb);
 	if (err) {
 		dev_err(dev, "unable to request interrupt, aborting");
 		goto error_dev;
@@ -1764,11 +1763,13 @@ static void __devexit snsocb_remove(struct pci_dev *pdev)
 	if (ocb && ocb->board && ocb->board->sysfs.attrs)
 		sysfs_remove_group(&dev->kobj, &ocb->board->sysfs);
 
-	device_del(&ocb->dev);
-	cdev_del(&ocb->cdev);
-
 	iowrite32(0, ocb->ioaddr + REG_IRQ_ENABLE);
 	iowrite32(OCB_CONF_RESET, ocb->ioaddr + REG_CONFIG);
+	ioread32(ocb->ioaddr + REG_IRQ_ENABLE); // Make sure device receoved the iowrite32()
+
+	free_irq(pdev->irq, ocb);
+	device_del(&ocb->dev);
+	cdev_del(&ocb->cdev);
 
 	snsocb_free_big_queue(ocb);
 	snsocb_free_queue(dev, ocb->dq_page, ocb->dq_dma, OCB_DQ_SIZE);
