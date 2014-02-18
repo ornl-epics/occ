@@ -1,0 +1,37 @@
+# depslib dependency file v1.0
+1391714963 source:/home/kvodopivec/work/SNS/occlib/main.c
+	"occlib_hw.h"
+
+1392066679 /home/kvodopivec/work/SNS/occlib/occlib.h
+	<stddef.h>
+	<stdint.h>
+
+1391715816 /home/kvodopivec/work/SNS/occlib/occlib_hw.h
+	"occlib.h"
+	<sys/types.h>
+
+1392386384 source:/home/kvodopivec/work/SNS/ADARA/occ/occlib/occlib.c
+	"occlib_hw.h"
+	"sns-ocb.h"
+	<assert.h>
+	<errno.h>
+	<fcntl.h>
+	<poll.h>
+	<stdlib.h>
+	<string.h>
+	<sys/mman.h>
+	<sys/types.h>
+	<sys/stat.h>
+	<unistd.h>
+
+1392386384 /home/kvodopivec/work/SNS/ADARA/occ/occlib/occlib_hw.h
+	"occlib.h"
+	<sys/types.h>
+
+1392406217 /home/kvodopivec/work/SNS/ADARA/occ/occlib/occlib.h
+	<stdbool.h>
+	<stddef.h>
+	<stdint.h>
+
+1392386384 /home/kvodopivec/work/SNS/ADARA/occ/occlib/sns-ocb.h
+

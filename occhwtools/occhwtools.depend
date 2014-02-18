@@ -1,0 +1,13 @@
+# depslib dependency file v1.0
+1392404487 source:/home/kvodopivec/work/SNS/ADARA/occ/occhwtools/occ_loopback.cpp
+	<occlib.h>
+	<cstdlib>
+	<errno.h>
+	<fstream>
+	<iostream>
+
+1392386384 /home/kvodopivec/work/SNS/ADARA/occ/occlib/occlib.h
+	<stdbool.h>
+	<stddef.h>
+	<stdint.h>
+
