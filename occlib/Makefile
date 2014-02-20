@@ -11,6 +11,8 @@ all: CFLAGS+=-O2 -DNDEBUG
 all: common
 
 debug: CFLAGS+=-ggdb -g
+# Keep asserts until this library matures, then remove the following line
+debug: CFLAGS+=-DNDEBUG
 debug: common
 
 common: lib$(LIBNAME).a

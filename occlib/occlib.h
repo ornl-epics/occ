@@ -146,7 +146,14 @@ int occ_send(struct occ_handle *handle, const void *data, size_t count);
  * the data quickly. For long computations data should be copied to application
  * memory and processed there.
  *
- * Number of bytes available in the buffer might not be aligned to 8 bytes.
+ * Number of bytes available in the buffer are guaranteed to be 8-byte aligned.
+ * Valid data represented by start address and number of bytes contains 1 or more
+ * OCC packets. The OCC protocol and OCC board implementations guarantee each
+ * OCC packet is also aligned to 8-byte boundary. It's an invalid packet if the
+ * length in the OCC header says otherwise. The last packet in the returned
+ * buffer might not be complete and application must accomodate for that; either
+ * not process the incomplete packet at the end or make an effort to merge with
+ * the rest of the data when available.
  *
  * \param[in] handle Valid OCC API handle.
  * \param[out] address Pointer to buffer where incoming data is.

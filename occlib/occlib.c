@@ -152,25 +152,18 @@ int occ_reset(struct occ_handle *handle) {
     return 0;
 }
 
+static size_t _occ_data_align(size_t size) {
+    return (size + 7) & ~7;
+}
+
 int occ_send(struct occ_handle *handle, const void *data, size_t count) {
     assert(handle != NULL && handle->magic == OCC_HANDLE_MAGIC);
+    assert(_occ_data_align(count) == count);
 
     int ret = pwrite(handle->fd, (const void *)data, count, OCB_CMD_TX);
     if (ret < 0)
         ret = -errno;
     return 0;
-}
-
-void *_find_incomplete_packet(void *start, void *end) {
-    void *tmp = start;
-    struct occ_packet_header *hdr = (struct occ_packet_header *)start;
-
-    while ((tmp + sizeof(struct occ_packet_header) + hdr->payload_length) <= end) {
-        tmp += sizeof(struct occ_packet_header) + hdr->payload_length;
-        hdr = (struct occ_packet_header *)tmp;
-    }
-
-    return tmp;
 }
 
 int occ_data_wait(struct occ_handle *handle, void **address, size_t *count, uint32_t timeout) {
@@ -219,24 +212,36 @@ int occ_data_wait(struct occ_handle *handle, void **address, size_t *count, uint
     if (dma_prod_off >= handle->dma_cons_off) {
         *address = handle->dma_buf + handle->dma_cons_off;
         *count = dma_prod_off - handle->dma_cons_off;
-    } else if ((handle->dma_buf_len - handle->dma_cons_off) > sizeof(handle->rollover_buf)) {
-        assert(handle->dma_buf_len > handle->dma_cons_off);
-        *address = handle->dma_buf + handle->dma_cons_off;
-        *count = handle->dma_buf_len - handle->dma_cons_off;
     } else {
-        // Overflow occured and there's little data at the end of the buffer.
-        // Since we're not parsing the data, we don't know whether there's more
-        // complete packets in this tail. If that is the case, application will
-        // most probably process all complete packets and acknowledge what it
-        // processed, leaving some data unacknowledge. Which means this block is
-        // being called twice at the end of a buffer - not once as one might
-        // assume.
+        uint32_t headlen = handle->dma_buf_len - handle->dma_cons_off;
         assert(handle->dma_buf_len > handle->dma_cons_off);
-        *address = handle->rollover_buf;
-        *count = handle->dma_buf_len - handle->dma_cons_off;
-        memcpy(handle->rollover_buf, handle->dma_buf + handle->dma_cons_off, handle->dma_buf_len - handle->dma_cons_off);
+        if (headlen > sizeof(handle->rollover_buf)) {
+            assert(handle->dma_buf_len > handle->dma_cons_off);
+            *address = handle->dma_buf + handle->dma_cons_off;
+            *count = handle->dma_buf_len - handle->dma_cons_off;
+        } else {
+            // Overflow occured and there's little data at the end of the buffer.
+            // Since we're not parsing the data, we don't know whether there's more
+            // complete packets in this tail. If it is the case, application will
+            // most probably process all complete packets and acknowledge what it
+            // processed, leaving some data unacknowledged. Which means this block is
+            // being called twice at the end of a buffer - not once as one might
+            // assume.
+            uint32_t taillen = sizeof(handle->rollover_buf) - headlen;
+            if (taillen > dma_prod_off)
+                taillen = dma_prod_off;
+            memcpy(handle->rollover_buf, handle->dma_buf + handle->dma_cons_off, headlen);
+            memcpy(&handle->rollover_buf[headlen], handle->dma_buf, taillen);
+            *address = handle->rollover_buf;
+            *count = headlen + taillen;
+        }
     }
 
+    if (_occ_data_align(*count) != *count) {
+        // Tough choice. We can't extend the count as the data might not be there yet.
+        // So we must shrink the count to previous 8-byte boundary.
+        *count = _occ_packet_align(*count - 7);
+    }
     handle->last_count = *count;
 
     return 0;
@@ -244,11 +249,11 @@ int occ_data_wait(struct occ_handle *handle, void **address, size_t *count, uint
 
 int occ_data_ack(struct occ_handle *handle, size_t count) {
     assert(handle != NULL && handle->magic == OCC_HANDLE_MAGIC);
+    assert(_occ_data_align(count) == count); // Driver is aligning the data silently anyway
 
     if (count > handle->last_count)
         count = handle->last_count;
 
-    // TODO: align to 8?
     uint32_t length = count;
     if (pwrite(handle->fd, &length, sizeof(length), OCB_CMD_ADVANCE_DQ) < 0)
         return -errno;

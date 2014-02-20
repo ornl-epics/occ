@@ -59,7 +59,7 @@ struct occ_packet_header {
 static void usage(const char *progname) {
     cout << "Usage: " << progname << " [OPTION]" << endl;
     cout << "Send input file through OCC at specified rate. Expect hardware loopback. " << endl;
-    cout << "Read data from OCC and compare it to the input file. The program runs in two" << endl;
+    cout << "Read data from OCC and compare it to the input file." << endl;
     cout << endl;
     cout << "Options:" << endl;
     cout << "  -d, --device-file=FILE   Full path to OCC board device file" << endl;
@@ -191,15 +191,13 @@ static void *send_to_occ(void *arg) {
         hdr->destination = OCC_DESTINATION;
         hdr->source = OCC_SOURCE;
         hdr->info = OCC_INFO;
+        hdr->reserved1 = 0;
+        hdr->reserved2 = 0;
 
-        // Don't update the packet size, even if less data in payload.
-
-#ifdef TRACE
-        cout << "infile.read() => " << hdr->payload_length << endl;
-#endif
-
-        // Update packet_size in case less data than expected
-        packet_size = (sizeof(struct occ_packet_header) + hdr->payload_length);
+        if (packet_size != (sizeof(struct occ_packet_header) + hdr->payload_length)) {
+            fill_n(payload + hdr->payload_length, payload + (packet_size - hdr->payload_length), 0);
+            hdr->payload_length = packet_size - sizeof(struct occ_packet_header);
+        }
 
 #ifdef TRACE
         cout << "occ_send(" << packet_size << ")" << endl;
@@ -285,9 +283,6 @@ void *receive_from_occ(void *arg) {
                     break;
                 // trash the header when dumping to file
                 outfile.write(reinterpret_cast<const char *>(payload), hdr->payload_length);
-#ifdef TRACE
-                cout << "outfile.write(" << hdr->payload_length << ")" << endl;
-#endif
                 remain -= packet_len;
                 data += packet_len;
             }
