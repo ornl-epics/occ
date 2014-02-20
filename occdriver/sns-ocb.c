@@ -555,8 +555,8 @@ static int snsocb_rxone(struct ocb *ocb)
 	}
 
 	/* How much can we copy from the source before we wrap? */
-	if (*cons < prod) {
-		head = size - prod;
+	if (*cons > prod) {
+		head = size - *cons;
 		head = min(head, length);
 		tail = length - head;
 	} else {
