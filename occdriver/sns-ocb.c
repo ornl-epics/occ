@@ -555,8 +555,8 @@ static int snsocb_rxone(struct ocb *ocb)
 	}
 
 	/* How much can we copy from the source before we wrap? */
-	if (*cons > prod) {
-		head = size - *cons;
+	if (*cons < prod) {
+		head = size - prod;
 		head = min(head, length);
 		tail = length - head;
 	} else {
@@ -722,9 +722,6 @@ static void snsocb_reset(struct ocb *ocb)
 
 	iowrite32(OCB_CONF_RESET, ioaddr + REG_CONFIG);
 
-	/* JEB - Clear the DQ CONS_IDX */
-	iowrite32(0x0,ioaddr + REG_DQ_CONS_INDEX);
-
 	/* Post our writes; RESET will self-clear on the next PCI cycle. */
 	ioread32(ioaddr + REG_CONFIG);
 
@@ -755,6 +752,13 @@ static void snsocb_reset(struct ocb *ocb)
 		iowrite32(ocb->dq_dma >> 32, ioaddr + REG_DQ_ADDRHI);
 		iowrite32(OCB_DQ_SIZE - 1, ioaddr + REG_DQ_MAX_OFFSET);
 	}
+
+	/* Clear queue offset indexes */
+	iowrite32(0x0, ioaddr + REG_TX_PROD_INDEX);
+	if (ocb->emulate_dq)
+		iowrite32(0x0, ioaddr + REG_RX_CONS_INDEX);
+    else
+		iowrite32(0x0, ioaddr + REG_DQ_CONS_INDEX);
 
 	iowrite32(ocb->conf, ocb->ioaddr + REG_CONFIG);
 	if (ocb->emulate_dq) {
