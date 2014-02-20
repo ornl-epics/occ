@@ -15,11 +15,13 @@ using namespace std;
 
 AnalyzeOCC::AnalyzeOCC(const string &devfile) :
     m_occ(NULL),
-    m_rampCounter(0)
+    m_rampCounter(-1)
 {
     int ret = occ_open(devfile.c_str(), OCC_INTERFACE_OPTICAL, &m_occ);
     if (ret != 0)
         throw runtime_error("Failed to open OCC device - " + occErrorString(ret));
+
+    memset(&m_metrics, 0, sizeof(m_metrics));
 }
 
 AnalyzeOCC::~AnalyzeOCC()
@@ -43,14 +45,21 @@ void AnalyzeOCC::process()
         }
 
         for (it = data; it < (data + datalen); ) {
-            LabPacket *packet = new (it) LabPacket;
+            LabPacket *packet;
+            try {
+                packet = new (it) LabPacket(datalen - (it - data));
+            } catch (overflow_error &e) {
+                break;
+            }
             analyzePacket(packet);
             it += packet->length();
         }
 
-        ret = occ_data_ack(m_occ, it - data);
-        if (ret != 0) {
-            throw runtime_error("Failed to advance consumer index - " + occErrorString(ret));
+        if ((it - data) > 0) {
+            ret = occ_data_ack(m_occ, it - data);
+            if (ret != 0) {
+                throw runtime_error("Failed to advance consumer index - " + occErrorString(ret));
+            }
         }
     }
 }
@@ -63,13 +72,13 @@ void AnalyzeOCC::analyzePacket(const LabPacket * const packet)
 
     if (packet_length == 0) {
         // header length is not aligned
-	} else if (packet->isCommand()) {
+    } else if (packet->isCommand()) {
         good = true;
         m_metrics.commands.goodCount++;
         m_metrics.commands.bytes += packet_length;
-	} else if (packet->isData()) {
+    } else if (packet->isData()) {
 
-	    if (packet->isDataRtdl()) {
+        if (packet->isDataRtdl()) {
             m_metrics.rtdl.bytes += packet_length;
             if (packet->verifyRtdl(errorOffset)) {
                 good = true;
@@ -77,7 +86,7 @@ void AnalyzeOCC::analyzePacket(const LabPacket * const packet)
             } else {
                 m_metrics.rtdl.badCount++;
             }
-	    } else if (packet->isDataMeta()) {
+        } else if (packet->isDataMeta()) {
             m_metrics.meta.bytes += packet_length;
             if (packet->verifyMeta(errorOffset)) {
                 good = true;
@@ -85,7 +94,7 @@ void AnalyzeOCC::analyzePacket(const LabPacket * const packet)
             } else {
                 m_metrics.meta.badCount++;
             }
-	    } else if (packet->isDataEvent()) {
+        } else if (packet->isDataEvent()) {
             m_metrics.event.bytes += packet_length;
             if (packet->verifyEvent(errorOffset)) {
                 good = true;
@@ -93,7 +102,7 @@ void AnalyzeOCC::analyzePacket(const LabPacket * const packet)
             } else {
                 m_metrics.event.badCount++;
             }
-	    } else if (packet->isDataRamp()) {
+        } else if (packet->isDataRamp()) {
             m_metrics.ramp.bytes += packet_length;
             if (packet->verifyRamp(errorOffset, m_rampCounter)) {
                 good = true;
@@ -101,17 +110,21 @@ void AnalyzeOCC::analyzePacket(const LabPacket * const packet)
             } else {
                 m_metrics.ramp.badCount++;
             }
-	    }
+        } else {
+            good = true;
+            m_metrics.other.bytes += packet_length;
+            m_metrics.ramp.goodCount++;
+        }
 
         m_metrics.data.bytes += packet_length;
-	    if (good)
+        if (good)
             m_metrics.data.goodCount++;
         else
             m_metrics.data.badCount++;
-	}
+    }
 
-	m_metrics.total.bytes += packet_length;
-	if (good)
+    m_metrics.total.bytes += packet_length;
+    if (good)
         m_metrics.total.goodCount++;
     else
         m_metrics.total.badCount++;

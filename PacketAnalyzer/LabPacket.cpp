@@ -11,6 +11,11 @@
 #define TEST_DSP_COUNTER_MAX    400         // defined by DSP test firmware
 #define TEST_DSP_COUNTER_MIN    1           // defined by DSP test firmware
 
+LabPacket::LabPacket(uint32_t datalen) :
+    DasPacket(datalen)
+{
+}
+
 bool LabPacket::isDataRamp() const
 {
     return (info & DAS_DATA_MASK) == DAS_DATA_RAMP;

@@ -8,29 +8,33 @@ struct DasNeutronEvent {
 	uint32_t pixelid;
 };
 
+/**
+ * Class representing a DAS packet.
+ *
+ * Don't introduce any virtual functions here as this will break allocating
+ * objects from OCC buffer.
+ */
 struct DasPacket
 {
-public:
-    uint32_t destination;       //<! Destination id
-    uint32_t source;            //<! Sender id
-    uint32_t info;              //<! field describing packet type and other info
-    uint32_t payload_length;    //<! payload length
-    uint32_t reserved1;
-    uint32_t reserved2;
-    uint32_t data[0];
+    public:
+        uint32_t destination;       //<! Destination id
+        uint32_t source;            //<! Sender id
+        uint32_t info;              //<! field describing packet type and other info
+        uint32_t payload_length;    //<! payload length
+        uint32_t reserved1;
+        uint32_t reserved2;
+        uint32_t data[0];
 
-    uint32_t length() const;
-    uint32_t payloadLength() const;
+        DasPacket(uint32_t datalen);
 
-    bool isCommand() const;
-    bool isData() const;
-    bool isDataRtdl() const;
-    bool isDataMeta() const;
-    bool isDataEvent() const;
+        uint32_t length() const;
+        uint32_t payloadLength() const;
 
-    virtual bool verifyRtdl(uint32_t &errorOffset) const;
-    virtual bool verifyMeta(uint32_t &errorOffset) const;
-    virtual bool verifyEvent(uint32_t &errorOffset) const;
+        bool isCommand() const;
+        bool isData() const;
+        bool isDataRtdl() const;
+        bool isDataMeta() const;
+        bool isDataEvent() const;
 };
 
 #endif // DASPACKET_HPP

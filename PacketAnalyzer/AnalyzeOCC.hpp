@@ -34,6 +34,7 @@ class AnalyzeOCC
             struct counter meta;
             struct counter event;
             struct counter ramp;
+            struct counter other;
         };
         struct metrics m_metrics;
 

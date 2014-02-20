@@ -5,7 +5,7 @@
 
 using namespace std;
 
-static bool shutdown = false;
+bool shutdown;
 
 static void sighandler(int signal) {
     switch (signal) {
@@ -23,14 +23,14 @@ static void usage(const char *progname) {
     cout << "Analyze incoming DAS data. " << endl;
     cout << endl;
     cout << "Options:" << endl;
-    cout << "  -d, --device-file=FILE   Full path to OCC board device file" << endl;
+    cout << "  -d, --device-file=FILE   Full path to OCC board device file (defaults to /dev/snsocb0)" << endl;
     cout << "  -o, --output-file=FILE   File to save bad packets to (don't save if not specified)" << endl;
     cout << endl;
 }
 
 int main(int argc, char **argv)
 {
-    const char *devfile = NULL;
+    const char *devfile = "/dev/snsocb0";
     const char *dumpfile = "";
     struct sigaction sigact;
 
@@ -64,8 +64,14 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    AnalyzeOutput analyzer(devfile, dumpfile);
-    analyzer.process();
+    try {
+        shutdown = false;
+        AnalyzeOutput analyzer(devfile, dumpfile);
+        analyzer.process();
+    } catch (exception &e) {
+        if (!shutdown)
+            cerr << "ERROR: " << e.what() << endl;
+    }
 
     return 0;
 }

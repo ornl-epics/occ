@@ -1,5 +1,5 @@
 CPPFLAGS=-Wall -I../occlib/
-LDFLAGS=-L../occlib -locc -lcurses
+LDFLAGS=-L../occlib -locc -lcurses -lrt
 SRCS=$(wildcard *.cpp)
 HDRS=
 BIN=PacketAnalyzer

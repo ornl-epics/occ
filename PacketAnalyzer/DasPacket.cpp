@@ -2,6 +2,8 @@
 
 #include <stddef.h> // offsetof
 
+#include <stdexcept>
+
 #define DAS_ROOT_ID                         0x000f10cc
 #define DAS_BROADCAST                       0x00000000
 
@@ -56,6 +58,11 @@
 
 #define MAX_EVENTS_PER_PACKET               1800
 
+DasPacket::DasPacket(uint32_t datalen)
+{
+    if (length() > datalen)
+        throw std::overflow_error("Packet spans over the provided buffer boundaries");
+}
 
 uint32_t DasPacket::length() const
 {
@@ -90,34 +97,3 @@ bool DasPacket::isDataEvent() const
     return (info & DAS_DATA_MASK) == DAS_DATA_EVENT;
 }
 
-bool DasPacket::verifyRtdl(uint32_t &errorOffset) const
-{
-	if ((payload_length >> 2) != 32) {
-		errorOffset = (reinterpret_cast<const char *>(&(this->payload_length)) - reinterpret_cast<const char *>(this));
-		return false;
-	}
-
-	return true;
-}
-
-bool DasPacket::verifyMeta(uint32_t &errorOffset) const
-{
-    if (((payload_length + 7) & ~7) != payload_length ||
-        payload_length == 0) {
-		errorOffset = (reinterpret_cast<const char *>(&(this->payload_length)) - reinterpret_cast<const char *>(this));
-        return false;
-    }
-
-    return true;
-}
-
-bool DasPacket::verifyEvent(uint32_t &errorOffset) const
-{
-    if (((payload_length + 7) & ~7) != payload_length ||
-        payload_length == 0) {
-		errorOffset = (reinterpret_cast<const char *>(&(this->payload_length)) - reinterpret_cast<const char *>(this));
-        return false;
-    }
-
-    return true;
-}
