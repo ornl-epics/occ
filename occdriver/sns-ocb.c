@@ -555,8 +555,8 @@ static int snsocb_rxone(struct ocb *ocb)
 	}
 
 	/* How much can we copy from the source before we wrap? */
-	if (*cons < prod) {
-		head = size - prod;
+	if (*cons > prod) {
+		head = size - *cons;
 		head = min(head, length);
 		tail = length - head;
 	} else {
@@ -948,7 +948,7 @@ static ssize_t snsocb_write(struct file *file, const char __user *buf,
 	case OCB_CMD_ADVANCE_DQ:
 		if (count != sizeof(u32))
 			return -EINVAL;
-		
+
 		if (copy_from_user(&val, buf, sizeof(u32)))
 			return -EFAULT;
 
@@ -1335,6 +1335,7 @@ static void __devexit snsocb_remove(struct pci_dev *pdev)
 DEFINE_PCI_DEVICE_TABLE(snsocb_pci_table) = {
 	{ PCI_VDEVICE(XILINX, 0x1002), .driver_data = BOARD_SNS_PCIX },
 	{ PCI_DEVICE(0x1775, 0x1000), .driver_data = BOARD_GE_PCIE },
+	{ PCI_DEVICE(0x7014, 0x0007), .driver_data = BOARD_SNS_PCIE },
 	{ 0, }
 };
 
