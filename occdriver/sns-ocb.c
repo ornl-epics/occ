@@ -483,21 +483,23 @@ static u32 __snsocb_rxroom(struct ocb *ocb)
 
 static u32 snsocb_rxcopy(struct ocb *ocb, u32 prod, void *src, u32 len)
 {
-	/* __snsocb_rxroom() must indicate there is enough room
-	 * for the entire packet before calling here.
-	 */
-	void *dst = page_address(ocb->dq_page);
-	u32 head, tail;
+	if (len > 0) {
+		/* __snsocb_rxroom() must indicate there is enough room
+		 * for the entire packet before calling here.
+		 */
+		void *dst = page_address(ocb->dq_page);
+		u32 head, tail;
 
-	/* We know there is room for the packet, so just
-	 * check for any wrapping on the ring buffer.
-	 */
-	head = OCB_DQ_SIZE - prod;
-	head = min(head, len);
-	tail = len - head;
+		/* We know there is room for the packet, so just
+		 * check for any wrapping on the ring buffer.
+		 */
+		head = OCB_DQ_SIZE - prod;
+		head = min(head, len);
+		tail = len - head;
 
-	memcpy(dst + prod, src, head);
-	memcpy(dst, src + head, tail);
+		memcpy(dst + prod, src, head);
+		memcpy(dst, src + head, tail);
+	}
 
 	return (prod + len) % OCB_DQ_SIZE;
 }
