@@ -3,7 +3,11 @@
 #include <cstdlib>
 #include <errno.h>
 #include <fstream>
+#include <iomanip>
 #include <iostream>
+#include <list>
+#include <signal.h>
+#include <vector>
 
 #define OCC_MAX_PACKET_SIZE 1800
 #define TX_MAX_SIZE         1800        // Maximum packet size in bytes to be send over OCC
@@ -22,16 +26,22 @@ struct program_context {
     const char *output_file;
     unsigned long send_rate;
     unsigned long packet_size;
+    unsigned long data_length;
     struct occ_handle *occ;
+    list< vector<unsigned char> > queue;
+    pthread_mutex_t queLock;
 
     program_context() :
         device_file(NULL),
-        input_file(NULL),
+        input_file("/dev/urandom"),
         output_file(NULL),
         send_rate(0),
         packet_size(0),
+        data_length(0),
         occ(NULL)
-    {}
+    {
+        pthread_mutex_init(&queLock, NULL);
+    }
 };
 
 struct transmit_status {
@@ -58,16 +68,29 @@ struct occ_packet_header {
 
 static void usage(const char *progname) {
     cout << "Usage: " << progname << " [OPTION]" << endl;
-    cout << "Send input file through OCC at specified rate. Expect hardware loopback. " << endl;
-    cout << "Read data from OCC and compare it to the input file." << endl;
+    cout << "Tool assumes established hardware loopback. Reads data from input file and" << endl;
+    cout << "sends it to OCC device at specified rate. Expect the same data on the receive" << endl;
+    cout << "side and abort if it differs." << endl;
     cout << endl;
     cout << "Options:" << endl;
     cout << "  -d, --device-file=FILE   Full path to OCC board device file" << endl;
-    cout << "  -i, --input-file=FILE    Input data file to be sent to OCC board" << endl;
-    cout << "  -o, --output-file=FILE   File to save received data to (don't save if not specified)" << endl;
+    cout << "  -i, --input-file=FILE    File with data to be sent through OCC (defaults to /dev/urandom)" << endl;
+    cout << "  -o, --output-file=FILE   Where to store incoming data (don't save if not specified)" << endl;
     cout << "  -r, --rate=BYTES/S       Send data at this rate (defaults to 0, unlimited)" << endl;
     cout << "  -s, --packet-size=SIZE   Size of each sent packet (defaults to 0, random size)" << endl;
+    cout << "  -l, --data-length=LENGTH Approximate amount of data to read from input file (defaults to 0, all data)" << endl;
     cout << endl;
+}
+
+static void sighandler(int signal) {
+    switch (signal) {
+    case SIGTERM:
+    case SIGINT:
+        shutdown = true;
+        break;
+    default:
+        break;
+    }
 }
 
 bool parse_args(int argc, char **argv, struct program_context *ctx) {
@@ -97,6 +120,10 @@ bool parse_args(int argc, char **argv, struct program_context *ctx) {
         if (key == "-s" || key == "--packet-size") {
             if ((i + 1) < argc)
                 ctx->packet_size = max(atoi(argv[++i]), TX_MAX_SIZE);
+        }
+        if (key == "-l" || key == "--data-length") {
+            if ((i + 1) < argc)
+                ctx->data_length = atoi(argv[++i]);
         }
     }
 
@@ -168,11 +195,11 @@ static void *send_to_occ(void *arg) {
 
     srand(time(NULL));
 
-    unsigned char *buffer = new unsigned char[TX_MAX_SIZE];
-    struct occ_packet_header *hdr = (struct occ_packet_header *)buffer;
+    unsigned char buffer[TX_MAX_SIZE];
+    struct occ_packet_header *hdr = reinterpret_cast<struct occ_packet_header *>(buffer);
     unsigned char *payload = buffer + sizeof(struct occ_packet_header);
 
-    while (infile.good()) {
+    while (!shutdown && infile.good() && (ctx->data_length == 0 || status->n_bytes <= ctx->data_length)) {
         unsigned long packet_size = ctx->packet_size;
 
         // Pick a random packet size in range [sizeof(hdr), TX_MAX_SIZE]
@@ -194,10 +221,18 @@ static void *send_to_occ(void *arg) {
         hdr->reserved1 = 0;
         hdr->reserved2 = 0;
 
-        if (packet_size != (sizeof(struct occ_packet_header) + hdr->payload_length)) {
-            fill_n(payload + hdr->payload_length, payload + (packet_size - hdr->payload_length), 0);
-            hdr->payload_length = packet_size - sizeof(struct occ_packet_header);
+        if (hdr->payload_length < (packet_size - sizeof(struct occ_packet_header))) {
+            uint32_t new_payload_length = __occ_align(hdr->payload_length);
+            fill_n(payload + hdr->payload_length, new_payload_length - hdr->payload_length, 0);
+            hdr->payload_length = new_payload_length;
+            packet_size = sizeof(struct occ_packet_header) + hdr->payload_length;
         }
+
+        // Enqueue one packet
+        vector<unsigned char> v(buffer, buffer+packet_size);
+        pthread_mutex_lock(&ctx->queLock);
+        ctx->queue.push_back(v);
+        pthread_mutex_unlock(&ctx->queLock);
 
 #ifdef TRACE
         cout << "occ_send(" << packet_size << ")" << endl;
@@ -212,7 +247,7 @@ static void *send_to_occ(void *arg) {
             if (i % 8 == 7)
                 cout << endl;
         }
-        cout << dec << setw(1) << noshowbase << lowercase << endl;
+        cout << dec << setw(1) << noshowbase << nouppercase << endl;
 #endif
 
         status->n_bytes += packet_size;
@@ -220,13 +255,25 @@ static void *send_to_occ(void *arg) {
         ratelimit(ctx->send_rate, status->n_bytes, &starttime);
     }
 
-    delete[] buffer;
-
     return status;
 }
 
 inline size_t __occ_packet_align(size_t size) {
     return (size + 7) & ~7;
+}
+
+bool compareWithSent(struct program_context *ctx, unsigned char *data, size_t datalen) {
+    vector<unsigned char> received(data, data + datalen);
+    vector<unsigned char> sent;
+
+    pthread_mutex_lock(&ctx->queLock);
+    if (!ctx->queue.empty()) {
+        sent = ctx->queue.front();
+        ctx->queue.pop_front();
+    }
+    pthread_mutex_unlock(&ctx->queLock);
+
+    return (sent == received);
 }
 
 /**
@@ -264,31 +311,39 @@ void *receive_from_occ(void *arg) {
             if (i % 8 == 7)
                 cout << endl;
         }
-        cout << dec << setw(1) << noshowbase << lowercase << endl;
+        cout << dec << setw(1) << noshowbase << nouppercase << endl;
 #endif
 
-        if (outfile.good()) {
-            size_t remain = datalen;
-            while (remain > 0) {
-                struct occ_packet_header *hdr = (struct occ_packet_header *)data;
-                unsigned char *payload = data + sizeof(struct occ_packet_header);
-                size_t packet_len = __occ_packet_align(sizeof(struct occ_packet_header) + hdr->payload_length);
-                if (packet_len > OCC_MAX_PACKET_SIZE) {
-                    // Acknowledge everything but skip processing the rest
-                    cerr << "Bad packet based on length check (" << packet_len << ">1800), skipping... (" << hex << data << dec << endl;
-                    remain = 0;
-                    break;
-                }
-                if (packet_len > remain)
-                    break;
+        size_t remain = datalen;
+        while (remain > 0) {
+            struct occ_packet_header *hdr = (struct occ_packet_header *)data;
+            unsigned char *payload = data + sizeof(struct occ_packet_header);
+            size_t packet_len = __occ_packet_align(sizeof(struct occ_packet_header) + hdr->payload_length);
+            if (packet_len > OCC_MAX_PACKET_SIZE) {
+                // Acknowledge everything but skip processing the rest
+                cerr << "Bad packet based on length check (" << packet_len << ">1800), skipping... (" << hex << data << dec << endl;
+                remain = 0;
+                break;
+            }
+            if (packet_len > remain)
+                break;
+
+            if (outfile.good()) {
                 // trash the header when dumping to file
                 outfile.write(reinterpret_cast<const char *>(payload), hdr->payload_length);
-                remain -= packet_len;
-                data += packet_len;
             }
-            // Adjust to the actual processed data for acknowledgement
-            datalen -= remain;
+
+            if (!compareWithSent(ctx, data, packet_len)) {
+                status->error = "Received data mismatch";
+                shutdown = true;
+                break;
+            }
+
+            remain -= packet_len;
+            data += packet_len;
         }
+        // Adjust to the actual processed data for acknowledgement
+        datalen -= remain;
 
 #ifdef TRACE
         cout << "occ_data_ack(" << datalen << ")" << endl;
@@ -312,6 +367,7 @@ int main(int argc, char **argv) {
     pthread_t receive_thread;
     int ret = 0;
     struct transmit_status *send_status = NULL, *receive_status = NULL;
+    struct sigaction sigact;
 
     if (!parse_args(argc, argv, &ctx) || !ctx.device_file || !ctx.input_file) {
         usage(argv[0]);
@@ -324,6 +380,13 @@ int main(int argc, char **argv) {
     }
 
     do {
+
+        sigact.sa_handler = &sighandler;
+        sigact.sa_flags = 0;
+        sigemptyset(&sigact.sa_mask);
+        sigaction(SIGTERM, &sigact, NULL);
+        sigaction(SIGINT, &sigact, NULL);
+
         if (pthread_create(&receive_thread, NULL, &receive_from_occ, &ctx) != 0) {
             cerr << "ERROR: Cannot start receive thread!" << endl;
             ret = 2;
@@ -337,10 +400,7 @@ int main(int argc, char **argv) {
             break;
         }
 
-        // Give the TX some time for safely transmit the packet, then shutdown properly
-        thread_sleep(1 * 1000000000UL);
         shutdown = true;
-
         if (pthread_join(receive_thread, (void **)&receive_status) != 0 || !receive_status) {
             cerr << "ERROR: Cannot stop receive thread!" << endl;
             ret = 2;

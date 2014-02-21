@@ -13,13 +13,13 @@
 				<Option compiler="gcc" />
 				<Compiler>
 					<Add option="-g" />
-					<Add directory="../OCClib" />
+					<Add directory="../occlib" />
 				</Compiler>
 				<Linker>
 					<Add library="occ" />
 					<Add library="pthread" />
 					<Add library="rt" />
-					<Add directory="../OCClib" />
+					<Add directory="../occlib" />
 				</Linker>
 			</Target>
 			<Target title="Release">
@@ -29,14 +29,14 @@
 				<Option compiler="gcc" />
 				<Compiler>
 					<Add option="-O2" />
-					<Add directory="../OCClib" />
+					<Add directory="../occlib" />
 				</Compiler>
 				<Linker>
 					<Add option="-s" />
 					<Add library="occ" />
 					<Add library="pthread" />
 					<Add library="rt" />
-					<Add directory="../OCClib" />
+					<Add directory="../occlib" />
 				</Linker>
 			</Target>
 		</Build>
