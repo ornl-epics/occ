@@ -119,7 +119,7 @@ bool parse_args(int argc, char **argv, struct program_context *ctx) {
         }
         if (key == "-s" || key == "--packet-size") {
             if ((i + 1) < argc)
-                ctx->packet_size = max(atoi(argv[++i]), TX_MAX_SIZE);
+                ctx->packet_size = min(atoi(argv[++i]), TX_MAX_SIZE);
         }
         if (key == "-l" || key == "--data-length") {
             if ((i + 1) < argc)
@@ -226,6 +226,7 @@ static void *send_to_occ(void *arg) {
             fill_n(payload + hdr->payload_length, new_payload_length - hdr->payload_length, 0);
             hdr->payload_length = new_payload_length;
             packet_size = sizeof(struct occ_packet_header) + hdr->payload_length;
+            cout << "INFO: input packet not 8-byte aligned, padding with '\\0's" << endl;
         }
 
         // Enqueue one packet
@@ -241,13 +242,17 @@ static void *send_to_occ(void *arg) {
             break;
 
 #ifdef TRACE
-        cout << hex << showbase << setw(4) << uppercase;
+        cout << hex;
         for (size_t i = 0; i < packet_size; i++) {
-            cout << (int)(buffer[i] & 0xFF) << " ";
-            if (i % 8 == 7)
+            cout << setw(2) << setfill('0') << uppercase << (int)(buffer[i] & 0xFF);
+            if (i % 24 == 23)
                 cout << endl;
+            else if (i % 4 == 3)
+                cout << "  ";
+            else
+                cout << " ";
         }
-        cout << dec << setw(1) << noshowbase << nouppercase << endl;
+        cout << dec << endl;
 #endif
 
         status->n_bytes += packet_size;
@@ -305,13 +310,17 @@ void *receive_from_occ(void *arg) {
 
 #ifdef TRACE
         cout << "occ_data_wait() => " << datalen << endl;
-        cout << hex << showbase << setw(4) << uppercase;
+        cout << hex;
         for (size_t i = 0; i < datalen; i++) {
-            cout << (int)(data[i] & 0xFF) << " ";
-            if (i % 8 == 7)
+            cout << setw(2) << setfill('0') << uppercase << (int)(data[i] & 0xFF);
+            if (i % 24 == 23)
                 cout << endl;
+            else if (i % 4 == 3)
+                cout << "  ";
+            else
+                cout << " ";
         }
-        cout << dec << setw(1) << noshowbase << nouppercase << endl;
+        cout << dec << endl;
 #endif
 
         size_t remain = datalen;
