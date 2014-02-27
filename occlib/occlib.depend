@@ -35,3 +35,28 @@
 
 1392386384 /home/kvodopivec/work/SNS/ADARA/occ/occlib/sns-ocb.h
 
+1393445486 source:/home/kvodopivec/work/SNS/git/detectors/occlib/occlib.c
+	"occlib_hw.h"
+	"sns-ocb.h"
+	<assert.h>
+	<errno.h>
+	<fcntl.h>
+	<poll.h>
+	<stdlib.h>
+	<string.h>
+	<sys/mman.h>
+	<sys/types.h>
+	<sys/stat.h>
+	<unistd.h>
+
+1393444855 /home/kvodopivec/work/SNS/git/detectors/occlib/occlib_hw.h
+	"occlib.h"
+	<sys/types.h>
+
+1393444855 /home/kvodopivec/work/SNS/git/detectors/occlib/occlib.h
+	<stdbool.h>
+	<stddef.h>
+	<stdint.h>
+
+1393444855 /home/kvodopivec/work/SNS/git/detectors/occdriver/sns-ocb.h
+

@@ -1,4 +1,4 @@
-CFLAGS=-Wall
+CFLAGS=-Wall -I../occdriver
 LDFLAGS=
 SRCS=occlib.c
 HDRS=occlib.h occlib_hw.h

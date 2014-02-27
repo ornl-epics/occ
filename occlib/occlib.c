@@ -240,7 +240,7 @@ int occ_data_wait(struct occ_handle *handle, void **address, size_t *count, uint
     if (_occ_data_align(*count) != *count) {
         // Tough choice. We can't extend the count as the data might not be there yet.
         // So we must shrink the count to previous 8-byte boundary.
-        *count = _occ_packet_align(*count - 7);
+        *count = _occ_data_align(*count - 7);
     }
     handle->last_count = *count;
 

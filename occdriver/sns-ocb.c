@@ -368,8 +368,8 @@ static ssize_t snsocb_tx(struct file *file, struct ocb *ocb,
 		tail = dwords - head;
 
 	__iowrite32_copy(ocb->txfifo + (ocb->tx_prod * 8),
-			 ocb->tx_buffer, head * 8);
-	__iowrite32_copy(ocb->txfifo, ocb->tx_buffer + head * 8, tail * 8);
+			 ocb->tx_buffer, head * 2);
+	__iowrite32_copy(ocb->txfifo, ocb->tx_buffer + head * 8, tail * 2);
 
 	ocb->tx_prod += dwords;
 	ocb->tx_prod %= OCB_TX_FIFO_LEN / 8;
@@ -1339,7 +1339,7 @@ static void __devexit snsocb_remove(struct pci_dev *pdev)
 DEFINE_PCI_DEVICE_TABLE(snsocb_pci_table) = {
 	{ PCI_VDEVICE(XILINX, 0x1002), .driver_data = BOARD_SNS_PCIX },
 	{ PCI_DEVICE(0x1775, 0x1000), .driver_data = BOARD_GE_PCIE },
-	{ PCI_DEVICE(0x7014, 0x0007), .driver_data = BOARD_SNS_PCIE },
+	{ PCI_VDEVICE(XILINX, 0x7014), .driver_data = BOARD_SNS_PCIE },
 	{ 0, }
 };
 

@@ -26,14 +26,18 @@
 				<Option compiler="gcc" />
 				<Option createDefFile="1" />
 				<Compiler>
-					<Add option="-Wall" />
 					<Add option="-O2" />
+					<Add option="-Wall" />
+					<Add directory="../occdriver" />
 				</Compiler>
 				<Linker>
 					<Add option="-s" />
 				</Linker>
 			</Target>
 		</Build>
+		<Compiler>
+			<Add directory="../occdriver" />
+		</Compiler>
 		<Unit filename="occlib.c">
 			<Option compilerVar="CC" />
 		</Unit>

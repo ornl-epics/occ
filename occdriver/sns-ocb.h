@@ -50,6 +50,7 @@
 #define 	OCB_SELECT_OPTICAL	1
 
 /* Not a full 8k as we have to avoid prod_idx == cons_idx (empty) */
+// TODO: PCIe queue size is 32*1024, it can't just yet roll-over properly at lower sizes
 #define OCB_TX_FIFO_LEN		8192
 #define OCB_MAX_TX_LEN		(OCB_TX_FIFO_LEN - 8)
 
