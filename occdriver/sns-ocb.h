@@ -1,6 +1,10 @@
 #ifndef __SNS_DAS_H
 #define __SNS_DAS_H
 
+#if !defined(__KERNEL__)
+typedef uint32_t u32;
+#endif
+
 /* The user should read an appropriate amount of data from the device for
  * the command being requested. Commands are indicated by the offset read.
  *
@@ -10,22 +14,19 @@
  * available in the ring buffer, and error occurs, or we reset the card. It
  * may also be interrupted by a signal or return early if using O_NONBLOCK.
  *
- * Reading 12 bytes at offset OCB_CMD_GET_STATUS gives information about
- * the driver and current status of the hardware. The first four bytes is
- * the firmware version of the card. The second four bytes is the length
- * of the RX ring buffer, which should be passed to mmap() to get access.
- * The last four bytes are status information, as returned in the second
- * word for OCB_CMD_RX.
+ * Reading sizeof(struct ocb_status) bytes at offset OCB_CMD_GET_STATUS
+ * gives information about the driver and current status of the hardware.
+ * Check the struct ocb_status for details.
  */
-#define OCB_CMD_RX		1
-#define OCB_CMD_GET_STATUS	2
+#define OCB_CMD_RX				1
+#define OCB_CMD_GET_STATUS		2
 
-/* Status flags returned in second word from read() calls */
-#define OCB_RX_MSG		(1 << 5)
-#define OCB_RX_STALLED		(1 << 4)
-#define OCB_RESET_OCCURRED	(1 << 3)
-#define OCB_MODE_OPTICAL	(1 << 2)
-#define OCB_OPTICAL_PRESENT	(1 << 1)
+/* Status flags returned in status member of ocb_status struct */
+#define OCB_RX_MSG				(1 << 5)
+#define OCB_RX_STALLED			(1 << 4)
+#define OCB_RESET_OCCURRED		(1 << 3)
+#define OCB_MODE_OPTICAL		(1 << 2)
+#define OCB_OPTICAL_PRESENT		(1 << 1)
 #define OCB_OPTICAL_NOSIGNAL	(1 << 0)
 
 /* Commands are passed to the driver by writing to the fd at a given
@@ -43,15 +44,34 @@
  * EINTR in errno. If the card is reset while the call is queued to send a
  * packet, it may use ECONNRESET. EIO indicates a timeout during the TX
  */
-#define OCB_CMD_TX		9
-#define OCB_CMD_ADVANCE_DQ	10
-#define OCB_CMD_RESET		11
+#define OCB_CMD_TX				9
+#define OCB_CMD_ADVANCE_DQ		10
+#define OCB_CMD_RESET			11
 #define 	OCB_SELECT_LVDS		0
 #define 	OCB_SELECT_OPTICAL	1
 
-/* Not a full 8k as we have to avoid prod_idx == cons_idx (empty) */
-// TODO: PCIe queue size is 32*1024, it can't just yet roll-over properly at lower sizes
-#define OCB_TX_FIFO_LEN		8192
-#define OCB_MAX_TX_LEN		(OCB_TX_FIFO_LEN - 8)
+#define OCB_VER					1
+
+/* Offsets are passed to the driver by calling mmap() with the given offset.
+ */
+#define OCB_MMAP_BAR0           0
+#define OCB_MMAP_BAR1           1
+#define OCB_MMAP_BAR2           2
+#define OCB_MMAP_RX_DMA         6
+
+/* Boards supported by the driver.
+ */
+#define BOARD_SNS_PCIX	1
+#define BOARD_SNS_PCIE	2
+#define BOARD_GE_PCIE	3
+
+struct ocb_status {
+    u32 ocb_ver;			// Position of this one should not change. OCB version defines the rest of the protocol.
+	u32 board_type;			// One of the BOARD_xxx values
+    u32 firmware_ver;		// Code is 0xVVYYMMDD -- version, year, month, day (BCD)
+    u32 status;
+    u32 dq_size;			// Size of RX DMA data cyclic-queue in bytes
+    u32 bars[3];			// Sizes of BAR regions used for mmap
+};
 
 #endif /* __SNS_DAS_H */

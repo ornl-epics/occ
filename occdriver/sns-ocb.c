@@ -15,6 +15,8 @@
 #include <linux/sched.h>
 #include <linux/ratelimit.h>
 #include <linux/poll.h>
+#include <linux/delay.h>
+#include <linux/version.h>
 #include "sns-ocb.h"
 
 /* Newer kernels provide these, but not the RHEL6 kernels...
@@ -35,6 +37,10 @@ do {									\
 	dev_level_ratelimited(dev_err, dev, fmt, ##__VA_ARGS__)
 #endif
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,8,0)
+#define __devexit
+#endif // LINUX_VERSION_CODE
+
 /* Only really need one while on PCI-X, but hope to support multiple
  * cards easily on PCIe with the same driver.
  */
@@ -45,7 +51,7 @@ do {									\
  * expected use case for this driver is to be loaded at boot. We can handle
  * up to 4 MB, but we'll start with 2 MB for now.
  */
-#define OCB_DQ_SIZE		(2 * 1024 * 1024)
+#define OCB_DQ_SIZE			(2 * 1024 * 1024)
 
 /* For cards that split the Optical data into three queues -- we have
  * an inbound message queue of 64 entries, each 32 bytes and a command
@@ -53,10 +59,11 @@ do {									\
  */
 #define OCB_IMQ_ENTRIES		64
 #define OCB_IMQ_SIZE		(OCB_IMQ_ENTRIES * 8 * sizeof(u32))
-#define OCB_CQ_SIZE		(64 * 1024)
+#define OCB_CQ_SIZE			(64 * 1024)
 
 #define OCB_MMIO_BAR		0
 #define OCB_TXFIFO_BAR		1
+#define OCB_DDR_BAR			2
 
 #define REG_VERSION		0x0000
 
@@ -163,6 +170,15 @@ struct sw_imq {
 	u32	info[2];
 };
 
+/* Board capabilities description structure */
+struct ocb_board_desc {
+    u32 type;
+    u32 firmware;
+    u32 tx_fifo_len;
+    u32 unified_que;
+    u32 bars[3];
+};
+
 struct ocb {
 	void __iomem *ioaddr;
 	void __iomem *txfifo;
@@ -226,19 +242,55 @@ struct ocb {
 
 	/* Needed to synchronize interrupts before card reset */
 	struct pci_dev *pdev;
-};
 
-/* We support multiple boards and firmware from the same driver; we
- * need to keep track of what we have, and their capabilities.
- */
-#define BOARD_SNS_PCIX	0
-#define BOARD_SNS_PCIE	1
-#define BOARD_GE_PCIE	2
+    /* Pointer to a statically allocated description for this board */
+	struct ocb_board_desc *board;
+};
 
 static const char *snsocb_name[] = {
 	[BOARD_SNS_PCIX] = "SNS PCI-X",
 	[BOARD_SNS_PCIE] = "SNS PCIe",
 	[BOARD_GE_PCIE] = "GE PCIe",
+};
+
+static struct ocb_board_desc boards[] = {
+	{
+		.type = BOARD_SNS_PCIX,
+		.firmware = 0x31121106,
+		.tx_fifo_len = 8192,
+		.unified_que = 1,
+		.bars = { 1048576, 1048576 }
+	},
+	{
+		.type = BOARD_SNS_PCIX,
+		.firmware = 0x31130603,
+		.tx_fifo_len = 8192,
+		.unified_que = 1,
+		.bars = { 1048576, 1048576 }
+	},
+	{
+		.type = BOARD_SNS_PCIX,
+		.firmware = 0x22100817,
+		.tx_fifo_len = 8192,
+		.unified_que = 0,
+		.bars = { 1048576, 1048576 }
+	},
+	{
+		.type = BOARD_SNS_PCIE,
+		.firmware = 0x000a0001,
+		.tx_fifo_len = 32768,
+		.unified_que = 1,
+		.bars = { 4096, 32768, 16777216 }
+	},
+/*
+	{
+		.type = BOARD_GE_PCIE,
+		.firmware = 0x0,
+		.unified_que = 0,
+		.bars = { 1048576, 1048576 }
+	},
+*/
+	{ 0 }
 };
 
 static DEFINE_MUTEX(snsocb_devlock);
@@ -298,8 +350,8 @@ static u32 __snsocb_tx_room(struct ocb *ocb)
 	 */
 	u32 prod = ocb->tx_prod << 3;
 	u32 cons = ioread32(ocb->ioaddr + REG_TX_CONS_INDEX) << 3;
-	u32 room = OCB_TX_FIFO_LEN + cons - prod - 8;
-	return room % OCB_TX_FIFO_LEN;
+	u32 room = ocb->board->tx_fifo_len + cons - prod - 8;
+	return room % ocb->board->tx_fifo_len;
 }
 
 static ssize_t snsocb_tx(struct file *file, struct ocb *ocb,
@@ -309,7 +361,7 @@ static ssize_t snsocb_tx(struct file *file, struct ocb *ocb,
 	DEFINE_WAIT(wait);
 	int timeout, ret = 0;
 
-	if (count < 1 || count > OCB_MAX_TX_LEN)
+	if (count < 1 || count > ocb->board->tx_fifo_len)
 		return -EINVAL;
 
 	mutex_lock(&ocb->tx_lock);
@@ -360,7 +412,7 @@ static ssize_t snsocb_tx(struct file *file, struct ocb *ocb,
 	/* Calculate how many dwords of this message can fit before we wrap
 	 * around the MMIO space (head).
 	 */
-	head = (OCB_TX_FIFO_LEN / 8) - ocb->tx_prod;
+	head = (ocb->board->tx_fifo_len / 8) - ocb->tx_prod;
 	if (dwords < head) {
 		head = dwords;
 		tail = 0;
@@ -372,7 +424,7 @@ static ssize_t snsocb_tx(struct file *file, struct ocb *ocb,
 	__iowrite32_copy(ocb->txfifo, ocb->tx_buffer + head * 8, tail * 2);
 
 	ocb->tx_prod += dwords;
-	ocb->tx_prod %= OCB_TX_FIFO_LEN / 8;
+	ocb->tx_prod %= ocb->board->tx_fifo_len / 8;
 
 	iowrite32(count, ocb->ioaddr + REG_TX_LENGTH);
 	iowrite32(ocb->tx_prod, ocb->ioaddr + REG_TX_PROD_INDEX);
@@ -757,7 +809,7 @@ static void snsocb_reset(struct ocb *ocb)
 	iowrite32(0x0, ioaddr + REG_TX_PROD_INDEX);
 	if (ocb->emulate_dq)
 		iowrite32(0x0, ioaddr + REG_RX_CONS_INDEX);
-    else
+	else
 		iowrite32(0x0, ioaddr + REG_DQ_CONS_INDEX);
 
 	iowrite32(ocb->conf, ocb->ioaddr + REG_CONFIG);
@@ -871,16 +923,31 @@ static int snsocb_mmap(struct file *file, struct vm_area_struct *vma)
 {
 	struct ocb *ocb = file->private_data;
 	unsigned long size = vma->vm_end - vma->vm_start;
+	unsigned long addr;
 
-	if (vma->vm_pgoff || size != OCB_DQ_SIZE)
-		return -EINVAL;
+	switch (vma->vm_pgoff) {
+	case OCB_MMAP_BAR0:
+	case OCB_MMAP_BAR1:
+	case OCB_MMAP_BAR2:
+		if (ocb->board->bars[vma->vm_pgoff] == 0)
+			return -ENOSYS;
+		if (size != ocb->board->bars[vma->vm_pgoff])
+			return -EINVAL;
+		addr = pci_resource_start(ocb->pdev, vma->vm_pgoff);
+		vma->vm_page_prot = pgprot_noncached(vma->vm_page_prot);
+		vma->vm_flags |= VM_IO;
+		return remap_pfn_range(vma, vma->vm_start, addr >> PAGE_SHIFT, size, vma->vm_page_prot);
+	case OCB_MMAP_RX_DMA:
+		if (size != OCB_DQ_SIZE)
+			return -EINVAL;
+		vma->vm_ops = &snsocb_vm_ops;
+		vma->vm_file = file;
+		vma->vm_private_data = ocb;
+		vma->vm_flags |= VM_IO | VM_DONTEXPAND;
+		return 0;
+	}
 
-	vma->vm_ops = &snsocb_vm_ops;
-	vma->vm_file = file;
-	vma->vm_private_data = ocb;
-	vma->vm_flags |= VM_RESERVED | VM_DONTEXPAND;
-
-	return 0;
+	return -EINVAL;
 }
 
 static unsigned int snsocb_poll(struct file *file,
@@ -914,22 +981,27 @@ static ssize_t snsocb_read(struct file *file, char __user *buf,
 			   size_t count, loff_t *pos)
 {
 	struct ocb *ocb = file->private_data;
-	u32 info[3];
+	struct ocb_status info;
 
 	switch (*pos) {
 	case OCB_CMD_GET_STATUS:
-		if (count != (3 * sizeof(u32)))
+		if (count != sizeof(struct ocb_status))
 			return -EINVAL;
 
 		spin_lock_irq(&ocb->lock);
-		info[0] = ocb->firmware_version;
-		info[1] = OCB_DQ_SIZE;
-		info[2] = __snsocb_status(ocb);
+		info.ocb_ver = OCB_VER;
+		info.board_type = ocb->board->type;
+		info.firmware_ver = ocb->firmware_version;
+		info.status = __snsocb_status(ocb);
+		info.dq_size = OCB_DQ_SIZE;
+		info.bars[0] = ocb->board->bars[0];
+		info.bars[1] = ocb->board->bars[1];
+		info.bars[2] = ocb->board->bars[2];
 		if (!ocb->reset_in_progress)
 			ocb->reset_occurred = false;
 		spin_unlock_irq(&ocb->lock);
 
-		if (copy_to_user(buf, info, sizeof(info)))
+		if (copy_to_user(buf, &info, sizeof(info)))
 			return -EFAULT;
 		break;
 	case OCB_CMD_RX:
@@ -1085,7 +1157,6 @@ static int __devexit snsocb_probe(struct pci_dev *pdev,
 	int board_id = ent->driver_data;
 	struct device *dev = &pdev->dev;
 	struct ocb *ocb = NULL;
-	int need_all_rings = 0;
 	int minor, err;
 
 	err = pcim_enable_device(pdev);
@@ -1184,33 +1255,15 @@ static int __devexit snsocb_probe(struct pci_dev *pdev,
 	 */
 	err = -ENODEV;
 	ocb->firmware_version = ioread32(ocb->ioaddr + REG_VERSION);
-	if (board_id == BOARD_SNS_PCIX) {
-		/* TODO: support the older version(s) of firmware */
-		switch (ocb->firmware_version) {
-		case 0x31121106:
-		case 0x31130603:
-			/* The default; everything in a single ring */
+	ocb->board = &boards[0];
+	while (ocb->board && ocb->board->type != 0) {
+		if (ocb->board->type == board_id && ocb->board->firmware == ocb->firmware_version)
 			break;
-		case 0x22100817:
-			/* Most beamlines use this one */
-			need_all_rings = 1;
-			break;
-		default:
-			dev_err(dev, "unsupported firmware version 0x%08x\n",
-				ocb->firmware_version);
-			goto error_dev;
-		}
-	} else if (board_id == BOARD_GE_PCIE) {
-		if (ocb->firmware_version != 0xb000001f) {
-			dev_err(dev, "unsupported firmware version 0x%08x\n",
-				ocb->firmware_version);
-			goto error_dev;
-		}
-		need_all_rings = 1;
-	} else if (board_id == BOARD_SNS_PCIE) {
-
-	} else {
-		dev_err(dev, "unknown board ID %d\n", board_id);
+		++ocb->board;
+	}
+	if (!ocb->board || ocb->board->type == 0) {
+		dev_err(dev, "unsupported %s firmware 0x%08x\n", snsocb_name[board_id], ocb->firmware_version);
+		err = -ENODEV;
 		goto error_dev;
 	}
 
@@ -1226,7 +1279,7 @@ static int __devexit snsocb_probe(struct pci_dev *pdev,
 		goto error_dev;
 	}
 
-	if (need_all_rings) {
+	if (!ocb->board->unified_que) {
 		/* Some of these could be done by dev_alloc_coherent(), but
 		 * this works just as well and minimizes the different
 		 * concepts in the driver.
@@ -1257,7 +1310,7 @@ static int __devexit snsocb_probe(struct pci_dev *pdev,
 		}
 	}
 
-	ocb->tx_buffer = kmalloc(OCB_TX_FIFO_LEN, GFP_KERNEL);
+	ocb->tx_buffer = kmalloc(ocb->board->tx_fifo_len, GFP_KERNEL);
 	if (!ocb->tx_buffer) {
 		dev_err(dev, "unable to allocate TX buffer, aborting");
 		goto error_dq;

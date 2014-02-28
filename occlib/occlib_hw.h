@@ -10,8 +10,6 @@
 
 #include "occlib.h"
 
-#include <sys/types.h> // off_t
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -24,11 +22,12 @@ extern "C" {
  * \param[in] handle Valid OCC API handle.
  * \param[in] bar Base Address Registers number, 0-6.
  * \param[in] offset Offset within selected BAR.
- * \param[in] data Buffer to be written to the address starting at BAR+offset.
- * \param[in] count Number of bytes to be written.
+ * \param[in] data Buffer to be written starting at BAR+offset.
+ * \param[in] count Number of dwords to be written.
  * \return 0 on success, negative errno on error.
+ * \retval -ENOSYS Selected BAR is not available in current device.
  */
-int occ_io_write(struct occ_handle *handle, uint8_t bar, off_t offset, const uint8_t *data, size_t count);
+int occ_io_write(struct occ_handle *handle, uint8_t bar, uint32_t offset, const uint32_t *data, uint32_t count);
 
 /**
  * Read data directly from PCI I/O.
@@ -38,11 +37,12 @@ int occ_io_write(struct occ_handle *handle, uint8_t bar, off_t offset, const uin
  * \param[in] handle Valid OCC API handle.
  * \param[in] bar Base Address Registers number, 0-6.
  * \param[in] offset Offset within selected BAR.
- * \param[in] data Buffer where to put data from the address starting at BAR+offset.
- * \param[in] count Number of bytes to be read.
+ * \param[in] data Buffer where to put dword data from the address starting at BAR+offset.
+ * \param[in] count Number of dwords to be read.
  * \return 0 on success, negative errno on error.
+ * \retval -ENOSYS Selected BAR is not available in current device.
  */
-int occ_io_read(struct occ_handle *handle, uint8_t bar, off_t offset, uint8_t *data, size_t count);
+int occ_io_read(struct occ_handle *handle, uint8_t bar, uint32_t offset, uint32_t *data, uint32_t count);
 
 #ifdef __cplusplus
 }

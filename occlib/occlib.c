@@ -1,5 +1,5 @@
 #include "occlib_hw.h"
-#include "sns-ocb.h"
+#include <sns-ocb.h>
 
 #include <assert.h>
 #include <errno.h>
@@ -19,6 +19,10 @@ struct occ_handle {
     uint32_t magic;
     int fd;
     void *dma_buf;
+    struct {
+        void *addr;
+        uint32_t len;
+    } bars[3];;
     uint32_t dma_buf_len;
     uint32_t dma_cons_off;
     uint8_t use_optic;
@@ -41,7 +45,7 @@ struct occ_packet_header {
 
 int occ_open(const char *devfile, occ_interface_type type, struct occ_handle **handle) {
     int ret = 0;
-    uint32_t info[3];
+    struct ocb_status info;
 
     do {
         *handle = malloc(sizeof(struct occ_handle));
@@ -60,17 +64,25 @@ int occ_open(const char *devfile, occ_interface_type type, struct occ_handle **h
             break;
         }
 
-        if (pread((*handle)->fd, info, sizeof(info), OCB_CMD_GET_STATUS) != sizeof(info)) {
-            ret = -errno;
+        ret = pread((*handle)->fd, &info, sizeof(info), OCB_CMD_GET_STATUS);
+        if (ret != sizeof(info)) {
+            if (ret < 0)
+                ret = -errno;
+            else
+                ret = -ENODATA;
             break;
         }
-        (*handle)->dma_buf_len = info[1];
-        if ((info[2] & OCB_OPTICAL_PRESENT) && type == OCC_INTERFACE_OPTICAL)
+        if (info.ocb_ver != OCB_VER) {
+            ret = -ENOSYS;
+            break;
+        }
+        (*handle)->dma_buf_len = info.dq_size;
+        if ((info.status & OCB_OPTICAL_PRESENT) && type == OCC_INTERFACE_OPTICAL)
             (*handle)->use_optic = 1;
 
         (*handle)->dma_buf = (void *)mmap(NULL, (*handle)->dma_buf_len,
                                              PROT_READ|PROT_WRITE, MAP_SHARED|MAP_POPULATE,
-                                             (*handle)->fd, 0);
+                                             (*handle)->fd, 6*sysconf(_SC_PAGESIZE));
         if ((*handle)->dma_buf == MAP_FAILED) {
             ret = -errno;
             break;
@@ -116,25 +128,25 @@ int occ_close(struct occ_handle *handle) {
 }
 
 int occ_status(struct occ_handle *handle, occ_status_t *status) {
-    uint32_t info[3];
+    struct ocb_status info;
 
     assert(handle != NULL && handle->magic == OCC_HANDLE_MAGIC);
     assert(status != NULL);
 
-    if (pread(handle->fd, info, sizeof(info), OCB_CMD_GET_STATUS) < 0)
+    if (pread(handle->fd, &info, sizeof(info), OCB_CMD_GET_STATUS) < 0)
         return -errno;
 
     status->dma_size = handle->dma_buf_len;
     status->interface = (handle->use_optic ? OCC_INTERFACE_OPTICAL : OCC_INTERFACE_LVDS);
-    status->firmware_ver = info[0];
-    status->optical_signal = (info[2] & OCB_OPTICAL_PRESENT);
+    status->firmware_ver = info.firmware_ver;
+    status->optical_signal = (info.status & OCB_OPTICAL_PRESENT);
 
     return 0;
 }
 
 int occ_reset(struct occ_handle *handle) {
     uint32_t interface;
-    uint32_t info[3];
+    struct ocb_status info;
 
     assert(handle != NULL && handle->magic == OCC_HANDLE_MAGIC);
 
@@ -143,7 +155,7 @@ int occ_reset(struct occ_handle *handle) {
         return -errno;
 
     // Read status to clear the reset-occurred flag
-    if (pread(handle->fd, info, sizeof(info), OCB_CMD_GET_STATUS) < 0)
+    if (pread(handle->fd, &info, sizeof(info), OCB_CMD_GET_STATUS) < 0)
         return -errno;
     // XXX verify the returned status?
 
@@ -278,6 +290,80 @@ int occ_read(struct occ_handle *handle, void *data, size_t count, uint32_t timeo
     ret = occ_data_ack(handle, count);
     if (ret != 0)
         return ret;
+
+    return count;
+}
+
+static int _occ_map_bar(struct occ_handle *handle, uint8_t bar) {
+
+    if (handle->bars[bar].addr == NULL) {
+        struct ocb_status info;
+
+        if (bar >= (sizeof(info.bars)/sizeof(info.bars[0]))) {
+        	return -ENOSYS;
+        }
+
+        if (pread(handle->fd, &info, sizeof(info), OCB_CMD_GET_STATUS) != sizeof(info)) {
+            return -errno;
+        }
+
+        if (info.bars[bar] == 0) {
+        	return -ENOSYS;
+        }
+
+        handle->bars[bar].len = info.bars[bar];
+        handle->bars[bar].addr = (void *)mmap(NULL,
+                                              handle->bars[bar].len,
+                                              PROT_READ | PROT_WRITE,
+                                              MAP_SHARED | MAP_POPULATE,
+                                              handle->fd,
+                                              bar * sysconf(_SC_PAGESIZE));
+        if (handle->bars[bar].addr == MAP_FAILED) {
+            handle->bars[bar].addr = NULL;
+            return -errno;
+        }
+    }
+    return 0;
+}
+
+int occ_io_read(struct occ_handle *handle, uint8_t bar, uint32_t offset, uint32_t *data, uint32_t count) {
+    uint32_t *addr;
+    int ret;
+    size_t i;
+
+    assert(handle != NULL && handle->magic == OCC_HANDLE_MAGIC);
+    assert(offset % 4 == 0);
+
+    ret = _occ_map_bar(handle, bar);
+    if (ret != 0)
+        return ret;
+    if (offset >= handle->bars[bar].len)
+        return -EOVERFLOW;
+
+    addr = handle->bars[bar].addr + offset;
+    for (i = 0; i < count; i++)
+        *data++ = *addr++;
+
+    return count;
+}
+
+int occ_io_write(struct occ_handle *handle, uint8_t bar, uint32_t offset, const uint32_t *data, uint32_t count) {
+    uint32_t *addr;
+    int ret;
+    size_t i;
+
+    assert(handle != NULL && handle->magic == OCC_HANDLE_MAGIC);
+    assert(offset % 4 == 0);
+
+    ret = _occ_map_bar(handle, bar);
+    if (ret != 0)
+        return ret;
+    if (offset >= handle->bars[bar].len)
+        return -EOVERFLOW;
+
+    addr = handle->bars[bar].addr + offset;
+    for (i = 0; i < count; i++)
+        *addr++ = *data++;
 
     return count;
 }

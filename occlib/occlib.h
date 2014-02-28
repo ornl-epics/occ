@@ -70,7 +70,11 @@ typedef enum {
  * \param[in] devfile Full path to the device file for selected OCC board.
  * \param[in] type Device type, either LVDS or optical.
  * \param[out] handle Handle to be used with the rest of the API interfaces.
- * \return 0 on success, negative errno otherwise.
+ * \retval 0 on success
+ * \retval -ENOSYS Driver/library version mismatch.
+ * \retval -ENODATA Could not verify connection with driver.
+ * \retval -ENOMEM Not enough memory.
+ * \retval -X Other POSIX errno values.
  */
 int occ_open(const char *devfile, occ_interface_type type, struct occ_handle **handle);
 
