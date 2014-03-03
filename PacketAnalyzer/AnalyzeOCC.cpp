@@ -41,7 +41,11 @@ void AnalyzeOCC::process()
         if (ret != 0) {
             if (ret == -ETIME)
                 continue;
-            throw runtime_error("Failed to read from OCC device - " + occErrorString(ret));
+            if (ret == -ECONNRESET) {
+                if (occ_reset(m_occ) != 0)
+                    throw runtime_error("Failed to read from OCC device - " + occErrorString(ret));
+                continue;
+            }
         }
 
         for (it = data; it < (data + datalen); ) {
@@ -49,6 +53,7 @@ void AnalyzeOCC::process()
             try {
                 packet = new (it) LabPacket(datalen - (it - data));
             } catch (overflow_error &e) {
+                it = data + datalen;
                 break;
             }
             analyzePacket(packet);
