@@ -98,6 +98,7 @@ bool LabPacket::verifyEvent(uint32_t &errorOffset) const
 		return false;
 
 	// DSP-T uses 6 words at start
+    event += 3;
 	for (uint32_t i = 3; i < nevents; i++, event++) {
 		if (event->tof > EVENT_TOF_MAX) {
 			errorOffset = i;
@@ -105,7 +106,7 @@ bool LabPacket::verifyEvent(uint32_t &errorOffset) const
 		}
 
 		if ((event->pixelid & 0x3FFFFFFF) > EVENT_PIXELID_MAX ||
-			(int32_t)(event->pixelid & 0x3FFFFFFF) < EVENT_PIXELID_MIN) {
+			(event->pixelid & 0x3FFFFFFF) < EVENT_PIXELID_MIN) {
 			errorOffset = i;
 			return false;
 		}

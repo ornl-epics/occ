@@ -50,12 +50,21 @@ void AnalyzeOCC::process()
 
         for (it = data; it < (data + datalen); ) {
             LabPacket *packet;
+
             try {
                 packet = new (it) LabPacket(datalen - (it - data));
             } catch (overflow_error &e) {
-                it = data + datalen;
+                // Must be at the end of the queue, and the API gave us partial packet.
                 break;
+            } catch (length_error &e) {
+                // Something wrong with the packet, consuming the rest of the
+                // data might put the offset for the next packet right in the
+                // middle of some packet, possible mistranslation of the length
+                // and baam. Better to start over.
+                if (occ_reset(m_occ) != 0)
+                    throw runtime_error("Failed to gracefully recover corrupted queue");
             }
+
             analyzePacket(packet);
             it += packet->length();
         }

@@ -13,7 +13,7 @@
 #include <unistd.h>
 
 #define OCC_HANDLE_MAGIC        0x0cc0cc
-#define ROLLOVER_BUFFER_SIZE    1800      // Size of temporary buffer when DMA buffer rollover occurs
+#define ROLLOVER_BUFFER_SIZE    (1800*8)      // Size of temporary buffer when DMA buffer rollover occurs
 
 struct occ_handle {
     uint32_t magic;
