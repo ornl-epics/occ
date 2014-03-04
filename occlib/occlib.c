@@ -300,7 +300,7 @@ static int _occ_map_bar(struct occ_handle *handle, uint8_t bar) {
         struct ocb_status info;
 
         if (bar >= (sizeof(info.bars)/sizeof(info.bars[0]))) {
-        	return -ENOSYS;
+            return -ENOSYS;
         }
 
         if (pread(handle->fd, &info, sizeof(info), OCB_CMD_GET_STATUS) != sizeof(info)) {
@@ -308,7 +308,7 @@ static int _occ_map_bar(struct occ_handle *handle, uint8_t bar) {
         }
 
         if (info.bars[bar] == 0) {
-        	return -ENOSYS;
+            return -ENOSYS;
         }
 
         handle->bars[bar].len = info.bars[bar];
