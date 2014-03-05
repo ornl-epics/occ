@@ -18,28 +18,43 @@ AnalyzeOCC::AnalyzeOCC(const string &devfile) :
 {
 }
 
-void AnalyzeOCC::process()
+void AnalyzeOCC::process(bool no_analyze)
 {
+    OccAdapter::reset(true);
+
     while (!shutdown) {
         unsigned char *data = NULL;
         size_t datalen = 0;
         unsigned char *it;
 
-        int ret = occ_data_wait(m_occ, reinterpret_cast<void **>(&data), &datalen, 100);
+        int ret = occ_data_wait(m_occ, reinterpret_cast<void **>(&data), &datalen, 0);
         if (ret != 0) {
             if (ret == -ETIME)
                 continue;
+            if (ret == -ECONNRESET) {
+                OccAdapter::reset(true);
+                continue;
+            }
             throw runtime_error("Failed to read from OCC device - " + occErrorString(ret));
         }
 
         for (it = data; it < (data + datalen); ) {
             LabPacket *packet;
+
             try {
                 packet = new (it) LabPacket(datalen - (it - data));
             } catch (overflow_error &e) {
                 break;
             }
-            analyzePacket(packet);
+            if (!no_analyze)
+                analyzePacket(packet);
+            else
+                m_metrics.total.goodCount++;
+
+            m_metrics.total.bytes += packet->length();
+
+            showMetrics();
+
             it += packet->length();
         }
 
@@ -111,7 +126,6 @@ void AnalyzeOCC::analyzePacket(const LabPacket * const packet)
             m_metrics.data.badCount++;
     }
 
-    m_metrics.total.bytes += packet_length;
     if (good)
         m_metrics.total.goodCount++;
     else

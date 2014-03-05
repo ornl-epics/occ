@@ -338,6 +338,11 @@ void *receive_from_occ(void *arg) {
     else
         outfile.setstate(ios_base::eofbit);
 
+    if (occ_enable_rx(ctx->occ, true) != 0) {
+        status->error = "cannot enable RX";
+        return status;
+    }
+
     while (!shutdown) {
         unsigned char *data = NULL;
         size_t datalen = 0;

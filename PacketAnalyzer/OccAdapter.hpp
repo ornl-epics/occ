@@ -12,12 +12,15 @@ class OccAdapter {
         OccAdapter(const std::string &devfile);
         ~OccAdapter();
 
+        void reset(bool rx_enable);
         bool isPcie();
         void enablePcieGenerator(uint32_t rate);
     protected:
         struct occ_handle *m_occ;
 
         std::string occErrorString(int error);
+    private:
+        uint32_t m_pcie_generator_rate;
 };
 
 #endif // OCCADAPTER_HPP

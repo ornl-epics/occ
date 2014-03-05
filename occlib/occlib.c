@@ -127,6 +127,16 @@ int occ_close(struct occ_handle *handle) {
     return ret;
 }
 
+int occ_enable_rx(struct occ_handle *handle, bool enable) {
+    uint32_t val = (enable ? 1 : 0);
+    assert(handle != NULL && handle->magic == OCC_HANDLE_MAGIC);
+    
+    if (pwrite(handle->fd, &val, sizeof(val), OCB_CMD_RX_ENABLE) < 0)
+        return -errno;
+
+    return 0;
+}
+
 int occ_status(struct occ_handle *handle, occ_status_t *status) {
     struct ocb_status info;
 
@@ -141,6 +151,7 @@ int occ_status(struct occ_handle *handle, occ_status_t *status) {
     status->interface = (handle->use_optic ? OCC_INTERFACE_OPTICAL : OCC_INTERFACE_LVDS);
     status->firmware_ver = info.firmware_ver;
     status->optical_signal = (info.status & OCB_OPTICAL_PRESENT);
+    status->rx_enabled = (info.status & OCB_RX_ENABLED);
 
     return 0;
 }

@@ -9,7 +9,8 @@
 using namespace std;
 
 OccAdapter::OccAdapter(const string &devfile) :
-    m_occ(NULL)
+    m_occ(NULL),
+    m_pcie_generator_rate(0)
 {
     int ret = occ_open(devfile.c_str(), OCC_INTERFACE_OPTICAL, &m_occ);
     if (ret != 0)
@@ -29,6 +30,19 @@ bool OccAdapter::isPcie()
         throw runtime_error("Failed to read OCC status");
 
     return (status.board == OCC_BOARD_PCIE);
+}
+
+void OccAdapter::reset(bool rx_enable)
+{
+    if (occ_reset(m_occ) != 0)
+        throw runtime_error("Failed to reset OCC board");
+
+    if (rx_enable && occ_enable_rx(m_occ, true) != 0)
+        throw runtime_error("Failed to enable data reception");
+
+    if (m_pcie_generator_rate != 0)
+        enablePcieGenerator(m_pcie_generator_rate);
+
 }
 
 void OccAdapter::enablePcieGenerator(uint32_t rate)
@@ -65,6 +79,8 @@ void OccAdapter::enablePcieGenerator(uint32_t rate)
         val |= sim_enable_bits;
     if (occ_io_write(m_occ, bar0, config_reg, &val, 1) != 1)
         throw runtime_error("Failed to write packet generation configuration");
+
+    m_pcie_generator_rate = rate;
 }
 
 string OccAdapter::occErrorString(int error)

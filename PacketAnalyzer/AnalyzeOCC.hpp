@@ -14,8 +14,8 @@ class AnalyzeOCC : public OccAdapter
     public:
         AnalyzeOCC(const std::string &devfile);
 
-        void process();
-        virtual void analyzePacket(const LabPacket * const packet);
+        void process(bool no_analyze);
+        virtual void showMetrics() {};
         virtual void dumpPacket(const LabPacket * const packet, uint32_t errorOffset) {};
     protected:
         struct counter {
@@ -45,6 +45,8 @@ class AnalyzeOCC : public OccAdapter
 
     private:
         uint32_t m_rampCounter;
+
+        void analyzePacket(const LabPacket * const packet);
 };
 
 #endif // ANALYZEOCC_HPP

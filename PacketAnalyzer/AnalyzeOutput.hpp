@@ -13,7 +13,7 @@ class AnalyzeOutput : public AnalyzeOCC
         AnalyzeOutput(const std::string &devfile, const std::string &dumpfile);
         ~AnalyzeOutput();
 
-        void analyzePacket(const LabPacket * const packet);
+        void showMetrics();
         void dumpPacket(const LabPacket * const packet, uint32_t errorOffset);
     private:
         std::string m_dumpFile;
@@ -28,7 +28,6 @@ class AnalyzeOutput : public AnalyzeOCC
         int m_datatsync;
         int m_datasubpacket;
 
-        void showMetrics();
         std::string formatTime(time_t t);
         double speedFormatted(double speed);
         char speedTag(double speed);

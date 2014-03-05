@@ -51,6 +51,7 @@ typedef enum {
     uint32_t dma_size;              //!< Size of the DMA memory in bytes.
     //bool stalled;                 //!< True if DMA memory for incoming data is full and device is in stalled mode.
     bool optical_signal;            //!< True when optical signal is present.
+    bool rx_enabled;                //!< True when receiving of data is enabled.
  } occ_status_t;
 
 /**
@@ -116,6 +117,23 @@ int occ_close(struct occ_handle *handle);
  * \retval -x Return negative errno value.
  */
 int occ_reset(struct occ_handle *handle);
+
+/**
+ * Enable receiving of data.
+ *
+ * When powered up or reset, the board will not be receiving any data until
+ * instructed to do so. This function allows the application to enable as well
+ * as disable receiving of data at any point in time.
+ * When high data-rate is expected, the application may want to setup the
+ * receive data handler first and only then enable data reception to prevent
+ * exhausting the limited DMA buffer before the thread could be even started.
+ *
+ * \param[in] handle Valid OCC API handle.
+ * \param[in] enable Enable the RX when non-zero, disable otherwise.
+ * \retval 0 on success
+ * \retval -x Return negative errno value.
+ */
+int occ_enable_rx(struct occ_handle *handle, bool enable);
 
 /**
  * Retrieve the OCC board and driver status.

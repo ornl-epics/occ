@@ -330,6 +330,8 @@ static u32 __snsocb_status(struct ocb *ocb)
 		status |= OCB_RX_STALLED;
 	if (ocb->reset_occurred)
 		status |= OCB_RESET_OCCURRED;
+	if (ocb->conf & OCB_CONF_RX_ENABLE)
+		status |= OCB_RX_ENABLED;
 
 	hw_status = ioread32(ocb->ioaddr + REG_STATUS);
 	if (hw_status & OCB_STATUS_OPTICAL_PRESENT) {
@@ -812,6 +814,7 @@ static void snsocb_reset(struct ocb *ocb)
 	else
 		iowrite32(0x0, ioaddr + REG_DQ_CONS_INDEX);
 
+	ocb->conf &= ~OCB_CONF_RX_ENABLE;
 	iowrite32(ocb->conf, ocb->ioaddr + REG_CONFIG);
 	if (ocb->emulate_dq) {
 		ocb->dq_prod = ocb->dq_cons = 0;
@@ -1081,6 +1084,24 @@ static ssize_t snsocb_write(struct file *file, const char __user *buf,
 	case OCB_CMD_TX:
 		count = snsocb_tx(file, ocb, buf, count);
 		break;
+	case OCB_CMD_RX_ENABLE:
+		if (count != sizeof(u32))
+			return -EINVAL;
+
+		if (copy_from_user(&val, buf, sizeof(u32)))
+			return -EFAULT;
+
+		spin_lock_irq(&ocb->lock);
+		if (val)
+			ocb->conf |= OCB_CONF_RX_ENABLE;
+		else
+			ocb->conf &= ~OCB_CONF_RX_ENABLE;
+		val = ocb->conf;
+		spin_unlock_irq(&ocb->lock);
+		iowrite32(val, ocb->ioaddr + REG_CONFIG);
+		val = ioread32(ocb->ioaddr + REG_CONFIG);
+
+		break;
 	default:
 		return -EINVAL;
 	}
@@ -1105,7 +1126,7 @@ static int snsocb_open(struct inode *inode, struct file *file)
 		return err;
 
 	file->private_data = ocb;
-	ocb->conf = OCB_CONF_RX_ENABLE;
+	ocb->conf = 0;
 	if (ocb->use_optical) {
 		ocb->conf |= OCB_CONF_SELECT_OPTICAL;
 		ocb->conf |= OCB_CONF_OPTICAL_ENABLE;

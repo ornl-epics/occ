@@ -8,7 +8,7 @@
 using namespace std;
 
 #define MAX_EVENTS_PER_PACKET               1800
-#define PRINT_RATELIMIT                     1e8 // define how often to print metrics [in ns]
+#define PRINT_RATELIMIT                     1e9 // define how often to print metrics [in ns]
 
 AnalyzeOutput::AnalyzeOutput(const string &devfile, const string &dumpfile) :
     AnalyzeOCC(devfile),
@@ -25,13 +25,6 @@ AnalyzeOutput::~AnalyzeOutput()
 {
     m_dumpStream.close();
     endwin();
-}
-
-void AnalyzeOutput::analyzePacket(const LabPacket * const packet)
-{
-    AnalyzeOCC::analyzePacket(packet);
-
-    showMetrics();
 }
 
 void AnalyzeOutput::showMetrics()

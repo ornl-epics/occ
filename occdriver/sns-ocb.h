@@ -43,12 +43,19 @@ typedef uint32_t u32;
  * TX calls can be interrupted by a signal, in which case they may leave
  * EINTR in errno. If the card is reset while the call is queued to send a
  * packet, it may use ECONNRESET. EIO indicates a timeout during the TX
+ *
+ * Writing 4 bytes at offset OCB_CMD_RX_ENABLE with a non-zero value will
+ * enable the RX. 0 will disable it.
+ *
+ * Writing sizeof(ocb_hw_pkt_sim) bytes at offset OCB_CMD_HW_PKT_SIM_ENABLE
+ * will configure the HW Packet Simulator.
  */
 #define OCB_CMD_TX				9
 #define OCB_CMD_ADVANCE_DQ		10
 #define OCB_CMD_RESET			11
 #define 	OCB_SELECT_LVDS		0
 #define 	OCB_SELECT_OPTICAL	1
+#define OCB_CMD_RX_ENABLE		12
 
 /* Not a full 8k as we have to avoid prod_idx == cons_idx (empty) */
 // TODO: PCIe queue size is 32*1024, it can't just yet roll-over properly at lower sizes
