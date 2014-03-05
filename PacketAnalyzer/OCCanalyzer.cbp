@@ -50,6 +50,8 @@
 		<Unit filename="DasPacket.hpp" />
 		<Unit filename="LabPacket.cpp" />
 		<Unit filename="LabPacket.hpp" />
+		<Unit filename="OccAdapter.cpp" />
+		<Unit filename="OccAdapter.hpp" />
 		<Unit filename="main.cpp" />
 		<Extensions>
 			<code_completion />

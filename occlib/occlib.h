@@ -34,9 +34,18 @@ typedef enum {
 } occ_interface_type;
 
 /**
+ * OCC board types.
+ */
+typedef enum {
+    OCC_BOARD_PCIX,
+    OCC_BOARD_PCIE,
+} occ_board_type;
+
+/**
  * Structure describing OCC board and driver information.
  */
  typedef struct {
+    occ_board_type board;           //!< Board type used by this handle.
     occ_interface_type interface;   //!< Interface type used by this handle.
     uint32_t firmware_ver;          //!< Version of the FPGA firmware.
     uint32_t dma_size;              //!< Size of the DMA memory in bytes.

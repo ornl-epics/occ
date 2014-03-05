@@ -1,18 +1,18 @@
 #ifndef ANALYZEOCC_HPP
 #define ANALYZEOCC_HPP
 
+#include "OccAdapter.hpp"
+
 #include <stdint.h>
 #include <string>
 
 // Forward declarations
-struct occ_handle;
 class LabPacket;
 
-class AnalyzeOCC
+class AnalyzeOCC : public OccAdapter
 {
     public:
         AnalyzeOCC(const std::string &devfile);
-        virtual ~AnalyzeOCC();
 
         void process();
         virtual void analyzePacket(const LabPacket * const packet);
@@ -22,6 +22,11 @@ class AnalyzeOCC
             uint64_t bytes;
             uint64_t goodCount;
             uint64_t badCount;
+            counter() :
+                bytes(0),
+                goodCount(0),
+                badCount(0)
+            {}
         };
 
         struct metrics {
@@ -39,11 +44,7 @@ class AnalyzeOCC
         struct metrics m_metrics;
 
     private:
-        struct occ_handle *m_occ;
         uint32_t m_rampCounter;
-
-        std::string occErrorString(int error);
-
 };
 
 #endif // ANALYZEOCC_HPP

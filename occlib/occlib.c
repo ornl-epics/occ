@@ -13,7 +13,7 @@
 #include <unistd.h>
 
 #define OCC_HANDLE_MAGIC        0x0cc0cc
-#define ROLLOVER_BUFFER_SIZE    1800      // Size of temporary buffer when DMA buffer rollover occurs
+#define ROLLOVER_BUFFER_SIZE    (1800*8)      // Size of temporary buffer when DMA buffer rollover occurs
 
 struct occ_handle {
     uint32_t magic;
@@ -137,6 +137,7 @@ int occ_status(struct occ_handle *handle, occ_status_t *status) {
         return -errno;
 
     status->dma_size = handle->dma_buf_len;
+    status->board = (info.board_type == BOARD_SNS_PCIE ? OCC_BOARD_PCIE : OCC_BOARD_PCIX);
     status->interface = (handle->use_optic ? OCC_INTERFACE_OPTICAL : OCC_INTERFACE_LVDS);
     status->firmware_ver = info.firmware_ver;
     status->optical_signal = (info.status & OCB_OPTICAL_PRESENT);

@@ -2,7 +2,6 @@
 #include "LabPacket.hpp"
 
 #include <errno.h>
-#include <cstring> // strerror
 
 #include <occlib.h>
 #include <stdexcept>
@@ -14,20 +13,9 @@ extern bool shutdown;
 using namespace std;
 
 AnalyzeOCC::AnalyzeOCC(const string &devfile) :
-    m_occ(NULL),
+    OccAdapter(devfile),
     m_rampCounter(-1)
 {
-    int ret = occ_open(devfile.c_str(), OCC_INTERFACE_OPTICAL, &m_occ);
-    if (ret != 0)
-        throw runtime_error("Failed to open OCC device - " + occErrorString(ret));
-
-    memset(&m_metrics, 0, sizeof(m_metrics));
-}
-
-AnalyzeOCC::~AnalyzeOCC()
-{
-    if (m_occ)
-        occ_close(m_occ);
 }
 
 void AnalyzeOCC::process()
@@ -132,11 +120,4 @@ void AnalyzeOCC::analyzePacket(const LabPacket * const packet)
     if (!good) {
         dumpPacket(packet, errorOffset);
     }
-}
-
-string AnalyzeOCC::occErrorString(int error)
-{
-    if (error > 0)
-        error = 0;
-    return string(strerror(-error));
 }
