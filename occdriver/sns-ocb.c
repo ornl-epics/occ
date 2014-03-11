@@ -484,26 +484,29 @@ static ssize_t snsocb_rx(struct file *file, char __user *buf, size_t count)
 	if (count != sizeof(info))
 		return -EINVAL;
 
-	spin_lock_irq(&ocb->lock);
 	for (;;) {
 		prepare_to_wait(&ocb->rx_wq, &wait, TASK_INTERRUPTIBLE);
 		if (ocb->reset_in_progress) {
 			ret = -ECONNRESET;
+			spin_unlock_irq(&ocb->lock);
 			break;
 		}
+		spin_lock_irq(&ocb->lock);
 		if (ocb->dq_prod != ocb->dq_cons)
 			break;
+		spin_unlock_irq(&ocb->lock);
+
 		if (file->f_flags & O_NONBLOCK) {
 			ret = -EAGAIN;
+			spin_lock_irq(&ocb->lock);
 			break;
 		}
 		if (signal_pending(current)) {
 			ret = -ERESTARTSYS;
+			spin_lock_irq(&ocb->lock);
 			break;
 		}
-		spin_unlock_irq(&ocb->lock);
 		schedule();
-		spin_lock_irq(&ocb->lock);
 	}
 	finish_wait(&ocb->rx_wq, &wait);
 
@@ -564,18 +567,25 @@ static int snsocb_rxone(struct ocb *ocb)
 	 * emulated data ring.
 	 */
 	u32 room_needed, length, head, tail, size;
-	u32 creg, prod, dq_prod, *cons;
+	u32 creg, prod, dq_prod, cons, imq_cons, hwcq_cons, hwdq_cons, used_room;
 	struct sw_imq *imq;
 	void *src;
 
 	spin_lock_irq(&ocb->lock);
+	imq_cons = ocb->imq_cons;
+	hwcq_cons = ocb->hwcq_cons;
+	hwdq_cons = ocb->hwdq_cons;
+	dq_prod = ocb->dq_prod;
+	used_room = __snsocb_rxroom(ocb);
+
 	if (ocb->imq_prod == ocb->imq_cons || ocb->stalled) {
 		spin_unlock_irq(&ocb->lock);
 		return 1;
 	}
+	spin_unlock_irq(&ocb->lock);
 
 	/* We need room for the split header, and the payload. */
-	imq = &ocb->imq[ocb->imq_cons];
+	imq = &ocb->imq[imq_cons];
 	length = ALIGN(imq->length, 8);
 	room_needed = sizeof(struct sw_imq);
 	room_needed += length;
@@ -589,28 +599,29 @@ static int snsocb_rxone(struct ocb *ocb)
 	if (imq->type & IMQ_TYPE_COMMAND) {
 		src = page_address(ocb->hwcq_page);
 		prod = ioread32(ocb->ioaddr + REG_CQ_PROD_INDEX);
-		cons = &ocb->hwcq_cons;
+		cons = hwcq_cons;
 		creg = REG_CQ_CONS_INDEX;
 		size = OCB_CQ_SIZE;
 	} else {
 		src = page_address(ocb->hwdq_page);
 		prod = ioread32(ocb->ioaddr + REG_DQ_PROD_INDEX);
-		cons = &ocb->hwdq_cons;
+		cons = hwdq_cons;
 		creg = REG_DQ_CONS_INDEX;
 		size = OCB_DQ_SIZE;
 	}
 
 	/* Make sure we have enough data in the source queue */
-	if (length > ((prod - *cons + size) % size)) {
+	if (length > ((prod - cons + size) % size)) {
 		dev_err_ratelimited(&ocb->dev,
 				    "IMQ too-long length (reg %x)\n", creg);
+		spin_lock_irq(&ocb->lock);
 		__snsocb_stalled(ocb);
 		goto consume_queue;
 	}
 
 	/* How much can we copy from the source before we wrap? */
-	if (*cons > prod) {
-		head = size - *cons;
+	if (cons > prod) {
+		head = size - cons;
 		head = min(head, length);
 		tail = length - head;
 	} else {
@@ -618,8 +629,9 @@ static int snsocb_rxone(struct ocb *ocb)
 		tail = 0;
 	}
 
-	if (room_needed > __snsocb_rxroom(ocb)) {
+	if (room_needed > used_room) {
 		dev_warn_ratelimited(&ocb->dev, "userspace stalled RX\n");
+		spin_lock_irq(&ocb->lock);
 		__snsocb_stalled(ocb);
 		goto consume_queue;
 	}
@@ -628,20 +640,23 @@ static int snsocb_rxone(struct ocb *ocb)
 	 * producer index; this drops the lock during the copies, and
 	 * ensures users only see a complete packet at the end.
 	 */
-
-	dq_prod = ocb->dq_prod;
-	spin_unlock_irq(&ocb->lock);
 	dq_prod = snsocb_rxcopy(ocb, dq_prod, imq, sizeof(struct sw_imq));
-	dq_prod = snsocb_rxcopy(ocb, dq_prod, src + *cons, head);
+	dq_prod = snsocb_rxcopy(ocb, dq_prod, src + cons, head);
 	dq_prod = snsocb_rxcopy(ocb, dq_prod, src, tail);
+
+	/* The OCC card consumes the queues in 8 byte incremenets */
+	cons += ALIGN(length, 8);
+	cons %= size;
+
 	spin_lock_irq(&ocb->lock);
 	ocb->dq_prod = dq_prod;
 
 consume_queue:
-	/* The OCC card consumes the queues in 8 byte incremenets */
-	*cons += ALIGN(length, 8);
-	*cons %= size;
-	iowrite32(*cons, ocb->ioaddr + creg);
+	if (imq->type & IMQ_TYPE_COMMAND)
+		ocb->hwcq_cons = cons;
+	else
+		ocb->hwdq_cons = cons;
+	iowrite32(cons, ocb->ioaddr + creg);
 	ocb->imq_cons++;
 	ocb->imq_cons %= SW_IMQ_RING_SIZE;
 	wake_up(&ocb->rx_wq);
@@ -668,42 +683,57 @@ static int snsocb_saveimqs(struct ocb *ocb)
 {
 	/* Copy packet headers from the limited hardware queue to our larger
 	 * one to cover the latency of tasklet packet copy.
+	 * New packet headers become avaialbe only when the function completes,
+	 * but the device is not locked during copying.
 	 */
 	u32 hwprod = ioread32(ocb->ioaddr + REG_IMQ_PROD_INDEX);
-	struct hw_imq *hwimq;
-	u32 new_prod;
+	struct hw_imq *hwimq = page_address(ocb->hwimq_page);
+	u32 new_prod, hwimq_cons, imq_prod, imq_cons;
 	int rc = 0;
 
 	spin_lock(&ocb->lock);
-	while (ocb->hwimq_cons != hwprod) {
+	hwimq_cons = ocb->hwimq_cons;
+	imq_prod = ocb->imq_prod;
+	imq_cons = ocb->imq_cons;
+	spin_unlock(&ocb->lock);
+
+	while (hwimq_cons != hwprod) {
 		/* Copy in the new descriptors we know about before
 		 * checking for more.
 		 */
 		do {
-			new_prod = (ocb->imq_prod + 1) % SW_IMQ_RING_SIZE;
-			if (new_prod == ocb->imq_cons) {
+			new_prod = (imq_prod + 1) % SW_IMQ_RING_SIZE;
+			if (new_prod == imq_cons) {
+				// XXX: If seeing this case a lot, consider refreshing imq_cons to make sure consumer did not advance
 				rc = -ENOSPC;
 				dev_warn_ratelimited(&ocb->dev,
 						     "no IMQ space\n");
-				goto out;
+				goto out_update;
 			}
 
-			hwimq = page_address(ocb->hwimq_page);
-			hwimq += ocb->hwimq_cons;
-			memcpy(ocb->imq + ocb->imq_prod, hwimq, sizeof(*ocb->imq));
-			ocb->imq_prod = new_prod;
+			memcpy(ocb->imq + imq_prod, hwimq + hwimq_cons, sizeof(*ocb->imq));
+			imq_prod = new_prod;
 
 			/* Go ahead and consume the HW entry */
-			ocb->hwimq_cons++;
-			ocb->hwimq_cons %= OCB_IMQ_ENTRIES;
-			iowrite32(ocb->hwimq_cons, ocb->ioaddr + REG_IMQ_CONS_INDEX);
-		} while (ocb->hwimq_cons != hwprod);
+			hwimq_cons++;
+			hwimq_cons %= OCB_IMQ_ENTRIES;
+		} while (hwimq_cons != hwprod);
 
 		hwprod = ioread32(ocb->ioaddr + REG_IMQ_PROD_INDEX);
 	}
 
-out:
+out_update:
+	spin_lock(&ocb->lock);
+	ocb->hwimq_cons = hwimq_cons;
+	ocb->imq_prod = imq_prod;
 	spin_unlock(&ocb->lock);
+
+	/* snsocb_reset() is the only place where this register is overwritten
+	 * but the snsocb_reset() makes sure to disable and synchronize interrupts
+	 * we're safe to do the write without the lock.
+	 */
+	iowrite32(hwimq_cons, ocb->ioaddr + REG_IMQ_CONS_INDEX);
+
 	return rc;
 }
 
