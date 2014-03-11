@@ -22,6 +22,7 @@ typedef uint32_t u32;
 #define OCB_CMD_GET_STATUS		2
 
 /* Status flags returned in status member of ocb_status struct */
+#define OCB_RX_ENABLED				(1 << 5)
 #define OCB_RX_MSG				(1 << 5)
 #define OCB_RX_STALLED			(1 << 4)
 #define OCB_RESET_OCCURRED		(1 << 3)
