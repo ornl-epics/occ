@@ -44,6 +44,11 @@
 		</Unit>
 		<Unit filename="occlib.h" />
 		<Unit filename="occlib_hw.h" />
+		<Unit filename="occlib_sim.c">
+			<Option compilerVar="CC" />
+			<Option compile="0" />
+			<Option link="0" />
+		</Unit>
 		<Extensions>
 			<code_completion />
 			<envvars />

@@ -1,26 +1,32 @@
 CFLAGS=-Wall -I../occdriver
 LDFLAGS=
 SRCS=occlib.c
+SIMSRCS=occlib_sim.c
 HDRS=occlib.h occlib_hw.h
 LIBNAME=occ
 OBJS=$(SRCS:.c=.o)
+SIMOBJS=$(SIMSRCS:.c=.o)
 
-.PHONY: all debug common clean doc
+.PHONY: all debug simulator common clean doc
 
-all: CFLAGS+=-O2 -DNDEBUG
+all: CFLAGS+=-O2
 all: common
 
+simulator: OBJS=$(SIMOBJS)
+simulator: debug
+
 debug: CFLAGS+=-ggdb -g
-# Keep asserts until this library matures, then remove the following line
-debug: CFLAGS+=-DNDEBUG
 debug: common
 
 common: lib$(LIBNAME).a
 
 occlib.o: occlib.c $(HDRS)
 
-lib$(LIBNAME).a: $(OBJS)
-	$(AR) rcs $@ $^
+# This is tricky. Rules will be compiled before evaluated. When evaluated,
+# OBJS might be different based on the simulator rule which makes this rule
+# work.
+lib$(LIBNAME).a: $(OBJS) $(SIMOBJS)
+	$(AR) rcs $@ $(OBJS)
 
 clean:
 	rm -fR $(OBJS) lib$(LIBNAME).a doc/

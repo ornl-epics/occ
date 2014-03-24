@@ -1,7 +1,6 @@
 #include "occlib_hw.h"
 #include <sns-ocb.h>
 
-#include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <poll.h>
@@ -73,7 +72,7 @@ int occ_open(const char *devfile, occ_interface_type type, struct occ_handle **h
             break;
         }
         if (info.ocb_ver != OCB_VER) {
-            ret = -ENOSYS;
+            ret = -ENOMSG;
             break;
         }
         (*handle)->dma_buf_len = info.dq_size;
@@ -129,8 +128,10 @@ int occ_close(struct occ_handle *handle) {
 
 int occ_enable_rx(struct occ_handle *handle, bool enable) {
     uint32_t val = (enable ? 1 : 0);
-    assert(handle != NULL && handle->magic == OCC_HANDLE_MAGIC);
-    
+
+    if (handle == NULL || handle->magic != OCC_HANDLE_MAGIC)
+        return -EINVAL;
+
     if (pwrite(handle->fd, &val, sizeof(val), OCB_CMD_RX_ENABLE) < 0)
         return -errno;
 
@@ -140,8 +141,8 @@ int occ_enable_rx(struct occ_handle *handle, bool enable) {
 int occ_status(struct occ_handle *handle, occ_status_t *status) {
     struct ocb_status info;
 
-    assert(handle != NULL && handle->magic == OCC_HANDLE_MAGIC);
-    assert(status != NULL);
+    if (handle == NULL || handle->magic != OCC_HANDLE_MAGIC || status == NULL)
+        return -EINVAL;
 
     if (pread(handle->fd, &info, sizeof(info), OCB_CMD_GET_STATUS) < 0)
         return -errno;
@@ -160,7 +161,8 @@ int occ_reset(struct occ_handle *handle) {
     uint32_t interface;
     struct ocb_status info;
 
-    assert(handle != NULL && handle->magic == OCC_HANDLE_MAGIC);
+    if (handle == NULL || handle->magic != OCC_HANDLE_MAGIC)
+        return -EINVAL;
 
     interface = (handle->use_optic == 0) ? OCB_SELECT_LVDS : OCB_SELECT_OPTICAL;
     if (pwrite(handle->fd, &interface, sizeof(interface), OCB_CMD_RESET) != sizeof(interface))
@@ -181,8 +183,8 @@ static size_t _occ_data_align(size_t size) {
 }
 
 int occ_send(struct occ_handle *handle, const void *data, size_t count) {
-    assert(handle != NULL && handle->magic == OCC_HANDLE_MAGIC);
-    assert(_occ_data_align(count) == count);
+    if (handle == NULL || handle->magic != OCC_HANDLE_MAGIC || _occ_data_align(count) != count)
+        return -EINVAL;
 
     int ret = pwrite(handle->fd, (const void *)data, count, OCB_CMD_TX);
     if (ret < 0)
@@ -194,7 +196,8 @@ int occ_data_wait(struct occ_handle *handle, void **address, size_t *count, uint
     int ret;
     uint32_t info[2];
 
-    assert(handle != NULL && handle->magic == OCC_HANDLE_MAGIC);
+    if (handle == NULL || handle->magic != OCC_HANDLE_MAGIC)
+        return -EINVAL;
 
     // Block until some data is available
     do {
@@ -223,7 +226,7 @@ int occ_data_wait(struct occ_handle *handle, void **address, size_t *count, uint
             if (info[1] & OCB_RESET_OCCURRED)
                 return -ECONNRESET;
             if (info[1] & OCB_RX_STALLED)
-                return -ENOBUFS;
+                return -EOVERFLOW;
             continue;
         }
     } while (0);
@@ -238,9 +241,9 @@ int occ_data_wait(struct occ_handle *handle, void **address, size_t *count, uint
         *count = dma_prod_off - handle->dma_cons_off;
     } else {
         uint32_t headlen = handle->dma_buf_len - handle->dma_cons_off;
-        assert(handle->dma_buf_len > handle->dma_cons_off);
+        if (handle->dma_buf_len > handle->dma_cons_off)
+            return -ERANGE;
         if (headlen > sizeof(handle->rollover_buf)) {
-            assert(handle->dma_buf_len > handle->dma_cons_off);
             *address = handle->dma_buf + handle->dma_cons_off;
             *count = handle->dma_buf_len - handle->dma_cons_off;
         } else {
@@ -272,8 +275,9 @@ int occ_data_wait(struct occ_handle *handle, void **address, size_t *count, uint
 }
 
 int occ_data_ack(struct occ_handle *handle, size_t count) {
-    assert(handle != NULL && handle->magic == OCC_HANDLE_MAGIC);
-    assert(_occ_data_align(count) == count); // Driver is aligning the data silently anyway
+
+    if (handle == NULL || handle->magic != OCC_HANDLE_MAGIC || _occ_data_align(count) != count)
+        return -EINVAL;
 
     if (count > handle->last_count)
         count = handle->last_count;
@@ -343,8 +347,8 @@ int occ_io_read(struct occ_handle *handle, uint8_t bar, uint32_t offset, uint32_
     int ret;
     size_t i;
 
-    assert(handle != NULL && handle->magic == OCC_HANDLE_MAGIC);
-    assert(offset % 4 == 0);
+    if (handle == NULL || handle->magic != OCC_HANDLE_MAGIC || offset % 4 != 0)
+        return -EINVAL;
 
     ret = _occ_map_bar(handle, bar);
     if (ret != 0)
@@ -364,8 +368,8 @@ int occ_io_write(struct occ_handle *handle, uint8_t bar, uint32_t offset, const 
     int ret;
     size_t i;
 
-    assert(handle != NULL && handle->magic == OCC_HANDLE_MAGIC);
-    assert(offset % 4 == 0);
+    if (handle == NULL || handle->magic != OCC_HANDLE_MAGIC || offset % 4 != 0)
+        return -EINVAL;
 
     ret = _occ_map_bar(handle, bar);
     if (ret != 0)

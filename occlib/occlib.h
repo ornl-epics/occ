@@ -37,8 +37,9 @@ typedef enum {
  * OCC board types.
  */
 typedef enum {
-    OCC_BOARD_PCIX,
-    OCC_BOARD_PCIE,
+    OCC_BOARD_PCIX = 1,
+    OCC_BOARD_PCIE = 2,
+    OCC_BOARD_SIMULATOR = 15,
 } occ_board_type;
 
 /**
@@ -81,7 +82,8 @@ typedef enum {
  * \param[in] type Device type, either LVDS or optical.
  * \param[out] handle Handle to be used with the rest of the API interfaces.
  * \retval 0 on success
- * \retval -ENOSYS Driver/library version mismatch.
+ * \retval -ENOENT No such device.
+ * \retval -ENOMSG Driver/library version mismatch.
  * \retval -ENODATA Could not verify connection with driver.
  * \retval -ENOMEM Not enough memory.
  * \retval -X Other POSIX errno values.
@@ -192,8 +194,9 @@ int occ_send(struct occ_handle *handle, const void *data, size_t count);
  * \param[in] timeout Number of millisecond to wait for some data, 0 for infinity.
  * \retval 0 on success
  * \retval -ECONNRESET Device has been reset.
- * \retval -ENOBUFS DMA buffer is full, device has stalled.
+ * \retval -EOVERFLOW DMA buffer is full, device has stalled.
  * \retval -ENODATA No data is available, try again.
+ * \retval -ETIME Timeout occured before any data was available.
  */
 int occ_data_wait(struct occ_handle *handle, void **address, size_t *count, uint32_t timeout);
 
