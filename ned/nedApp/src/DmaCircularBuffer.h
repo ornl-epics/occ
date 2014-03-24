@@ -1,0 +1,49 @@
+#ifndef DMA_CIRCULAR_BUFFER_H
+#define DMA_CIRCULAR_BUFFER_H
+
+#include "BaseCircularBuffer.h"
+
+struct occ_handle;
+
+/**
+ * A DMA circular buffer class.
+ *
+ * The DmaCircularBuffer works directly with the DMA buffer populated by the OCC
+ * board. It does not make any copy of the data whatsoever. See occlib.h for details.
+ */
+class DmaCircularBuffer : public BaseCircularBuffer {
+    public:
+        /**
+         * Create DMA circular buffer.
+         */
+        DmaCircularBuffer(struct occ_handle *occ);
+
+        /**
+         * Destroy DMA circular buffer.
+         */
+        ~DmaCircularBuffer();
+
+        /**
+         * Wait until some data is available in circular buffer.
+         *
+         * The function waits for OCC board to signal it has some data.
+         */
+        void wait(void **data, uint32_t *len);
+
+        /**
+         * Advance consumer index.
+         *
+         * Instruct OCC board to advance consumer index.
+         */
+        void consume(uint32_t len);
+
+        /**
+         * Return true when no data is available in circular buffer.
+         */
+        bool empty();
+
+    private:
+        struct occ_handle *m_occ;       //!< Pre-initialized OCC handle
+};
+
+#endif // DMA_CIRCULAR_BUFFER_H

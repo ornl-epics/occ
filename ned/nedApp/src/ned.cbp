@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="ned" />
+		<Option makefile_is_custom="1" />
+		<Option pch_mode="2" />
+		<Option compiler="gcc" />
+		<MakeCommands>
+			<Build command="$make -f $makefile $target" />
+			<CompileFile command="$make -f $makefile $file" />
+			<Clean command="$make -f $makefile clean" />
+			<DistClean command="$make -f $makefile distclean$target" />
+			<AskRebuildNeeded command="$make -q -f $makefile $target" />
+			<SilentBuild command="$make -f $makefile $target &gt; $(CMD_NULL)" />
+		</MakeCommands>
+		<Build>
+			<Target title="Release">
+				<Option output="bin/Release/ned" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Release/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-O2" />
+				</Compiler>
+				<Linker>
+					<Add option="-s" />
+				</Linker>
+				<MakeCommands>
+					<Build command="$make -f $makefile clean all" />
+					<CompileFile command="$make -f $makefile $file" />
+					<Clean command="$make -f $makefile clean" />
+					<DistClean command="$make -f $makefile distclean$target" />
+					<AskRebuildNeeded command="$make -q -f $makefile $target" />
+					<SilentBuild command="$make -f $makefile clean all &gt; $(CMD_NULL)" />
+				</MakeCommands>
+			</Target>
+		</Build>
+		<Compiler>
+			<Add option="-Wall" />
+		</Compiler>
+		<Unit filename="AtomicCounter.h" />
+		<Unit filename="BaseCircularBuffer.h" />
+		<Unit filename="BaseDispatcher.cpp" />
+		<Unit filename="BaseDispatcher.h" />
+		<Unit filename="CircularBuffer.cpp" />
+		<Unit filename="CircularBuffer.h" />
+		<Unit filename="DmaCircularBuffer.cpp" />
+		<Unit filename="DmaCircularBuffer.h" />
+		<Unit filename="DmaCopier.cpp" />
+		<Unit filename="DmaCopier.h" />
+		<Unit filename="EpicsRegister.cpp" />
+		<Unit filename="OccDispatcher.cpp" />
+		<Unit filename="OccDispatcher.h" />
+		<Unit filename="OccPortDriver.cpp" />
+		<Unit filename="OccPortDriver.h" />
+		<Unit filename="PluginDriver.cpp" />
+		<Unit filename="PluginDriver.h" />
+		<Unit filename="SyncedMessage.cpp" />
+		<Unit filename="SyncedMessage.h" />
+		<Unit filename="include/DasPacketList.h" />
+		<Unit filename="main.cpp" />
+		<Unit filename="src/DasPacketList.cpp" />
+		<Unit filename="unittest/testCircularBuffer.cpp" />
+		<Extensions>
+			<code_completion />
+			<envvars />
+			<debugger />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>

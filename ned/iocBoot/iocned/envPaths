@@ -1,0 +1,5 @@
+epicsEnvSet("ARCH","linux-x86_64")
+epicsEnvSet("IOC","iocned")
+epicsEnvSet("TOP","/home/kvodopivec/work/SNS/playground/dasdaq")
+epicsEnvSet("EPICS_BASE","/home/kvodopivec/work/EPICS/base-3.14.12.4")
+epicsEnvSet("ASYN","/home/kvodopivec/work/EPICS/support/asyn-4-22")

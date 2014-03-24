@@ -1,0 +1,53 @@
+record(mbbi, "$(P)$(R)DeviceStatus")
+{
+    field(PINI, "YES")
+    field(DTYP, "asynInt32")
+    field(INP,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))DEVICE_STATUS")
+    # Those match to return code of occ_open()
+    field(ZRVL, "0")
+    field(ONVL, "1")  # EPERM
+    field(TWVL, "2")  # ENOENT
+    field(THVL, "42") # ENOMSG
+    field(FRVL, "61") # ENODATA
+    field(ZRST, "Ready")
+    field(ONST, "Permission denied")
+    field(TWST, "No device")
+    field(THST, "Version mismatch")
+    field(FRST, "Interface error")
+}
+record(mbbi, "$(P)$(R)BoardType")
+{
+    field(PINI, "YES")
+    field(DTYP, "asynInt32")
+    field(INP,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))BOARD_TYPE")
+    field(ONVL, "1")
+    field(TWVL, "2")
+    field(FFVL, "15")
+    field(ONST, "SNS PCI-X")
+    field(TWST, "SNS PCI Express")
+    field(FFST, "Simulator")
+}
+record(bi, "$(P)$(R)BoardFirmwareVer")
+{
+   field(PINI, "YES")
+   field(DTYP, "asynInt32")
+   field(INP,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))BOARD_FIRMWARE_VER")
+}
+record(bi, "$(P)$(R)OpticsPresent")
+{
+   field(PINI, "YES")
+   field(DTYP, "asynInt32")
+   field(INP,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))OPTICS_PRESENT")
+   field(ZNAM, "No")
+   field(ONAM, "Yes")
+   field(SCAN, "1 second")
+}
+record(bi, "$(P)$(R)RxEnabled")
+{
+   field(PINI, "YES")
+   field(DTYP, "asynInt32")
+   field(INP,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))RX_ENABLED")
+   field(ZNAM, "No")
+   field(ONAM, "Yes")
+   field(SCAN, "I/O Intr")
+}
