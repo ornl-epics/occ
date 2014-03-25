@@ -1,31 +1,50 @@
 #include "BasePlugin.h"
 #include "DasPacketList.h"
 
-#define NUM_PLUGINDRIVER_PARAMS ((int)(&LAST_PLUGINDRIVER_PARAM - &FIRST_PLUGINDRIVER_PARAM + 1))
+#include <epicsThread.h>
+#include <string>
+
+#define NUM_BASEPLUGIN_PARAMS ((int)(&LAST_BASEPLUGIN_PARAM - &FIRST_BASEPLUGIN_PARAM + 1))
 
 #define MESSAGE_QUEUE_SIZE 1   //!< Size of the message queue for callbacks. Since using the synchronous callbacks, 1 should be enough.
 
-BasePlugin::BasePlugin(const char *portName, const char *dispatcherPortName, bool blockingCallbacks, int reason,
+/* Helper C functions for asyn/EPICS registration
+ */
+extern "C" {
+    static void processDataThread(void *drvPvt)
+    {
+        BasePlugin *plugin = reinterpret_cast<BasePlugin *>(drvPvt);
+        plugin->processDataThread();
+    }
+    static void dispatcherCallback(void *drvPvt, asynUser *pasynUser, void *genericPointer)
+    {
+        BasePlugin *plugin = reinterpret_cast<BasePlugin *>(drvPvt);
+        plugin->dispatcherCallback(pasynUser, genericPointer);
+    }
+}
+
+BasePlugin::BasePlugin(const char *portName, const char *dispatcherPortName, int reason,
                            int maxAddr, int numParams, int interfaceMask,
                            int interruptMask, int asynFlags, int autoConnect,
                            int priority, int stackSize)
-	: asynPortDriver(portName, maxAddr, NUM_PLUGINDRIVER_PARAMS + numParams, interfaceMask,
+	: asynPortDriver(portName, maxAddr, NUM_BASEPLUGIN_PARAMS + numParams, interfaceMask,
 	                 interruptMask, asynFlags, autoConnect, priority, stackSize)
     , m_messageQueue(MESSAGE_QUEUE_SIZE, sizeof(void*))
+    , m_portName(portName)
+    , m_processDataThread(0)
 {
+    int status;
 
     m_pasynuserDispatcher = pasynManager->createAsynUser(0, 0);
     m_pasynuserDispatcher->userPvt = this;
     m_pasynuserDispatcher->reason = reason;
 
-    createParam("BLOCKING_CALLBACKS",       asynParamInt32,     &PluginDriverBlockingCallbacks);
-    createParam("ENABLE_CALLBACKS",         asynParamInt32,     &PluginDriverEnableCallbacks);
+    createParam("BLOCKING_CALLBACKS",       asynParamInt32,     &PluginBlockingCallbacks);
+    createParam("ENABLE_CALLBACKS",         asynParamInt32,     &PluginEnableCallbacks);
 
-    setIntegerParam(PluginDriverBlockingCallbacks,      blockingCallbacks);
-    setIntegerParam(PluginDriverEnableCallbacks,        1);
+    setIntegerParam(PluginEnableCallbacks,  1);
 
-    // TODO: add worker thread
-
+    // Connect to dispatcher port permanently. Don't allow connecting to different port at runtime.
     connectToDispatcherPort(dispatcherPortName);
 }
 
@@ -38,15 +57,56 @@ void notifyDispatcher() {}
 }
 #endif // 0
 
+asynStatus BasePlugin::writeInt32(asynUser *pasynUser, epicsInt32 value)
+{
+    int reason = pasynUser->reason;
+    asynStatus status;
+    int addr;
+
+    status = getAddress(pasynUser, &addr);
+    if (status != asynSuccess)
+        return(status);
+
+    status = setIntegerParam(addr, reason, value);
+
+    if (reason == PluginBlockingCallbacks) {
+        if (value > 0 && m_processDataThread == (epicsThreadId)0) {
+            std::string threadName = m_portName + "_Thread";
+            m_processDataThread = epicsThreadCreate(threadName.c_str(),
+                                                    epicsThreadPriorityMedium,
+                                                    epicsThreadGetStackSize(epicsThreadStackMedium),
+                                                    (EPICSTHREADFUNC)::processDataThread,
+                                                    this);
+            if (m_processDataThread == (epicsThreadId)0) {
+                asynPrint(this->pasynUserSelf, ASYN_TRACE_ERROR, "Failed to create data processing thread - %s\n", threadName.c_str());
+                status = asynError;
+            }
+        }
+        if (value == 0 && m_processDataThread != (epicsThreadId)0) {
+            // Wake-up processing thread by sending a dummy message. The thread
+            // will then exit based on the changed PluginBlockingCallbacks param.
+            m_messageQueue.send(0, 0);
+            m_processDataThread = 0;
+        }
+    }
+
+    status = callParamCallbacks(addr);
+
+    return status;
+}
+
 void BasePlugin::dispatcherCallback(asynUser *pasynUser, void *genericPointer)
 {
     DasPacketList *packetList = reinterpret_cast<DasPacketList *>(genericPointer);
     int status=0;
     int blockingCallbacks;
 
+    if (packetList == 0)
+        return;
+
     this->lock();
 
-    status |= getIntegerParam(PluginDriverBlockingCallbacks, &blockingCallbacks);
+    status |= getIntegerParam(PluginBlockingCallbacks, &blockingCallbacks);
 
     /* Increase the reference counter so that the processData() does not need to
      * decide whether or not to release - simply release it every time.
@@ -75,14 +135,6 @@ void BasePlugin::dispatcherCallback(asynUser *pasynUser, void *genericPointer)
     this->unlock();
 }
 
-extern "C" {
-    static void dispatcherCallback(void *drvPvt, asynUser *pasynUser, void *genericPointer)
-    {
-        BasePlugin *plugin = (BasePlugin *)drvPvt;
-        plugin->dispatcherCallback(pasynUser, genericPointer);
-    }
-}
-
 asynStatus BasePlugin::connectToDispatcherPort(const char *portName)
 {
     asynStatus status;
@@ -100,10 +152,30 @@ asynStatus BasePlugin::connectToDispatcherPort(const char *portName)
                   __func__, portName, 0, status, m_pasynuserDispatcher->errorMessage);
     }
 
-    getIntegerParam(PluginDriverEnableCallbacks, &enableCallbacks);
+    getIntegerParam(PluginEnableCallbacks, &enableCallbacks);
     status = setCallbacks(enableCallbacks);
 
     return(status);
+}
+
+void BasePlugin::processDataThread(void)
+{
+    const DasPacketList *packetList;
+    int blockingCallbacks;
+
+    getIntegerParam(PluginBlockingCallbacks, &blockingCallbacks);
+
+    while (blockingCallbacks > 0) {
+        m_messageQueue.receive(&packetList, sizeof(&packetList));
+        if (packetList == 0)
+            continue;
+
+        this->lock();
+
+        processData(packetList);
+
+        this->unlock();
+    }
 }
 
 asynStatus BasePlugin::setCallbacks(bool enableCallbacks)

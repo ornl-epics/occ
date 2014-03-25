@@ -3,8 +3,10 @@
 #include <iostream>
 using namespace std;
 
-AdaraPlugin::AdaraPlugin(const char *portName, const char *dispatcherPortName, bool blockingCallbacks)
-    : BasePlugin(portName, dispatcherPortName, blockingCallbacks, REASON_NORMAL)
+EPICS_REGISTER_PLUGIN(AdaraPlugin, 2, "port name", string, "dispatcher port", string);
+
+AdaraPlugin::AdaraPlugin(const char *portName, const char *dispatcherPortName)
+    : BasePlugin(portName, dispatcherPortName, REASON_NORMAL)
 {
 
 }
