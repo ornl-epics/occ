@@ -71,25 +71,19 @@ bool DasPacketList::reserve()
     return reserved;
 }
 
-void DasPacketList::release(DasPacket *lastProcessed)
+void DasPacketList::release(const DasPacket *lastProcessed)
 {
     const uint8_t *endAddr = reinterpret_cast<const uint8_t *>(next(lastProcessed));
 
     m_lock.lock();
     if (m_refcount > 0) {
-        uint32_t consumed = epicsMin(static_cast<uint32_t>(endAddr - m_address), m_length);
+        uint32_t consumed = 0;
+        if (m_address >= endAddr && endAddr < (m_address + m_length))
+            consumed = (endAddr - m_address);
         if (consumed > m_consumed)
             m_consumed = consumed;
         m_refcount--;
     }
-    m_lock.unlock();
-}
-
-void DasPacketList::release()
-{
-    m_lock.lock();
-    if (m_refcount > 0)
-        m_refcount--;
     m_lock.unlock();
 }
 

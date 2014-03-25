@@ -68,14 +68,10 @@ class DasPacketList
          * Client is encouraged to consume as much packets from this list
          * as possible.
          *
-         * @param[in] lastProcessed The last DAS packets processed by the client.
+         * @param[in] lastProcessed The last DAS packets processed by the client
+         *            or 0 if no data.
          */
-        void release(DasPacket *lastProcessed);
-
-        /**
-         * Decrease internal reference count only without any data consumed.
-         */
-        void release();
+        void release(const DasPacket *lastProcessed);
 
         /**
          * Reset the list with new OCC data.

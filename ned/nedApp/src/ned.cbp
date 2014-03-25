@@ -39,12 +39,20 @@
 		<Compiler>
 			<Add option="-Wall" />
 		</Compiler>
-		<Unit filename="AtomicCounter.h" />
+		<Unit filename="AdaraPlugin.cpp" />
+		<Unit filename="AdaraPlugin.h" />
+		<Unit filename="BaseCircularBuffer.cpp" />
 		<Unit filename="BaseCircularBuffer.h" />
 		<Unit filename="BaseDispatcher.cpp" />
 		<Unit filename="BaseDispatcher.h" />
+		<Unit filename="BasePlugin.cpp" />
+		<Unit filename="BasePlugin.h" />
 		<Unit filename="CircularBuffer.cpp" />
 		<Unit filename="CircularBuffer.h" />
+		<Unit filename="DasPacket.cpp" />
+		<Unit filename="DasPacket.h" />
+		<Unit filename="DasPacketList.cpp" />
+		<Unit filename="DasPacketList.h" />
 		<Unit filename="DmaCircularBuffer.cpp" />
 		<Unit filename="DmaCircularBuffer.h" />
 		<Unit filename="DmaCopier.cpp" />
@@ -54,13 +62,7 @@
 		<Unit filename="OccDispatcher.h" />
 		<Unit filename="OccPortDriver.cpp" />
 		<Unit filename="OccPortDriver.h" />
-		<Unit filename="PluginDriver.cpp" />
-		<Unit filename="PluginDriver.h" />
-		<Unit filename="SyncedMessage.cpp" />
-		<Unit filename="SyncedMessage.h" />
-		<Unit filename="include/DasPacketList.h" />
 		<Unit filename="main.cpp" />
-		<Unit filename="src/DasPacketList.cpp" />
 		<Unit filename="unittest/testCircularBuffer.cpp" />
 		<Extensions>
 			<code_completion />

@@ -43,7 +43,7 @@ void OccDispatcher::occBufferReadThread()
 
         sendToPlugins(REASON_NORMAL, &m_packetsList);
 
-        m_packetsList.release(); // reset() set it to 1
+        m_packetsList.release(0); // reset() set it to 1
         consumed = m_packetsList.waitAllReleased();
         if (consumed == 0) {
             // There could be two reasons, either no suitable plugin running or

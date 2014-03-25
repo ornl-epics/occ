@@ -148,13 +148,15 @@ class BasePlugin : public asynPortDriver {
         /**
          * Process the DAS packets received from the dispatcher.
          *
-         * The processData() implementation should process as much packets
+         * The derived processData() implementation should process as much packets
          * as possible from the DAS packets list, ideally all packets that it
          * knows how to handle. Only packets that are not processed by any
          * plugin will be delivered again through this function.
          *
          * No packet can be modified in place, if the processData implementation
          * wants to modify data it must copy it to new memory and work there.
+         *
+         * BasePlugin guarantees to put a lock around this function.
          *
          * @param[in] packetList List of received packets.
          * @return Last packet from the list that this function processed, or 0 for none.

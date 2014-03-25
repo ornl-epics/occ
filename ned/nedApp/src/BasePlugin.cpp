@@ -67,6 +67,10 @@ asynStatus BasePlugin::writeInt32(asynUser *pasynUser, epicsInt32 value)
     if (status != asynSuccess)
         return(status);
 
+    // Must lock to ensure paramters are synchronized between all threads.
+    // Potentially message could get lost in the worker thread, consequently dead-lock the producer.
+    this->lock();
+
     status = setIntegerParam(addr, reason, value);
 
     if (reason == PluginBlockingCallbacks) {
@@ -89,6 +93,7 @@ asynStatus BasePlugin::writeInt32(asynUser *pasynUser, epicsInt32 value)
             m_processDataThread = 0;
         }
     }
+    this->unlock();
 
     status = callParamCallbacks(addr);
 
@@ -108,24 +113,21 @@ void BasePlugin::dispatcherCallback(asynUser *pasynUser, void *genericPointer)
 
     status |= getIntegerParam(PluginBlockingCallbacks, &blockingCallbacks);
 
-    /* Increase the reference counter so that the processData() does not need to
-     * decide whether or not to release - simply release it every time.
-     */
+    // Increase the reference counter, we need to call release(last) in any case.
     packetList->reserve();
 
     if (blockingCallbacks) {
         /* In blocking mode, process the callback in calling thread. Return when
          * processing is complete.
          */
-        processData(packetList);
+        const DasPacket *last = processData(packetList);
+        packetList->release(last);
     } else {
         /* Non blocking mode means the callback will be processed in our background
-         * thread.
+         * thread. Make a reservation so that it doesn't go away.
          */
-        bool sent = m_messageQueue.trySend(&packetList, sizeof(&packetList));
-        if (!sent) {
-            packetList->release();
-
+        if (!m_messageQueue.trySend(&packetList, sizeof(&packetList))) {
+            packetList->release(0);
             asynPrint(pasynUser, ASYN_TRACE_FLOW, "BasePlugin:%s message queue full\n", __func__);
         }
     }
@@ -160,7 +162,7 @@ asynStatus BasePlugin::connectToDispatcherPort(const char *portName)
 
 void BasePlugin::processDataThread(void)
 {
-    const DasPacketList *packetList;
+    DasPacketList *packetList;
     int blockingCallbacks;
 
     getIntegerParam(PluginBlockingCallbacks, &blockingCallbacks);
@@ -172,7 +174,8 @@ void BasePlugin::processDataThread(void)
 
         this->lock();
 
-        processData(packetList);
+        const DasPacket *last = processData(packetList);
+        packetList->release(last);
 
         this->unlock();
     }
