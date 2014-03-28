@@ -106,6 +106,30 @@ int Wait(uint32_t bufSize, uint32_t pushSize1, uint32_t consumeSize1=0, uint32_t
     return 1;
 }
 
+int Bug_BigDataDontRollover() {
+    // m_buffer         = 0x7FFFF4A5F010
+    // m_rolloverSize   = 14400
+    // m_size           = 1000000
+    // m_producer       = 10864
+    // m_consumer       = 10872
+    // wait() was setting len = 967288 (correct len = m_size - m_consumer = 989128)
+    CircularBuffer buf(1000000);
+    char data[1000000];
+    void *ptr;
+    uint32_t len;
+    if (buf.push(data, 1000000-8) != (1000000-8))
+        return 0;
+    buf.consume(10872);
+    if (buf.push(data, 10864) != 10864)
+        return 0;
+    buf.wait(&ptr, &len);
+    if (len != 989128) {
+        testDiag("bufsize=1000000 prod=10864 cons=10872 => avail=989128 but got %d", len);
+        return 0;
+    }
+    return 1;
+}
+
 MAIN(mathTest)
 {
     uint32_t bufSize, pushSize1, pushSize2, pushSize3, consumeSize1, consumeSize2;
@@ -171,6 +195,9 @@ MAIN(mathTest)
     testOk1(Wait(bufSize=128, pushSize1=64,  consumeSize1=0,  pushSize2=24));
     testOk1(Wait(bufSize=128, pushSize1=64,  consumeSize1=0,  pushSize2=64));
     testOk1(Wait(bufSize=128, pushSize1=120, consumeSize1=64, pushSize2=64));
+
+    testDiag("Regression tests");
+    testOk1(Bug_BigDataDontRollover());
 
     return testDone();
 }

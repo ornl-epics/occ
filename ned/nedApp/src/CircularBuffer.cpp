@@ -90,15 +90,18 @@ void CircularBuffer::wait(void **data, uint32_t *len)
 
     m_lock.lock();
     *data = (char *)m_buffer + m_consumer;
-    *len = (m_producer - m_consumer) % m_size;
-    if (m_consumer > (m_size - m_rolloverSize) && *len > (m_size - m_consumer)) {
-        *len = min(m_rolloverSize, *len);
-        *data = m_rollover;
+    if (m_producer >= m_consumer)
+        *len = m_producer - m_consumer;
+    else {
+        *len = m_size - m_consumer;
+        if (*len < m_rolloverSize) {
+            uint32_t head = *len;
+            memcpy(m_rollover, (char *)m_buffer + m_consumer, *len);
+            memcpy((char *)m_rollover + *len, m_buffer, m_rolloverSize - *len);
 
-        uint32_t head = m_size - m_consumer;
-        memcpy(m_rollover, (char *)m_buffer + m_consumer, head);
-        if (*len > head)
-            memcpy((char *)m_rollover + head, m_buffer, *len - head);
+            *len = m_rolloverSize;
+            *data = m_rollover;
+        }
     }
     m_lock.unlock();
 }
