@@ -8,6 +8,8 @@
 
 static const uint32_t UNIT_SIZE = 8;
 
+#define TEST_OK     1
+#define TEST_FAIL   0
 #define min(a,b) epicsMin(a,b)
 #define max(a,b) epicsMax(a,b)
 
@@ -30,7 +32,7 @@ int CreateDestroy()
     buf = new CircularBuffer(1 * 1024 * 1024);
     delete buf;
 
-    return 1;
+    return TEST_OK;
 }
 
 int PushConsume(uint32_t bufSize, uint32_t pushSize1, uint32_t consumeSize1=0, uint32_t pushSize2=0, uint32_t consumeSize2=0, uint32_t pushSize3=0)
@@ -41,7 +43,7 @@ int PushConsume(uint32_t bufSize, uint32_t pushSize1, uint32_t consumeSize1=0, u
     uint32_t free = bufSize - UNIT_SIZE;
 
     expected = CircularBufferNonprotected::_alignDown(min(free, pushSize1), UNIT_SIZE);
-    if (buf.push(data, pushSize1) != expected) return 0;
+    if (buf.push(data, pushSize1) != expected) return TEST_FAIL;
     free -= expected;
 
     if (consumeSize1 > 0) {
@@ -51,7 +53,7 @@ int PushConsume(uint32_t bufSize, uint32_t pushSize1, uint32_t consumeSize1=0, u
 
     if (pushSize2 > 0) {
         expected = CircularBufferNonprotected::_alignDown(min(free, pushSize2), UNIT_SIZE);
-        if (buf.push(data, pushSize2) != expected) return 0;
+        if (buf.push(data, pushSize2) != expected) return TEST_FAIL;
         free -= expected;
     }
 
@@ -62,10 +64,10 @@ int PushConsume(uint32_t bufSize, uint32_t pushSize1, uint32_t consumeSize1=0, u
 
     if (pushSize3 > 0) {
         expected = CircularBufferNonprotected::_alignDown(min(free, pushSize3), UNIT_SIZE);
-        if (buf.push(data, pushSize3) != expected) return 0;
+        if (buf.push(data, pushSize3) != expected) return TEST_FAIL;
     }
 
-    return 1;
+    return TEST_OK;
 }
 
 int Wait(uint32_t bufSize, uint32_t pushSize1, uint32_t consumeSize1=0, uint32_t pushSize2=0, uint32_t consumeSize2=0, uint32_t pushSize3=0)
@@ -82,8 +84,8 @@ int Wait(uint32_t bufSize, uint32_t pushSize1, uint32_t consumeSize1=0, uint32_t
     /*ignore*/buf.push(data, pushSize1); // Not testing push here
     free -= expected;
     buf.wait(&ptr, &len);
-    if (len != expected) return 0;
-    if (memcmp(data, ptr, len) != 0) return 0;
+    if (len != expected) return TEST_FAIL;
+    if (memcmp(data, ptr, len) != 0) return TEST_FAIL;
 
     if (consumeSize1 > 0) {
         buf.consume(consumeSize1);
@@ -91,7 +93,7 @@ int Wait(uint32_t bufSize, uint32_t pushSize1, uint32_t consumeSize1=0, uint32_t
         if (free > 0) {
             expected -= consumeSize1;
             buf.wait(&ptr, &len);
-            if (len != expected) return 0;
+            if (len != expected) return TEST_FAIL;
         }
     }
 
@@ -100,10 +102,36 @@ int Wait(uint32_t bufSize, uint32_t pushSize1, uint32_t consumeSize1=0, uint32_t
         /*ignore*/buf.push(data, pushSize2);
         free -= expected;
         buf.wait(&ptr, &len);
-        if (len != (bufSize - UNIT_SIZE - free)) return 0;
+        if (len != (bufSize - UNIT_SIZE - free)) return TEST_FAIL;
     }
 
-    return 1;
+    return TEST_OK;
+}
+
+int PushOverBoundary() {
+    CircularBuffer buf(256);
+    char data[256];
+    char *ptr;
+    uint32_t len;
+
+    if (buf.push(data, 256) != (256-UNIT_SIZE))
+        return TEST_FAIL;
+    buf.consume(256-UNIT_SIZE); // should be empty now
+
+    strcpy(data, "ThisDataRollsOver"); // UNIT_SIZE=8 => "ThisData" goes at the end of buffer, "RollOver" rolls over
+    buf.push(data, 48);
+
+    // Now we're at the 248-byte offset, where the "This..." should be
+    buf.wait((void **)&ptr, &len);
+    if (len != 48)
+        return TEST_FAIL;
+    if (strncmp(ptr, "ThisDataRollsOver", strlen("ThisDataRollsOver")) != 0) {
+        ptr[strlen("ThisDataRollsOver")] = '\0';
+        testDiag("Expecting 'ThisDataRollsOver', got '%s'", ptr);
+        return TEST_FAIL;
+    }
+
+    return TEST_OK;
 }
 
 int Bug_BigDataDontRollover() {
@@ -117,24 +145,54 @@ int Bug_BigDataDontRollover() {
     char data[1000000];
     void *ptr;
     uint32_t len;
-    if (buf.push(data, 1000000-8) != (1000000-8))
-        return 0;
+    if (buf.push(data, 1000000-UNIT_SIZE) != (1000000-UNIT_SIZE))
+        return TEST_FAIL;
     buf.consume(10872);
     if (buf.push(data, 10864) != 10864)
-        return 0;
+        return TEST_FAIL;
     buf.wait(&ptr, &len);
     if (len != 989128) {
         testDiag("bufsize=1000000 prod=10864 cons=10872 => avail=989128 but got %d", len);
-        return 0;
+        return TEST_FAIL;
     }
-    return 1;
+    return TEST_OK;
+}
+
+int Bug_WaitConsidersProducerOnRollover() {
+    // On rollover and using the temporary rollover buffer,
+    // the amount of data copied into rollover buffer should not go
+    // beyond producer.
+    CircularBuffer buf(128);
+    char data[128];
+    char *ptr;
+    uint32_t len;
+
+    memset(data, '0', sizeof(data));
+    buf.push(data, sizeof(data));
+    buf.consume(128-UNIT_SIZE);
+
+    memset(data, '1', sizeof(data));
+    buf.push(data, 16); // 8 bytes at the end, 8 bytes roll over
+    buf.wait((void **)&ptr, &len);
+    // the rollover buffer could accomodate more than 16 bytes - that's how much we pushed
+    // but it really shouldn't
+    if (len != 16) {
+        testDiag("expected 16 bytes, got %d bytes", len);
+        return TEST_FAIL;
+    }
+    if (strncmp(ptr, "1111111111111111", 16) !=0) {
+        testDiag("rollover data CRC error");
+        return TEST_FAIL;
+    }
+
+    return TEST_OK;
 }
 
 MAIN(mathTest)
 {
     uint32_t bufSize, pushSize1, pushSize2, pushSize3, consumeSize1, consumeSize2;
 
-    testPlan(42);
+    testPlan(45);
 
     testDiag("CircularBuffer constructor & destructor");
     testOk(CreateDestroy(), "Create & destroy");
@@ -198,6 +256,8 @@ MAIN(mathTest)
 
     testDiag("Regression tests");
     testOk1(Bug_BigDataDontRollover());
+    testOk1(PushOverBoundary());
+    testOk1(Bug_WaitConsidersProducerOnRollover());
 
     return testDone();
 }

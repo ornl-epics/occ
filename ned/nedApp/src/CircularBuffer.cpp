@@ -65,8 +65,8 @@ uint32_t CircularBuffer::push(void *data, uint32_t len)
         tail = len - head;
     }
 
-    memcpy((char *)m_buffer + prod, data, head);
-    memcpy((char *)m_buffer,        data, tail);
+    memcpy(static_cast<char*>(m_buffer) + prod, data, head);
+    memcpy(m_buffer, static_cast<char*>(data) + head, tail);
 
     m_lock.lock();
     m_producer += len;
@@ -96,10 +96,11 @@ void CircularBuffer::wait(void **data, uint32_t *len)
         *len = m_size - m_consumer;
         if (*len < m_rolloverSize) {
             uint32_t head = *len;
-            memcpy(m_rollover, (char *)m_buffer + m_consumer, *len);
-            memcpy((char *)m_rollover + *len, m_buffer, m_rolloverSize - *len);
+            uint32_t tail = min(m_rolloverSize - *len, m_producer);
+            memcpy(m_rollover, (char *)m_buffer + m_consumer, head);
+            memcpy((char *)m_rollover + head, m_buffer, tail);
 
-            *len = m_rolloverSize;
+            *len = head + tail;
             *data = m_rollover;
         }
     }
