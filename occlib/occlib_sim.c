@@ -11,10 +11,17 @@
 #include <unistd.h>
 
 #define OCC_HANDLE_MAGIC        0x0cc0cc
+#define DATA_FILE               "occlib_sim.data"
+#define MAX_OCC_PACKET_SIZE     (1800*8)
+#define MAX(a,b)                ((a)>(b) ? (a) : (b))
+#define MIN(a,b)                ((a)<(b) ? (a) : (b))
 
 struct occ_handle {
     uint32_t magic;
     bool rx_enabled;
+    void *rxdata;
+    uint32_t rxdatasize;
+    uint32_t consumer;
 };
 
 #pragma pack(push)
@@ -30,6 +37,7 @@ struct occ_packet_header {
 #pragma pack(pop)
 
 int occ_open(const char *devfile, occ_interface_type type, struct occ_handle **handle) {
+    int fd;
 
     *handle = malloc(sizeof(struct occ_handle));
     if (*handle == NULL) {
@@ -38,6 +46,13 @@ int occ_open(const char *devfile, occ_interface_type type, struct occ_handle **h
 
     memset(*handle, 0, sizeof(struct occ_handle));
     (*handle)->magic = OCC_HANDLE_MAGIC;
+    fd = open(DATA_FILE, O_RDONLY);
+    if (fd != -1) {
+        (*handle)->rxdatasize = lseek(fd, 0, SEEK_END);
+        lseek(fd, 0, SEEK_SET);
+        (*handle)->rxdata = mmap(NULL, (*handle)->rxdatasize, PROT_READ, MAP_SHARED, fd, 0);
+        close(fd);
+    }
 
     return 0;
 }
@@ -45,6 +60,9 @@ int occ_open(const char *devfile, occ_interface_type type, struct occ_handle **h
 int occ_close(struct occ_handle *handle) {
 
     if (handle != NULL && handle->magic == OCC_HANDLE_MAGIC) {
+        if (handle->rxdata)
+            munmap(handle->rxdata, handle->rxdatasize);
+
         free(handle);
     }
 
@@ -102,7 +120,26 @@ int occ_data_wait(struct occ_handle *handle, void **address, size_t *count, uint
     if (handle == NULL || handle->magic != OCC_HANDLE_MAGIC)
         return -EINVAL;
 
-    return -ENOSYS;
+    if (handle->rxdata == NULL)
+        return -ENOENT;
+
+    if (!handle->rx_enabled) {
+        *count = 0;
+        return 0;
+    }
+
+    if (handle->consumer >= handle->rxdatasize) {
+        *address = NULL;
+        *count = 0;
+        sleep(1); // No more data expected from file, only wake-up now and then
+    } else {
+        *address = handle->rxdata + handle->consumer;
+        *count = MIN(handle->rxdatasize - handle->consumer, MAX_OCC_PACKET_SIZE);
+        if (*count < 24)
+            *count = 0;
+    }
+
+    return 0;
 }
 
 int occ_data_ack(struct occ_handle *handle, size_t count) {
@@ -110,7 +147,11 @@ int occ_data_ack(struct occ_handle *handle, size_t count) {
     if (handle == NULL || handle->magic != OCC_HANDLE_MAGIC || _occ_data_align(count) != count)
         return -EINVAL;
 
-    return -ENOSYS;
+    if (handle->rxdata == NULL)
+        return -ENOENT;
+
+    handle->consumer += count;
+    return 0;
 }
 
 int occ_read(struct occ_handle *handle, void *data, size_t count, uint32_t timeout) {
