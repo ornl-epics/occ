@@ -32,7 +32,7 @@ class DasPacketList
          *
          * @return First DAS packet or 0 if none.
          */
-        const DasPacket *first();
+        const DasPacket *first() const;
 
         /**
          * Return next DAS packet in the list.
@@ -40,7 +40,7 @@ class DasPacketList
          * @param[in] current Any valid packet previously returned from first() or next().
          * @return Next DAS packet or 0 if none.
          */
-        const DasPacket *next(const DasPacket *current);
+        const DasPacket *next(const DasPacket *current) const;
 
         /**
          * Increase internal reference count.
@@ -60,18 +60,9 @@ class DasPacketList
          *
          * After the client gets finished with processing DAS packets
          * described by this list, it should release the data by calling
-         * this function with the last DAS packet it actually processed.
-         * The last packet processed helps DasPacketList class determine
-         * the size of the data processed which could be flagged consumed.
-         * The remaining of the data in the memory gets rescheduled for
-         * later processing.
-         * Client is encouraged to consume as much packets from this list
-         * as possible.
-         *
-         * @param[in] lastProcessed The last DAS packets processed by the client
-         *            or 0 if no data.
+         * this function.
          */
-        void release(const DasPacket *lastProcessed);
+        void release();
 
         /**
          * Reset the list with new OCC data.
@@ -92,10 +83,8 @@ class DasPacketList
          *
          * After the function returns, reference counter is guaranteed to be 0 and
          * object can not be reserved() again until next reset() returns.
-         *
-         * @return Number of bytes consumed from the memory block.
          */
-        uint32_t waitAllReleased() const;
+        void waitAllReleased() const;
 
     private:
         const uint8_t *m_address;

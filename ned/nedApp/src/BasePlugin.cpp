@@ -24,11 +24,11 @@ extern "C" {
 }
 
 BasePlugin::BasePlugin(const char *portName, const char *dispatcherPortName, int reason,
-                           int maxAddr, int numParams, int interfaceMask,
-                           int interruptMask, int asynFlags, int autoConnect,
-                           int priority, int stackSize)
-	: asynPortDriver(portName, maxAddr, NUM_BASEPLUGIN_PARAMS + numParams, interfaceMask,
-	                 interruptMask, asynFlags, autoConnect, priority, stackSize)
+                       int numParams, int maxAddr, int interfaceMask,
+                       int interruptMask, int asynFlags, int autoConnect,
+                       int priority, int stackSize)
+	: asynPortDriver(portName, maxAddr, NUM_BASEPLUGIN_PARAMS + numParams, interfaceMask | defaultInterfaceMask,
+	                 interruptMask | defaultInterruptMask, asynFlags, autoConnect, priority, stackSize)
     , m_messageQueue(MESSAGE_QUEUE_SIZE, sizeof(void*))
     , m_portName(portName)
     , m_processDataThread(0)
@@ -41,10 +41,14 @@ BasePlugin::BasePlugin(const char *portName, const char *dispatcherPortName, int
 
     createParam("BLOCKING_CALLBACKS",       asynParamInt32,     &PluginBlockingCallbacks);
     createParam("ENABLE_CALLBACKS",         asynParamInt32,     &PluginEnableCallbacks);
+    createParam("PROCESSED_COUNT",          asynParamInt32,     &ProcessedCount);
+    createParam("TRANSMITTED_COUNT",        asynParamInt32,     &ReceivedCount);
 
     setIntegerParam(PluginEnableCallbacks,  1);
+    setIntegerParam(PluginBlockingCallbacks,1);
 
     // Connect to dispatcher port permanently. Don't allow connecting to different port at runtime.
+    // TODO: Don't do it here, registered callbacks might get called before object constructed
     connectToDispatcherPort(dispatcherPortName);
 }
 
@@ -104,30 +108,27 @@ void BasePlugin::dispatcherCallback(asynUser *pasynUser, void *genericPointer)
 {
     DasPacketList *packetList = reinterpret_cast<DasPacketList *>(genericPointer);
     int status=0;
-    int blockingCallbacks;
+    int blockingCallbacks = 0;
 
     if (packetList == 0)
         return;
 
     this->lock();
 
-    status |= getIntegerParam(PluginBlockingCallbacks, &blockingCallbacks);
-
-    // Increase the reference counter, we need to call release(last) in any case.
-    packetList->reserve();
+    getIntegerParam(PluginBlockingCallbacks, &blockingCallbacks);
 
     if (blockingCallbacks) {
         /* In blocking mode, process the callback in calling thread. Return when
          * processing is complete.
          */
-        const DasPacket *last = processData(packetList);
-        packetList->release(last);
+        processData(packetList);
     } else {
         /* Non blocking mode means the callback will be processed in our background
          * thread. Make a reservation so that it doesn't go away.
          */
+        packetList->reserve();
         if (!m_messageQueue.trySend(&packetList, sizeof(&packetList))) {
-            packetList->release(0);
+            packetList->release();
             asynPrint(pasynUser, ASYN_TRACE_FLOW, "BasePlugin:%s message queue full\n", __func__);
         }
     }
@@ -174,8 +175,8 @@ void BasePlugin::processDataThread(void)
 
         this->lock();
 
-        const DasPacket *last = processData(packetList);
-        packetList->release(last);
+        processData(packetList);
+        packetList->release();
 
         this->unlock();
     }

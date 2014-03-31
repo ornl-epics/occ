@@ -11,7 +11,7 @@ DasPacketList::DasPacketList()
     //ctor
 }
 
-const DasPacket *DasPacketList::first()
+const DasPacket *DasPacketList::first() const
 {
     const DasPacket *pkt = 0;
 
@@ -23,7 +23,7 @@ const DasPacket *DasPacketList::first()
     return pkt;
 }
 
-const DasPacket *DasPacketList::next(const DasPacket *current)
+const DasPacket *DasPacketList::next(const DasPacket *current) const
 {
     const DasPacket *pkt = 0;
     const uint8_t *currAddr = reinterpret_cast<const uint8_t *>(current);
@@ -31,8 +31,8 @@ const DasPacket *DasPacketList::next(const DasPacket *current)
     m_lock.lock();
     if (m_refcount != 0) {
         // Basic boundary check for current packet, rest is taken care of by _verifyPacket
-        if (m_address >= currAddr && currAddr < (m_address + m_length)) {
-            const DasPacket *tmp = reinterpret_cast<const DasPacket *>(m_address + current->length());
+        if (m_address <= currAddr && currAddr < (m_address + m_length)) {
+            const DasPacket *tmp = reinterpret_cast<const DasPacket *>(currAddr + current->length());
             pkt = _verifyPacket(tmp);
         }
     }
@@ -71,19 +71,11 @@ bool DasPacketList::reserve()
     return reserved;
 }
 
-void DasPacketList::release(const DasPacket *lastProcessed)
+void DasPacketList::release()
 {
-    const uint8_t *endAddr = reinterpret_cast<const uint8_t *>(next(lastProcessed));
-
     m_lock.lock();
-    if (m_refcount > 0) {
-        uint32_t consumed = 0;
-        if (m_address >= endAddr && endAddr < (m_address + m_length))
-            consumed = (endAddr - m_address);
-        if (consumed > m_consumed)
-            m_consumed = consumed;
+    if (m_refcount > 0)
         m_refcount--;
-    }
     m_lock.unlock();
 }
 
@@ -95,7 +87,6 @@ bool DasPacketList::reset(uint8_t *addr, uint32_t length)
     if (m_refcount == 0) {
         m_address = addr;
         m_length = length;
-        m_consumed = 0;
         m_refcount = 1;
         reseted = true;
     }
@@ -104,18 +95,12 @@ bool DasPacketList::reset(uint8_t *addr, uint32_t length)
     return reseted;
 }
 
-uint32_t DasPacketList::waitAllReleased() const
+void DasPacketList::waitAllReleased() const
 {
     uint32_t consumed;
 
     while (!released())
         m_event.wait();
-
-    m_lock.lock();
-    consumed = m_consumed;
-    m_lock.unlock();
-
-    return consumed;
 }
 
 bool DasPacketList::released() const

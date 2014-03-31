@@ -28,7 +28,8 @@ void DmaCopier::run()
         if (status != 0) {
             // TODO: report error
             break;
-        }
+        } else if (len == 0)
+            continue;
 
         len = CircularBuffer::push(data, len);
 

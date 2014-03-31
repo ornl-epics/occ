@@ -35,7 +35,7 @@ enum {
  * Registers plugin with EPICS system.
  *
  * Each plugin class should call this macro somewhere in the .c/.cpp file. The macro
- * creates a C function called <plugin name>Configure and exports it through EPICS
+ * creates a C function called \<plugin name\>Configure and exports it through EPICS
  * to be used from EPICS shell (for example st.cmd).
  *
  * There are several macros depending on the number and type of arguments required by
@@ -48,7 +48,7 @@ enum {
  *            is created called ExamplePluginConfigure which creates new object of
  *            ExamplePlugin whenever called.
  * @param[in] numargs Number of plugin parameters supported by plugin constructor.
- * @param[in] args Pairs of (argument name, argument type) parameters. For each parameter
+ * @param[in] ... Pairs of (argument name, argument type) parameters. For each parameter
  *            there should be exactly one such pair. Supported argument types are
  *            string, int.
  */
@@ -113,8 +113,8 @@ extern "C" { \
  */
 class BasePlugin : public asynPortDriver {
 	public:
-	    static const int defaultInterfaceMask = asynGenericPointerMask | asynDrvUserMask;
-	    static const int defaultInterruptMask = asynGenericPointerMask;
+	    static const int defaultInterfaceMask = asynInt32Mask | asynGenericPointerMask | asynDrvUserMask;
+	    static const int defaultInterruptMask = 0;
 
 	    /**
 	     * Constructor
@@ -126,8 +126,8 @@ class BasePlugin : public asynPortDriver {
 	     * @param[in] portName asyn port name.
 	     * @param[in] dispatcherPortName Name of the dispatcher asyn port to connect to.
          * @param[in] reason Type of the messages to receive callbacks for.
-         * @param[in] maxAddr The maximum  number of asyn addr addresses this driver supports. 1 is minimum.
          * @param[in] numParams The number of parameters that the derived class supports.
+         * @param[in] maxAddr The maximum  number of asyn addr addresses this driver supports. 1 is minimum.
          * @param[in] interfaceMask Bit mask defining the asyn interfaces that this driver supports.
          * @param[in] interruptMask Bit mask definining the asyn interfaces that can generate interrupts (callbacks)
          * @param[in] asynFlags Flags when creating the asyn port driver; includes ASYN_CANBLOCK and ASYN_MULTIDEVICE.
@@ -136,7 +136,7 @@ class BasePlugin : public asynPortDriver {
          * @param[in] stackSize The stack size for the asyn port driver thread if ASYN_CANBLOCK is set in asynFlags.
 	     */
         BasePlugin(const char *portName, const char *dispatcherPortName, int reason,
-                   int maxAddr=1, int numParams=0, int interfaceMask=BasePlugin::defaultInterfaceMask,
+                   int numParams=0, int maxAddr=1, int interfaceMask=BasePlugin::defaultInterfaceMask,
                    int interruptMask=BasePlugin::defaultInterruptMask, int asynFlags=0, int autoConnect=1,
                    int priority=0, int stackSize=0);
 
@@ -158,10 +158,12 @@ class BasePlugin : public asynPortDriver {
          *
          * BasePlugin guarantees to put a lock around this function.
          *
+         * @todo: NO NEED TO release(last), just release everything!!!
+         *
          * @param[in] packetList List of received packets.
          * @return Last packet from the list that this function processed, or 0 for none.
          */
-        virtual const DasPacket *processData(const DasPacketList * const packetList) = 0;
+        virtual void processData(const DasPacketList * const packetList) = 0;
 
         /**
          * Handle integer parameter value change.
@@ -178,11 +180,13 @@ class BasePlugin : public asynPortDriver {
          */
         virtual asynStatus writeInt32(asynUser *pasynUser, epicsInt32 value);
 
-    private:
+    protected:
         int PluginBlockingCallbacks;
         #define FIRST_BASEPLUGIN_PARAM PluginBlockingCallbacks
         int PluginEnableCallbacks;
-        #define LAST_BASEPLUGIN_PARAM PluginEnableCallbacks
+        int ReceivedCount;
+        int ProcessedCount;
+        #define LAST_BASEPLUGIN_PARAM ProcessedCount
 
     private:
         asynUser *m_pasynuserDispatcher;            //!< asynUser for connecting to dispatcher

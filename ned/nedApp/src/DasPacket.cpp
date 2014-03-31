@@ -1,9 +1,8 @@
 #include "DasPacket.h"
 
-#include <stddef.h> // offsetof
-
 #include <stdexcept>
 
+// Get rid of these defines gradually as we re-implement into structured way
 #define DAS_ROOT_ID                         0x000f10cc
 #define DAS_BROADCAST                       0x00000000
 
@@ -51,20 +50,9 @@
 #define DAS_RSP_CHAN_STATUS                 (DAS_RSP_STATUS | 0x1000)
 #define DAS_RSP_CHAN_MASK                   (7 << 8)
 
-#define DAS_DATA_MASK                       0xFC
-#define DAS_DATA_RTDL_FROM_DSP              0xFC
-#define DAS_DATA_METADATA                   0x08
-#define DAS_DATA_EVENT                      0x0C
-
-#define MAX_EVENTS_PER_PACKET               1800
-
-DasPacket::DasPacket(uint32_t datalen)
+bool DasPacket::valid() const
 {
-    uint32_t len = length();
-    if (len == 0)
-        throw std::length_error("Packet size is not right, either not aligned packet or zero size");
-    if (len > datalen)
-        throw std::overflow_error("Packet spans over the provided buffer boundaries");
+    return (length() > 0);
 }
 
 uint32_t DasPacket::length() const
@@ -77,26 +65,52 @@ uint32_t DasPacket::length() const
 
 bool DasPacket::isCommand() const
 {
-    return (info & DAS_COMMAND);
+    return (cmdinfo.is_command);
 }
 
 bool DasPacket::isData() const
 {
-    return !((info & DAS_COMMAND) && (info & DAS_PASSTHROUGH_LVDS));
+    return (!cmdinfo.is_command);
 }
 
-bool DasPacket::isDataRtdl() const
+bool DasPacket::isNeutronData() const
 {
-    return (info & DAS_DATA_MASK) == DAS_DATA_RTDL_FROM_DSP;
+    // info == 0x0C
+    return (!datainfo.is_command && datainfo.only_neutron_data && datainfo.rtdl_present && datainfo.unused4_7 == 0x0);
 }
 
-bool DasPacket::isDataMeta() const
+bool DasPacket::isMetaData() const
 {
-    return (info & DAS_DATA_MASK) == DAS_DATA_METADATA;
+    // info == 0x08
+    return (!datainfo.is_command && !datainfo.only_neutron_data && datainfo.rtdl_present && datainfo.unused4_7 == 0x0);
 }
 
-bool DasPacket::isDataEvent() const
+bool DasPacket::isRtdl() const
 {
-    return (info & DAS_DATA_MASK) == DAS_DATA_EVENT;
+    if (cmdinfo.is_command) {
+        return (cmdinfo.command == DasPacket::CommandType::CMD_RTDL);
+    } else {
+        // Data version of the RTDL command (0x85)
+        return (info == 0xFC);
+    }
 }
 
+const DasPacket::RtdlHeader *DasPacket::getRtdlHeader() const
+{
+    if (!datainfo.is_command && datainfo.rtdl_present && payload_length >= sizeof(RtdlHeader))
+        return (RtdlHeader *)data;
+    return 0;
+};
+
+const DasPacket::NeutronEvent *DasPacket::getNeutronData(uint32_t *count) const
+{
+    const uint8_t *start = 0;
+    *count = 0;
+    if (!datainfo.is_command) {
+        start = reinterpret_cast<const uint8_t *>(data);
+        if (datainfo.rtdl_present)
+            start += sizeof(RtdlHeader);
+        *count = (payload_length - (start - reinterpret_cast<const uint8_t*>(data))) / 8;
+    }
+    return reinterpret_cast<const NeutronEvent *>(start);
+}

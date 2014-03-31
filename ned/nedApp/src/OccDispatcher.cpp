@@ -43,17 +43,15 @@ void OccDispatcher::occBufferReadThread()
 
         sendToPlugins(REASON_NORMAL, &m_packetsList);
 
-        m_packetsList.release(0); // reset() set it to 1
-        consumed = m_packetsList.waitAllReleased();
-        if (consumed == 0) {
-            // There could be two reasons, either no suitable plugin running or
-            // the data is not valid. In either case consume valid packets.
-            const DasPacket *pkt = m_packetsList.first();
-            while (pkt != 0) {
-                consumed += pkt->length();
-                pkt = m_packetsList.next(pkt);
-            }
+        consumed = 0;
+        // Plugins have been notified, hopefully they're all threads.
+        // While waiting, calculate how much data can be consumed from circular buffer.
+        for (const DasPacket *packet = m_packetsList.first(); packet != 0; packet = m_packetsList.next(packet)) {
+            consumed += packet->length();
         }
+
+        m_packetsList.release(); // reset() set it to 1
+        m_packetsList.waitAllReleased();
 
         m_circularBuffer->consume(consumed);
     }

@@ -68,8 +68,8 @@ OccPortDriver::OccPortDriver(const char *portName, int deviceId, uint32_t localB
 
     // For testing only - create a plugin and send some data to it
     BasePlugin *p = new AdaraPlugin("testPort1", "OCCdispatcher");
-    if (localBufferSize)
-        dynamic_cast<DmaCopier*>(m_circularBuffer)->push((void *)"testing1", 8);
+
+    status = occ_enable_rx(m_occ, true);
 }
 
 OccPortDriver::~OccPortDriver()

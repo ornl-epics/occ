@@ -11,6 +11,9 @@ include $(TOP)/configure/CONFIG
 # Split build into static library and app for unit tests
 # to pick-up functionlity from library.
 
+# The C/C++ bitfield ordering in structs is platform AND compiler dependant
+# 
+USR_CXXFLAGS += -DBITFIELD_LSB_FIRST
 USR_CXXFLAGS += -std=c++0x
 CXXFLAGS = -g -ggdb $(USR_CXXFLAGS)
 
