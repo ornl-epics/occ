@@ -241,17 +241,17 @@ int occ_data_wait(struct occ_handle *handle, void **address, size_t *count, uint
         *count = dma_prod_off - handle->dma_cons_off;
     } else {
         uint32_t headlen = handle->dma_buf_len - handle->dma_cons_off;
-        if (handle->dma_buf_len > handle->dma_cons_off)
+        if (handle->dma_buf_len <= handle->dma_cons_off)
             return -ERANGE;
         if (headlen > sizeof(handle->rollover_buf)) {
             *address = handle->dma_buf + handle->dma_cons_off;
             *count = handle->dma_buf_len - handle->dma_cons_off;
         } else {
-            // Overflow occured and there's little data at the end of the buffer.
+            // Rollover occured and there's little data at the end of the buffer.
             // Since we're not parsing the data, we don't know whether there's more
             // complete packets in this tail. If it is the case, application will
             // most probably process all complete packets and acknowledge what it
-            // processed, leaving some data unacknowledged. Which means this block is
+            // processed, leaving some data unacknowledged. Which means this block of code is
             // being called twice at the end of a buffer - not once as one might
             // assume.
             uint32_t taillen = sizeof(handle->rollover_buf) - headlen;
