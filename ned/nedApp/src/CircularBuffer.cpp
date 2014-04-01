@@ -5,6 +5,7 @@
 #include <string.h>
 
 #include <algorithm>
+#include <stdexcept>
 
 static const uint32_t UNIT_SIZE            = 8;              // OCC data is 8 byte aligned
 static const uint32_t ROLLOVER_BUFFER_SIZE = 1800*UNIT_SIZE; // Comes from the OCC protocol, max 1800 events in packet
@@ -18,6 +19,11 @@ CircularBuffer::CircularBuffer(uint32_t size)
     , m_consumer(0)
     , m_producer(0)
 {
+	if (size > (numeric_limits<uint32_t>::max()/2)) { // I wish there was a portable way like numeric_limits<typeof(m_size)>::max
+        // Consult also comment in CircularBuffer:consume()
+        throw length_error("Requested buffer size too big");
+    }
+
     // Don't need or want the initialization provided by new operator.
     // This is fine with C++ as long as we're consistent and use free (not delete) at the end.
     m_buffer = mallocMustSucceed(size, "Can't allocate CircularBuffer buffer");
@@ -119,8 +125,15 @@ void CircularBuffer::consume(uint32_t len)
     len = _alignDown(len, m_unit);
 
     m_lock.lock();
-    used = (m_producer - m_consumer) % m_size;
-    len = std::min(len, used);
+    // The next computation limits the size of the buffer to half the size
+    // of the type used for m_size,m_producer,m_consumer variables.
+    used = (m_size + m_producer - m_consumer) % m_size;
+    if (used < len) {
+		// If this happens, the client code is broken and should be fixed.
+        // Likely this will cause the next wait() to return address
+        // in the middle of the packet.
+        len = used;
+    }
     m_consumer = (m_consumer + len) % m_size;
     m_lock.unlock();
 }

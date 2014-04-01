@@ -188,11 +188,33 @@ int Bug_WaitConsidersProducerOnRollover() {
     return TEST_OK;
 }
 
+int Bug_ConsumingEntireBuffer() {
+    // The bug in consume() function was that the number of used bytes
+    // was not calculated correctly due to unsigned nature of producer and
+    // consumer. Substracting those two could return negative result, in which
+    // case the modulus was not aligning it properly.
+    // m_producer = 16
+    // m_consumer = 24
+    // m_size     = 48
+    // used = (m_producer - m_consumer) % m_size; // <= this was returning 8, but the expected value is 40
+    CircularBuffer buf(48);
+    char data[48];
+
+    buf.push(data, 40);
+    buf.consume(24);
+    buf.push(data, 24);
+    // Now there's 40 bytes of data in the buffer, let's consume it all at once
+    buf.consume(40);
+    // ... and all the data should be gone. The bug was that m_consumer would
+    // be set to 32 before, so still some data in buffer.
+    return (buf.empty() ? TEST_OK : TEST_FAIL);
+}
+
 MAIN(mathTest)
 {
     uint32_t bufSize, pushSize1, pushSize2, pushSize3, consumeSize1, consumeSize2;
 
-    testPlan(45);
+    testPlan(46);
 
     testDiag("CircularBuffer constructor & destructor");
     testOk(CreateDestroy(), "Create & destroy");
@@ -258,6 +280,7 @@ MAIN(mathTest)
     testOk1(Bug_BigDataDontRollover());
     testOk1(PushOverBoundary());
     testOk1(Bug_WaitConsidersProducerOnRollover());
+    testOk1(Bug_ConsumingEntireBuffer());
 
     return testDone();
 }
