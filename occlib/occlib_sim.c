@@ -123,10 +123,8 @@ int occ_data_wait(struct occ_handle *handle, void **address, size_t *count, uint
     if (handle->rxdata == NULL)
         return -ENOENT;
 
-    if (!handle->rx_enabled) {
-        *count = 0;
-        return 0;
-    }
+    while (!handle->rx_enabled)
+        usleep(1000);
 
     if (handle->consumer >= handle->rxdatasize) {
         *address = NULL;

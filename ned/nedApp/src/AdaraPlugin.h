@@ -3,6 +3,33 @@
 
 #include "BasePlugin.h"
 
+/**
+ * Plugin that forwards Neutron Event data to ADARA SMS over TCP/IP.
+ *
+ * The plugin registers to receive all packets, but will only process and
+ * forward neutron event data packets which have RTDL header attached and
+ * the RTDL packets.
+ *
+ * After setting at least LISTEN_ADDR parameter, the plugin will start listening
+ * for incoming TCP/IP connections. LISTEN_ADDR and LISTEN_PORT can be changed
+ * at any time, which will reconfigure listening socket and also disconnect
+ * ADARA SMS client, if connected.
+ *
+ * When enabled, processing of packets will only occur if there's a client
+ * which accepts data. In this case, the Neutron Event data packets and RTDL
+ * packets are transformed into ADARA format and sent over socket, one packet
+ * at a time. Client socket is disconnected on any error. ADARA is supposed
+ * to reconnect immediately.
+ *
+ * AdaraPlugin provides following asyn parameters:
+ * asyn param name      | asyn param index | asyn param type | init val | mode | Description
+ * -------------------- | ---------------- | --------------- | -------- | ---- | -----------
+ * LISTEN_IP            | ListenIP         | asynParamOctet  | <empty>  | RW   | Hostname or IP address to listen to
+ * LISTEN_PORT          | ListenPort       | asynParamInt32  | 5656     | RW   | Port number to listen to
+ * CLIENT_IP            | ClientIP         | asynParamOctet  | <empty>  | RO   | IP of ADARA client if connected, or empty string
+ * TRANSMITTED_COUNT    | TransmittedCount | asynParamInt32  | 0        | RO   | Number of packets sent to ADARA
+ */
+
 class AdaraPlugin : public BasePlugin {
     public:
         /**
@@ -10,8 +37,9 @@ class AdaraPlugin : public BasePlugin {
 	     *
 	     * @param[in] portName asyn port name.
 	     * @param[in] dispatcherPortName Name of the dispatcher asyn port to connect to.
+	     * @param[in] blocking Should processing of callbacks block execution of caller thread or not.
          */
-        AdaraPlugin(const char *portName, const char *dispatcherPortName);
+        AdaraPlugin(const char *portName, const char *dispatcherPortName, int blocking=0);
 
         /**
          * Destructor
@@ -36,8 +64,8 @@ class AdaraPlugin : public BasePlugin {
         asynStatus writeOctet(asynUser *pasynUser, const char *value, size_t nChars, size_t *nActual);
 
     private:
-        int ListenIP;
         #define FIRST_ADARAPLUGIN_PARAM ListenIP
+        int ListenIP;
         int ListenPort;
         int ClientIP;
         int TransmittedCount;
@@ -66,11 +94,21 @@ class AdaraPlugin : public BasePlugin {
          * Try to connect client socket, don't block.
          *
          * Caller must hold a lock. When returned with true, m_clientSock is a valid
-         * client id and the clientHost is filled with the client IP address and remote port.
+         * client id. Function updates CLIENT_IP parameter.
          *
          * @param[out] clientHost When connected, dotted IP address of the client, followed by the port.
+         * @return true if connected, false otherwise.
          */
-        bool connectClient(std::string &clientHost);
+        bool connectClient();
+
+        /**
+         * Disconnect client if connected.
+         *
+         * Caller must hold a lock. Function updates CLIENT_IP parameter.
+         *
+         * @return true when disconnected or no client, false on error.
+         */
+        void disconnectClient();
 
         /**
          * Send data to client through m_clientSock.

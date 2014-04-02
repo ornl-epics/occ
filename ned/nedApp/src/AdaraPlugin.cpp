@@ -7,7 +7,7 @@
 #include <iostream>
 using namespace std;
 
-EPICS_REGISTER_PLUGIN(AdaraPlugin, 2, "port name", string, "dispatcher port", string);
+EPICS_REGISTER_PLUGIN(AdaraPlugin, 3, "port name", string, "dispatcher port", string, "blocking callbacks", int);
 
 #define NUM_ADARAPLUGIN_PARAMS      ((int)(&LAST_ADARAPLUGIN_PARAM - &FIRST_ADARAPLUGIN_PARAM + 1))
 #define DEFAULT_LISTEN_IP_PORT      5656
@@ -17,8 +17,8 @@ EPICS_REGISTER_PLUGIN(AdaraPlugin, 2, "port name", string, "dispatcher port", st
 #define ADARA_CODE_DAS_DATA         0x00000000
 #define ADARA_CODE_DAS_RTDL         0x00000100
 
-AdaraPlugin::AdaraPlugin(const char *portName, const char *dispatcherPortName)
-    : BasePlugin(portName, dispatcherPortName, REASON_NORMAL, NUM_ADARAPLUGIN_PARAMS, 1,
+AdaraPlugin::AdaraPlugin(const char *portName, const char *dispatcherPortName, int blocking)
+    : BasePlugin(portName, dispatcherPortName, REASON_OCCDATA, blocking, NUM_ADARAPLUGIN_PARAMS, 1,
                  asynOctetMask, asynOctetMask | asynInt32Mask)
     , m_listenSock(-1)
     , m_clientSock(-1)
@@ -31,12 +31,12 @@ AdaraPlugin::AdaraPlugin(const char *portName, const char *dispatcherPortName)
     createParam("CLIENT_IP",            asynParamOctet,     &ClientIP);
     createParam("TRANSMITTED_COUNT",    asynParamInt32,     &TransmittedCount);
 
+    setStringParam(ListenIP,            "");
+    setStringParam(ClientIP,            "");
     setIntegerParam(ListenPort,         DEFAULT_LISTEN_IP_PORT);
     setIntegerParam(TransmittedCount,   m_nTransmitted);
     setIntegerParam(ProcessedCount,     m_nProcessed);
     setIntegerParam(ReceivedCount,      m_nReceived);
-
-    setupListeningSocket("localhost", 54321);
 }
 
 AdaraPlugin::~AdaraPlugin()
@@ -51,11 +51,7 @@ void AdaraPlugin::processData(const DasPacketList * const packetList)
     // for client, instead we rely on the incoming data rate to trigger this function
     // quite often.
     if (m_clientSock == -1) {
-        string clientHost;
-        if (connectClient(clientHost)) {
-            setStringParam(ClientIP, clientHost.c_str());
-            callParamCallbacks();
-        }
+        (void)connectClient();
     }
 
     for (const DasPacket *packet = packetList->first(); packet != 0; packet = packetList->next(packet)) {
@@ -121,11 +117,10 @@ bool AdaraPlugin::send(const uint32_t *data, uint32_t length)
     while (m_clientSock != -1 && length > 0) {
         ssize_t sent = write(m_clientSock, rest, length);
         if (sent == -1) {
-            close(m_clientSock);
-            m_clientSock = -1;
             asynPrint(this->pasynUserSelf, ASYN_TRACE_ERROR,
                       "AdaraPlugin::%s(%s) Closed socket due to an write error - %s\n",
                       __func__, portName, strerror(errno));
+            disconnectClient();
         }
         rest += sent;
         length -= sent;
@@ -177,7 +172,7 @@ asynStatus AdaraPlugin::writeOctet(asynUser *pasynUser, const char *value, size_
         }
         *nActual = nChars;
 
-        status = getIntegerParam(ListenPort, sizeof(port), &port);
+        status = getIntegerParam(ListenPort, &port);
         if (status != asynSuccess) {
             port = DEFAULT_LISTEN_IP_PORT;
             asynPrint(this->pasynUserSelf, ASYN_TRACE_ERROR,
@@ -252,18 +247,16 @@ bool AdaraPlugin::setupListeningSocket(const string &host, uint16_t port)
         close(m_listenSock);
     m_listenSock = sock;
 
-    if (m_clientSock != -1)
-        close(m_clientSock);
-    m_clientSock = -1;
+    disconnectClient();
 
     this->unlock();
 
     return true;
 }
 
-bool AdaraPlugin::connectClient(string &clientHost)
+bool AdaraPlugin::connectClient()
 {
-    char buf[128];
+    char clientip[128];
     struct pollfd fds = {
         .fd = m_listenSock, // POSIX allows negative values, revents becomes 0
         .events = POLLIN,
@@ -280,7 +273,17 @@ bool AdaraPlugin::connectClient(string &clientHost)
     if (m_clientSock == -1)
         return false;
 
-    sockAddrToDottedIP(&client, buf, sizeof(buf));
-    clientHost.assign(buf);
+    sockAddrToDottedIP(&client, clientip, sizeof(clientip));
+    setStringParam(ClientIP, clientip);
+    callParamCallbacks();
     return true;
+}
+
+void AdaraPlugin::disconnectClient()
+{
+    if (m_clientSock != -1)
+        close(m_clientSock);
+    m_clientSock = -1;
+    setStringParam(ClientIP, "");
+    callParamCallbacks();
 }

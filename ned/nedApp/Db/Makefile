@@ -11,6 +11,7 @@ include $(TOP)/configure/CONFIG
 # Create and install (or just install) into <top>/db
 # databases, templates, substitutions like this
 DB += ned.db
+DB += AdaraPlugin.db
 
 #----------------------------------------------------
 # If <anyname>.db template is not named <anyname>*.template add
@@ -21,5 +22,5 @@ include $(TOP)/configure/RULES
 #  ADD RULES AFTER THIS LINE
 
 DB += ned.template
-
+DB += AdaraPlugin.template
 

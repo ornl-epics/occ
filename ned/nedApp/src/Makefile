@@ -34,7 +34,6 @@ PROD_LIBS += occ
 PROD_LIBS += $(EPICS_BASE_IOC_LIBS)
 
 PROD_SRCS  += ned_registerRecordDeviceDriver.cpp
-PROD_SRCS  += EpicsRegister.cpp
 PROD_SRCS  += main.cpp
 
 # Static library

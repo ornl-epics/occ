@@ -2,12 +2,11 @@
 #define PLUGIN_DRIVER_H
 
 #include "DasPacketList.h"
+#include "EpicsRegister.h"
 
 #include <stdint.h>
 #include <string>
 #include <asynPortDriver.h>
-#include <iocsh.h>
-#include <epicsExport.h>
 #include <epicsMessageQueue.h>
 #include <epicsThread.h>
 
@@ -18,18 +17,10 @@ enum {
     // Numbers should be unique within the asyn driver. All asynPortDriver parameters
     // share the same space. asynPortDriver start with 0 and increments the index for
     // each parameter. Pick reasonably high unique numbers here.
-    REASON_NORMAL           = 10000,
-    REASON_DIAGNOSTIC       = 10001,
+    REASON_OCCDATA          = 10000,
+    REASON_OCCDATADIAG      = 10001,
 };
 
-#define XSTR(s) STR(s)
-#define STR(s) #s
-#define EPICS_TYPE_string   iocshArgString
-#define EPICS_VAL_string    sval
-#define EPICS_CTYPE_string  const char*
-#define EPICS_TYPE_int      iocshArgInt
-#define EPICS_VAL_int       ival
-#define EPICS_CTYPE_int     int
 
 /**
  * Registers plugin with EPICS system.
@@ -37,6 +28,11 @@ enum {
  * Each plugin class should call this macro somewhere in the .c/.cpp file. The macro
  * creates a C function called \<plugin name\>Configure and exports it through EPICS
  * to be used from EPICS shell (for example st.cmd).
+ *
+ * Registering plugin with EPICS from the C code is first step in EPICS registration.
+ * User must manually add support for registered class into nedSupport.dbd file. For
+ * example, append the following line:
+ * registrar("ExamplePluginRegister")
  *
  * There are several macros depending on the number and type of arguments required by
  * the plugin.
@@ -52,43 +48,7 @@ enum {
  *            there should be exactly one such pair. Supported argument types are
  *            string, int.
  */
-#define EPICS_REGISTER_PLUGIN(name, numargs, ...) EPICS_REGISTER_PLUGIN_##numargs(name, __VA_ARGS__)
-
-#define EPICS_REGISTER_PLUGIN_1(name, arg0name, arg0type) \
-static const iocshArg initArg0 = { arg0name, EPICS_TYPE_##arg0type}; \
-static const iocshArg * const initArgs[] = {&initArg0}; \
-static const iocshFuncDef initFuncDef = { XSTR(name ## Configure), 1, initArgs}; \
-extern "C" { \
-    int name##Configure(EPICS_CTYPE_##arg0type arg0) { new name(arg0); return(asynSuccess); } \
-    static void initCallFunc(const iocshArgBuf *args) { name ## Configure(args[0].EPICS_VAL_##arg0type); } \
-    void name##Register(void) { iocshRegister(&initFuncDef,initCallFunc); } \
-    epicsExportRegistrar(name##Register); \
-}
-
-#define EPICS_REGISTER_PLUGIN_2(name, arg0name, arg0type, arg1name, arg1type) \
-static const iocshArg initArg0 = { arg0name, EPICS_TYPE_##arg0type}; \
-static const iocshArg initArg1 = { arg1name, EPICS_TYPE_##arg1type}; \
-static const iocshArg * const initArgs[] = {&initArg0,&initArg1}; \
-static const iocshFuncDef initFuncDef = { XSTR(name ## Configure), 2, initArgs}; \
-extern "C" { \
-    int name##Configure(EPICS_CTYPE_##arg0type arg0, EPICS_CTYPE_##arg1type arg1) { new name(arg0, arg1); return(asynSuccess); } \
-    static void initCallFunc(const iocshArgBuf *args) { name ## Configure(args[0].EPICS_VAL_##arg0type, args[1].EPICS_VAL_##arg1type); } \
-    void name##Register(void) { iocshRegister(&initFuncDef,initCallFunc); } \
-    epicsExportRegistrar(name##Register); \
-}
-
-#define EPICS_REGISTER_PLUGIN_3(name, arg0name, arg0type, arg1name, arg1type, arg2name, arg2type) \
-static const iocshArg initArg0 = { arg0name, EPICS_TYPE_##arg0type}; \
-static const iocshArg initArg1 = { arg1name, EPICS_TYPE_##arg1type}; \
-static const iocshArg initArg2 = { arg2name, EPICS_TYPE_##arg2type}; \
-static const iocshArg * const initArgs[] = {&initArg0,&initArg1,&initArg2}; \
-static const iocshFuncDef initFuncDef = { XSTR(name ## Configure), 3, initArgs}; \
-extern "C" { \
-    int name##Configure(EPICS_CTYPE_##arg0type arg0, EPICS_CTYPE_##arg1type arg1, EPICS_CTYPE_##arg2type arg2) { new name(arg0, arg1, arg2); return(asynSuccess); } \
-    static void initCallFunc(const iocshArgBuf *args) { name ## Configure(args[0].EPICS_VAL_##arg1type, args[1].EPICS_VAL_##arg1type, args[2].EPICS_VAL_##arg2type); } \
-    void name##Register(void) { iocshRegister(&initFuncDef,initCallFunc); } \
-    epicsExportRegistrar(name##Register); \
-}
+#define EPICS_REGISTER_PLUGIN(name, numargs, ...) EPICS_REGISTER(name, name,  numargs, __VA_ARGS__)
 
 /**
  * Abstract base plugin class.
@@ -110,6 +70,13 @@ extern "C" { \
  * in the code. For runtime loaded plugins, the plugin class implementation must
  * export its functionality through EPICS. New instances can then be created from
  * the EPICS shell. Use #EPICS_REGISTER_PLUGIN macro to export plugin to EPICS.
+ *
+ * BasePlugin provides following asyn parameters:
+ * asyn param name      | asyn param index | asyn param type | init val | mode | Description
+ * -------------------- | ---------------- | --------------- | -------- | ---- | -----------
+ * ENABLE_CALLBACKS     | EnableCallbacks  | asynParamInt32  | 0        | RW   | Shall the plugin register for data callbacks (1) or not (0)
+ * RECEIVED_COUNT       | ReceivedCount    | asynParamInt32  | 0        | RO   | Number of packets received, to be populated by derived classes
+ * PROCESSED_COUNT      | ProcessedCount   | asynParamInt32  | 0        | RO   | Number of packets processed, to be populated by derived classes
  */
 class BasePlugin : public asynPortDriver {
 	public:
@@ -120,12 +87,15 @@ class BasePlugin : public asynPortDriver {
 	     * Constructor
 	     *
 	     * Initialize internal state of the class. This includes calling asynPortDriver
-	     * constructor, creating and setting default values for class parameters,
-	     * connecting to dispatcher port.
+	     * constructor, creating and setting default values for class parameters and creating
+	     * worker thread for received data callbacks. It does not, however, register to the
+	     * dispatcher messages. This needs to be done through the ENABLE_CALLBACKS parameter
+	     * @b after BasePlugin object has been fully constructed.
 	     *
 	     * @param[in] portName asyn port name.
 	     * @param[in] dispatcherPortName Name of the dispatcher asyn port to connect to.
          * @param[in] reason Type of the messages to receive callbacks for.
+         * @param[in] blocking Flag whether the processing should be done in the context of caller thread or in background thread.
          * @param[in] numParams The number of parameters that the derived class supports.
          * @param[in] maxAddr The maximum  number of asyn addr addresses this driver supports. 1 is minimum.
          * @param[in] interfaceMask Bit mask defining the asyn interfaces that this driver supports.
@@ -135,7 +105,7 @@ class BasePlugin : public asynPortDriver {
          * @param[in] priority The thread priority for the asyn port driver thread if ASYN_CANBLOCK is set in asynFlags.
          * @param[in] stackSize The stack size for the asyn port driver thread if ASYN_CANBLOCK is set in asynFlags.
 	     */
-        BasePlugin(const char *portName, const char *dispatcherPortName, int reason,
+        BasePlugin(const char *portName, const char *dispatcherPortName, int reason, int blocking=0,
                    int numParams=0, int maxAddr=1, int interfaceMask=BasePlugin::defaultInterfaceMask,
                    int interruptMask=BasePlugin::defaultInterruptMask, int asynFlags=0, int autoConnect=1,
                    int priority=0, int stackSize=0);
@@ -143,7 +113,7 @@ class BasePlugin : public asynPortDriver {
 		/**
 		 * Destructor.
 		 */
-		virtual ~BasePlugin() { };
+		virtual ~BasePlugin();
 
         /**
          * Process the DAS packets received from the dispatcher.
@@ -181,9 +151,8 @@ class BasePlugin : public asynPortDriver {
         virtual asynStatus writeInt32(asynUser *pasynUser, epicsInt32 value);
 
     protected:
-        int PluginBlockingCallbacks;
-        #define FIRST_BASEPLUGIN_PARAM PluginBlockingCallbacks
-        int PluginEnableCallbacks;
+        #define FIRST_BASEPLUGIN_PARAM EnableCallbacks
+        int EnableCallbacks;
         int ReceivedCount;
         int ProcessedCount;
         #define LAST_BASEPLUGIN_PARAM ProcessedCount
@@ -193,8 +162,9 @@ class BasePlugin : public asynPortDriver {
         void *m_asynGenericPointerInterruptPvt;     //!< The asyn interfaces we access as a client
         epicsMessageQueue m_messageQueue;           //!< Message queue for non-blocking mode
         std::string m_portName;                     //!< Port name
-        epicsThreadId m_processDataThread;          //!< Background thread processing data, created on demand
-                                                    //!< by setting PluginBlockingCallbacks parameter
+        std::string m_dispatcherPortName;           //!< Dispatcher port name
+        epicsThreadId m_threadId;                   //!< Thread ID if created during constructor, 0 otherwise
+        bool m_shutdown;                            //!< Flag to shutdown the thread, used in conjunction with messageQueue wakeup
 
         asynStatus connectToDispatcherPort(const char *portName);
         asynStatus setCallbacks(bool enableCallbacks);

@@ -58,7 +58,7 @@
 		<Unit filename="DmaCircularBuffer.h" />
 		<Unit filename="DmaCopier.cpp" />
 		<Unit filename="DmaCopier.h" />
-		<Unit filename="EpicsRegister.cpp" />
+		<Unit filename="EpicsRegister.h" />
 		<Unit filename="OccDispatcher.cpp" />
 		<Unit filename="OccDispatcher.h" />
 		<Unit filename="OccPortDriver.cpp" />

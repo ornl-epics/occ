@@ -1,9 +1,9 @@
 #include "OccPortDriver.h"
 #include "DmaCircularBuffer.h"
 #include "DmaCopier.h"
+#include "EpicsRegister.h"
 
 #include "OccDispatcher.h"
-#include "AdaraPlugin.h" // for testing only
 
 #include <cstring> // strerror
 #include <cstddef>
@@ -19,6 +19,8 @@ static const int asynPriority      = 0;
 static const int asynStackSize     = 0;
 
 #define NUM_OCCPORTDRIVER_PARAMS ((int)(&LAST_OCCPORTDRIVER_PARAM - &FIRST_OCCPORTDRIVER_PARAM + 1))
+
+EPICS_REGISTER(ned, OccPortDriver, 3, "Port name", string, "Device id", int, "Local buffer size", int);
 
 OccPortDriver::OccPortDriver(const char *portName, int deviceId, uint32_t localBufferSize)
 	: asynPortDriver(portName, asynMaxAddr, NUM_OCCPORTDRIVER_PARAMS, asynInterfaceMask,
@@ -63,13 +65,8 @@ OccPortDriver::OccPortDriver(const char *portName, int deviceId, uint32_t localB
     else
         m_circularBuffer = new DmaCircularBuffer(m_occ);
 
-    // Create dispatcher thread
+    // Create dispatcher thread - the port name should be configurable as it's used by plugins
     OccDispatcher *d = new OccDispatcher("OCCdispatcher", m_circularBuffer);
-
-    // For testing only - create a plugin and send some data to it
-    BasePlugin *p = new AdaraPlugin("testPort1", "OCCdispatcher");
-
-    status = occ_enable_rx(m_occ, true);
 }
 
 OccPortDriver::~OccPortDriver()

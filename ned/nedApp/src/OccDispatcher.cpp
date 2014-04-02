@@ -41,7 +41,7 @@ void OccDispatcher::occBufferReadThread()
         }
         resetErrorRatelimit = false;
 
-        sendToPlugins(REASON_NORMAL, &m_packetsList);
+        sendToPlugins(REASON_OCCDATA, &m_packetsList);
 
         consumed = 0;
         // Plugins have been notified, hopefully they're all threads.
