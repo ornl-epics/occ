@@ -50,6 +50,8 @@
 		<Unit filename="BasePlugin.h" />
 		<Unit filename="CircularBuffer.cpp" />
 		<Unit filename="CircularBuffer.h" />
+		<Unit filename="CmdPlugin.cpp" />
+		<Unit filename="CmdPlugin.h" />
 		<Unit filename="DasPacket.cpp" />
 		<Unit filename="DasPacket.h" />
 		<Unit filename="DasPacketList.cpp" />

@@ -42,11 +42,10 @@ record(bi, "$(P)$(R)OpticsPresent")
    field(ONAM, "Yes")
    field(SCAN, "1 second")
 }
-record(bi, "$(P)$(R)RxEnabled")
+record(bo, "$(P)$(R)RxEnabled")
 {
-   field(PINI, "YES")
    field(DTYP, "asynInt32")
-   field(INP,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))RX_ENABLED")
+   field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))RX_ENABLED")
    field(ZNAM, "No")
    field(ONAM, "Yes")
    field(SCAN, "I/O Intr")

@@ -51,8 +51,7 @@ ned_SRCS  += DasPacket.cpp
 ned_SRCS  += DasPacketList.cpp
 ned_SRCS  += BasePlugin.cpp
 ned_SRCS  += AdaraPlugin.cpp
-ned_SRCS  += BaseDispatcher.cpp
-ned_SRCS  += OccDispatcher.cpp
+ned_SRCS  += CmdDispatcher.cpp
 
 #===========================
 

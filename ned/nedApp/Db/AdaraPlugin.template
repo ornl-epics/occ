@@ -10,7 +10,7 @@ record(longout, "$(P)$(R)ListenPort")
    field(OUT,   "@asyn($(PORT),$(ADDR),$(TIMEOUT))LISTEN_PORT")
    field(VAL,   "0")
 }
-record(stringout, "$(P)$(R)ClientIp")
+record(stringin, "$(P)$(R)ClientIp")
 {
     field(DTYP, "asynOctetRead")
     field(INP,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))CLIENT_IP")
@@ -21,4 +21,5 @@ record(longin, "$(P)$(R)TransmittedCount")
    field(DTYP,  "asynInt32")
    field(INP,   "@asyn($(PORT),$(ADDR),$(TIMEOUT))TRANSMITTED_COUNT")
    field(VAL,   "0")
+   field(SCAN,  "I/O Intr")
 }

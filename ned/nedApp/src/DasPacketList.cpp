@@ -79,7 +79,7 @@ void DasPacketList::release()
     m_lock.unlock();
 }
 
-bool DasPacketList::reset(uint8_t *addr, uint32_t length)
+bool DasPacketList::reset(const uint8_t *addr, uint32_t length)
 {
     bool reseted = false;
 

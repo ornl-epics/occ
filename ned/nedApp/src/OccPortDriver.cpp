@@ -2,8 +2,7 @@
 #include "DmaCircularBuffer.h"
 #include "DmaCopier.h"
 #include "EpicsRegister.h"
-
-#include "OccDispatcher.h"
+#include "BasePlugin.h"
 
 #include <cstring> // strerror
 #include <cstddef>
@@ -11,8 +10,8 @@
 #include <occlib.h>
 
 static const int asynMaxAddr       = 1;
-static const int asynInterfaceMask = asynInt32Mask | asynOctetMask | asynDrvUserMask; // don't remove DrvUserMask or you'll break callback's reasons
-static const int asynInterruptMask = asynInt32Mask | asynOctetMask;
+static const int asynInterfaceMask = asynInt32Mask | asynOctetMask | asynGenericPointerMask | asynDrvUserMask; // don't remove DrvUserMask or you'll break callback's reasons
+static const int asynInterruptMask = asynInt32Mask | asynOctetMask | asynGenericPointerMask;
 static const int asynFlags         = 0;
 static const int asynAutoConnect   = 1;
 static const int asynPriority      = 0;
@@ -22,10 +21,19 @@ static const int asynStackSize     = 0;
 
 EPICS_REGISTER(ned, OccPortDriver, 3, "Port name", string, "Device id", int, "Local buffer size", int);
 
+extern "C" {
+    static void processOccDataC(void *drvPvt)
+    {
+        OccPortDriver *driver = reinterpret_cast<OccPortDriver *>(drvPvt);
+        driver->processOccData();
+    }
+}
+
 OccPortDriver::OccPortDriver(const char *portName, int deviceId, uint32_t localBufferSize)
 	: asynPortDriver(portName, asynMaxAddr, NUM_OCCPORTDRIVER_PARAMS, asynInterfaceMask,
 	                 asynInterruptMask, asynFlags, asynAutoConnect, asynPriority, asynStackSize)
     , m_occ(NULL)
+    , m_occBufferReadThreadId(0)
 {
     int status;
     occ_status_t occstatus;
@@ -64,9 +72,16 @@ OccPortDriver::OccPortDriver(const char *portName, int deviceId, uint32_t localB
         m_circularBuffer = new DmaCopier(m_occ, localBufferSize);
     else
         m_circularBuffer = new DmaCircularBuffer(m_occ);
+    if (!m_circularBuffer) {
+        asynPrint(this->pasynUserSelf, ASYN_TRACE_ERROR, "Unable to create circular buffer handler\n");
+        return;
+    }
 
-    // Create dispatcher thread - the port name should be configurable as it's used by plugins
-    OccDispatcher *d = new OccDispatcher("OCCdispatcher", m_circularBuffer);
+    m_occBufferReadThreadId = epicsThreadCreate(portName,
+                                                epicsThreadPriorityHigh,
+                                                epicsThreadGetStackSize(epicsThreadStackMedium),
+                                                (EPICSTHREADFUNC)processOccDataC,
+                                                this);
 }
 
 OccPortDriver::~OccPortDriver()
@@ -104,4 +119,62 @@ asynStatus OccPortDriver::readInt32(asynUser *pasynUser, epicsInt32 *value)
         callParamCallbacks();
     }
     return asynPortDriver::readInt32(pasynUser, value);
+}
+
+asynStatus OccPortDriver::writeInt32(asynUser *pasynUser, epicsInt32 value)
+{
+    if (pasynUser->reason == RxEnabled) {
+        int ret = occ_enable_rx(m_occ, value != 0);
+        if (ret != 0) {
+            asynPrint(pasynUser, ASYN_TRACE_ERROR, "Unable to enable RX - %s(%d)\n", strerror(-ret), ret);
+            return asynError;
+        }
+        setIntegerParam(RxEnabled, value == 0 ? 0 : 1);
+        callParamCallbacks();
+        return asynSuccess;
+    }
+    return asynPortDriver::writeInt32(pasynUser, value);
+}
+
+void OccPortDriver::processOccData()
+{
+    void *data;
+    uint32_t length;
+    uint32_t consumed;
+    bool resetErrorRatelimit = false;
+    DasPacketList packetsList;
+
+    while (true) {
+        m_circularBuffer->wait(&data, &length);
+
+        if (!packetsList.reset(reinterpret_cast<uint8_t*>(data), length)) {
+            // This should not happen. If it does it's certainly a code error that needs to be fixed.
+            if (!resetErrorRatelimit) {
+                asynPrint(pasynUserSelf, ASYN_TRACE_FLOW, "PluginDriver:%s ERROR failed to reset DasPacketList\n", __func__);
+                resetErrorRatelimit = true;
+            }
+            continue;
+        }
+        resetErrorRatelimit = false;
+
+        sendToPlugins(REASON_OCCDATA, &packetsList);
+
+        consumed = 0;
+        // Plugins have been notified, hopefully they're all non-blocking.
+        // While waiting, calculate how much data can be consumed from circular buffer.
+        for (const DasPacket *packet = packetsList.first(); packet != 0; packet = packetsList.next(packet)) {
+            consumed += packet->length();
+        }
+
+        packetsList.release(); // reset() set it to 1
+        packetsList.waitAllReleased();
+
+        m_circularBuffer->consume(consumed);
+    }
+}
+
+void OccPortDriver::sendToPlugins(int messageType, const DasPacketList *packetList)
+{
+    const void *addr = reinterpret_cast<const void *>(packetList);
+    doCallbacksGenericPointer(const_cast<void *>(addr), messageType, 0);
 }

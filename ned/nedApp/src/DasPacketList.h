@@ -76,7 +76,7 @@ class DasPacketList
          * @param[in] length Memory block length in bytes.
          * @return true when object points to new data, false if reference count is not 0.
          */
-        bool reset(uint8_t *addr, uint32_t length);
+        bool reset(const uint8_t *addr, uint32_t length);
 
         /**
          * Wait for all consumers to release the object.

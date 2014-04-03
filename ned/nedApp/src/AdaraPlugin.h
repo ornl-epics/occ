@@ -39,7 +39,7 @@ class AdaraPlugin : public BasePlugin {
 	     * @param[in] dispatcherPortName Name of the dispatcher asyn port to connect to.
 	     * @param[in] blocking Should processing of callbacks block execution of caller thread or not.
          */
-        AdaraPlugin(const char *portName, const char *dispatcherPortName, int blocking=0);
+        AdaraPlugin(const char *portName, const char *dispatcherPortName, int blocking);
 
         /**
          * Destructor
