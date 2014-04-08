@@ -177,7 +177,7 @@ asynStatus BasePlugin::setCallbacks(bool enable)
         asynGenericPointer *asynGenericPointerInterface = reinterpret_cast<asynGenericPointer *>(interface->pinterface);
         status = asynGenericPointerInterface->registerInterruptUser(
                     interface->drvPvt, m_pasynuser,
-                    ::genericPointerCallback, this, &m_asynGenericPointerInterrupt);
+                    ::dispatcherCallback, this, &m_asynGenericPointerInterrupt);
         if (status != asynSuccess) {
             asynPrint(this->pasynUserSelf, ASYN_TRACE_ERROR,
                       "BasePlugin::%s ERROR: Can't enable interrupt callbacks on dispatcher port: %s\n",
