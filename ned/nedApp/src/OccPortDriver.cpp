@@ -136,6 +136,16 @@ asynStatus OccPortDriver::writeInt32(asynUser *pasynUser, epicsInt32 value)
     return asynPortDriver::writeInt32(pasynUser, value);
 }
 
+asynStatus OccPortDriver::writeGenericPointer(asynUser *pasynUser, void *pointer)
+{
+    if (pasynUser->reason == REASON_OCCDATA) {
+        DasPacketList *packets = reinterpret_cast<DasPacketList *>(pointer);
+        const DasPacket *packet = packets->first();
+        uint32_t len = packet->payload_length;
+        // TODO: send to OCC
+    }
+}
+
 void OccPortDriver::processOccData()
 {
     void *data;

@@ -70,6 +70,11 @@ class epicsShareFunc OccPortDriver : public asynPortDriver {
          */
 		asynStatus writeInt32(asynUser *pasynUser, epicsInt32 value);
 
+        /**
+         * Overloaded method.
+         */
+		asynStatus writeGenericPointer (asynUser *pasynUser, void *pointer);
+
     public:
         /**
          * Process data from OCC buffer and dispatch it to the registered plugins.

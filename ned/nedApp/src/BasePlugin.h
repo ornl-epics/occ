@@ -48,7 +48,7 @@ enum {
  *            there should be exactly one such pair. Supported argument types are
  *            string, int.
  */
-#define EPICS_REGISTER_PLUGIN(name, numargs, ...) EPICS_REGISTER(name, name,  numargs, __VA_ARGS__)
+#define EPICS_REGISTER_PLUGIN(name, numargs, ...) EPICS_REGISTER(name, name, numargs, __VA_ARGS__)
 
 /**
  * Abstract base plugin class.
@@ -150,6 +150,16 @@ class BasePlugin : public asynPortDriver {
          */
         virtual asynStatus writeInt32(asynUser *pasynUser, epicsInt32 value);
 
+        /**
+         * Send list of packets to dispatcher.
+         *
+         * This is always blocking call, it will only return when the dispatcher
+         * is done with the data.
+         *
+         * @param[in] packetsList List of packets to be sent.
+         */
+        void dispatcherSend(const DasPacketList * const packetsList);
+
     protected:
         #define FIRST_BASEPLUGIN_PARAM EnableCallbacks
         int EnableCallbacks;
@@ -158,16 +168,20 @@ class BasePlugin : public asynPortDriver {
         #define LAST_BASEPLUGIN_PARAM ProcessedCount
 
     private:
-        asynUser *m_pasynuserDispatcher;            //!< asynUser for connecting to dispatcher
-        void *m_asynGenericPointerInterruptPvt;     //!< The asyn interfaces we access as a client
+        asynUser *m_pasynuser;                      //!< asynUser handler for asyn management
+        void *m_asynGenericPointerInterrupt;        //!< Generic pointer interrupt handler
         epicsMessageQueue m_messageQueue;           //!< Message queue for non-blocking mode
         std::string m_portName;                     //!< Port name
         std::string m_dispatcherPortName;           //!< Dispatcher port name
         epicsThreadId m_threadId;                   //!< Thread ID if created during constructor, 0 otherwise
         bool m_shutdown;                            //!< Flag to shutdown the thread, used in conjunction with messageQueue wakeup
 
-        asynStatus connectToDispatcherPort(const char *portName);
-        asynStatus setCallbacks(bool enableCallbacks);
+        /**
+         * Enable or disable callbacks from dispatcher.
+         *
+         * @return asynSuccess if operation succeeded.
+         */
+        asynStatus setCallbacks(bool enable);
 
     public: // public only for C linkage, don't use outside the class
         /**
