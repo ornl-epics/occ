@@ -1,5 +1,6 @@
 #include "BasePlugin.h"
 #include "DasPacketList.h"
+#include "Timer.h"
 
 #include <epicsThread.h>
 #include <string>
@@ -145,6 +146,22 @@ void BasePlugin::dispatcherSend(const DasPacketList * const packetsList)
     asynGenericPointerInterface->write(interface->drvPvt, m_pasynuser, ptr);
 }
 
+bool BasePlugin::scheduleCallback(std::function<void(void)> &callback, double delay)
+{
+    Timer *timer = new Timer(true); // Timer* will be deleted in timerExpire
+    if (!timer)
+        return false;
+    std::function<void()> timerCb = std::bind(&BasePlugin::timerExpire, this, timer, callback);
+    return timer->schedule(timerCb, delay);
+}
+
+const char *BasePlugin::getParamName(int index)
+{
+    const char *name = "<error>";
+    asynPortDriver::getParamName(index, &name);
+    return name;
+}
+
 void BasePlugin::processDataThread(void)
 {
     while (!m_shutdown) {
@@ -199,4 +216,12 @@ asynStatus BasePlugin::setCallbacks(bool enable)
     }
 
     return status;
+}
+
+void BasePlugin::timerExpire(Timer *timer, std::function<void()> callback)
+{
+    this->lock();
+    callback();
+    this->unlock();
+    delete timer;
 }

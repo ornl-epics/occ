@@ -40,6 +40,7 @@ struct DasPacket
          */
         enum CommandType {
             CMD_RTDL                    = 0x85, //!< RTDL is a command packet, but can also be data packet if info == 0xFC
+            CMD_WRITE_CONFIG            = 0x30, //!< Write module configuration
         };
 
         static const uint32_t MinLength = 6*4;  //!< Minumum total length of any DAS packet, at least the header must be present
@@ -82,9 +83,12 @@ struct DasPacket
         uint32_t data[0];
 
         /**
-         * Constructor, hardly ever used.
+         * Create DasPacket of variable size based on the payloadLength.
+         *
+         * @param[in] payloadLength Size of the packet payload in bytes.
+         * @param[in] payload Payload to be copied into the DasPacket buffer, must match payloadLength. If 0, nothing will be copied.
          */
-        DasPacket(uint32_t datalen);
+        static DasPacket *create(uint32_t payloadLength, const uint8_t *payload=0);
 
         /**
          * Check if packet is valid, like the alignment check, size check, etc.
@@ -137,6 +141,19 @@ struct DasPacket
          * @param[out] count Number of NeutronEvents in the returned memory.
          */
         const NeutronEvent *getNeutronData(uint32_t *count) const;
+
+    private:
+
+        /**
+         * Constructor.
+         *
+         * The constructor is kept private to prevent user make mistake allocating
+         * this dynamically sizable object.
+         *
+         * @param[in] payloadLength Size of the packet payload in bytes.
+         * @param[in] payload Payload to be copied into the DasPacket buffer, must match payloadLength. If 0, nothing will be copied.
+         */
+        DasPacket(uint32_t payloadLength, const uint8_t *payload=0);
 };
 
 #endif // DASPACKET_HPP

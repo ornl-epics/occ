@@ -79,6 +79,13 @@ class DasPacketList
         bool reset(const uint8_t *addr, uint32_t length);
 
         /**
+         * Reset the list and put a single DasPacket in it.
+         *
+         * This is a convinience wrapper function for the reset(const uint8_t*, uint32_t)
+         */
+        bool reset(const DasPacket * const packet);
+
+        /**
          * Wait for all consumers to release the object.
          *
          * After the function returns, reference counter is guaranteed to be 0 and

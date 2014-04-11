@@ -6,6 +6,7 @@
 
 #include <stdint.h>
 #include <string>
+#include <functional>
 #include <asynPortDriver.h>
 #include <epicsMessageQueue.h>
 #include <epicsThread.h>
@@ -21,6 +22,7 @@ enum {
     REASON_OCCDATADIAG      = 10001,
 };
 
+class Timer;
 
 /**
  * Registers plugin with EPICS system.
@@ -160,6 +162,29 @@ class BasePlugin : public asynPortDriver {
          */
         void dispatcherSend(const DasPacketList * const packetsList);
 
+        /**
+         * Request a custom callback function to be called at some time in the future.
+         *
+         * If the plugin is non-blocking and is not running its own thread
+         * to do synchronous work, it can request attention in some future
+         * time. The callback will be called in the timer thread which is
+         * shared among all plugins callbacks, and so it shouldn't take block
+         * for to long. When called, access to the plugin is
+         * locked and other requests to current plugin object are serialized.
+         *
+         * @param[in] callback Function to be called after delay expires.
+         * @param[in] delay Delay from now when to invoke the function, in seconds.
+         */
+        bool scheduleCallback(std::function<void(void)> &callback, double delay);
+
+        /**
+         * Return the name of the asyn parameter.
+         *
+         * @param[in] index asyn parameter index
+         * @return Name of the parameter used when parameter was registered.
+         */
+        const char *getParamName(int index);
+
     protected:
         #define FIRST_BASEPLUGIN_PARAM EnableCallbacks
         int EnableCallbacks;
@@ -182,6 +207,11 @@ class BasePlugin : public asynPortDriver {
          * @return asynSuccess if operation succeeded.
          */
         asynStatus setCallbacks(bool enable);
+
+        /**
+         * Called from epicsTimer when timer expires.
+         */
+        void timerExpire(Timer *timer, std::function<void(void)> callback);
 
     public: // public only for C linkage, don't use outside the class
         /**

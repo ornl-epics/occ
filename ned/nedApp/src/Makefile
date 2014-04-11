@@ -43,6 +43,7 @@ SHARED_LIBRARIES = NO
 # Headers used by unit-tests
 INC += CircularBuffer.h
 
+ned_SRCS  += Timer.cpp
 ned_SRCS  += OccPortDriver.cpp
 ned_SRCS  += DmaCircularBuffer.cpp
 ned_SRCS  += CircularBuffer.cpp

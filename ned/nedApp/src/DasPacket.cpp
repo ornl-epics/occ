@@ -1,6 +1,7 @@
 #include "DasPacket.h"
 
 #include <stdexcept>
+#include <string.h>
 
 // Get rid of these defines gradually as we re-implement into structured way
 #define DAS_ROOT_ID                         0x000f10cc
@@ -49,6 +50,33 @@
 #define DAS_RSP_CHAN_CONFIG                 (DAS_RSP_CONFIG | 0x1000)
 #define DAS_RSP_CHAN_STATUS                 (DAS_RSP_STATUS | 0x1000)
 #define DAS_RSP_CHAN_MASK                   (7 << 8)
+
+DasPacket *DasPacket::create(uint32_t payloadLen, const uint8_t *payload)
+{
+    DasPacket *packet = 0;
+    void *addr = malloc(sizeof(DasPacket) + payloadLen);
+    if (addr)
+        packet = new (addr) DasPacket(payloadLen, payload);
+    return packet;
+}
+
+DasPacket::DasPacket(uint32_t payloadLen, const uint8_t *payload)
+    : destination(0)
+    , source(0)
+    , info(0)
+    , payload_length((payloadLen + 7 ) & ~7)
+    , reserved1(0)
+    , reserved2(0)
+{
+    if (payload) {
+        memcpy(data, payload, payloadLen);
+        if (payload_length != payloadLen) {
+            memset(&data[payload_length], 0, payload_length - payloadLen);
+        }
+    } else {
+        memset(data, 0, payload_length);
+    }
+}
 
 bool DasPacket::valid() const
 {

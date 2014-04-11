@@ -95,6 +95,11 @@ bool DasPacketList::reset(const uint8_t *addr, uint32_t length)
     return reseted;
 }
 
+bool DasPacketList::reset(const DasPacket * const packet)
+{
+    return reset(reinterpret_cast<const uint8_t *>(packet), packet->length());
+}
+
 void DasPacketList::waitAllReleased() const
 {
     uint32_t consumed;
