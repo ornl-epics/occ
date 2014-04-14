@@ -223,7 +223,7 @@ bool AdaraPlugin::setupListeningSocket(const string &host, uint16_t port)
         return false;
     }
 
-    if (bind(sock, (struct sockaddr *)&sockaddr, sizeof(struct sockaddr)) != 0) {
+    if (::bind(sock, (struct sockaddr *)&sockaddr, sizeof(struct sockaddr)) != 0) {
         char sockErrBuf[64];
         asynPrint(this->pasynUserSelf, ASYN_TRACE_ERROR,
                   "AdaraPlugin::%s(%s) failed to bind to socket - %s\n",
@@ -257,11 +257,12 @@ bool AdaraPlugin::setupListeningSocket(const string &host, uint16_t port)
 bool AdaraPlugin::connectClient()
 {
     char clientip[128];
-    struct pollfd fds = {
-        .fd = m_listenSock, // POSIX allows negative values, revents becomes 0
-        .events = POLLIN,
-        .revents = 0,
-    };
+    struct pollfd fds;
+
+    fds.fd = m_listenSock; // POSIX allows negative values, revents becomes 0
+    fds.events = POLLIN;
+    fds.revents = 0;
+
     // Non-blocking check
     if (poll(&fds, 1, 0) == 0 || fds.revents != POLLIN)
         return false;
