@@ -53,9 +53,14 @@ ned_SRCS  += DasPacketList.cpp
 ned_SRCS  += BasePlugin.cpp
 ned_SRCS  += AdaraPlugin.cpp
 ned_SRCS  += CmdDispatcher.cpp
+ned_SRCS  += DspPlugin.cpp
 
 #===========================
 
 include $(TOP)/configure/RULES
 #----------------------------------------
 #  ADD RULES AFTER THIS LINE
+
+doc: Doxyfile
+	./extract_module_params.sh DspPlugin.cpp > DspPlugin.dox
+	doxygen

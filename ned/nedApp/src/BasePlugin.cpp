@@ -124,14 +124,14 @@ void BasePlugin::dispatcherCallback(asynUser *pasynUser, void *genericPointer)
          * thread. Make a reservation so that it doesn't go away.
          */
         packetList->reserve();
-        if (!m_messageQueue.trySend(&packetList, sizeof(&packetList))) {
+        if (m_messageQueue.trySend(&packetList, sizeof(&packetList)) == -1) {
             packetList->release();
             asynPrint(pasynUser, ASYN_TRACE_FLOW, "BasePlugin:%s message queue full\n", __func__);
         }
     }
 }
 
-void BasePlugin::dispatcherSend(const DasPacketList * const packetsList)
+void BasePlugin::sendToDispatcher(const DasPacket *packet)
 {
     asynInterface *interface = pasynManager->findInterface(m_pasynuser, asynGenericPointerType, 1);
     if (!interface) {
@@ -141,9 +141,12 @@ void BasePlugin::dispatcherSend(const DasPacketList * const packetsList)
         return;
     }
 
+    DasPacketList packetsList;
+    packetsList.reset(packet);
     asynGenericPointer *asynGenericPointerInterface = reinterpret_cast<asynGenericPointer *>(interface->pinterface);
-    void *ptr = reinterpret_cast<void *>(const_cast<DasPacketList *>(packetsList));
+    void *ptr = reinterpret_cast<void *>(const_cast<DasPacketList *>(&packetsList));
     asynGenericPointerInterface->write(interface->drvPvt, m_pasynuser, ptr);
+    packetsList.release();
 }
 
 bool BasePlugin::scheduleCallback(std::function<void(void)> &callback, double delay)

@@ -39,8 +39,10 @@ struct DasPacket
          * to document each one well when added.
          */
         enum CommandType {
-            CMD_RTDL                    = 0x85, //!< RTDL is a command packet, but can also be data packet if info == 0xFC
+            CMD_READ_VERSION            = 0x20, //!< Read module version
+            CMD_READ_CONFIG             = 0x21, //!< Read module configuration
             CMD_WRITE_CONFIG            = 0x30, //!< Write module configuration
+            CMD_RTDL                    = 0x85, //!< RTDL is a command packet, but can also be data packet if info == 0xFC
         };
 
         static const uint32_t MinLength = 6*4;  //!< Minumum total length of any DAS packet, at least the header must be present
@@ -57,7 +59,9 @@ struct DasPacket
             uint32_t info;                      //!< Raw access to the info (dcomserver compatibility mode)
             struct {
 #ifdef BITFIELD_LSB_FIRST
-                enum CommandType command:31;    //!< 31 bits describing DAS module commands
+                enum CommandType command:8;     //!< 8 bits describing DAS module commands
+                unsigned unused_command:22;     //!< Command filler, unknown or unspecified bits
+                unsigned is_response:1;         //!< If 1 the packet is response to a command
                 unsigned is_command:1;          //!< If 1, packet is command, data otherwise
 #endif
             } cmdinfo;
@@ -109,6 +113,11 @@ struct DasPacket
          * Is this a command packet?
          */
         bool isCommand() const;
+
+        /**
+         * Is this a response packet?
+         */
+        bool isResponse() const;
 
         /**
          * Is this a data packet?

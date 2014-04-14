@@ -153,14 +153,14 @@ class BasePlugin : public asynPortDriver {
         virtual asynStatus writeInt32(asynUser *pasynUser, epicsInt32 value);
 
         /**
-         * Send list of packets to dispatcher.
+         * Send single packet to the dispatcher to transmit it through optics.
          *
          * This is always blocking call, it will only return when the dispatcher
          * is done with the data.
          *
-         * @param[in] packetsList List of packets to be sent.
+         * @param[in] packet Packet to be sent out.
          */
-        void dispatcherSend(const DasPacketList * const packetsList);
+        void sendToDispatcher(const DasPacket *packet);
 
         /**
          * Request a custom callback function to be called at some time in the future.
@@ -192,6 +192,13 @@ class BasePlugin : public asynPortDriver {
         int ProcessedCount;
         #define LAST_BASEPLUGIN_PARAM ProcessedCount
 
+        /**
+         * Enable or disable callbacks from dispatcher.
+         *
+         * @return asynSuccess if operation succeeded.
+         */
+        asynStatus setCallbacks(bool enable);
+
     private:
         asynUser *m_pasynuser;                      //!< asynUser handler for asyn management
         void *m_asynGenericPointerInterrupt;        //!< Generic pointer interrupt handler
@@ -200,13 +207,6 @@ class BasePlugin : public asynPortDriver {
         std::string m_dispatcherPortName;           //!< Dispatcher port name
         epicsThreadId m_threadId;                   //!< Thread ID if created during constructor, 0 otherwise
         bool m_shutdown;                            //!< Flag to shutdown the thread, used in conjunction with messageQueue wakeup
-
-        /**
-         * Enable or disable callbacks from dispatcher.
-         *
-         * @return asynSuccess if operation succeeded.
-         */
-        asynStatus setCallbacks(bool enable);
 
         /**
          * Called from epicsTimer when timer expires.

@@ -48,7 +48,7 @@ const DasPacket *DasPacketList::_verifyPacket(const DasPacket *pkt) const
     if (pktAddr >= (m_address + m_length))
         return 0;
 
-    if (pkt->length() <= DasPacket::MinLength || pkt->length() >= DasPacket::MaxLength)
+    if (pkt->length() < DasPacket::MinLength || pkt->length() > DasPacket::MaxLength)
         return 0;
 
     if ((pktAddr + pkt->length()) > (m_address + m_length))

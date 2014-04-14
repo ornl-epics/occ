@@ -14,6 +14,7 @@ epicsEnvSet("PORT",   "OCC1")
 dbLoadRecords("../../db/ned.template","P=$(PREFIX),R=ocb1:,PORT=$(PORT),ADDR=0,TIMEOUT=1")
 nedConfigure("$(PORT)", 0, 1000000)
 
+#CmdPluginConfigure("Test", "$(PORT)")
 AdaraPluginConfigure("Adara1", "$(PORT)")
 dbLoadRecords("../../db/AdaraPlugin.template","P=$(PREFIX),R=ocb1:,PORT=Adara1,ADDR=0,TIMEOUT=1")
 dbLoadRecords("../../db/BasePlugin.template","P=$(PREFIX),R=ocb1:,PORT=Adara1,ADDR=0,TIMEOUT=1")

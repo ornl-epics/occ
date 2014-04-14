@@ -9,6 +9,8 @@
 #include <errno.h>
 #include <occlib.h>
 
+#include "DspPlugin.h"
+
 static const int asynMaxAddr       = 1;
 static const int asynInterfaceMask = asynInt32Mask | asynOctetMask | asynGenericPointerMask | asynDrvUserMask; // don't remove DrvUserMask or you'll break callback's reasons
 static const int asynInterruptMask = asynInt32Mask | asynOctetMask | asynGenericPointerMask;
@@ -82,6 +84,8 @@ OccPortDriver::OccPortDriver(const char *portName, int deviceId, uint32_t localB
                                                 epicsThreadGetStackSize(epicsThreadStackMedium),
                                                 (EPICSTHREADFUNC)processOccDataC,
                                                 this);
+
+    DspPlugin *dsp = new DspPlugin("DspPlugin", "OCC1", 0x10);
 }
 
 OccPortDriver::~OccPortDriver()
@@ -142,6 +146,16 @@ asynStatus OccPortDriver::writeGenericPointer(asynUser *pasynUser, void *pointer
         DasPacketList *packets = reinterpret_cast<DasPacketList *>(pointer);
         const DasPacket *packet = packets->first();
         uint32_t len = packet->payload_length;
+
+        DasPacket *out = DasPacket::create(16, 0);
+        out->source = packet->destination;
+        out->info = packet->info;
+        out->cmdinfo.is_response = 1;
+        out->data[0] = 0x310E040B;
+        out->data[1] = 0x13140411;
+        DmaCopier *dma = dynamic_cast<DmaCopier*>(m_circularBuffer);
+        dma->push(reinterpret_cast<void *>(out), out->length());
+
         // TODO: send to OCC
     }
 }
