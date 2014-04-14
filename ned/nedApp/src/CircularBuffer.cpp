@@ -5,6 +5,7 @@
 #include <string.h>
 
 #include <algorithm>
+#include <limits>
 #include <stdexcept>
 
 static const uint32_t UNIT_SIZE            = 8;              // OCC data is 8 byte aligned
