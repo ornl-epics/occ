@@ -33,6 +33,14 @@ struct DasPacket
         };
 
         /**
+         * Well known hardware addresses.
+         */
+        enum HardwareId {
+            HWID_BROADCAST              = 0x0,      //!< Everybody should receive the packet
+            HWID_SELF                   = 0xF10CC,  //!< Preprocessor HWID
+        };
+
+        /**
          * Commands used by different DAS modules.
          *
          * Add those gradualy as migrating from legacy software. Make sure
@@ -42,6 +50,9 @@ struct DasPacket
             CMD_READ_VERSION            = 0x20, //!< Read module version
             CMD_READ_CONFIG             = 0x21, //!< Read module configuration
             CMD_WRITE_CONFIG            = 0x30, //!< Write module configuration
+            CMD_DISCOVER                = 0x80, //!< Discover modules
+            CMD_START                   = 0x82, //!< Start acquisition
+            CMD_STOP                    = 0x83, //!< Stop acquisition
             CMD_RTDL                    = 0x85, //!< RTDL is a command packet, but can also be data packet if info == 0xFC
         };
 
@@ -59,9 +70,11 @@ struct DasPacket
             uint32_t info;                      //!< Raw access to the info (dcomserver compatibility mode)
             struct {
 #ifdef BITFIELD_LSB_FIRST
-                enum CommandType command:8;     //!< 8 bits describing DAS module commands
-                unsigned unused_command:22;     //!< Command filler, unknown or unspecified bits
+                enum CommandType command:8;    //!< 8 bits describing DAS module commands
+                unsigned unused:20;             //!< LVDS parity bits used to be here, may still be present in responses
+                unsigned is_chain:1;            //!< TODO: what is it?
                 unsigned is_response:1;         //!< If 1 the packet is response to a command
+                unsigned is_passthru:1;         //!< Not sure what this does, but it seems like it's getting set when DSP is forwarding the packet from some other module
                 unsigned is_command:1;          //!< If 1, packet is command, data otherwise
 #endif
             } cmdinfo;
@@ -71,7 +84,8 @@ struct DasPacket
                 unsigned subpacket_end:1;       //!< End of subpacket, only the last packet of all subpackets has this one set
                 unsigned only_neutron_data:1;   //!< Only neutron data, if 0 some metadata is included
                 unsigned rtdl_present:1;        //!< Is RTDL 6-words data included right after the header? Should be always 1 for newer DSPs
-                unsigned unused4_7:4;           //!< Need to figure out what these are used for
+                unsigned unused4:1;             //!< Always zero?
+                unsigned format_code:3;         //!< Format code
                 unsigned subpacket_count:16;    //!< Subpacket counter
                 unsigned unused24_27:4;         //!< Not used, should be all 0
                 unsigned last_subpacket:1;      //!< Is this the last subpacket?

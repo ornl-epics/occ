@@ -109,13 +109,13 @@ bool DasPacket::isData() const
 bool DasPacket::isNeutronData() const
 {
     // info == 0x0C
-    return (!datainfo.is_command && datainfo.only_neutron_data && datainfo.rtdl_present && datainfo.unused4_7 == 0x0);
+    return (!datainfo.is_command && datainfo.only_neutron_data && datainfo.rtdl_present && datainfo.format_code == 0x0);
 }
 
 bool DasPacket::isMetaData() const
 {
     // info == 0x08
-    return (!datainfo.is_command && !datainfo.only_neutron_data && datainfo.rtdl_present && datainfo.unused4_7 == 0x0);
+    return (!datainfo.is_command && !datainfo.only_neutron_data && datainfo.rtdl_present && datainfo.format_code == 0x0);
 }
 
 bool DasPacket::isRtdl() const
