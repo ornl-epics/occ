@@ -76,6 +76,8 @@ void DasPacketList::release()
     m_lock.lock();
     if (m_refcount > 0)
         m_refcount--;
+    if (m_refcount == 0)
+        m_event.signal();
     m_lock.unlock();
 }
 
@@ -102,8 +104,6 @@ bool DasPacketList::reset(const DasPacket * const packet)
 
 void DasPacketList::waitAllReleased() const
 {
-    uint32_t consumed;
-
     while (!released())
         m_event.wait();
 }
