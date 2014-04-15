@@ -20,7 +20,7 @@
 				<Option object_output="obj/Release/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
-				<Option parameters="/home/kvodopivec/work/SNS/git/detectors/ned/iocBoot/iocned/st.cmd" />
+				<Option parameters="../../iocBoot/iocned/st.cmd" />
 				<Compiler>
 					<Add option="-O2" />
 				</Compiler>

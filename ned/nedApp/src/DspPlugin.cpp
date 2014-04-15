@@ -9,8 +9,6 @@
 
 #define NUM_DSPPLUGIN_PARAMS ((int)(&LAST_DSPPLUGIN_PARAM - &FIRST_DSPPLUGIN_PARAM + 1))
 
-static const int DSP_SOURCE_ID              = 0xF10CC;  // Source hardware ID when sending out commands
-
 EPICS_REGISTER_PLUGIN(DspPlugin, 3, "Port name", string, "Dispatcher port name", string, "Hardware ID", int);
 
 DspPlugin::DspPlugin(const char *portName, const char *dispatcherPortName, uint32_t hardwareId)
@@ -18,7 +16,6 @@ DspPlugin::DspPlugin(const char *portName, const char *dispatcherPortName, uint3
                  1, asynInt32Mask, asynOctetMask | asynInt32Mask)
     , m_hardwareId(hardwareId)
 {
-
     createParam("HARDWARE_ID",          asynParamInt32, &HardwareId);
     createParam("HARDWARE_VER",         asynParamInt32, &HardwareVer);
     createParam("HARDWARE_REV",         asynParamInt32, &HardwareVer);
@@ -37,7 +34,7 @@ DspPlugin::DspPlugin(const char *portName, const char *dispatcherPortName, uint3
 
     // Temporary
     std::function<void(void)> cb = std::bind(&DspPlugin::reqVersionRead, this);
-    scheduleCallback(cb, 3.0);
+    scheduleCallback(cb, 5.0);
     setCallbacks(true);
 
     callParamCallbacks();
@@ -46,7 +43,7 @@ DspPlugin::DspPlugin(const char *portName, const char *dispatcherPortName, uint3
 void DspPlugin::reqVersionRead()
 {
     DasPacket *packet = DasPacket::create(0, 0);
-    packet->source = DSP_SOURCE_ID;
+    packet->source = DasPacket::HWID_SELF;
     packet->destination = m_hardwareId;
     packet->cmdinfo.is_command = true;
     packet->cmdinfo.command = DasPacket::CMD_READ_VERSION;
@@ -91,7 +88,7 @@ void DspPlugin::reqCfgWrite()
     }
 
     DasPacket *packet = DasPacket::create(size*4, reinterpret_cast<uint8_t*>(data));
-    packet->source = DSP_SOURCE_ID;
+    packet->source = DasPacket::HWID_SELF;
     packet->destination = m_hardwareId;
     packet->cmdinfo.is_command = true;
     packet->cmdinfo.command = DasPacket::CMD_WRITE_CONFIG;
@@ -105,7 +102,7 @@ void DspPlugin::reqCfgWrite()
 void DspPlugin::reqCfgRead()
 {
     DasPacket *packet = DasPacket::create(0, 0);
-    packet->source = DSP_SOURCE_ID;
+    packet->source = DasPacket::HWID_SELF;
     packet->destination = m_hardwareId;
     packet->cmdinfo.is_command = true;
     packet->cmdinfo.command = DasPacket::CMD_READ_CONFIG;
@@ -152,7 +149,7 @@ asynStatus DspPlugin::writeInt32(asynUser *pasynUser, epicsInt32 value)
         case DSP_CMD_CONFIG_WRITE:
             reqCfgWrite();
             break;
-        case DSP_CMD_CONFIG_READ:ma
+        case DSP_CMD_CONFIG_READ:
             reqCfgRead();
             break;
         case DSP_CMD_CONFIG_RESET:
@@ -203,6 +200,8 @@ void DspPlugin::processData(const DasPacketList * const packetList)
             rspVersionRead(packet);
         } else if (packet->cmdinfo.command == DasPacket::CMD_READ_CONFIG) {
             rspCfgRead(packet);
+        } else if (packet->cmdinfo.command == 0x41 || packet->cmdinfo.command == DasPacket::CMD_DISCOVER) {
+            int debug = 1;
         }
     }
 }
@@ -314,12 +313,12 @@ void DspPlugin::createConfigParam(const char *name, char section, uint32_t offse
     int index;
     createParam(name, asynParamInt32, &index);
     setIntegerParam(index, value);
-    m_configParams[index] = {
-        .section = section,
-        .offset  = offset,
-        .mask    = mask,
-        .initVal = value,
-    };
+    ParamDesc desc;
+    desc.section = section;
+    desc.offset  = offset;
+    desc.mask    = mask;
+    desc.initVal = value;
+    m_configParams[index] = desc;
 }
 
 void DspPlugin::createStatusParam(const char *name, uint32_t offset, uint32_t nBits, uint32_t shift)

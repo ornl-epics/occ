@@ -85,7 +85,7 @@ OccPortDriver::OccPortDriver(const char *portName, int deviceId, uint32_t localB
                                                 (EPICSTHREADFUNC)processOccDataC,
                                                 this);
 
-    DspPlugin *dsp = new DspPlugin("DspPlugin", "OCC1", 0x10);
+    DspPlugin *dsp = new DspPlugin("DspPlugin", "/dev/snsocb0", 0x15FACB2D);
 }
 
 OccPortDriver::~OccPortDriver()
@@ -147,17 +147,14 @@ asynStatus OccPortDriver::writeGenericPointer(asynUser *pasynUser, void *pointer
         const DasPacket *packet = packets->first();
         uint32_t len = packet->payload_length;
 
-        DasPacket *out = DasPacket::create(16, 0);
-        out->source = packet->destination;
-        out->info = packet->info;
-        out->cmdinfo.is_response = 1;
-        out->data[0] = 0x310E040B;
-        out->data[1] = 0x13140411;
-        DmaCopier *dma = dynamic_cast<DmaCopier*>(m_circularBuffer);
-        dma->push(reinterpret_cast<void *>(out), out->length());
+        int ret = occ_send(m_occ, reinterpret_cast<const void *>(packet), packet->length());
+        if (ret != 0) {
+            asynPrint(pasynUser, ASYN_TRACE_ERROR, "Unable to send data to OCC - %s(%d)\n", strerror(-ret), ret);
+            return asynError;
+        }
 
-        // TODO: send to OCC
     }
+    return asynSuccess;
 }
 
 void OccPortDriver::processOccData()
