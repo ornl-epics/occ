@@ -90,7 +90,7 @@ void AdaraPlugin::processData(const DasPacketList * const packetList)
                                ((packet->datainfo.subpacket_count & 0x7FFF) << 15) +
                                (m_nTransmitted+1) % 0xFFFF;
                 // but legacy code from dcomserver looks like this - go with that for now
-                outpacket[5] = packet->info & 0x3 | ((packet->info << 8) & 0xFFFF0000);
+                outpacket[5] = (packet->info & 0x3) | ((packet->info << 8) & 0xFFFF0000);
                 outpacket[6] = rtdl->charge;
                 outpacket[7] = rtdl->general_info;
                 outpacket[8] = rtdl->tsync_width;
@@ -157,7 +157,7 @@ asynStatus AdaraPlugin::writeInt32(asynUser *pasynUser, epicsInt32 value)
 
 asynStatus AdaraPlugin::writeOctet(asynUser *pasynUser, const char *value, size_t nChars, size_t *nActual)
 {
-    asynStatus status;
+    asynStatus status = asynError;
 
     if (pasynUser->reason == ListenIP) {
         int port;

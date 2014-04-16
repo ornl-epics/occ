@@ -87,7 +87,7 @@ BasePlugin::~BasePlugin()
 asynStatus BasePlugin::writeInt32(asynUser *pasynUser, epicsInt32 value)
 {
     int reason = pasynUser->reason;
-    asynStatus status;
+    asynStatus status = asynError;
 
     if (reason == EnableCallbacks) {
         this->lock();
@@ -107,7 +107,6 @@ asynStatus BasePlugin::writeInt32(asynUser *pasynUser, epicsInt32 value)
 void BasePlugin::dispatcherCallback(asynUser *pasynUser, void *genericPointer)
 {
     DasPacketList *packetList = reinterpret_cast<DasPacketList *>(genericPointer);
-    int status=0;
 
     if (packetList == 0)
         return;
