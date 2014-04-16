@@ -8,7 +8,7 @@
 #include <limits>
 #include <stdexcept>
 
-static const uint32_t UNIT_SIZE            = 8;              // OCC data is 8 byte aligned
+static const uint32_t UNIT_SIZE            = 4;              // OCC data is 4 byte aligned
 static const uint32_t ROLLOVER_BUFFER_SIZE = 1800*UNIT_SIZE; // Comes from the OCC protocol, max 1800 events in packet
 
 using namespace std;

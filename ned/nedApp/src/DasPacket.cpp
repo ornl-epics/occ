@@ -64,7 +64,7 @@ DasPacket::DasPacket(uint32_t payloadLen, const uint8_t *payload)
     : destination(0)
     , source(0)
     , info(0)
-    , payload_length((payloadLen + 7 ) & ~7)
+    , payload_length((payloadLen + 3 ) & ~3)
     , reserved1(0)
     , reserved2(0)
 {
@@ -86,7 +86,7 @@ bool DasPacket::valid() const
 uint32_t DasPacket::length() const
 {
     uint32_t packet_length = sizeof(DasPacket) + payload_length;
-    if (packet_length != ((packet_length + 7 ) & ~7))
+    if (packet_length != ((packet_length + 3 ) & ~3))
         packet_length = 0;
     return packet_length;
 }

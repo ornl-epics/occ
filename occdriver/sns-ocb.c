@@ -586,7 +586,7 @@ static int snsocb_rxone(struct ocb *ocb)
 
 	/* We need room for the split header, and the payload. */
 	imq = &ocb->imq[imq_cons];
-	length = ALIGN(imq->length, 8);
+	length = ALIGN(imq->length, 4);
 	room_needed = sizeof(struct sw_imq);
 	room_needed += length;
 
@@ -644,8 +644,8 @@ static int snsocb_rxone(struct ocb *ocb)
 	dq_prod = snsocb_rxcopy(ocb, dq_prod, src + cons, head);
 	dq_prod = snsocb_rxcopy(ocb, dq_prod, src, tail);
 
-	/* The OCC card consumes the queues in 8 byte incremenets */
-	cons += ALIGN(length, 8);
+	/* The OCC card consumes the queues in 4 byte incremenets */
+	cons += ALIGN(length, 4);
 	cons %= size;
 
 	spin_lock_irq(&ocb->lock);
@@ -1061,8 +1061,8 @@ static ssize_t snsocb_write(struct file *file, const char __user *buf,
 		if (copy_from_user(&val, buf, sizeof(u32)))
 			return -EFAULT;
 
-		/* We only deal with packets that are multiples of 8 bytes */
-		val = ALIGN(val, 8);
+		/* We only deal with packets that are multiples of 4 bytes */
+		val = ALIGN(val, 4);
 
 		if (!val || val >= OCB_DQ_SIZE)
 			return -EOVERFLOW;
