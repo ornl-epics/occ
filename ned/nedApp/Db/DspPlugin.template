@@ -1,0 +1,57 @@
+record(mbbo, "$(P)$(R)Command")
+{
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))COMMAND")
+    field(ZRVL, "0")
+    field(ONVL, "1")
+    field(TWVL, "2")
+    field(THVL, "3")
+    field(FRVL, "4")
+    field(ZRST, "No command")
+    field(ONST, "Initialize")
+    field(TWST, "Write config")
+    field(THST, "Read config")
+    field(FRST, "Reset config")
+}
+record(stringin, "$(P)$(R)HardwareDate")
+{
+    field(DTYP, "asynOctetRead")
+    field(INP,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))HARDWARE_DATE")
+    field(VAL,  "Unknown")
+    field(SCAN, "I/O Intr")
+}
+record(longin, "$(P)$(R)HardwareRev")
+{
+    field(DTYP,  "asynInt32")
+    field(INP,   "@asyn($(PORT),$(ADDR),$(TIMEOUT))HARDWARE_REV")
+    field(VAL,   "0")
+    field(SCAN, "I/O Intr")
+}
+record(longin, "$(P)$(R)HardwareVer")
+{
+    field(DTYP,  "asynInt32")
+    field(INP,   "@asyn($(PORT),$(ADDR),$(TIMEOUT))HARDWARE_VER")
+    field(VAL,   "0")
+    field(SCAN, "I/O Intr")
+}
+record(stringin, "$(P)$(R)FirmwareDate")
+{
+    field(DTYP, "asynOctetRead")
+    field(INP,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))FIRMWARE_DATE")
+    field(VAL,  "Unknown")
+    field(SCAN, "I/O Intr")
+}
+record(longin, "$(P)$(R)FirmwareRev")
+{
+    field(DTYP,  "asynInt32")
+    field(INP,   "@asyn($(PORT),$(ADDR),$(TIMEOUT))FIRMWARE_REV")
+    field(VAL,   "0")
+    field(SCAN, "I/O Intr")
+}
+record(longin, "$(P)$(R)FirmwareVer")
+{
+    field(DTYP,  "asynInt32")
+    field(INP,   "@asyn($(PORT),$(ADDR),$(TIMEOUT))FIRMWARE_VER")
+    field(VAL,   "0")
+    field(SCAN, "I/O Intr")
+}

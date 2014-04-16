@@ -1,6 +1,5 @@
 record(bo, "$(P)$(R)EnableCallbacks")
 {
-   field(PINI, "YES")
    field(DTYP, "asynInt32")
    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))ENABLE_CALLBACKS")
    field(ZNAM, "No")

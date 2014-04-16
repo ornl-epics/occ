@@ -2,6 +2,7 @@
 #include "Log.h"
 
 #include <epicsAlgorithm.h>
+#include <osiSock.h>
 #include <string.h>
 
 #include <functional>
@@ -9,19 +10,34 @@
 
 #define NUM_DSPPLUGIN_PARAMS ((int)(&LAST_DSPPLUGIN_PARAM - &FIRST_DSPPLUGIN_PARAM + 1))
 
-EPICS_REGISTER_PLUGIN(DspPlugin, 3, "Port name", string, "Dispatcher port name", string, "Hardware ID", int);
+EPICS_REGISTER_PLUGIN(DspPlugin, 3, "Port name", string, "Dispatcher port name", string, "Hardware ID", string);
 
-DspPlugin::DspPlugin(const char *portName, const char *dispatcherPortName, uint32_t hardwareId)
+const unsigned DspPlugin::NUM_DSPPLUGIN_CONFIGPARAMS    = 263;
+const double DspPlugin::DSP_RESPONSE_TIMEOUT            = 1.0;
+
+DspPlugin::DspPlugin(const char *portName, const char *dispatcherPortName, const char *hardwareId)
     : BasePlugin(portName, dispatcherPortName, REASON_OCCDATA, 1, NUM_DSPPLUGIN_PARAMS + NUM_DSPPLUGIN_CONFIGPARAMS,
-                 1, asynInt32Mask, asynOctetMask | asynInt32Mask)
-    , m_hardwareId(hardwareId)
+                 1, asynOctetMask | asynInt32Mask | asynDrvUserMask, asynOctetMask | asynInt32Mask)
+    , m_hardwareId(0)
 {
+    struct in_addr hwid;
+    if (strncasecmp(hardwareId, "0x", 2) == 0) {
+        char *endptr;
+        m_hardwareId = strtoul(hardwareId, &endptr, 16);
+        if (*endptr != 0)
+            m_hardwareId = 0;
+    } else if (hostToIPAddr(hardwareId, &hwid) == 0) {
+            m_hardwareId = ntohl(hwid.s_addr);
+    }
+    if (m_hardwareId == 0)
+        LOG_ERROR("Invalid hardware id '%s'", hardwareId);
+
     createParam("HARDWARE_ID",          asynParamInt32, &HardwareId);
     createParam("HARDWARE_VER",         asynParamInt32, &HardwareVer);
-    createParam("HARDWARE_REV",         asynParamInt32, &HardwareVer);
+    createParam("HARDWARE_REV",         asynParamInt32, &HardwareRev);
     createParam("HARDWARE_DATE",        asynParamOctet, &HardwareDate);
     createParam("FIRMWARE_VER",         asynParamInt32, &FirmwareVer);
-    createParam("FIRMWARE_REV",         asynParamInt32, &FirmwareVer);
+    createParam("FIRMWARE_REV",         asynParamInt32, &FirmwareRev);
     createParam("FIRMWARE_DATE",        asynParamOctet, &FirmwareDate);
     createParam("COMMAND",              asynParamInt32, &Command);
 
@@ -31,11 +47,6 @@ DspPlugin::DspPlugin(const char *portName, const char *dispatcherPortName, uint3
     assert(m_configParams.size() == NUM_DSPPLUGIN_CONFIGPARAMS);
 
     setIntegerParam(HardwareId, m_hardwareId);
-
-    // Temporary
-    std::function<void(void)> cb = std::bind(&DspPlugin::reqVersionRead, this);
-    scheduleCallback(cb, 5.0);
-    setCallbacks(true);
 
     callParamCallbacks();
 }
@@ -61,12 +72,17 @@ void DspPlugin::rspVersionRead(const DasPacket *packet)
 
     setIntegerParam(HardwareVer, payload->hardware.version);
     setIntegerParam(HardwareRev, payload->hardware.revision);
-    snprintf(date, sizeof(date), "20%d/%d/%d", payload->hardware.year, payload->hardware.month, payload->hardware.day);
+    snprintf(date, sizeof(date), "20%d/%d/%d", (payload->hardware.year/16)*10 + payload->hardware.year%16,
+                                               (payload->hardware.month/16)*10 + payload->hardware.month%16,
+                                               (payload->hardware.day/16)*10 + payload->hardware.day%16);
     setStringParam(HardwareDate, date);
 
     setIntegerParam(FirmwareVer, payload->firmware.version);
     setIntegerParam(FirmwareRev, payload->firmware.revision);
-    snprintf(date, sizeof(date), "20%d/%d/%d", payload->firmware.year, payload->firmware.month, payload->firmware.day);
+    snprintf(date, sizeof(date), "20%d/%d/%d", (payload->firmware.year/16)*10 + payload->firmware.year%16,
+                                               (payload->firmware.month/16)*10 + payload->firmware.month%16,
+                                               (payload->firmware.day/16)*10 + payload->firmware.day%16);
+
     setStringParam(FirmwareDate, date);
 
     callParamCallbacks();
@@ -79,7 +95,7 @@ void DspPlugin::reqCfgWrite()
         size += getCfgSectionSize(i);
 
     int data[size];
-    for (int i=0; i<size; i++)
+    for (uint32_t i=0; i<size; i++)
         data[i] = 0;
 
     int offset = 0;
@@ -200,7 +216,7 @@ void DspPlugin::processData(const DasPacketList * const packetList)
             rspVersionRead(packet);
         } else if (packet->cmdinfo.command == DasPacket::CMD_READ_CONFIG) {
             rspCfgRead(packet);
-        } else if (packet->cmdinfo.command == 0x41 || packet->cmdinfo.command == DasPacket::CMD_DISCOVER) {
+        } else if (packet->cmdinfo.command == DasPacket::CMD_DISCOVER) {
             int debug = 1;
         }
     }
@@ -215,7 +231,7 @@ uint32_t DspPlugin::configureSection(char section, int *data, uint32_t count)
         return 0;
     }
 
-    for (int i=0; i<sectionSize; i++)
+    for (uint32_t i=0; i<sectionSize; i++)
         data[i] = 0;
 
     for (std::map<int, struct ParamDesc>::iterator it=m_configParams.begin(); it != m_configParams.end(); it++) {
@@ -288,6 +304,8 @@ void DspPlugin::noResponseCleanup(DasPacket::CommandType cmd)
     switch (cmd) {
         case DasPacket::CMD_READ_VERSION:
             LOG_ERROR("Timeout waiting for DSP version response");
+            break;
+        default:
             break;
     }
 }

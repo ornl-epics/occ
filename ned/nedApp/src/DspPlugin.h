@@ -5,10 +5,6 @@
 
 #include <map>
 
-// Up to C++11 it's not valid to initialize static non-int member variables
-#define DSP_RESPONSE_TIMEOUT        1.0     //!< Default DSP response timeout
-
-
 /**
  * Plugin for DSP module.
  *
@@ -52,9 +48,9 @@ class DspPlugin : public BasePlugin {
             uint32_t eeprom_code;
         };
 
-        static const int NUM_DSPPLUGIN_CONFIGPARAMS = 263; //!< This is used as a runtime assert check and must match number of configured parameters
-
-    public:
+        /**
+         * Valid commands to be send through COMMAND parameter.
+         */
         enum Command {
             DSP_CMD_NONE            = 0,
             DSP_CMD_INITIALIZE      = 1,    //!< Trigger DSP module initialization
@@ -63,7 +59,22 @@ class DspPlugin : public BasePlugin {
             DSP_CMD_CONFIG_RESET    = 4,    //!< Reset configuration to default values
         };
 
-        DspPlugin(const char *portName, const char *dispatcherPortName, uint32_t hardwareId);
+        static const unsigned NUM_DSPPLUGIN_CONFIGPARAMS;   //!< This is used as a runtime assert check and must match number of configuration parameters
+        static const double DSP_RESPONSE_TIMEOUT;           //!< Default DSP response timeout, in seconds
+
+    public:
+
+        /**
+         * Constructor for DspPlugin
+         *
+         * Constructor will create and populate PVs with default values.
+         *
+	     * @param[in] portName asyn port name.
+	     * @param[in] dispatcherPortName Name of the dispatcher asyn port to connect to.
+	     * @param[in] hardwareId Hardware ID of the DSP module, can be in IP format (xxx.xxx.xxx.xxx) or
+         *                       in hex number string in big-endian byte order (0x15FACB2D equals to IP 21.250.203.45)
+         */
+        DspPlugin(const char *portName, const char *dispatcherPortName, const char *hardwareId);
 
     private:
         uint32_t m_hardwareId;

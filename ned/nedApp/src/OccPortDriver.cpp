@@ -84,8 +84,6 @@ OccPortDriver::OccPortDriver(const char *portName, int deviceId, uint32_t localB
                                                 epicsThreadGetStackSize(epicsThreadStackMedium),
                                                 (EPICSTHREADFUNC)processOccDataC,
                                                 this);
-
-    DspPlugin *dsp = new DspPlugin("DspPlugin", "/dev/snsocb0", 0x15FACB2D);
 }
 
 OccPortDriver::~OccPortDriver()
@@ -145,7 +143,6 @@ asynStatus OccPortDriver::writeGenericPointer(asynUser *pasynUser, void *pointer
     if (pasynUser->reason == REASON_OCCDATA) {
         DasPacketList *packets = reinterpret_cast<DasPacketList *>(pointer);
         const DasPacket *packet = packets->first();
-        uint32_t len = packet->payload_length;
 
         int ret = occ_send(m_occ, reinterpret_cast<const void *>(packet), packet->length());
         if (ret != 0) {

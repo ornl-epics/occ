@@ -13,6 +13,7 @@ include $(TOP)/configure/CONFIG
 DB += ned.template
 DB += BasePlugin.template
 DB += AdaraPlugin.template
+DB += DspPlugin.template
 
 #----------------------------------------------------
 # If <anyname>.db template is not named <anyname>*.template add

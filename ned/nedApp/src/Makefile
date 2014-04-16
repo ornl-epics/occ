@@ -1,6 +1,6 @@
 TOP=../..
 
-OCCLIB_DIR=/home/kvodopivec/work/SNS/git/detectors/occlib
+OCCLIB_DIR=/home/dasuser/work/klemen/git/detectors/occlib
 
 include $(TOP)/configure/CONFIG
 #----------------------------------------
@@ -15,7 +15,7 @@ include $(TOP)/configure/CONFIG
 # 
 USR_CXXFLAGS += -DBITFIELD_LSB_FIRST
 USR_CXXFLAGS += -std=c++0x
-CXXFLAGS = -g -ggdb $(USR_CXXFLAGS)
+CXXFLAGS = -Wall -g -ggdb $(USR_CXXFLAGS)
 
 # Product
 PROD_NAME = ned

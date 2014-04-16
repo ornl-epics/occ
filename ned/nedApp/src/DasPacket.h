@@ -33,7 +33,7 @@ struct DasPacket
         };
 
         /**
-         * Well known hardware addresses.
+         * Well known hardware addresses, big-endian byte order.
          */
         enum HardwareId {
             HWID_BROADCAST              = 0x0,      //!< Everybody should receive the packet
@@ -54,6 +54,7 @@ struct DasPacket
             CMD_START                   = 0x82, //!< Start acquisition
             CMD_STOP                    = 0x83, //!< Stop acquisition
             CMD_RTDL                    = 0x85, //!< RTDL is a command packet, but can also be data packet if info == 0xFC
+            RSP_ACK                     = 0x41, //!< Acknowledgement to the command, the command that is being acknowledged is in payload
         };
 
         static const uint32_t MinLength = 6*4;  //!< Minumum total length of any DAS packet, at least the header must be present
@@ -80,8 +81,8 @@ struct DasPacket
             } cmdinfo;
             struct {
 #ifdef BITFIELD_LSB_FIRST
-                unsigned subpacket_start:1;     //!< I guess the first packet in the train of subpackets
-                unsigned subpacket_end:1;       //!< End of subpacket, only the last packet of all subpackets has this one set
+                unsigned subpacket_start:1;     //!< The first packet in the train of subpackets
+                unsigned subpacket_end:1;       //!< Last packet in the train
                 unsigned only_neutron_data:1;   //!< Only neutron data, if 0 some metadata is included
                 unsigned rtdl_present:1;        //!< Is RTDL 6-words data included right after the header? Should be always 1 for newer DSPs
                 unsigned unused4:1;             //!< Always zero?
