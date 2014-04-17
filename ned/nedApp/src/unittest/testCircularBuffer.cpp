@@ -6,7 +6,7 @@
 #include <math.h>
 #include <string.h>
 
-static const uint32_t UNIT_SIZE = 8;
+static const uint32_t UNIT_SIZE = 4;
 
 #define TEST_OK     1
 #define TEST_FAIL   0

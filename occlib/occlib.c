@@ -179,7 +179,7 @@ int occ_reset(struct occ_handle *handle) {
 }
 
 static size_t _occ_data_align(size_t size) {
-    return (size + 7) & ~7;
+    return (size + 3) & ~3;
 }
 
 int occ_send(struct occ_handle *handle, const void *data, size_t count) {
@@ -232,7 +232,7 @@ int occ_data_wait(struct occ_handle *handle, void **address, size_t *count, uint
     } while (0);
 
     // There are a couple of assumptions here that we take for granted.
-    // * Producer index is always 8-byte aligned
+    // * Producer index is always 4-byte aligned
     // * Producer index is always OCC packet aligned
 
     uint32_t dma_prod_off = info[0];
@@ -266,8 +266,8 @@ int occ_data_wait(struct occ_handle *handle, void **address, size_t *count, uint
 
     if (_occ_data_align(*count) != *count) {
         // Tough choice. We can't extend the count as the data might not be there yet.
-        // So we must shrink the count to previous 8-byte boundary.
-        *count = _occ_data_align(*count - 7);
+        // So we must shrink the count to previous 4-byte boundary.
+        *count = _occ_data_align(*count - 3);
     }
     handle->last_count = *count;
 
