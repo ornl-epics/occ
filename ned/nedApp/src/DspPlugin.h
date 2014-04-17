@@ -16,6 +16,7 @@
  * HARDWARE_REV         | HardwareRev      | asynParamInt32  | 0        | RO   | Hardware revision
  * HARDWARE_DATE        | HardwareDate     | asynParamInt32  | 0        | RO   | Hardware date
  * FIRMWARE_VER         | FirmwareVer      | asynParamInt32  | 0        | RO   | Number of packets processed, to be populated by derived classes
+ * STATUS               | Status           | asynParamInt32  | 0        | RO   | Status of DSP plugin (see DspPlugin::Status for available options)
  * COMMAND              | Command          | asynParamInt32  | 0        | RW   | Issue a command for this plugin (see DspPlugin::Command for available options)
  */
 class DspPlugin : public BasePlugin {
@@ -46,6 +47,14 @@ class DspPlugin : public BasePlugin {
             struct VersionRegister hardware;
             struct VersionRegister firmware;
             uint32_t eeprom_code;
+        };
+
+        /**
+         * Valid statuses of the DspPlugin, the communication link with Dsp or the DSP itself.
+         */
+        enum Status {
+            STAT_NOT_INITIALIZED    = 0,    //!< DspPlugin has not yet been initialized
+            STAT_DSP_TIMEOUT        = 10,   //!< DSP has not respond in expected time to the last command
         };
 
         /**
@@ -215,7 +224,9 @@ class DspPlugin : public BasePlugin {
         uint32_t getCfgSectionOffset(char section);
 
     private:
-        #define FIRST_DSPPLUGIN_PARAM HardwareId
+        #define FIRST_DSPPLUGIN_PARAM Status
+        int Status;         //!< Status of the DSP plugin
+        int Command;        //!< Command to plugin, like initialize the module, read configuration, verify module version etc.
         int HardwareId;     //!< Hardare ID that this object is controlling
         int HardwareVer;    //!< Module hardware version
         int HardwareRev;    //!< Module hardware revision
@@ -223,8 +234,7 @@ class DspPlugin : public BasePlugin {
         int FirmwareVer;    //!< Module firmware version
         int FirmwareRev;    //!< Module firmware revision
         int FirmwareDate;   //!< Module firmware date
-        int Command;        //!< Command to plugin, like initialize the module, read configuration, verify module version etc.
-        #define LAST_DSPPLUGIN_PARAM Command
+        #define LAST_DSPPLUGIN_PARAM FirmwareDate
 
 };
 

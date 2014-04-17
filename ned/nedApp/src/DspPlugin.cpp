@@ -40,6 +40,7 @@ DspPlugin::DspPlugin(const char *portName, const char *dispatcherPortName, const
     createParam("FIRMWARE_REV",         asynParamInt32, &FirmwareRev);
     createParam("FIRMWARE_DATE",        asynParamOctet, &FirmwareDate);
     createParam("COMMAND",              asynParamInt32, &Command);
+    createParam("STATUS",               asynParamInt32, &Status);
 
     createConfigParams();
     createStatusParams();
@@ -47,6 +48,7 @@ DspPlugin::DspPlugin(const char *portName, const char *dispatcherPortName, const
     assert(m_configParams.size() == NUM_DSPPLUGIN_CONFIGPARAMS);
 
     setIntegerParam(HardwareId, m_hardwareId);
+    setIntegerParam(Status, STAT_NOT_INITIALIZED);
 
     callParamCallbacks();
 }

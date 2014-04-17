@@ -26,13 +26,19 @@ void DmaCopier::run()
 
         status = occ_data_wait(m_occ, &data, &len, 0);
         if (status != 0) {
-            // TODO: report error
+            wakeUpConsumer(status);
             break;
         } else if (len == 0)
             continue;
 
         len = CircularBuffer::push(data, len);
+        if (len == 0)
+            break;
 
         status = occ_data_ack(m_occ, len);
+        if (status != 0) {
+            wakeUpConsumer(status);
+            break;
+        }
     }
 }

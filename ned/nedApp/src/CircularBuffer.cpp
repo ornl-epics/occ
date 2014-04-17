@@ -17,6 +17,7 @@ CircularBuffer::CircularBuffer(uint32_t size)
     : m_unit(UNIT_SIZE)
     , m_size(_align(size, m_unit))
     , m_rolloverSize(min(m_size - m_unit, ROLLOVER_BUFFER_SIZE))
+    , m_error(0)
     , m_consumer(0)
     , m_producer(0)
 {
@@ -52,9 +53,13 @@ uint32_t CircularBuffer::push(void *data, uint32_t len)
     uint32_t prod, cons;
     uint32_t head, tail;
 
-    if (!m_buffer || !m_rollover)
+    if (!m_buffer || !m_rollover) {
+        m_error = -EFAULT;
         return 0;
+    }
     if (len < m_unit)
+        return 0;
+    if (m_error)
         return 0;
 
     m_lock.lock();
@@ -63,6 +68,12 @@ uint32_t CircularBuffer::push(void *data, uint32_t len)
     m_lock.unlock();
 
     len = std::min(_alignDown(len, m_unit), (m_size + cons - prod - m_unit) % m_size);
+
+    if (len == 0) {
+        m_error = -EOVERFLOW;
+        m_event.signal();
+        return 0;
+    }
 
     head = m_size - prod;
     if (len < head) {
@@ -85,15 +96,18 @@ uint32_t CircularBuffer::push(void *data, uint32_t len)
     return (head + tail);
 }
 
-void CircularBuffer::wait(void **data, uint32_t *len)
+int CircularBuffer::wait(void **data, uint32_t *len)
 {
     if (!m_buffer || !m_rollover) {
         *len = 0;
-        return;
+        return -EFAULT;
     }
 
-    while (empty())
+    while (m_error == 0 && empty())
         m_event.wait();
+
+    if (m_error != 0)
+        return m_error;
 
     m_lock.lock();
     *data = (char *)m_buffer + m_consumer;
@@ -112,16 +126,18 @@ void CircularBuffer::wait(void **data, uint32_t *len)
         }
     }
     m_lock.unlock();
+
+    return 0;
 }
 
-void CircularBuffer::consume(uint32_t len)
+int CircularBuffer::consume(uint32_t len)
 {
     uint32_t used;
 
     if (!m_buffer || !m_rollover)
-        return;
+        return -EFAULT;
     if (len < m_unit)
-        return;
+        return -EINVAL;
 
     len = _alignDown(len, m_unit);
 
@@ -137,6 +153,8 @@ void CircularBuffer::consume(uint32_t len)
     }
     m_consumer = (m_consumer + len) % m_size;
     m_lock.unlock();
+
+    return 0;
 }
 
 bool CircularBuffer::empty()
@@ -148,6 +166,12 @@ bool CircularBuffer::empty()
     m_lock.unlock();
 
     return isEmpty;
+}
+
+void CircularBuffer::wakeUpConsumer(int error)
+{
+    m_error = error;
+    m_event.signal();
 }
 
 uint32_t CircularBuffer::_alignDown(uint32_t value, uint8_t base)

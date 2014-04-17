@@ -12,7 +12,7 @@ epicsEnvSet("PREFIX", "SNS:")
 epicsEnvSet("PORT",   "/dev/snsocb0")
 #asynSetTraceIOMask("$(PORT)",0,255)
 dbLoadRecords("../../db/ned.template","P=$(PREFIX),R=ocb1:,PORT=$(PORT),ADDR=0,TIMEOUT=1")
-nedConfigure("$(PORT)", 0, 1000000)
+nedConfigure("$(PORT)", 0, 4000000)
 
 #CmdPluginConfigure("Test", "$(PORT)")
 AdaraPluginConfigure("Adara1", "$(PORT)")

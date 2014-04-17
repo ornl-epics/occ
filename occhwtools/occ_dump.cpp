@@ -130,6 +130,11 @@ int main(int argc, char **argv) {
         return 3;
     }
 
+    if (occ_enable_rx(occ, 1) != 0) {
+        cerr << "ERROR: cannot enable RX on OCC interface" << endl;
+        return 3;
+    }
+
     sigact.sa_handler = &sighandler;
     sigact.sa_flags = 0;
     sigemptyset(&sigact.sa_mask);

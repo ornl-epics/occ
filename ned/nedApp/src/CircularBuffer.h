@@ -40,18 +40,31 @@ class CircularBuffer : public BaseCircularBuffer {
          * pointer to the start of the memory where the data is. It also
          * modifies the len parameter to reflect the amount of data that
          * is available.
+         *
+         * @retval 0 on success
+         * @retval -EOVERFLOW on buffer full
+         * @retval -EFAULT on internal error, ie. the buffers have not been allocated
          */
-        void wait(void **data, uint32_t *len);
+        int wait(void **data, uint32_t *len);
 
         /**
          * Advance consumer index.
+         *
+         * @retval 0 on success
+         * @retval -EINVAL on invalid len value
+         * @retval -EFAULT on internal error, ie. the buffers have not been allocated
          */
-        void consume(uint32_t len);
+        int consume(uint32_t len);
 
         /**
          * Return true when no data is available in circular buffer.
          */
         bool empty();
+
+        /**
+         * Wakeup consumer in case of an outside error.
+         */
+        void wakeUpConsumer(int error);
 
     protected:
         static uint32_t _align(uint32_t value, uint8_t base);
@@ -64,6 +77,7 @@ class CircularBuffer : public BaseCircularBuffer {
         const uint32_t m_size;      //!< Size of the circular buffer in bytes
         void *m_rollover;           //!< Rollover buffer for the last packet in circular buffer that is cut in two parts
         const uint32_t m_rolloverSize; //!< Size of the rollover buffer in bytes
+        int m_error;                //!< Non-zero error value
 
         // These change frequently and should be secured by a lock
         uint32_t m_consumer;        //!< Index into circular buffer where consumer is

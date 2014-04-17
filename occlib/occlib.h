@@ -190,7 +190,7 @@ int occ_send(struct occ_handle *handle, const void *data, size_t count);
  *
  * \param[in] handle Valid OCC API handle.
  * \param[out] address Pointer to buffer where incoming data is.
- * \param[out] count The number of bytes available in the buffer.
+ * \param[out] count On success, the value is updated to the number of bytes available in the buffer.
  * \param[in] timeout Number of millisecond to wait for some data, 0 for infinity.
  * \retval 0 on success
  * \retval -ECONNRESET Device has been reset.

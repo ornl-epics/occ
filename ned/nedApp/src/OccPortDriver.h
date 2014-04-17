@@ -20,6 +20,7 @@ struct occ_handle;
  * The following asyn parameters are provided and can be used from EPICS PV infrastructure:
  * asyn param name    | asyn param index     | asyn param type | init val | mode | Description
  * ------------------ | -------------------- | --------------- | -------- | ---- | -----------
+ * STATUS             | Status               | asynParamInt32  | 0        | RO   | Status of OCC port driver (see OccPortDriver::Status for available options)
  * DEVICE_STATUS      | DeviceStatus         | asynParamInt32  | 0        | RO   | Raw error code as returned from OCC API functions, non-negative number for errors, 0 for success
  * BOARD_TYPE         | BoardType            | asynParamInt32  | 0        | RO   | Type of board based as described by occ_board_type; 1 for SNS PCI-X, 2 for SNS PCIe, 15 for simulator
  * BOARD_FIRMWARE_VER | BoardFirmwareVersion | asynParamInt32  | 0        | RO   | OCC board firmware version
@@ -27,6 +28,16 @@ struct occ_handle;
  * RX_ENABLED         | RxEnabled            | asynParamInt32  | 0        | RW   | Flag to enable (1) or disable (0) reception on OCC board
  */
 class epicsShareFunc OccPortDriver : public asynPortDriver {
+    private:
+        /**
+         * Valid statuses of the OccPortDriver and the OCC infrastructure.
+         */
+        enum {
+            STAT_OK             = 0,    //!< No error
+            STAT_BUFFER_FULL    = 1,    //!< Receive buffer is full, acquisition was stopped
+            STAT_OCC_ERROR      = 2,    //!< OCC error was detected
+        };
+
 	public:
 	    /**
 	     * Constructor
@@ -90,8 +101,9 @@ class epicsShareFunc OccPortDriver : public asynPortDriver {
         void processOccData();
 
     private:
+        #define FIRST_OCCPORTDRIVER_PARAM Status
+        int Status;
         int DeviceStatus;
-        #define FIRST_OCCPORTDRIVER_PARAM DeviceStatus
         int BoardType;
         int BoardFirmwareVersion;
         int OpticsPresent;

@@ -27,15 +27,23 @@ class DmaCircularBuffer : public BaseCircularBuffer {
          * Wait until some data is available in circular buffer.
          *
          * The function waits for OCC board to signal it has some data.
+         * On success it updates the len argument with the number of bytes of
+         * data available.
+         *
+         * @param[out] data Pointer to the start of the data.
+         * @param[out] len On success, updated to the number of bytes of data.
+         * @return Matches return code of occ_data_wait()
          */
-        void wait(void **data, uint32_t *len);
+        int wait(void **data, uint32_t *len);
 
         /**
          * Advance consumer index.
          *
          * Instruct OCC board to advance consumer index.
+         *
+         * @return Matches return code of occ_data_ack()
          */
-        void consume(uint32_t len);
+        int consume(uint32_t len);
 
         /**
          * Return true when no data is available in circular buffer.

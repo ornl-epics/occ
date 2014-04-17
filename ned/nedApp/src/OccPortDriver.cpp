@@ -41,18 +41,23 @@ OccPortDriver::OccPortDriver(const char *portName, int deviceId, uint32_t localB
     occ_status_t occstatus;
 
     // Register params with asyn
+    createParam("STATUS",               asynParamInt32,     &Status);
     createParam("DEVICE_STATUS",        asynParamInt32,     &DeviceStatus);
     createParam("BOARD_TYPE",           asynParamInt32,     &BoardType);
     createParam("BOARD_FIRMWARE_VER",   asynParamInt32,     &BoardFirmwareVersion);
     createParam("OPTICS_PRESENT",       asynParamInt32,     &OpticsPresent);
     createParam("RX_ENABLED",           asynParamInt32,     &RxEnabled);
 
+    setIntegerParam(Status, STAT_OK);
+
     // Initialize OCC board
     status = occ_open(portName, OCC_INTERFACE_OPTICAL, &m_occ);
     setIntegerParam(DeviceStatus, -status);
     if (status != 0) {
+        setIntegerParam(Status, STAT_OCC_ERROR);
         asynPrint(this->pasynUserSelf, ASYN_TRACE_ERROR, "Unable to open OCC device - %s(%d)\n", strerror(-status), status);
         m_occ = NULL;
+        return;
     }
 
     // Query OCC board status and populate PVs
@@ -84,6 +89,8 @@ OccPortDriver::OccPortDriver(const char *portName, int deviceId, uint32_t localB
                                                 epicsThreadGetStackSize(epicsThreadStackMedium),
                                                 (EPICSTHREADFUNC)processOccDataC,
                                                 this);
+
+    callParamCallbacks();
 }
 
 OccPortDriver::~OccPortDriver()
@@ -110,15 +117,21 @@ OccPortDriver::~OccPortDriver()
 asynStatus OccPortDriver::readInt32(asynUser *pasynUser, epicsInt32 *value)
 {
     if (pasynUser->reason == OpticsPresent) {
+        asynStatus status;
         occ_status_t occstatus;
-        int status = occ_status(m_occ, &occstatus);
-        if (status != 0) {
-            asynPrint(pasynUser, ASYN_TRACE_ERROR, "Unable to query OCC device status - %s(%d)\n", strerror(-status), status);
-            return asynError;
+        int ret = occ_status(m_occ, &occstatus);
+        if (ret == 0) {
+            setIntegerParam(RxEnabled, (int)occstatus.rx_enabled);
+            setIntegerParam(OpticsPresent, (int)occstatus.optical_signal);
+            status = asynSuccess;
+        } else {
+            setIntegerParam(DeviceStatus, -ret);
+            setIntegerParam(Status, STAT_OCC_ERROR);
+            asynPrint(pasynUser, ASYN_TRACE_ERROR, "Unable to query OCC device status - %s(%d)\n", strerror(-ret), ret);
+            status = asynError;
         }
-        setIntegerParam(RxEnabled, (int)occstatus.rx_enabled);
-        setIntegerParam(OpticsPresent, (int)occstatus.optical_signal);
         callParamCallbacks();
+        return status;
     }
     return asynPortDriver::readInt32(pasynUser, value);
 }
@@ -146,6 +159,9 @@ asynStatus OccPortDriver::writeGenericPointer(asynUser *pasynUser, void *pointer
 
         int ret = occ_send(m_occ, reinterpret_cast<const void *>(packet), packet->length());
         if (ret != 0) {
+            setIntegerParam(DeviceStatus, -ret);
+            setIntegerParam(Status, STAT_OCC_ERROR);
+            callParamCallbacks();
             asynPrint(pasynUser, ASYN_TRACE_ERROR, "Unable to send data to OCC - %s(%d)\n", strerror(-ret), ret);
             return asynError;
         }
@@ -163,7 +179,14 @@ void OccPortDriver::processOccData()
     DasPacketList packetsList;
 
     while (true) {
-        m_circularBuffer->wait(&data, &length);
+        int ret = m_circularBuffer->wait(&data, &length);
+        if (ret != 0) {
+            setIntegerParam(DeviceStatus, ret);
+            setIntegerParam(Status, ret == -EOVERFLOW ? STAT_BUFFER_FULL : STAT_OCC_ERROR);
+            callParamCallbacks();
+            asynPrint(pasynUserSelf, ASYN_TRACE_ERROR, "Unable to receive data from OCC, stopped - %s(%d)\n", strerror(-ret), ret);
+            break;
+        }
 
         if (!packetsList.reset(reinterpret_cast<uint8_t*>(data), length)) {
             // This should not happen. If it does it's certainly a code error that needs to be fixed.

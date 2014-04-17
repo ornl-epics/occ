@@ -11,23 +11,17 @@ DmaCircularBuffer::~DmaCircularBuffer()
 {
 }
 
-void DmaCircularBuffer::wait(void **data, uint32_t *len)
+int DmaCircularBuffer::wait(void **data, uint32_t *len)
 {
-    size_t l;
+    size_t l = 0;
     int status = occ_data_wait(m_occ, data, &l, 0);
-    if (status != 0) {
-        // TODO: error reporting
-        *len = 0;
-    }
     *len = l;
+    return status;
 }
 
-void DmaCircularBuffer::consume(uint32_t len)
+int DmaCircularBuffer::consume(uint32_t len)
 {
-    int status = occ_data_ack(m_occ, len);
-    if (status != 0) {
-        // TODO: error reporting
-    }
+    return occ_data_ack(m_occ, len);
 }
 
 bool DmaCircularBuffer::empty()

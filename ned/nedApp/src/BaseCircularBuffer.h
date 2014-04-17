@@ -29,13 +29,19 @@ class BaseCircularBuffer {
          * pointer to the start of the memory where the data is. It also
          * modifies the len parameter to reflect the amount of data that
          * is available.
+         *
+         * @retval 0 on success
+         * @retval negative on error, actual values are implementation specific
          */
-        virtual void wait(void **data, uint32_t *len) = 0;
+        virtual int wait(void **data, uint32_t *len) = 0;
 
         /**
          * Advance consumer index.
+         *
+         * @retval 0 on success
+         * @retval negative on error, actual values are implementation specific
          */
-        virtual void consume(uint32_t len) = 0;
+        virtual int consume(uint32_t len) = 0;
 
         /**
          * Return true when no data is available in circular buffer.
