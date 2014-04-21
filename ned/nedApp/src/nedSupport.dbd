@@ -3,3 +3,4 @@ include "asyn.dbd"
 registrar("nedRegister")
 registrar("AdaraPluginRegister")
 registrar("DspPluginRegister")
+registrar("DiscoverPluginRegister")

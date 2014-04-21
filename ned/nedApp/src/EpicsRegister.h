@@ -37,7 +37,7 @@ static const iocshFuncDef initFuncDef = { XSTR(name ## Configure), 1, initArgs};
 extern "C" { \
     int name##Configure(EPICS_CTYPE_##arg0type arg0) { new class(arg0); return(asynSuccess); } \
     static void initCallFunc(const iocshArgBuf *args) { name ## Configure(args[0].EPICS_VAL_##arg0type); } \
-    void name##Register(void) { iocshRegister(&initFuncDef,initCallFunc); } \
+    static void name##Register(void) { iocshRegister(&initFuncDef,initCallFunc); } \
     epicsExportRegistrar(name##Register); \
 }
 
@@ -49,7 +49,7 @@ static const iocshFuncDef initFuncDef = { XSTR(name ## Configure), 2, initArgs};
 extern "C" { \
     int name##Configure(EPICS_CTYPE_##arg0type arg0, EPICS_CTYPE_##arg1type arg1) { new class(arg0, arg1); return(asynSuccess); } \
     static void initCallFunc(const iocshArgBuf *args) { name ## Configure(args[0].EPICS_VAL_##arg0type, args[1].EPICS_VAL_##arg1type); } \
-    void name##Register(void) { iocshRegister(&initFuncDef,initCallFunc); } \
+    static void name##Register(void) { iocshRegister(&initFuncDef,initCallFunc); } \
     epicsExportRegistrar(name##Register); \
 }
 

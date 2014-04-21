@@ -209,7 +209,13 @@ asynStatus DspPlugin::readInt32(asynUser *pasynUser, epicsInt32 *value)
 
 void DspPlugin::processData(const DasPacketList * const packetList)
 {
+    int nReceived = 0;
+    int nProcessed = 0;
+    getIntegerParam(ReceivedCount,  &nReceived);
+    getIntegerParam(ProcessedCount, &nProcessed);
+
     for (const DasPacket *packet = packetList->first(); packet != 0; packet = packetList->next(packet)) {
+        nReceived++;
         // Silently skip packets we're not interested in
         if (!packet->isResponse() || packet->source != m_hardwareId)
             continue;
@@ -221,7 +227,12 @@ void DspPlugin::processData(const DasPacketList * const packetList)
         } else if (packet->cmdinfo.command == DasPacket::CMD_DISCOVER) {
             int debug = 1;
         }
+        nProcessed++;
     }
+
+    setIntegerParam(ReceivedCount,  nReceived);
+    setIntegerParam(ProcessedCount, nProcessed);
+    callParamCallbacks();
 }
 
 uint32_t DspPlugin::configureSection(char section, int *data, uint32_t count)

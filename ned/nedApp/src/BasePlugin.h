@@ -83,7 +83,7 @@ class Timer;
 class BasePlugin : public asynPortDriver {
 	public:
 	    static const int defaultInterfaceMask = asynInt32Mask | asynGenericPointerMask | asynDrvUserMask;
-	    static const int defaultInterruptMask = 0;
+	    static const int defaultInterruptMask = asynInt32Mask;
 
 	    /**
 	     * Constructor

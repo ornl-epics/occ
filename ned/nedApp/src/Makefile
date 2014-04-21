@@ -54,6 +54,7 @@ ned_SRCS  += BasePlugin.cpp
 ned_SRCS  += AdaraPlugin.cpp
 ned_SRCS  += CmdDispatcher.cpp
 ned_SRCS  += DspPlugin.cpp
+ned_SRCS  += DiscoverPlugin.cpp
 
 #===========================
 

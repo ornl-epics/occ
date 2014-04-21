@@ -50,12 +50,12 @@
 		<Unit filename="CircularBuffer.h" />
 		<Unit filename="CmdDispatcher.cpp" />
 		<Unit filename="CmdDispatcher.h" />
-		<Unit filename="Common.cpp" />
-		<Unit filename="Common.h" />
 		<Unit filename="DasPacket.cpp" />
 		<Unit filename="DasPacket.h" />
 		<Unit filename="DasPacketList.cpp" />
 		<Unit filename="DasPacketList.h" />
+		<Unit filename="DiscoverPlugin.cpp" />
+		<Unit filename="DiscoverPlugin.h" />
 		<Unit filename="DmaCircularBuffer.cpp" />
 		<Unit filename="DmaCircularBuffer.h" />
 		<Unit filename="DmaCopier.cpp" />

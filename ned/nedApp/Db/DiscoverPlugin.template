@@ -1,0 +1,9 @@
+record(mbbo, "$(P)$(R)Trigger")
+{
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))TRIGGER")
+    field(ZRVL, "0")
+    field(ONVL, "1")
+    field(ZRST, "")
+    field(ONST, "Discover")
+}
