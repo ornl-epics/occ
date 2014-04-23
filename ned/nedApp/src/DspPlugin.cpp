@@ -62,6 +62,7 @@ void DspPlugin::reqVersionRead()
     packet->cmdinfo.command = DasPacket::CMD_READ_VERSION;
 
     sendToDispatcher(packet);
+    delete packet;
 
     std::function<void(const DasPacket *)> responseCb = std::bind(&DspPlugin::rspCfgRead, this, std::placeholders::_1);
     expectResponse(DasPacket::CMD_READ_VERSION, responseCb);
@@ -70,7 +71,7 @@ void DspPlugin::reqVersionRead()
 void DspPlugin::rspVersionRead(const DasPacket *packet)
 {
     char date[20];
-    const RspVersion *payload = reinterpret_cast<const RspVersion*>(packet->data);
+    const RspVersion *payload = reinterpret_cast<const RspVersion*>(packet->payload);
 
     setIntegerParam(HardwareVer, payload->hardware.version);
     setIntegerParam(HardwareRev, payload->hardware.revision);
@@ -112,6 +113,7 @@ void DspPlugin::reqCfgWrite()
     packet->cmdinfo.command = DasPacket::CMD_WRITE_CONFIG;
 
     sendToDispatcher(packet);
+    delete packet;
 
     std::function<void(const DasPacket *)> responseCb = std::bind(&DspPlugin::rspCfgRead, this, std::placeholders::_1);
     expectResponse(DasPacket::CMD_WRITE_CONFIG, responseCb);
@@ -126,6 +128,7 @@ void DspPlugin::reqCfgRead()
     packet->cmdinfo.command = DasPacket::CMD_READ_CONFIG;
 
     sendToDispatcher(packet);
+    delete packet;
 
     std::function<void(const DasPacket *)> responseCb = std::bind(&DspPlugin::rspCfgRead, this, std::placeholders::_1);
     expectResponse(DasPacket::CMD_READ_CONFIG, responseCb);
@@ -143,7 +146,7 @@ void DspPlugin::rspCfgRead(const DasPacket *packet)
 
     for (std::map<int, struct ParamDesc>::iterator it=m_configParams.begin(); it != m_configParams.end(); it++) {
         uint32_t offset = getCfgSectionOffset(it->second.section) + it->second.offset;
-        int value = *(packet->data + offset);
+        int value = *(packet->payload + offset);
         setIntegerParam(it->first, value);
     }
     callParamCallbacks();

@@ -60,7 +60,7 @@ DasPacket *DasPacket::create(uint32_t payloadLen, const uint8_t *payload)
     return packet;
 }
 
-DasPacket::DasPacket(uint32_t payloadLen, const uint8_t *payload)
+DasPacket::DasPacket(uint32_t payloadLen, const uint8_t *payload_)
     : destination(0)
     , source(0)
     , info(0)
@@ -68,13 +68,13 @@ DasPacket::DasPacket(uint32_t payloadLen, const uint8_t *payload)
     , reserved1(0)
     , reserved2(0)
 {
-    if (payload) {
-        memcpy(data, payload, payloadLen);
+    if (payload_) {
+        memcpy(payload, payload_, payloadLen);
         if (payload_length != payloadLen) {
-            memset(&data[payload_length], 0, payload_length - payloadLen);
+            memset(&payload[payload_length], 0, payload_length - payloadLen);
         }
     } else {
-        memset(data, 0, payload_length);
+        memset(payload, 0, payload_length);
     }
 }
 
@@ -131,7 +131,7 @@ bool DasPacket::isRtdl() const
 const DasPacket::RtdlHeader *DasPacket::getRtdlHeader() const
 {
     if (!datainfo.is_command && datainfo.rtdl_present && payload_length >= sizeof(RtdlHeader))
-        return (RtdlHeader *)data;
+        return (RtdlHeader *)payload;
     return 0;
 };
 
@@ -140,10 +140,10 @@ const DasPacket::NeutronEvent *DasPacket::getNeutronData(uint32_t *count) const
     const uint8_t *start = 0;
     *count = 0;
     if (!datainfo.is_command) {
-        start = reinterpret_cast<const uint8_t *>(data);
+        start = reinterpret_cast<const uint8_t *>(payload);
         if (datainfo.rtdl_present)
             start += sizeof(RtdlHeader);
-        *count = (payload_length - (start - reinterpret_cast<const uint8_t*>(data))) / 8;
+        *count = (payload_length - (start - reinterpret_cast<const uint8_t*>(payload))) / 8;
     }
     return reinterpret_cast<const NeutronEvent *>(start);
 }

@@ -53,8 +53,28 @@ struct DasPacket
             CMD_DISCOVER                = 0x80, //!< Discover modules
             CMD_START                   = 0x82, //!< Start acquisition
             CMD_STOP                    = 0x83, //!< Stop acquisition
+            CMD_TSYNC                   = 0x84, //!< TSYNC packet
             CMD_RTDL                    = 0x85, //!< RTDL is a command packet, but can also be data packet if info == 0xFC
             RSP_ACK                     = 0x41, //!< Acknowledgement to the command, the command that is being acknowledged is in payload
+        };
+
+        /**
+         * Type of modules
+         */
+        enum ModuleType {
+            MOD_TYPE_ROC                = 32,   //!< ROC (or LPSD) module
+            MOD_TYPE_AROC               = 33,   //!< AROC
+            MOD_TYPE_HROC               = 34,
+            MOD_TYPE_BLNROC             = 37,
+            MOD_TYPE_CROC               = 41,
+            MOD_TYPE_IROC               = 42,
+            MOD_TYPE_BIDIMROC           = 43,
+            MOD_TYPE_DSP                = 48,
+            MOD_TYPE_SANSROC            = 64,
+            MOD_TYPE_ACPC               = 160,
+            MOD_TYPE_ACPCFEM            = 161,
+            MOD_TYPE_FFC                = 162,
+            MOD_TYPE_FEM                = 170,
         };
 
         static const uint32_t MinLength = 6*4;  //!< Minumum total length of any DAS packet, at least the header must be present
@@ -71,8 +91,12 @@ struct DasPacket
             uint32_t info;                      //!< Raw access to the info (dcomserver compatibility mode)
             struct {
 #ifdef BITFIELD_LSB_FIRST
-                enum CommandType command:8;    //!< 8 bits describing DAS module commands
-                unsigned unused:20;             //!< LVDS parity bits used to be here, may still be present in responses
+                enum CommandType command:8;     //!< 8 bits describing DAS module commands
+                enum ModuleType module_type:8;  //!< 15:8 bits describing module type
+                unsigned lvds_parity:1;         //!< LVDS parity bit
+                unsigned lvds_global:1;         //!< When set, send to everyone, otherwise 2 dwords in the payload specify the address
+                unsigned lvds_all_one:2;        //!< Until figure out what they are, always 11
+                unsigned unused:8;              //!< TODO: unknown
                 unsigned is_chain:1;            //!< TODO: what is it?
                 unsigned is_response:1;         //!< If 1 the packet is response to a command
                 unsigned is_passthru:1;         //!< Not sure what this does, but it seems like it's getting set when DSP is forwarding the packet from some other module
@@ -99,7 +123,7 @@ struct DasPacket
         uint32_t payload_length;                //!< payload length, might include the RTDL at the start
         uint32_t reserved1;
         uint32_t reserved2;
-        uint32_t data[0];
+        uint32_t payload[0];                    //!< 4-byte aligned payload data
 
         /**
          * Create DasPacket of variable size based on the payloadLength.

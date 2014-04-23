@@ -68,7 +68,7 @@ void AdaraPlugin::processData(const DasPacketList * const packetList)
             outpacket[1] = ADARA_CODE_DAS_RTDL;
             // The RTDL packet contents is just what ADARA expects.
             // Copy what we have, 32 words at most, leave the rest as 0.
-            memcpy(&outpacket[2], packet->data, sizeof(uint32_t)*min(packet->payload_length, static_cast<uint32_t>(32)));
+            memcpy(&outpacket[2], packet->payload, sizeof(uint32_t)*min(packet->payload_length, static_cast<uint32_t>(32)));
 
             if (send(outpacket, len))
                 m_nTransmitted++;
