@@ -1,3 +1,4 @@
+#include "BaseModulePlugin.h"
 #include "DiscoverPlugin.h"
 #include "Log.h"
 
@@ -20,8 +21,8 @@ DiscoverPlugin::DiscoverPlugin(const char *portName, const char *dispatcherPortN
     setCallbacks(true);
 
     bool parity;
-    parity = evenParity(0xA);
-    parity = evenParity(0xB);
+    parity = BaseModulePlugin::evenParity(0xA);
+    parity = BaseModulePlugin::evenParity(0xB);
 
     callParamCallbacks();
 }
@@ -58,7 +59,13 @@ void DiscoverPlugin::processData(const DasPacketList * const packetList)
             // their responses all their submodules can be observed. Since we're
             // also interested in module types, we'll do a p2p discover to every module.
             m_discovered[packet->source].type = packet->cmdinfo.module_type;
-            for (int i=0; i<packet->payload_length/sizeof(uint32_t); i++) {
+
+            // The global LVDS discover packet should address all modules connected
+            // through LVDS. For some unidentified reason, ROC boards connected directly
+            // to DSP don't respond, whereas ROCs behind FEM do.
+            //reqLvdsDiscover(DasPacket::HWID_BROADCAST);
+            // So we do P2P to each module.
+            for (uint32_t i=0; i<packet->payload_length/sizeof(uint32_t); i++) {
                 reqLvdsDiscover(packet->payload[i]);
             }
         } else if (packet->cmdinfo.is_passthru) {
@@ -89,7 +96,7 @@ void DiscoverPlugin::report(FILE *fp, int details)
     for (std::map<uint32_t, ModuleDesc>::iterator it = m_discovered.begin(); it != m_discovered.end(); it++) {
         char moduleId[16];
         char parentId[16];
-        char *type;
+        const char *type;
 
         switch (it->second.type) {
             case DasPacket::MOD_TYPE_ACPC:      type = "ACPC";      break;
@@ -120,49 +127,25 @@ void DiscoverPlugin::report(FILE *fp, int details)
 
 void DiscoverPlugin::reqDiscover()
 {
-    DasPacket *packet = DasPacket::create(0, 0);
-    packet->source = DasPacket::HWID_SELF;
-    packet->destination = DasPacket::HWID_BROADCAST;
-    packet->cmdinfo.is_command = true;
-    packet->cmdinfo.command = DasPacket::CMD_DISCOVER;
-
+    DasPacket *packet = BaseModulePlugin::createOpticalPacket(DasPacket::HWID_BROADCAST, DasPacket::CMD_DISCOVER);
+    if (!packet) {
+        LOG_ERROR("Failed to allocate DISCOVER packet");
+        return;
+    }
     sendToDispatcher(packet);
     delete packet;
 }
 
 void DiscoverPlugin::reqLvdsDiscover(uint32_t hardwareId)
 {
-    DasPacket *packet = DasPacket::create(2*sizeof(uint32_t), 0);
-    packet->source = DasPacket::HWID_SELF;
-    packet->destination = 0;
-    packet->cmdinfo.is_command = true;
-    packet->cmdinfo.is_passthru = true;
-    packet->cmdinfo.lvds_all_one = 0x3;
-    packet->cmdinfo.lvds_global = (hardwareId == DasPacket::HWID_BROADCAST);
-    packet->cmdinfo.lvds_parity = evenParity(DasPacket::CMD_DISCOVER);
-    packet->cmdinfo.command = DasPacket::CMD_DISCOVER;
-    if (hardwareId != DasPacket::HWID_BROADCAST) {
-        packet->payload[0] = hardwareId & 0xFFFF;
-        packet->payload[0] |= (evenParity(packet->payload[0]) << 16);
-        packet->payload[1] = (hardwareId >> 16 ) & 0xFFFF;
-        packet->payload[1] |= (evenParity(packet->payload[1]) << 16); // last bit changes parity
-        packet->payload[1] |= (0x1 << 17);
-    } else {
-        packet->payload_length = 0;
+    DasPacket *packet = BaseModulePlugin::createLvdsPacket(hardwareId, DasPacket::CMD_DISCOVER);
+    if (!packet) {
+        LOG_ERROR("Failed to allocate DISCOVER LVDS packet");
+        return;
     }
-
     sendToDispatcher(packet);
     delete packet;
-}
 
-bool DiscoverPlugin::evenParity(int number)
-{
-    int temp = 0;
-    while (number != 0) {
-        temp = temp ^ (number & 0x1);
-        number >>= 1;
-    }
-    return temp;
 }
 
 void DiscoverPlugin::resolveIP(uint32_t hardwareId, char *ip)
