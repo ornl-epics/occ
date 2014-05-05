@@ -1,4 +1,5 @@
 CFLAGS=-Wall -I../occdriver
+#CFLAGS+=-DRX_DUMP_PATH="/tmp/occ.dump" -DTX_DUMP_PATH="/tmp/occ_tx.dump"
 LDFLAGS=
 SRCS=occlib.c
 SIMSRCS=occlib_sim.c
