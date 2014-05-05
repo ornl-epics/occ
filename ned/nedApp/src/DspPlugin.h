@@ -1,9 +1,7 @@
 #ifndef DSP_PLUGIN_H
 #define DSP_PLUGIN_H
 
-#include "BasePlugin.h"
-
-#include <map>
+#include "BaseModulePlugin.h"
 
 /**
  * Plugin for DSP module.
@@ -14,12 +12,12 @@
  * HARDWARE_ID          | HardwareId       | asynParamInt32  | 0        | RO   | Hardware ID of the module connected to
  * HARDWARE_VER         | HardwareVer      | asynParamInt32  | 0        | RO   | Hardware version
  * HARDWARE_REV         | HardwareRev      | asynParamInt32  | 0        | RO   | Hardware revision
- * HARDWARE_DATE        | HardwareDate     | asynParamInt32  | 0        | RO   | Hardware date
+ * HARDWARE_DATE        | HardwareDate     | asynOctet       | ""       | RO   | Hardware date
  * FIRMWARE_VER         | FirmwareVer      | asynParamInt32  | 0        | RO   | Number of packets processed, to be populated by derived classes
  * STATUS               | Status           | asynParamInt32  | 0        | RO   | Status of DSP plugin (see DspPlugin::Status for available options)
  * COMMAND              | Command          | asynParamInt32  | 0        | RW   | Issue a command for this plugin (see DspPlugin::Command for available options)
  */
-class DspPlugin : public BasePlugin {
+class DspPlugin : public BaseModulePlugin {
     private: // structures and definitions
         struct ParamDesc {
             char section;           //!< Section name
@@ -69,6 +67,7 @@ class DspPlugin : public BasePlugin {
         };
 
         static const unsigned NUM_DSPPLUGIN_CONFIGPARAMS;   //!< This is used as a runtime assert check and must match number of configuration parameters
+        static const unsigned NUM_DSPPLUGIN_STATUSPARAMS;   //!< This is used as a runtime assert check and must match number of status parameters
         static const double DSP_RESPONSE_TIMEOUT;           //!< Default DSP response timeout, in seconds
 
     public:
@@ -82,11 +81,11 @@ class DspPlugin : public BasePlugin {
 	     * @param[in] dispatcherPortName Name of the dispatcher asyn port to connect to.
 	     * @param[in] hardwareId Hardware ID of the DSP module, can be in IP format (xxx.xxx.xxx.xxx) or
          *                       in hex number string in big-endian byte order (0x15FACB2D equals to IP 21.250.203.45)
+         * @param[in] blocking Flag whether the processing should be done in the context of caller thread or in background thread.
          */
-        DspPlugin(const char *portName, const char *dispatcherPortName, const char *hardwareId);
+        DspPlugin(const char *portName, const char *dispatcherPortName, const char *hardwareId, int blocking);
 
     private:
-        uint32_t m_hardwareId;
         std::map<int, struct ParamDesc> m_configParams;
 
         /**
@@ -178,11 +177,6 @@ class DspPlugin : public BasePlugin {
         void createStatusParams();
 
         /**
-         * Create and register single integer status parameter.
-         */
-        void createStatusParam(const char *name, uint32_t offset, uint32_t nBits, uint32_t shift);
-
-        /**
          * Setup the expected next response and a timeout routine.
          *
          * When the next command is received, it must be the one specified in
@@ -208,7 +202,7 @@ class DspPlugin : public BasePlugin {
         /**
          * Construct particular section of configuration data.
          */
-        uint32_t configureSection(char section, int *data, uint32_t count);
+        uint32_t configureSection(char section, uint32_t *data, uint32_t count);
 
         /**
          * Return size of particular configuration section.

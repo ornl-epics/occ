@@ -1,5 +1,5 @@
 epicsEnvSet("ARCH","linux-x86_64")
 epicsEnvSet("IOC","iocned")
-epicsEnvSet("TOP","/home/dasuser/work/klemen/git/detectors/ned")
+epicsEnvSet("TOP","/home/kvx/work/git/detectors/ned")
 epicsEnvSet("EPICS_BASE","/home/dasuser/EPICS/base-3.14.12.4")
 epicsEnvSet("ASYN","/home/dasuser/EPICS/support/asyn4-22")

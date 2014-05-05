@@ -9,7 +9,7 @@ ned_registerRecordDeviceDriver(pdbbase)
 
 ## Load record instances
 epicsEnvSet("PREFIX", "SNS:")
-epicsEnvSet("PORT",   "/dev/snsocb0")
+epicsEnvSet("PORT",   "/dev/snsocb1")
 #asynSetTraceIOMask("$(PORT)",0,255)
 dbLoadRecords("../../db/ned.template","P=$(PREFIX),R=ocb1:,PORT=$(PORT),ADDR=0,TIMEOUT=1")
 nedConfigure("$(PORT)", 0, 4000000)
@@ -20,12 +20,16 @@ dbLoadRecords("../../db/AdaraPlugin.template","P=$(PREFIX),R=ocb1:,PORT=Adara1,A
 dbLoadRecords("../../db/BasePlugin.template","P=$(PREFIX),R=ocb1:,PORT=Adara1,ADDR=0,TIMEOUT=1")
 
 #DspPluginConfigure("Dsp1", "$(PORT)", "0x15FACB2D")
-DspPluginConfigure("Dsp1", "$(PORT)", "21.250.203.45")
+DspPluginConfigure("Dsp1", "$(PORT)", "21.250.203.45", 1)
 dbLoadRecords("../../db/DspPlugin.template","P=$(PREFIX),R=dsp1:,PORT=Dsp1,ADDR=0,TIMEOUT=1")
 dbLoadRecords("../../db/BasePlugin.template","P=$(PREFIX),R=dsp1:,PORT=Dsp1,ADDR=0,TIMEOUT=1")
 
 DiscoverPluginConfigure("Disc", "$(PORT)")
 dbLoadRecords("../../db/DiscoverPlugin.template","P=$(PREFIX),R=disc:,PORT=Disc,ADDR=0,TIMEOUT=1")
 dbLoadRecords("../../db/BasePlugin.template","P=$(PREFIX),R=disc:,PORT=Disc,ADDR=0,TIMEOUT=1")
+
+RocPluginConfigure("roc1", "$(PORT)", "20.39.216.73", "5.x/5.x", 1)
+dbLoadRecords("../../db/RocPlugin.template","P=$(PREFIX),R=roc1:,PORT=roc1,ADDR=0,TIMEOUT=1")
+dbLoadRecords("../../db/BasePlugin.template","P=$(PREFIX),R=roc1:,PORT=roc1,ADDR=0,TIMEOUT=1")
 
 iocInit()

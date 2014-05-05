@@ -49,6 +49,7 @@ struct DasPacket
         enum CommandType {
             CMD_READ_VERSION            = 0x20, //!< Read module version
             CMD_READ_CONFIG             = 0x21, //!< Read module configuration
+            CMD_READ_STATUS             = 0x22, //!< Read module status
             CMD_WRITE_CONFIG            = 0x30, //!< Write module configuration
             CMD_DISCOVER                = 0x80, //!< Discover modules
             CMD_START                   = 0x82, //!< Start acquisition
@@ -144,11 +145,6 @@ struct DasPacket
         uint32_t length() const;
 
         /**
-         * Length of the packet payload in bytes.
-         */
-        uint32_t payloadLength() const;
-
-        /**
          * Is this a command packet?
          */
         bool isCommand() const;
@@ -189,6 +185,49 @@ struct DasPacket
          * @param[out] count Number of NeutronEvents in the returned memory.
          */
         const NeutronEvent *getNeutronData(uint32_t *count) const;
+
+        /**
+         * Return the actual source hardware address.
+         *
+         * Response packet source field always contains hardware address
+         * of the DSP. In case DSP is routing the packet for some other module,
+         * the real source hardware address is in the payload.
+         * This function returns the real source hardware address regardless
+         * of where the packet is coming from.
+         *
+         * @see getPayload
+         * @see getPayloadLength
+         * @return Actual source hardware address.
+         */
+        uint32_t getSourceAddress() const;
+
+        /**
+         * Return address to the actual packet payload.
+         *
+         * The response packets behind the DSP contain their address in the
+         * first 4-bytes of the payload. The real payload is thus shifted for
+         * 4 bytes. This only applies to the command responses as the data
+         * is being packed into bigger packets by the DSP.
+         *
+         * @see getSourceAddress
+         * @see getPayloadLength
+         * @return Returns address of the payload regardless where the packet
+         *         is coming from.
+         */
+        const uint32_t *getPayload() const;
+
+        /**
+         * Length of the packet payload in bytes.
+         *
+         * Based on the origin of the packet, first 4 bytes of the payload
+         * might contain the source hardware address of the module sending
+         * the data.
+         *
+         * @see getPayload
+         * @see getSourceAddress
+         * @return Returns number of the actual payload.
+         */
+        uint32_t getPayloadLength() const;
 
     private:
 

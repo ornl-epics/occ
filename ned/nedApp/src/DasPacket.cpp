@@ -147,3 +147,27 @@ const DasPacket::NeutronEvent *DasPacket::getNeutronData(uint32_t *count) const
     }
     return reinterpret_cast<const NeutronEvent *>(start);
 }
+
+uint32_t DasPacket::getSourceAddress() const
+{
+    if (cmdinfo.is_command && cmdinfo.is_passthru)
+        return payload[0];
+    else
+        return source;
+}
+
+const uint32_t *DasPacket::getPayload() const
+{
+    if (cmdinfo.is_command && cmdinfo.is_passthru)
+        return &payload[1];
+    else
+        return payload;
+}
+
+uint32_t DasPacket::getPayloadLength() const
+{
+    if (cmdinfo.is_command && cmdinfo.is_passthru)
+        return payload_length - 4;
+    else
+        return payload_length;
+}

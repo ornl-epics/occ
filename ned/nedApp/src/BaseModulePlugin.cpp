@@ -36,9 +36,9 @@ void BaseModulePlugin::sendToDispatcher(DasPacket::CommandType command, uint32_t
 {
     DasPacket *packet;
     if (m_connType == CONN_TYPE_LVDS)
-        packet = createOpticalPacket(m_hardwareId, command, payload, length);
-    else
         packet = createLvdsPacket(m_hardwareId, command, payload, length);
+    else
+        packet = createOpticalPacket(m_hardwareId, command, payload, length);
 
     if (packet) {
         BasePlugin::sendToDispatcher(packet);
@@ -114,8 +114,9 @@ bool BaseModulePlugin::evenParity(int number)
 
 void BaseModulePlugin::rspReadStatus(const DasPacket *packet)
 {
+    const uint32_t *payload = packet->getPayload();
     for (std::map<int, StatusParamDesc>::iterator it=m_statusParams.begin(); it != m_statusParams.end(); it++) {
-        int value = (packet->payload[it->second.offset] >> it->second.shift) & ((0x1 << it->second.width) - 1);
+        int value = (payload[it->second.offset] >> it->second.shift) & ((0x1 << it->second.width) - 1);
         setIntegerParam(it->first, value);
     }
     callParamCallbacks();

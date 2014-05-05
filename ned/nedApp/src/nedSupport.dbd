@@ -1,6 +1,7 @@
 include "base.dbd"
 include "asyn.dbd"
 registrar("nedRegister")
+registrar("DiscoverPluginRegister")
 registrar("AdaraPluginRegister")
 registrar("DspPluginRegister")
-registrar("DiscoverPluginRegister")
+registrar("RocPluginRegister")

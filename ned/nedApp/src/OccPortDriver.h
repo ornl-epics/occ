@@ -17,15 +17,21 @@ struct occ_handle;
  * directly to OCC board to initialize it, it creates handler for reading the OCC
  * buffer and serves as the main dispatcher of all OCC data.
  *
- * The following asyn parameters are provided and can be used from EPICS PV infrastructure:
- * asyn param name    | asyn param index     | asyn param type | init val | mode | Description
- * ------------------ | -------------------- | --------------- | -------- | ---- | -----------
- * STATUS             | Status               | asynParamInt32  | 0        | RO   | Status of OCC port driver (see OccPortDriver::Status for available options)
- * DEVICE_STATUS      | DeviceStatus         | asynParamInt32  | 0        | RO   | Raw error code as returned from OCC API functions, non-negative number for errors, 0 for success
- * BOARD_TYPE         | BoardType            | asynParamInt32  | 0        | RO   | Type of board based as described by occ_board_type; 1 for SNS PCI-X, 2 for SNS PCIe, 15 for simulator
- * BOARD_FIRMWARE_VER | BoardFirmwareVersion | asynParamInt32  | 0        | RO   | OCC board firmware version
- * OPTICS_PRESENT     | OpticsPresent        | asynParamInt32  | 0        | RO   | 1 when optical link is present, 0 otherwise
- * RX_ENABLED         | RxEnabled            | asynParamInt32  | 0        | RW   | Flag to enable (1) or disable (0) reception on OCC board
+ * Next table lists asyn parameters provided and can be used from EPICS PV infrastructure.
+ * Some naming restrictions enforced by EPICS records apply:
+ * - PV name length is limited to 27 characters in total, where the static prefix
+ *   is BLXXX:Det:OccX: long, living 13 characters to asyn param name
+ * - PV comment can be 29 characters long (text in brackets may be used to describe EPICS
+ *   PV valid values)
+ * asyn param    | asyn param type | init val | mode | Description                   |
+ * ------------- | --------------- | -------- | ---- | ------------------------------
+ * Status        | asynParamInt32  | 0        | RO   | Status of OccPortDriver       (0=OK,1=buffer full,2=OCC error)
+ * Command       | asynParamInt32  | 0        | RW   | Issue OccPortDriver command   (1=optics enable)
+ * BoardStatus   | asynParamInt32  | 0        | RO   | Board status code
+ * BoardType     | asynParamInt32  | 0        | RO   | OCC board type                (1=SNS PCI-X,2=SNS PCIe,15=simulator)
+ * BoardFwVer    | asynParamInt32  | 0        | RO   | OCC board firmware version
+ * OpticsPresent | asynParamInt32  | 0        | RO   | Is optical cable present      (0=not present,1=present)
+ * OpticsEnabled | asynParamInt32  | 0        | RW   | Is optical link enabled       (0=not enabled,1=enabled)
  */
 class epicsShareFunc OccPortDriver : public asynPortDriver {
     private:
@@ -36,6 +42,13 @@ class epicsShareFunc OccPortDriver : public asynPortDriver {
             STAT_OK             = 0,    //!< No error
             STAT_BUFFER_FULL    = 1,    //!< Receive buffer is full, acquisition was stopped
             STAT_OCC_ERROR      = 2,    //!< OCC error was detected
+        };
+
+        /**
+         * Recognized command values through Command parameter.
+         */
+        enum {
+            CMD_OPTICS_ENABLE   = 1,    //!< Enable optical link
         };
 
 	public:
@@ -103,12 +116,13 @@ class epicsShareFunc OccPortDriver : public asynPortDriver {
     private:
         #define FIRST_OCCPORTDRIVER_PARAM Status
         int Status;
-        int DeviceStatus;
+        int Command;
+        int BoardStatus;
         int BoardType;
-        int BoardFirmwareVersion;
+        int BoardFwVer;
         int OpticsPresent;
-        int RxEnabled;
-        #define LAST_OCCPORTDRIVER_PARAM RxEnabled
+        int OpticsEnabled;
+        #define LAST_OCCPORTDRIVER_PARAM OpticsEnabled
 };
 
 #endif // OCCPORTDRIVER_H
