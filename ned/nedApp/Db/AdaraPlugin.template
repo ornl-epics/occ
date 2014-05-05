@@ -1,25 +1,25 @@
-record(stringout, "$(P)$(R)ListenAddr")
+record(stringout, "$(P)$(R)ListenIp")
 {
     field(DTYP, "asynOctetWrite")
-    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))LISTEN_IP")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))ListenIp")
     field(VAL,  "Unknown")
 }
 record(longout, "$(P)$(R)ListenPort")
 {
    field(DTYP,  "asynInt32")
-   field(OUT,   "@asyn($(PORT),$(ADDR),$(TIMEOUT))LISTEN_PORT")
+   field(OUT,   "@asyn($(PORT),$(ADDR),$(TIMEOUT))ListenPort")
    field(VAL,   "0")
 }
 record(stringin, "$(P)$(R)ClientIp")
 {
     field(DTYP, "asynOctetRead")
-    field(INP,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))CLIENT_IP")
+    field(INP,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))ClientIp")
     field(VAL,  "None")
 }
-record(longin, "$(P)$(R)TransmittedCount")
+record(longin, "$(P)$(R)TxCount")
 {
    field(DTYP,  "asynInt32")
-   field(INP,   "@asyn($(PORT),$(ADDR),$(TIMEOUT))TRANSMITTED_COUNT")
+   field(INP,   "@asyn($(PORT),$(ADDR),$(TIMEOUT))TxCount")
    field(VAL,   "0")
    field(SCAN,  "I/O Intr")
 }

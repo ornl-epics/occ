@@ -12,11 +12,11 @@
  * can be used to print details of all discovered details.
  *
  * General plugin parameters:
- * asyn param name      | asyn param index | asyn param type | init val | mode | Description
- * -------------------- | ---------------- | --------------- | -------- | ---- | -----------
- * TRIGGER              | Trigger          | asynParamInt32  | 0        | RW   | Trigger discovery.
- * DISCOVERED_TOTAL     | DiscoveredTotal  | asynParamInt32  | 0        | RO   | Number of all modules discovered.
- * DISCOVERED_DSPS      | DiscoveredDsps   | asynParamInt32  | 0        | RO   | Number of DSP modules discovered.
+ * asyn param    | asyn param type | init val | mode | Description                   |
+ * ------------- | --------------- | -------- | ---- | ------------------------------
+ * Command       | asynParamInt32  | 0        | RW   | Trigger discovery
+ * NumModules    | asynParamInt32  | 0        | RO   | Number of all modules discovered.
+ * NumDsps       | asynParamInt32  | 0        | RO   | Number of DSP modules discovered.
  */
 class DiscoverPlugin : public BasePlugin {
 
@@ -82,8 +82,8 @@ class DiscoverPlugin : public BasePlugin {
         void resolveIP(uint32_t hardwareId, char *ip);
 
     private:
-        #define FIRST_DISCOVERPLUGIN_PARAM Trigger
-        int Trigger;            //!< Trigger discovery of modules
+        #define FIRST_DISCOVERPLUGIN_PARAM Command
+        int Command;            //!< Trigger discovery of modules
         int DiscoveredTotal;    //!< Number of all modules discovered
         int DiscoveredDsps;     //!< Number of DSP modules discovered
         #define LAST_DISCOVERPLUGIN_PARAM DiscoveredDsps

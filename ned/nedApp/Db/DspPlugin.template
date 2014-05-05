@@ -2,7 +2,7 @@ record(mbbi, "$(P)$(R)Status")
 {
     field(PINI, "YES")
     field(DTYP, "asynInt32")
-    field(INP,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))STATUS")
+    field(INP,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Status")
     field(ZRVL, "0")
     field(ZRST, "OK")
     field(SCAN, "I/O Intr")
@@ -10,7 +10,7 @@ record(mbbi, "$(P)$(R)Status")
 record(mbbo, "$(P)$(R)Command")
 {
     field(DTYP, "asynInt32")
-    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))COMMAND")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Command")
     field(ZRVL, "0")
     field(ONVL, "1")
     field(TWVL, "2")
@@ -22,45 +22,45 @@ record(mbbo, "$(P)$(R)Command")
     field(THST, "Read config")
     field(FRST, "Reset config")
 }
-record(stringin, "$(P)$(R)HardwareDate")
+record(stringin, "$(P)$(R)HwDate")
 {
     field(DTYP, "asynOctetRead")
-    field(INP,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))HARDWARE_DATE")
+    field(INP,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))HwDate")
     field(VAL,  "Unknown")
     field(SCAN, "I/O Intr")
 }
-record(longin, "$(P)$(R)HardwareRev")
+record(longin, "$(P)$(R)HwRev")
 {
     field(DTYP,  "asynInt32")
-    field(INP,   "@asyn($(PORT),$(ADDR),$(TIMEOUT))HARDWARE_REV")
+    field(INP,   "@asyn($(PORT),$(ADDR),$(TIMEOUT))HwRev")
     field(VAL,   "0")
     field(SCAN, "I/O Intr")
 }
-record(longin, "$(P)$(R)HardwareVer")
+record(longin, "$(P)$(R)HwVer")
 {
     field(DTYP,  "asynInt32")
-    field(INP,   "@asyn($(PORT),$(ADDR),$(TIMEOUT))HARDWARE_VER")
+    field(INP,   "@asyn($(PORT),$(ADDR),$(TIMEOUT))HwVer")
     field(VAL,   "0")
     field(SCAN, "I/O Intr")
 }
 record(stringin, "$(P)$(R)FirmwareDate")
 {
     field(DTYP, "asynOctetRead")
-    field(INP,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))FIRMWARE_DATE")
+    field(INP,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))FwDate")
     field(VAL,  "Unknown")
     field(SCAN, "I/O Intr")
 }
 record(longin, "$(P)$(R)FirmwareRev")
 {
     field(DTYP,  "asynInt32")
-    field(INP,   "@asyn($(PORT),$(ADDR),$(TIMEOUT))FIRMWARE_REV")
+    field(INP,   "@asyn($(PORT),$(ADDR),$(TIMEOUT))FwRev")
     field(VAL,   "0")
     field(SCAN, "I/O Intr")
 }
 record(longin, "$(P)$(R)FirmwareVer")
 {
     field(DTYP,  "asynInt32")
-    field(INP,   "@asyn($(PORT),$(ADDR),$(TIMEOUT))FIRMWARE_VER")
+    field(INP,   "@asyn($(PORT),$(ADDR),$(TIMEOUT))FwVer")
     field(VAL,   "0")
     field(SCAN, "I/O Intr")
 }

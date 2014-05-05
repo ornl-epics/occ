@@ -98,9 +98,9 @@ void RocPlugin::processData(const DasPacketList * const packetList)
     int nReceived = 0;
     int nProcessed = 0;
     int status;
-    getIntegerParam(ReceivedCount,  &nReceived);
-    getIntegerParam(ProcessedCount, &nProcessed);
-    getIntegerParam(Status,         &status);
+    getIntegerParam(RxCount,    &nReceived);
+    getIntegerParam(ProcCount,  &nProcessed);
+    getIntegerParam(Status,     &status);
 
     for (const DasPacket *packet = packetList->first(); packet != 0; packet = packetList->next(packet)) {
         nReceived++;
@@ -142,8 +142,8 @@ void RocPlugin::processData(const DasPacketList * const packetList)
         }
     }
 
-    setIntegerParam(ReceivedCount,  nReceived);
-    setIntegerParam(ProcessedCount, nProcessed);
+    setIntegerParam(RxCount,    nReceived);
+    setIntegerParam(ProcCount,  nProcessed);
     callParamCallbacks();
 }
 

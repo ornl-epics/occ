@@ -7,15 +7,17 @@
  * Plugin for DSP module.
  *
  * General plugin parameters:
- * asyn param name      | asyn param index | asyn param type | init val | mode | Description
- * -------------------- | ---------------- | --------------- | -------- | ---- | -----------
- * HARDWARE_ID          | HardwareId       | asynParamInt32  | 0        | RO   | Hardware ID of the module connected to
- * HARDWARE_VER         | HardwareVer      | asynParamInt32  | 0        | RO   | Hardware version
- * HARDWARE_REV         | HardwareRev      | asynParamInt32  | 0        | RO   | Hardware revision
- * HARDWARE_DATE        | HardwareDate     | asynOctet       | ""       | RO   | Hardware date
- * FIRMWARE_VER         | FirmwareVer      | asynParamInt32  | 0        | RO   | Number of packets processed, to be populated by derived classes
- * STATUS               | Status           | asynParamInt32  | 0        | RO   | Status of DSP plugin (see DspPlugin::Status for available options)
- * COMMAND              | Command          | asynParamInt32  | 0        | RW   | Issue a command for this plugin (see DspPlugin::Command for available options)
+ * asyn param    | asyn param type | init val | mode | Description                   |
+ * ------------- | --------------- | -------- | ---- | ------------------------------
+ * HwDate        | asynOctet       | ""       | RO   | Hardware date as YYYY/MM/DD
+ * HwVer         | asynParamInt32  | 0        | RO   | Hardware version
+ * HwRev         | asynParamInt32  | 0        | RO   | Hardware revision
+ * FwDate        | asynOctet       | ""       | RO   | Firmware date as YYYY/MM/DD
+ * FwVer         | asynParamInt32  | 0        | RO   | Firmware version
+ * FwRev         | asynParamInt32  | 0        | RO   | Firmware revision
+ * Status        | asynParamInt32  | 0        | RO   | Status of RocPlugin            (0=not initialized)
+ * Command       | asynParamInt32  | 0        | RW   | Issue RocPlugin command        (1=initialize,2=read status,3=write config to module,4=read config from module)
+
  */
 class DspPlugin : public BaseModulePlugin {
     private: // structures and definitions

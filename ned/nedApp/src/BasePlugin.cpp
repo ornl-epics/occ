@@ -43,12 +43,12 @@ BasePlugin::BasePlugin(const char *portName, const char *dispatcherPortName, int
     m_pasynuser->userPvt = this;
     m_pasynuser->reason = reason;
 
-    createParam("ENABLE_CALLBACKS",         asynParamInt32,     &EnableCallbacks); // Plugin does not receive any data until callbacks are enabled
-    createParam("PROCESSED_COUNT",          asynParamInt32,     &ProcessedCount);
-    createParam("RECEIVED_COUNT",           asynParamInt32,     &ReceivedCount);
+    createParam("Enable",       asynParamInt32,     &Enable); // Plugin does not receive any data until callbacks are enabled
+    createParam("ProcCount",    asynParamInt32,     &ProcCount);
+    createParam("RxCount",      asynParamInt32,     &RxCount);
 
-    setIntegerParam(ProcessedCount,         0);
-    setIntegerParam(ReceivedCount,          0);
+    setIntegerParam(ProcCount,  0);
+    setIntegerParam(RxCount,    0);
 
     // Connect to dispatcher port permanently. Don't allow connecting to different port at runtime.
     // Callbacks need to be enabled separately in order to actually get triggered from dispatcher.
@@ -89,7 +89,7 @@ asynStatus BasePlugin::writeInt32(asynUser *pasynUser, epicsInt32 value)
     int reason = pasynUser->reason;
     asynStatus status = asynError;
 
-    if (reason == EnableCallbacks) {
+    if (reason == Enable) {
         this->lock();
         status = setCallbacks(value > 0);
         this->unlock();
