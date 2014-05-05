@@ -187,7 +187,7 @@ void ratelimit(unsigned long rate, unsigned long processed, struct timespec *sta
 }
 
 size_t __occ_align(size_t size) {
-    return (size + 7) & ~7;
+    return (size + 3) & ~3;
 }
 
 /**
@@ -240,7 +240,7 @@ static void *send_to_occ(void *arg) {
             if (packet_size == 0)
                 packet_size = rand() % (TX_MAX_SIZE - sizeof(struct occ_packet_header)) + sizeof(struct occ_packet_header) + 1;
 
-            // Align packet_size to 8 bytes
+            // Align packet_size to 4 bytes
             packet_size = __occ_align(packet_size);
         }
 
@@ -257,7 +257,7 @@ static void *send_to_occ(void *arg) {
                 fill_n(payload + hdr->payload_length, new_payload_length - hdr->payload_length, 0);
                 hdr->payload_length = new_payload_length;
                 packet_size = sizeof(struct occ_packet_header) + hdr->payload_length;
-                cout << "INFO: input packet not 8-byte aligned, padding with '\\0's" << endl;
+                cout << "INFO: input packet not 4-byte aligned, padding with '\\0's" << endl;
             }
         }
 
@@ -304,7 +304,7 @@ static void *send_to_occ(void *arg) {
 }
 
 inline size_t __occ_packet_align(size_t size) {
-    return (size + 7) & ~7;
+    return (size + 3) & ~3;
 }
 
 bool compareWithSent(struct program_context *ctx, unsigned char *data, size_t datalen) {

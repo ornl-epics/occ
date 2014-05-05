@@ -486,13 +486,12 @@ static ssize_t snsocb_rx(struct file *file, char __user *buf, size_t count)
 
 	for (;;) {
 		prepare_to_wait(&ocb->rx_wq, &wait, TASK_INTERRUPTIBLE);
-		spin_lock_irq(&ocb->lock);
 		if (ocb->reset_in_progress) {
 			ret = -ECONNRESET;
+			spin_unlock_irq(&ocb->lock);
 			break;
 		}
-		if (ocb->stalled)
-			break;
+		spin_lock_irq(&ocb->lock);
 		if (ocb->dq_prod != ocb->dq_cons)
 			break;
 		spin_unlock_irq(&ocb->lock);
@@ -517,6 +516,7 @@ static ssize_t snsocb_rx(struct file *file, char __user *buf, size_t count)
 		info[1] |= OCB_RX_MSG;
 
 	spin_unlock_irq(&ocb->lock);
+
 	if (ret)
 		goto out;
 
@@ -586,7 +586,7 @@ static int snsocb_rxone(struct ocb *ocb)
 
 	/* We need room for the split header, and the payload. */
 	imq = &ocb->imq[imq_cons];
-	length = ALIGN(imq->length, 4);
+	length = ALIGN(imq->length, 8);
 	room_needed = sizeof(struct sw_imq);
 	room_needed += length;
 
@@ -644,8 +644,8 @@ static int snsocb_rxone(struct ocb *ocb)
 	dq_prod = snsocb_rxcopy(ocb, dq_prod, src + cons, head);
 	dq_prod = snsocb_rxcopy(ocb, dq_prod, src, tail);
 
-	/* The OCC card consumes the queues in 4 byte incremenets */
-	cons += ALIGN(length, 4);
+	/* The OCC card consumes the queues in 8 byte incremenets */
+	cons += ALIGN(length, 8);
 	cons %= size;
 
 	spin_lock_irq(&ocb->lock);
