@@ -28,12 +28,12 @@
 					<Add option="-s" />
 				</Linker>
 				<MakeCommands>
-					<Build command="$make -f $makefile clean all" />
+					<Build command="$make -f $makefile clean; $make -f $makefile -j2" />
 					<CompileFile command="$make -f $makefile $file" />
 					<Clean command="$make -f $makefile clean" />
 					<DistClean command="$make -f $makefile distclean$target" />
 					<AskRebuildNeeded command="$make -q -f $makefile $target" />
-					<SilentBuild command="$make -f $makefile clean all &gt; $(CMD_NULL)" />
+					<SilentBuild command="$make -f $makefile clean; $make -f $makefile -j2 &gt; $(CMD_NULL)" />
 				</MakeCommands>
 			</Target>
 		</Build>
@@ -44,6 +44,8 @@
 		<Unit filename="AdaraPlugin.h" />
 		<Unit filename="BaseCircularBuffer.cpp" />
 		<Unit filename="BaseCircularBuffer.h" />
+		<Unit filename="BaseModulePlugin.cpp" />
+		<Unit filename="BaseModulePlugin.h" />
 		<Unit filename="BasePlugin.cpp" />
 		<Unit filename="BasePlugin.h" />
 		<Unit filename="CircularBuffer.cpp" />
@@ -66,6 +68,9 @@
 		<Unit filename="Log.h" />
 		<Unit filename="OccPortDriver.cpp" />
 		<Unit filename="OccPortDriver.h" />
+		<Unit filename="RocPlugin.cpp" />
+		<Unit filename="RocPlugin.h" />
+		<Unit filename="StateMachine.h" />
 		<Unit filename="Timer.cpp" />
 		<Unit filename="Timer.h" />
 		<Unit filename="main.cpp" />

@@ -74,11 +74,6 @@ class DiscoverPlugin : public BasePlugin {
         void reqLvdsDiscover(uint32_t hardwareId);
 
         /**
-         * Return true if number has even number of 1s, false otherwise.
-         */
-        bool evenParity(int number);
-
-        /**
          * Convert hardware id to IP address.
          *
          * @param[in] hardwareId Id to convert.

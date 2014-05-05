@@ -14,6 +14,9 @@
 #define OCC_HANDLE_MAGIC        0x0cc0cc
 #define ROLLOVER_BUFFER_SIZE    (1800*8)      // Size of temporary buffer when DMA buffer rollover occurs
 
+#define xstr(s) str(s)
+#define str(s) #s
+
 struct occ_handle {
     uint32_t magic;
     int fd;
@@ -28,6 +31,14 @@ struct occ_handle {
     uint32_t firmware_ver;
     uint32_t last_count;                        //<! Number of bytes available returned by the last occ_data_wait()
     uint8_t rollover_buf[ROLLOVER_BUFFER_SIZE];
+
+#ifdef TX_DUMP_PATH
+    int tx_dump_fd;
+#endif
+#ifdef RX_DUMP_PATH
+    int rx_dump_fd;
+    uint32_t rx_dump_cons_off;
+#endif
 };
 
 #pragma pack(push)
@@ -90,6 +101,22 @@ int occ_open(const char *devfile, occ_interface_type type, struct occ_handle **h
         /* Reset the card to select our preferred interface */
         ret = occ_reset(*handle);
 
+#ifdef TX_DUMP_PATH
+        (*handle)->tx_dump_fd = open(xstr(TX_DUMP_PATH), O_WRONLY | O_CREAT | O_TRUNC | O_SYNC, (mode_t)0666);
+        if ((*handle)->tx_dump_fd == -1) {
+            ret = -ENODATA;
+            break;
+        }
+#endif
+#ifdef RX_DUMP_PATH
+        (*handle)->rx_dump_cons_off = 0;
+        (*handle)->rx_dump_fd = open(xstr(RX_DUMP_PATH), O_WRONLY | O_CREAT | O_TRUNC | O_SYNC, (mode_t)0666);
+        if ((*handle)->rx_dump_fd == -1) {
+            ret = -ENODATA;
+            break;
+        }
+#endif
+
     } while (0);
 
     if (ret != 0 && *handle) {
@@ -113,6 +140,13 @@ int occ_close(struct occ_handle *handle) {
     if (handle != NULL && handle->magic == OCC_HANDLE_MAGIC) {
 
         // XXX: call reset?
+
+#ifdef TX_DUMP_PATH
+        close(handle->tx_dump_fd);
+#endif
+#ifdef RX_DUMP_PATH
+        close(handle->rx_dump_fd);
+#endif
 
         if (munmap((void *)handle->dma_buf, handle->dma_buf_len) != 0)
             ret = -1 * errno;
@@ -189,6 +223,11 @@ int occ_send(struct occ_handle *handle, const void *data, size_t count) {
     int ret = pwrite(handle->fd, (const void *)data, count, OCB_CMD_TX);
     if (ret < 0)
         ret = -errno;
+
+#ifdef TX_DUMP_PATH
+    write(handle->tx_dump_fd, data, count);
+#endif
+
     return 0;
 }
 
@@ -270,6 +309,16 @@ int occ_data_wait(struct occ_handle *handle, void **address, size_t *count, uint
         *count = _occ_data_align(*count - 3);
     }
     handle->last_count = *count;
+
+#ifdef RX_DUMP_PATH
+    if (dma_prod_off >= handle->rx_dump_cons_off) {
+        write(handle->rx_dump_fd, handle->dma_buf + handle->rx_dump_cons_off, dma_prod_off - handle->rx_dump_cons_off);
+    } else {
+        write(handle->rx_dump_fd, handle->dma_buf + handle->rx_dump_cons_off, handle->dma_buf_len - handle->rx_dump_cons_off);
+        write(handle->rx_dump_fd, handle->dma_buf, dma_prod_off);
+    }
+    handle->rx_dump_cons_off = dma_prod_off;
+#endif
 
     return 0;
 }
