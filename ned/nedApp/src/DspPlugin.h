@@ -28,44 +28,12 @@ class DspPlugin : public BaseModulePlugin {
             int initVal;            //!< Initial value after object is created or configuration reset is being requested
         };
 
-        struct VersionRegister {
-#ifdef BITFIELD_LSB_FIRST
-            unsigned day:8;
-            unsigned month:8;
-            unsigned year:8;
-            unsigned revision:4;
-            unsigned version:4;
-#else
-#error Missing DspVersionRegister declaration
-#endif
-        };
-
-        /**
-         * Response payload to READ_VERSION command.
-         */
-        struct RspVersion {
-            struct VersionRegister hardware;
-            struct VersionRegister firmware;
-            uint32_t eeprom_code;
-        };
-
         /**
          * Valid statuses of the DspPlugin, the communication link with Dsp or the DSP itself.
          */
         enum Status {
             STAT_NOT_INITIALIZED    = 0,    //!< DspPlugin has not yet been initialized
             STAT_DSP_TIMEOUT        = 10,   //!< DSP has not respond in expected time to the last command
-        };
-
-        /**
-         * Valid commands to be send through COMMAND parameter.
-         */
-        enum Command {
-            DSP_CMD_NONE            = 0,
-            DSP_CMD_INITIALIZE      = 1,    //!< Trigger DSP module initialization
-            DSP_CMD_CONFIG_WRITE    = 2,    //!< Write current configuration to the DSP module
-            DSP_CMD_CONFIG_READ     = 3,    //!< Read actual configuration from DPS module and populate PVs accordingly
-            DSP_CMD_CONFIG_RESET    = 4,    //!< Reset configuration to default values
         };
 
         static const unsigned NUM_DSPPLUGIN_CONFIGPARAMS;   //!< This is used as a runtime assert check and must match number of configuration parameters
@@ -89,16 +57,7 @@ class DspPlugin : public BaseModulePlugin {
 
     private:
         std::map<int, struct ParamDesc> m_configParams;
-
-        /**
-         * Initialize module by requesting it's version information.
-         *
-         * When the module responds, populate the Hardware version and
-         * Firmware parameters.
-         *
-         * This function is asynchronous but does not wait for response.
-         */
-        void reqVersionRead();
+        std::map<char, uint32_t> m_configSectionSizes;
 
         /**
          * Handle READ_VERSION from DSP.
@@ -122,16 +81,6 @@ class DspPlugin : public BaseModulePlugin {
          * This function is asynchronous but does not wait for response.
          */
         void reqCfgWrite();
-
-        /**
-         * Read configuration from DSP module and populate PV values.
-         *
-         * It will only send a configuration read command to the DSP module,
-         * but not wait for response.
-         *
-         * This function is asynchronous but does not wait for response.
-         */
-        void reqCfgRead();
 
         /**
          * Handle READ_CONFIG response from DSP.
@@ -205,14 +154,6 @@ class DspPlugin : public BaseModulePlugin {
          * Construct particular section of configuration data.
          */
         uint32_t configureSection(char section, uint32_t *data, uint32_t count);
-
-        /**
-         * Return size of particular configuration section.
-         *
-         * @param[in] section Requested section
-         * @return Size of the section in number of records.
-         */
-        uint32_t getCfgSectionSize(char section);
 
         /**
          * Return the absolute offset of the configuration section within all configuration structure.

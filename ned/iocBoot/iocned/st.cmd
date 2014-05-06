@@ -9,7 +9,7 @@ ned_registerRecordDeviceDriver(pdbbase)
 
 ## Load record instances
 epicsEnvSet("PREFIX", "SNS:")
-epicsEnvSet("PORT",   "/dev/snsocb1")
+epicsEnvSet("PORT",   "/dev/snsocb0")
 #asynSetTraceIOMask("$(PORT)",0,255)
 dbLoadRecords("../../db/ned.template","P=$(PREFIX),R=ocb1:,PORT=$(PORT),ADDR=0,TIMEOUT=1")
 nedConfigure("$(PORT)", 0, 4000000)
@@ -19,8 +19,8 @@ AdaraPluginConfigure("Adara1", "$(PORT)")
 dbLoadRecords("../../db/AdaraPlugin.template","P=$(PREFIX),R=ocb1:,PORT=Adara1,ADDR=0,TIMEOUT=1")
 dbLoadRecords("../../db/BasePlugin.template","P=$(PREFIX),R=ocb1:,PORT=Adara1,ADDR=0,TIMEOUT=1")
 
-#DspPluginConfigure("Dsp1", "$(PORT)", "0x15FACB2D")
-DspPluginConfigure("Dsp1", "$(PORT)", "21.250.203.45", 1)
+#DspPluginConfigure("Dsp1", "$(PORT)", "0x15FA76DF")
+DspPluginConfigure("Dsp1", "$(PORT)", "21.250.118.223", 1)
 dbLoadRecords("../../db/DspPlugin.template","P=$(PREFIX),R=dsp1:,PORT=Dsp1,ADDR=0,TIMEOUT=1")
 dbLoadRecords("../../db/BasePlugin.template","P=$(PREFIX),R=dsp1:,PORT=Dsp1,ADDR=0,TIMEOUT=1")
 

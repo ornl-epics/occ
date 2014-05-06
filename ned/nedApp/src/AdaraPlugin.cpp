@@ -27,7 +27,7 @@ AdaraPlugin::AdaraPlugin(const char *portName, const char *dispatcherPortName, i
     , m_nReceived(0)
 {
     createParam("ListenIp",     asynParamOctet,     &ListenIP);
-    createParam("ListePort",    asynParamInt32,     &ListenPort);
+    createParam("ListenPort",   asynParamInt32,     &ListenPort);
     createParam("ClientIp",     asynParamOctet,     &ClientIP);
     createParam("TxCount",      asynParamInt32,     &TxCount);
 

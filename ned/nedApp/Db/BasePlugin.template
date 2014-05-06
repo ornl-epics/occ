@@ -16,7 +16,7 @@ record(longin, "$(P)$(R)ProcCount")
 record(longin, "$(P)$(R)RxCount")
 {
    field(DTYP,  "asynInt32")
-   field(INP,   "@asyn($(PORT),$(ADDR),$(TIMEOUT))RxCount"
+   field(INP,   "@asyn($(PORT),$(ADDR),$(TIMEOUT))RxCount")
    field(VAL,   "0")
    field(SCAN,  "I/O Intr")
 }

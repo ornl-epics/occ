@@ -8,11 +8,12 @@
 #include <functional>
 #include <string>
 
-#define NUM_DSPPLUGIN_PARAMS ((int)(&LAST_DSPPLUGIN_PARAM - &FIRST_DSPPLUGIN_PARAM + 1))
+#define NUM_DSPPLUGIN_PARAMS    ((int)(&LAST_DSPPLUGIN_PARAM - &FIRST_DSPPLUGIN_PARAM + 1))
+#define HEX_BYTE_TO_DEC(a)      ((((a)&0xFF)/16)*10 + ((a)&0xFF)%16)
 
 EPICS_REGISTER_PLUGIN(DspPlugin, 4, "Port name", string, "Dispatcher port name", string, "Hardware ID", string, "Blocking", int);
 
-const unsigned DspPlugin::NUM_DSPPLUGIN_CONFIGPARAMS    = 263;
+const unsigned DspPlugin::NUM_DSPPLUGIN_CONFIGPARAMS    = 272;
 const unsigned DspPlugin::NUM_DSPPLUGIN_STATUSPARAMS    = 100;
 const double DspPlugin::DSP_RESPONSE_TIMEOUT            = 1.0;
 
@@ -43,39 +44,68 @@ DspPlugin::DspPlugin(const char *portName, const char *dispatcherPortName, const
 
 
     createConfigParams();
-//    createStatusParams();
+    createStatusParams();
 
-    assert(m_configParams.size() == NUM_DSPPLUGIN_CONFIGPARAMS);
+    if (m_configParams.size() != NUM_DSPPLUGIN_CONFIGPARAMS) {
+        LOG_ERROR("Number of config params mismatch, expected %d but got %d", NUM_DSPPLUGIN_CONFIGPARAMS, m_configParams.size());
+        return;
+    }
 
     setIntegerParam(Status, STAT_NOT_INITIALIZED);
 
     callParamCallbacks();
-}
-
-void DspPlugin::reqVersionRead()
-{
-    sendToDispatcher(DasPacket::CMD_READ_VERSION);
+    setCallbacks(true);
 }
 
 void DspPlugin::rspVersionRead(const DasPacket *packet)
 {
-    char date[20];
+
+    struct RspVersion {
+#ifdef BITFIELD_LSB_FIRST
+        struct {
+            unsigned day:8;
+            unsigned month:8;
+            unsigned year:8;
+            unsigned revision:4;
+            unsigned version:4;
+        } hardware;
+        struct {
+            unsigned day:8;
+            unsigned month:8;
+            unsigned year:8;
+            unsigned revision:4;
+            unsigned version:4;
+        } firmware;
+        uint32_t eeprom_code1;
+        uint32_t eeprom_code2;
+#else
+#error Missing DspVersionRegister declaration
+#endif
+    };
+
     const RspVersion *payload = reinterpret_cast<const RspVersion*>(packet->payload);
 
-    setIntegerParam(HardwareVer, payload->hardware.version);
-    setIntegerParam(HardwareRev, payload->hardware.revision);
-    snprintf(date, sizeof(date), "20%d/%d/%d", (payload->hardware.year/16)*10 + payload->hardware.year%16,
-                                               (payload->hardware.month/16)*10 + payload->hardware.month%16,
-                                               (payload->hardware.day/16)*10 + payload->hardware.day%16);
-    setStringParam(HardwareDate, date);
+    if (packet->getPayloadLength() != sizeof(RspVersion)) {
+        LOG_ERROR("Received unexpected READ_VERSION response for this DSP type, received %u, expected %lu", packet->payload_length, sizeof(RspVersion));
+        //status = m_stateMachine.transition(VERSION_READ_MISMATCH);
+    } else {
+        char date[20];
 
-    setIntegerParam(FirmwareVer, payload->firmware.version);
-    setIntegerParam(FirmwareRev, payload->firmware.revision);
-    snprintf(date, sizeof(date), "20%d/%d/%d", (payload->firmware.year/16)*10 + payload->firmware.year%16,
-                                               (payload->firmware.month/16)*10 + payload->firmware.month%16,
-                                               (payload->firmware.day/16)*10 + payload->firmware.day%16);
+        setIntegerParam(HardwareVer, payload->hardware.version);
+        setIntegerParam(HardwareRev, payload->hardware.revision);
+        snprintf(date, sizeof(date), "20%d/%d/%d", HEX_BYTE_TO_DEC(payload->hardware.year),
+                                                   HEX_BYTE_TO_DEC(payload->hardware.month),
+                                                   HEX_BYTE_TO_DEC(payload->hardware.day));
+        setStringParam(HardwareDate, date);
 
-    setStringParam(FirmwareDate, date);
+        setIntegerParam(FirmwareVer, payload->firmware.version);
+        setIntegerParam(FirmwareRev, payload->firmware.revision);
+        snprintf(date, sizeof(date), "20%d/%d/%d", HEX_BYTE_TO_DEC(payload->firmware.year),
+                                                   HEX_BYTE_TO_DEC(payload->firmware.month),
+                                                   HEX_BYTE_TO_DEC(payload->firmware.day));
+
+        setStringParam(FirmwareDate, date);
+    }
 
     callParamCallbacks();
 }
@@ -83,8 +113,10 @@ void DspPlugin::rspVersionRead(const DasPacket *packet)
 void DspPlugin::reqCfgWrite()
 {
     uint32_t size = 0;
-    for (int i='A'; i<='F'; i++)
-        size += getCfgSectionSize(i);
+    for (char i='0'; i<='A'; i++)
+        size += m_configSectionSizes[i];
+    for (char i='A'; i<='F'; i++)
+        size += m_configSectionSizes[i];
 
     uint32_t data[size];
     for (uint32_t i=0; i<size; i++)
@@ -94,27 +126,25 @@ void DspPlugin::reqCfgWrite()
     for (int i='B'; i<='F'; i++) {
         offset += configureSection(i, &data[offset], size - offset);
     }
-    sendToDispatcher(DasPacket::CMD_WRITE_CONFIG, data, size*sizeof(uint32_t));
-}
-
-void DspPlugin::reqCfgRead()
-{
-    sendToDispatcher(DasPacket::CMD_READ_CONFIG);
+    sendToDispatcher(DasPacket::CMD_WRITE_CONFIG, data, size);
 }
 
 void DspPlugin::rspCfgRead(const DasPacket *packet)
 {
     uint32_t configSize = 0;
-    for (int i='A'; i<='F'; i++)
-        configSize += getCfgSectionSize(i);
-    if (packet->payload_length < (configSize*sizeof(int32_t))) {
+    for (char i='0'; i<='9'; i++)
+        configSize += m_configSectionSizes[i];
+    for (char i='A'; i<='F'; i++)
+        configSize += m_configSectionSizes[i];
+    if (packet->getPayloadLength() != (configSize*sizeof(int32_t))) {
         LOG_ERROR("Configuration response packet too short (%d b, expecting %d b)", packet->payload_length, configSize);
         return;
     }
 
     for (std::map<int, struct ParamDesc>::iterator it=m_configParams.begin(); it != m_configParams.end(); it++) {
         uint32_t offset = getCfgSectionOffset(it->second.section) + it->second.offset;
-        int value = *(packet->payload + offset);
+        int divider = it->second.mask & ~(it->second.mask << 1);
+        int value = (packet->payload[offset] & it->second.mask) >> divider;
         setIntegerParam(it->first, value);
     }
     callParamCallbacks();
@@ -132,37 +162,39 @@ asynStatus DspPlugin::writeInt32(asynUser *pasynUser, epicsInt32 value)
 {
     if (pasynUser->reason == Command) {
         switch (value) {
-        case DSP_CMD_INITIALIZE:
-            reqVersionRead();
-            break;
-        case DSP_CMD_CONFIG_WRITE:
+        case BaseModulePlugin::CMD_INITIALIZE:
+            //sendToDispatcher(DasPacket::CMD_DISCOVER);
+            sendToDispatcher(DasPacket::CMD_READ_VERSION);
+            return asynSuccess;
+        case BaseModulePlugin::CMD_READ_STATUS:
+            sendToDispatcher(DasPacket::CMD_READ_STATUS);
+            return asynSuccess;
+        case BaseModulePlugin::CMD_READ_CONFIG:
+            sendToDispatcher(DasPacket::CMD_READ_CONFIG);
+            return asynSuccess;
+        case BaseModulePlugin::CMD_WRITE_CONFIG:
             reqCfgWrite();
-            break;
-        case DSP_CMD_CONFIG_READ:
-            reqCfgRead();
-            break;
-        case DSP_CMD_CONFIG_RESET:
+            return asynSuccess;
+        case BaseModulePlugin::CMD_RESET_CONFIG:
             cfgReset();
-            break;
-        case DSP_CMD_NONE:
-            break;
+            return asynSuccess;
+        case BaseModulePlugin::CMD_NONE:
+            return asynSuccess;
         default:
             LOG_ERROR("Unrecognized command '%d'", value);
             return asynError;
         }
-        return asynSuccess;
     }
-    for (std::map<int, struct ParamDesc>::iterator it=m_configParams.begin(); it != m_configParams.end(); it++) {
-        if (it->first == pasynUser->reason) {
-            int multiplier = it->second.mask & ~(it->second.mask << 1);
-            if ((value * multiplier) & ~(it->second.mask)) {
-                LOG_ERROR("Parameter %s value %d out of bounds", getParamName(it->first), value);
-                return asynError;
-            } else {
-                setIntegerParam(it->first, value);
-                callParamCallbacks();
-                return asynSuccess;
-            }
+    std::map<int, struct ParamDesc>::iterator it = m_configParams.find(pasynUser->reason);
+    if (it != m_configParams.end()) {
+        int multiplier = it->second.mask & ~(it->second.mask << 1);
+        if ((value * multiplier) & ~(it->second.mask)) {
+            LOG_ERROR("Parameter %s value %d out of bounds", getParamName(it->first), value);
+            return asynError;
+        } else {
+            setIntegerParam(it->first, value);
+            callParamCallbacks();
+            return asynSuccess;
         }
     }
     return BasePlugin::writeInt32(pasynUser, value);
@@ -170,11 +202,9 @@ asynStatus DspPlugin::writeInt32(asynUser *pasynUser, epicsInt32 value)
 
 asynStatus DspPlugin::readInt32(asynUser *pasynUser, epicsInt32 *value)
 {
-    for (std::map<int, struct ParamDesc>::iterator it=m_configParams.begin(); it != m_configParams.end(); it++) {
-        if (it->first == pasynUser->reason) {
-            return getIntegerParam(it->first, value);
-        }
-    }
+    std::map<int, struct ParamDesc>::iterator it = m_configParams.find(pasynUser->reason);
+    if (it != m_configParams.end())
+        return getIntegerParam(it->first, value);
     return BasePlugin::readInt32(pasynUser, value);
 }
 
@@ -187,8 +217,9 @@ void DspPlugin::processData(const DasPacketList * const packetList)
 
     for (const DasPacket *packet = packetList->first(); packet != 0; packet = packetList->next(packet)) {
         nReceived++;
+
         // Silently skip packets we're not interested in
-        if (!packet->isResponse() || packet->source != m_hardwareId)
+        if (!packet->isResponse() || packet->getSourceAddress() != m_hardwareId)
             continue;
 
         switch (packet->cmdinfo.command) {
@@ -204,6 +235,14 @@ void DspPlugin::processData(const DasPacketList * const packetList)
             rspReadStatus(packet);
             nProcessed++;
             break;
+        case DasPacket::RSP_ACK:
+            switch (packet->getPayload()[0]) {
+            case DasPacket::CMD_WRITE_CONFIG:
+                // TODO:
+            default:
+                break;
+            }
+            break;
         }
 
         nProcessed++;
@@ -216,9 +255,11 @@ void DspPlugin::processData(const DasPacketList * const packetList)
 
 uint32_t DspPlugin::configureSection(char section, uint32_t *data, uint32_t count)
 {
-    uint32_t sectionSize = getCfgSectionSize(section);
+    uint32_t sectionSize = m_configSectionSizes[section];
 
-    if (count < sectionSize) {
+    if (sectionSize == 0) {
+        return 0;
+    } else if (count < sectionSize) {
         // TODO: error, exception?
         return 0;
     }
@@ -246,38 +287,20 @@ uint32_t DspPlugin::configureSection(char section, uint32_t *data, uint32_t coun
     return sectionSize;
 }
 
-uint32_t DspPlugin::getCfgSectionSize(char section)
-{
-    switch (section) {
-    case 'B':
-        return 1;
-    case 'C':
-        return 0x13 + 1;
-    case 'D':
-        return 0x47 + 1;
-    case 'E':
-        return 0x9 + 1;
-    case 'F':
-        return 1;
-    default:
-        return 0;
-    }
-}
-
 uint32_t DspPlugin::getCfgSectionOffset(char section)
 {
     uint32_t offset = 0;
     switch (section) {
     case 'F':
-        offset += getCfgSectionSize('E');
+        offset += m_configSectionSizes['E'];
     case 'E':
-        offset += getCfgSectionSize('D');
+        offset += m_configSectionSizes['D'];
     case 'D':
-        offset += getCfgSectionSize('C');
+        offset += m_configSectionSizes['C'];
     case 'C':
-        offset += getCfgSectionSize('B');
+        offset += m_configSectionSizes['B'];
     case 'B':
-        offset += getCfgSectionSize('A');
+        offset += m_configSectionSizes['A'];
     default:
         return offset;
     }
@@ -315,10 +338,9 @@ void DspPlugin::createConfigParam(const char *name, char section, uint32_t offse
         LOG_ERROR("DSP config parameter %s value %d out of bounds", name, value);
         return;
     }
-    if (offset >= getCfgSectionSize(section)) {
-        LOG_ERROR("DSP config parameter %s offset %d out of section bounds", name, offset);
-        return;
-    }
+
+    if (m_configSectionSizes[section] < (offset + 1))
+        m_configSectionSizes[section] = offset + 1;
 
     int index;
     createParam(name, asynParamInt32, &index);
@@ -346,44 +368,46 @@ void DspPlugin::createConfigParams() {
     createConfigParam("Chop7Delay",  'C', 0x7,  32,  0, 0); // Chopper 7 number of 9.4ns cycles to delay the copper reference signal.
 
     createConfigParam("Chop0Freq",   'C', 0x8,   4,  0, 0); // Chopper 0 frequency selector (0=60Hz,1=30Hz,2=20Hz,3=15Hz,4=12.5Hz,5=10Hz,6=7.5Hz,7=6Hz,8=5Hz,9=4Hz,10=3Hz,11=2.4Hz,12=2Hz,13=1.5Hz,14=1.25Hz,15=1Hz)
-    createConfigParam("Chop0Freq",   'C', 0x8,   4,  4, 0); // Chopper 1 frequency selector (0=60Hz,1=30Hz,2=20Hz,3=15Hz,4=12.5Hz,5=10Hz,6=7.5Hz,7=6Hz,8=5Hz,9=4Hz,10=3Hz,11=2.4Hz,12=2Hz,13=1.5Hz,14=1.25Hz,15=1Hz)
-    createConfigParam("Chop0Freq",   'C', 0x8,   4,  8, 0); // Chopper 2 frequency selector (0=60Hz,1=30Hz,2=20Hz,3=15Hz,4=12.5Hz,5=10Hz,6=7.5Hz,7=6Hz,8=5Hz,9=4Hz,10=3Hz,11=2.4Hz,12=2Hz,13=1.5Hz,14=1.25Hz,15=1Hz)
-    createConfigParam("Chop0Freq",   'C', 0x8,   4, 12, 0); // Chopper 3 frequency selector (0=60Hz,1=30Hz,2=20Hz,3=15Hz,4=12.5Hz,5=10Hz,6=7.5Hz,7=6Hz,8=5Hz,9=4Hz,10=3Hz,11=2.4Hz,12=2Hz,13=1.5Hz,14=1.25Hz,15=1Hz)
-    createConfigParam("Chop0Freq",   'C', 0x8,   4, 16, 0); // Chopper 4 frequency selector (0=60Hz,1=30Hz,2=20Hz,3=15Hz,4=12.5Hz,5=10Hz,6=7.5Hz,7=6Hz,8=5Hz,9=4Hz,10=3Hz,11=2.4Hz,12=2Hz,13=1.5Hz,14=1.25Hz,15=1Hz)
-    createConfigParam("Chop0Freq",   'C', 0x8,   4, 20, 0); // Chopper 5 frequency selector (0=60Hz,1=30Hz,2=20Hz,3=15Hz,4=12.5Hz,5=10Hz,6=7.5Hz,7=6Hz,8=5Hz,9=4Hz,10=3Hz,11=2.4Hz,12=2Hz,13=1.5Hz,14=1.25Hz,15=1Hz)
-    createConfigParam("Chop0Freq",   'C', 0x8,   4, 24, 0); // Chopper 6 frequency selector (0=60Hz,1=30Hz,2=20Hz,3=15Hz,4=12.5Hz,5=10Hz,6=7.5Hz,7=6Hz,8=5Hz,9=4Hz,10=3Hz,11=2.4Hz,12=2Hz,13=1.5Hz,14=1.25Hz,15=1Hz)
-    createConfigParam("Chop0Freq",   'C', 0x8,   4, 28, 0); // Chopper 7 frequency selector (0=60Hz,1=30Hz,2=20Hz,3=15Hz,4=12.5Hz,5=10Hz,6=7.5Hz,7=6Hz,8=5Hz,9=4Hz,10=3Hz,11=2.4Hz,12=2Hz,13=1.5Hz,14=1.25Hz,15=1Hz)
+    createConfigParam("Chop1Freq",   'C', 0x8,   4,  4, 0); // Chopper 1 frequency selector (0=60Hz,1=30Hz,2=20Hz,3=15Hz,4=12.5Hz,5=10Hz,6=7.5Hz,7=6Hz,8=5Hz,9=4Hz,10=3Hz,11=2.4Hz,12=2Hz,13=1.5Hz,14=1.25Hz,15=1Hz)
+    createConfigParam("Chop2Freq",   'C', 0x8,   4,  8, 0); // Chopper 2 frequency selector (0=60Hz,1=30Hz,2=20Hz,3=15Hz,4=12.5Hz,5=10Hz,6=7.5Hz,7=6Hz,8=5Hz,9=4Hz,10=3Hz,11=2.4Hz,12=2Hz,13=1.5Hz,14=1.25Hz,15=1Hz)
+    createConfigParam("Chop3Freq",   'C', 0x8,   4, 12, 0); // Chopper 3 frequency selector (0=60Hz,1=30Hz,2=20Hz,3=15Hz,4=12.5Hz,5=10Hz,6=7.5Hz,7=6Hz,8=5Hz,9=4Hz,10=3Hz,11=2.4Hz,12=2Hz,13=1.5Hz,14=1.25Hz,15=1Hz)
+    createConfigParam("Chop4Freq",   'C', 0x8,   4, 16, 0); // Chopper 4 frequency selector (0=60Hz,1=30Hz,2=20Hz,3=15Hz,4=12.5Hz,5=10Hz,6=7.5Hz,7=6Hz,8=5Hz,9=4Hz,10=3Hz,11=2.4Hz,12=2Hz,13=1.5Hz,14=1.25Hz,15=1Hz)
+    createConfigParam("Chop5Freq",   'C', 0x8,   4, 20, 0); // Chopper 5 frequency selector (0=60Hz,1=30Hz,2=20Hz,3=15Hz,4=12.5Hz,5=10Hz,6=7.5Hz,7=6Hz,8=5Hz,9=4Hz,10=3Hz,11=2.4Hz,12=2Hz,13=1.5Hz,14=1.25Hz,15=1Hz)
+    createConfigParam("Chop6Freq",   'C', 0x8,   4, 24, 0); // Chopper 6 frequency selector (0=60Hz,1=30Hz,2=20Hz,3=15Hz,4=12.5Hz,5=10Hz,6=7.5Hz,7=6Hz,8=5Hz,9=4Hz,10=3Hz,11=2.4Hz,12=2Hz,13=1.5Hz,14=1.25Hz,15=1Hz)
+    createConfigParam("Chop7Freq",   'C', 0x8,   4, 28, 0); // Chopper 7 frequency selector (0=60Hz,1=30Hz,2=20Hz,3=15Hz,4=12.5Hz,5=10Hz,6=7.5Hz,7=6Hz,8=5Hz,9=4Hz,10=3Hz,11=2.4Hz,12=2Hz,13=1.5Hz,14=1.25Hz,15=1Hz)
 
     createConfigParam("ChopDutyCycl",'C', 0x9,  32,  0, 83400); // Number of 100ns cycles to hold reference pulse in logic '1' state.
     createConfigParam("ChopMaxPerio",'C', 0xA,  32,  0, 166800); // Number of 100ns cycles expected between master timing reference pulses.
     createConfigParam("ChopFixedOff",'C', 0xB,  32,  0, 0); // Chopper TOF fixed offset - todo: make proper record links to chopper ioc
 
-    createConfigParam("ChopRtdlFr6", 'C', 0xC,   8,  8, 5); // RTDL Frame to load into RTDL Data RAM Address 6
-    createConfigParam("ChopRtdlFr7", 'C', 0xC,   8, 16, 6); // RTDL Frame to load into RTDL Data RAM Address 7
-    createConfigParam("ChopRtdlFr8", 'C', 0xC,   8, 24, 7); // RTDL Frame to load into RTDL Data RAM Address 8
-    createConfigParam("ChopRtdlFr9", 'C', 0xD,   8,  0, 8); // RTDL Frame to load into RTDL Data RAM Address 9
-    createConfigParam("ChopRtdlFr10",'C', 0xD,   8,  8, 15); // RTDL Frame to load into RTDL Data RAM Address 10
-    createConfigParam("ChopRtdlFr11",'C', 0xD,   8, 16, 17); // RTDL Frame to load into RTDL Data RAM Address 11
-    createConfigParam("ChopRtdlFr12",'C', 0xD,   8, 24, 24); // RTDL Frame to load into RTDL Data RAM Address 12
-    createConfigParam("ChopRtdlFr13",'C', 0xE,   8,  0, 25); // RTDL Frame to load into RTDL Data RAM Address 13
-    createConfigParam("ChopRtdlFr14",'C', 0xE,   8,  8, 26); // RTDL Frame to load into RTDL Data RAM Address 14
-    createConfigParam("ChopRtdlFr15",'C', 0xE,   8, 16, 28); // RTDL Frame to load into RTDL Data RAM Address 15
-    createConfigParam("ChopRtdlFr16",'C', 0xC,   8, 24, 29); // RTDL Frame to load into RTDL Data RAM Address 16
-    createConfigParam("ChopRtdlFr17",'C', 0xC,   8,  0, 30); // RTDL Frame to load into RTDL Data RAM Address 17
-    createConfigParam("ChopRtdlFr18",'C', 0xC,   8,  8, 31); // RTDL Frame to load into RTDL Data RAM Address 18
-    createConfigParam("ChopRtdlFr19",'C', 0xC,   8, 16, 32); // RTDL Frame to load into RTDL Data RAM Address 19
-    createConfigParam("ChopRtdlFr20",'C', 0xC,   8, 24, 33); // RTDL Frame to load into RTDL Data RAM Address 20
-    createConfigParam("ChopRtdlFr21",'C', 0xC,   8,  0, 34); // RTDL Frame to load into RTDL Data RAM Address 21
-    createConfigParam("ChopRtdlFr22",'C', 0xC,   8,  8, 35); // RTDL Frame to load into RTDL Data RAM Address 22
-    createConfigParam("ChopRtdlFr23",'C', 0xC,   8, 16, 36); // RTDL Frame to load into RTDL Data RAM Address 23
-    createConfigParam("ChopRtdlFr24",'C', 0xC,   8, 24, 37); // RTDL Frame to load into RTDL Data RAM Address 24
-    createConfigParam("ChopRtdlFr25",'C', 0xC,   8,  0, 38); // RTDL Frame to load into RTDL Data RAM Address 25
-    createConfigParam("ChopRtdlFr26",'C', 0xC,   8,  8, 39); // RTDL Frame to load into RTDL Data RAM Address 26
-    createConfigParam("ChopRtdlFr27",'C', 0xC,   8, 16, 40); // RTDL Frame to load into RTDL Data RAM Address 27
-    createConfigParam("ChopRtdlFr28",'C', 0xC,   8, 24, 41); // RTDL Frame to load into RTDL Data RAM Address 28
-    createConfigParam("ChopRtdlFr29",'C', 0xC,   8,  0, 1); // RTDL Frame to load into RTDL Data RAM Address 29
-    createConfigParam("ChopRtdlFr30",'C', 0xC,   8,  8, 2); // RTDL Frame to load into RTDL Data RAM Address 30
-    createConfigParam("ChopRtdlFr31",'C', 0xC,   8, 16, 3); // RTDL Frame to load into RTDL Data RAM Address 31
+    createConfigParam("ChopRtdlFr6", 'C', 0xC,   8,  0, 4); // RTDL Frame to load into RTDL Data RAM Address 6
+    createConfigParam("ChopRtdlFr7", 'C', 0xC,   8,  8, 5); // RTDL Frame to load into RTDL Data RAM Address 7
+    createConfigParam("ChopRtdlFr8", 'C', 0xC,   8, 16, 6); // RTDL Frame to load into RTDL Data RAM Address 8
+    createConfigParam("ChopRtdlFr9", 'C', 0xC,   8, 24, 7); // RTDL Frame to load into RTDL Data RAM Address 9
+    createConfigParam("ChopRtdlFr10",'C', 0xD,   8,  0, 8); // RTDL Frame to load into RTDL Data RAM Address 10
+    createConfigParam("ChopRtdlFr11",'C', 0xD,   8,  8, 15); // RTDL Frame to load into RTDL Data RAM Address 11
+    createConfigParam("ChopRtdlFr12",'C', 0xD,   8, 16, 17); // RTDL Frame to load into RTDL Data RAM Address 12
+    createConfigParam("ChopRtdlFr13",'C', 0xD,   8, 24, 24); // RTDL Frame to load into RTDL Data RAM Address 13
+    createConfigParam("ChopRtdlFr14",'C', 0xE,   8,  0, 25); // RTDL Frame to load into RTDL Data RAM Address 14
+    createConfigParam("ChopRtdlFr15",'C', 0xE,   8,  8, 26); // RTDL Frame to load into RTDL Data RAM Address 15
+    createConfigParam("ChopRtdlFr16",'C', 0xE,   8, 16, 28); // RTDL Frame to load into RTDL Data RAM Address 16
+    createConfigParam("ChopRtdlFr17",'C', 0xE,   8, 24, 29); // RTDL Frame to load into RTDL Data RAM Address 17
+    createConfigParam("ChopRtdlFr18",'C', 0xF,   8,  0, 30); // RTDL Frame to load into RTDL Data RAM Address 18
+    createConfigParam("ChopRtdlFr19",'C', 0xF,   8,  8, 31); // RTDL Frame to load into RTDL Data RAM Address 19
+    createConfigParam("ChopRtdlFr20",'C', 0xF,   8, 16, 32); // RTDL Frame to load into RTDL Data RAM Address 20
+    createConfigParam("ChopRtdlFr21",'C', 0xF,   8, 24, 33); // RTDL Frame to load into RTDL Data RAM Address 21
+    createConfigParam("ChopRtdlFr22",'C', 0x10,  8,  0, 34); // RTDL Frame to load into RTDL Data RAM Address 22
+    createConfigParam("ChopRtdlFr23",'C', 0x10,  8,  8, 35); // RTDL Frame to load into RTDL Data RAM Address 23
+    createConfigParam("ChopRtdlFr24",'C', 0x10,  8, 16, 36); // RTDL Frame to load into RTDL Data RAM Address 24
+    createConfigParam("ChopRtdlFr25",'C', 0x10,  8, 24, 37); // RTDL Frame to load into RTDL Data RAM Address 25
+    createConfigParam("ChopRtdlFr26",'C', 0x11,  8,  0, 38); // RTDL Frame to load into RTDL Data RAM Address 26
+    createConfigParam("ChopRtdlFr27",'C', 0x11,  8,  8, 39); // RTDL Frame to load into RTDL Data RAM Address 27
+    createConfigParam("ChopRtdlFr28",'C', 0x11,  8, 16, 40); // RTDL Frame to load into RTDL Data RAM Address 28
+    createConfigParam("ChopRtdlFr29",'C', 0x11,  8, 24, 41); // RTDL Frame to load into RTDL Data RAM Address 29
+    createConfigParam("ChopRtdlFr30",'C', 0x12,  8,  0, 1); // RTDL Frame to load into RTDL Data RAM Address 30
+    createConfigParam("ChopRtdlFr31",'C', 0x12,  8,  8, 2); // RTDL Frame to load into RTDL Data RAM Address 31
+// dcomserver thinks this one is valid
+//    createConfigParam("ChopRtdlFr32",'C', 0x12,  8, 16, 3); // RTDL Frame to load into RTDL Data RAM Address 32
 
     createConfigParam("ChopTrefTrig",'C', 0x13,  2,  0, 1); // Chopper TREF trigger select (0=Extract,1=Cycle Start,2=Beam On, 3=Event equals TREF event)
     createConfigParam("ChopTrefFreq",'C', 0x13,  4,  2, 0); // TREF frequency select (0=60Hz,1=30Hz,2=20Hz,3=15Hz,4=12.5Hz,5=10Hz,6=7.5Hz,7=6Hz,8=5Hz,9=4Hz,10=3Hz,11=2.4Hz,12=2Hz,13=1.5Hz,14=1.25Hz,15=1Hz)
@@ -394,6 +418,11 @@ void DspPlugin::createConfigParams() {
     createConfigParam("ChopFreqCnt", 'C', 0x13,  2, 28, 1); // Chopper frequency count control (0=enable strobe at cycle X, 1=at cycle X-1, 2=at cycle X-2)
     createConfigParam("ChopFreqCyc", 'C', 0x13,  1, 30, 1); // Chopper frequency cycle select (0=Present cycle number, 1=Next cycle number)
     createConfigParam("ChopSweepEn", 'C', 0x13,  1, 31, 0); // Chopper sweep enable (0=TOF fixed offset & Strobe input, 1=TOF fractional offset & Strobe synthesized)
+
+    createConfigParam("STsyncDelMax",'C', 0x14, 32,  0, 0); // Maximum Delay for Synthesized Master Strobe
+    createConfigParam("STsyncDelAdj",'C', 0x15, 32,  0, 0); // Delay Adjustment for Synthesized Master Strobe
+    createConfigParam("STsyncFraAdj",'C', 0x16, 32,  0, 0); // Fractional Delay Adjustment for Synthesized Master Strobe
+    createConfigParam("TimestHiFake",'C', 0x17, 32,  0, 0); // High DWord of RTDL time stamp in fake mode
 
     // Meta parameters
     createConfigParam("EdgeDetMod0", 'D', 0x0,   2,  0, 0); // Edge Detection mode for chanel 0 (0=disable channel,1=detect rising edge,2=detect falling edge,3=detect both edges)
@@ -547,9 +576,12 @@ void DspPlugin::createConfigParams() {
     createConfigParam("LvdsRxDis3",  'E', 0x0,  1, 11, 0); // LVDS disable channel 3 (0=allow packets,1=disable packet processing)
     createConfigParam("LvdsRxDis4",  'E', 0x0,  1, 14, 0); // LVDS disable channel 4 (0=allow packets,1=disable packet processing)
     createConfigParam("LvdsRxDis5",  'E', 0x0,  1, 17, 0); // LVDS disable channel 5 (0=allow packets,1=disable packet processing)
-    createConfigParam("LvdsRxCmdMod",'E', 0x0,  1, 18, 0); // LVDS sorter FIFO parser mode for commands (0=DDPLP0 bit 16 set => command,1=data otherwise)
-    createConfigParam("LvdsRxDatMod",'E', 0x0,  1, 19, 0); // LVDS sorter FIFO parser mode for data (0=DDPLP0 bit 16 set => data,1=command otherwise)
+    createConfigParam("LvdsRxCmdMod",'E', 0x0,  1, 18, 0); // LVDS sorter FIFO parser mode for commands (0=as command,1=as data)
+    createConfigParam("LvdsRxDatMod",'E', 0x0,  1, 19, 0); // LVDS sorter FIFO parser mode for data (0=as data,1=as command)
     createConfigParam("LvdsRxDatSiz",'E', 0x0,  8, 20, 4); // LVDS Number of Words in Channel Link Data Packet
+    createConfigParam("LvdsRxPowCtr",'E', 0x0,  1, 28, 0); // DSP Power Down During Power Down Reset Sequence (0=power down,1=disable power down)
+    createConfigParam("LvdsRxPowRst",'E', 0x0,  1, 29, 0); // Execute Power Down Reset Sequence (0=execute,1=bypass)
+    createConfigParam("LvdsRxFilter",'E', 0x0,  2, 30, 0); // Filter all commands
 
     createConfigParam("LvdsCmdFilt", 'E', 0x1, 16,  0, 0xFFFF); // LVDS command to filter
     createConfigParam("LvdsCmdFiltM",'E', 0x1, 16, 16, 0); // LVDS command filter mask
@@ -600,12 +632,15 @@ void DspPlugin::createConfigParams() {
     createConfigParam("OptPktMaxSize",'E', 0x9, 16,  0, 16111); // Optical data packet max size, in dwords (range 0-0xFFFF)
     createConfigParam("OptDataEopEn", 'E', 0x9,  1, 16, 1); // Optical Neutron data send EOP (0=disabled,1=enabled) - should be 1 if DSP submodules >0
     createConfigParam("OptMetaEopEn", 'E', 0x9,  1, 17, 0); // Optical Metadata send EOP (0=disabled,1=enabled) - should be 1 when edge detection enabled
+    createConfigParam("OptTofCtrl",   'E', 0x9,  1, 18, 0); // TOF control (0=fixed TOF and frame offset,1=full time offset)
+
+    createConfigParam("FakeTrigInfo", 'E', 0xA, 32,  0, 0); // Fake Trigger Information
 
     createConfigParam("SysResetMode", 'F', 0x0,  2,  0, 0); // Reset mode => SYSRST_O# (0-1=not used,2=use SYSRST# from LVDS T&C,3=use SYSRST# from optical T&C)
     createConfigParam("SysStartStopM",'F', 0x0,  3,  4, 0); // Start/Stop mode (0=normal, 1=fake data mode,2-3=not defined)
     createConfigParam("SysFakeTrigEn",'F', 0x0,  1,  7, 0); // Fake metadata trigger enable (0=disabled,1=enabled)
-    createConfigParam("SysFastSendEn",'F', 0x0,  1,  8, 0); // Send data immediately switch (0=assemble large packet,wait for reference pulse,1=don't assemble large packets, send immediately)
-    createConfigParam("SysPassthruEn",'F', 0x0,  1,  9, 0); // Send a command response for a passthru command (0=don't send response,1=send a response)
+    createConfigParam("SysFastSendEn",'F', 0x0,  1,  8, 0); // Send data immediately switch (0=big packets,1=send immediately)
+    createConfigParam("SysPassthruEn",'F', 0x0,  1,  9, 0); // Command response for passthru command (0=don't send,1=send)
     createConfigParam("SysStartAckEn",'F', 0x0,  1, 10, 1); // When set, this bit causes the command handler wait for an acknowledgement from an individual device that it received the Start/Stop command. (0=disable,1=enable)
     createConfigParam("SysRtdlMode",  'F', 0x0,  2, 12, 0); // RTDL mode (0=no RTDL,1=master,2=slave,3=fake mode)
     createConfigParam("SysRtdlOutEnA",'F', 0x0,  1, 14, 1); // RTDL output enable to fiber optic port A (0=disable,1=enable)
@@ -620,31 +655,31 @@ void DspPlugin::createConfigParams() {
 
 void DspPlugin::createStatusParams()
 {
-//      BLXXX:Det:DspX:| sig name  |                           | EPICS record description  | (bi and mbbi description)
-    createStatusParam("Configured",     0x0,  1,  0);
-    createStatusParam("AcquireStat",    0x0,  1,  1);
-    createStatusParam("ProgramErr",     0x0,  1,  2);
-    createStatusParam("PktLenErr",      0x0,  1,  3);
-    createStatusParam("UnknwnCmdErr",   0x0,  1,  4);
-    createStatusParam("LvdsTxFifFul",   0x0,  1,  5);
-    createStatusParam("LvdsCmdErr",     0x0,  1,  6);
-    createStatusParam("EepromInitOk",   0x0,  1,  7);
+//      BLXXX:Det:DspX:| sig name  |                     | EPICS record description  | (bi and mbbi description)
+    createStatusParam("Configured",     0x0,  1,  0); // Configured (Section 2)        (0=not configured,1=configured)
+    createStatusParam("AcquireStat",    0x0,  1,  1); // Acquiring data                (0=not acquiring,1=acquiring)
+    createStatusParam("ProgramErr",     0x0,  1,  2); // WRITE_CNFG during ACQUISITION (0=no error,1=error)
+    createStatusParam("PktLenErr",      0x0,  1,  3); // Packet length error           (0=no error,1=error)
+    createStatusParam("UnknwnCmdErr",   0x0,  1,  4); // Unrecognized command error    (0=no error,1=error)
+    createStatusParam("LvdsTxFifFul",   0x0,  1,  5); // LVDS TxFIFO went full         (0=not full,1=full)
+    createStatusParam("LvdsCmdErr",     0x0,  1,  6); // LVDS command error            (0=no error,1=error)
+    createStatusParam("EepromInitOk",   0x0,  1,  7); // EEPROM initialization status  (0=not ok,1=ok)
     createStatusParam("FoTransStatA",   0x0,  5, 16);
     createStatusParam("FoTransOutA",    0x0,  2, 22);
     createStatusParam("FoTransStatB",   0x0,  5, 24);
     createStatusParam("FoTransOutB",    0x0,  2, 30);
 
-    createStatusParam("RxNumErrsA",     0x1,  8,  0);
-    createStatusParam("RxErrFlagsA",    0x1, 13,  8);
-    createStatusParam("RxGoodPacketA",  0x1,  1, 21); // Good packet. When set, this indicates that the last packet received was parsed with no errors.
-    createStatusParam("RxPriFifNotEA",  0x1,  1, 22); // Stack FIFO Not Empty
+    createStatusParam("RxNumErrsA",     0x1,  8,  0); // Error Counter
+    createStatusParam("RxErrFlagsA",    0x1, 13,  8); // Error flags (8=partial packet timeout,9=SOF/address switch,10=EOF/address switch,11=SOF/hdr switch,12=EOF/hdr switch,13=SOF/payload switch,14=EOF/payload switch,15=SOF/CRC switch,16=EOF/CRC switch,17=CRC low word,18=CRC high word,19=pri FIFO almost full,20=sec FIFO almost full)
+    createStatusParam("RxGoodPacketA",  0x1,  1, 21); // Last packet was good
+    createStatusParam("RxPriFifNotEA",  0x1,  1, 23); // Stack FIFO Not Empty
     createStatusParam("RxPriFifAFulA",  0x1,  1, 24); // Stack FIFO Almost Full
     createStatusParam("RxSecFifNotEA",  0x1,  1, 25); // Secondary FIFO Not Empty
     createStatusParam("RxSecFifAFulA",  0x1,  1, 26); // Secondary FIFO Almost Full
-    createStatusParam("RxPtCrsbNotEA",  0x1,  1, 27); // Pass-through FIFO to Crossbar Not Empty
-    createStatusParam("RxPtCrbarAFuA",  0x1,  1, 28); // Pass-through FIFO to Crossbar Almost Full
-    createStatusParam("RxTransTimeA",   0x1,  1, 29); // Timeout in transferring data between the stack and secondary FIFOs.
-    createStatusParam("RxPriFifFulA",   0x1,  1, 30); // Packet received while the Stack FIFO is almost full.
+    createStatusParam("RxPtCrsbNotEA",  0x1,  1, 27); // PassThrough FIFO Not Empty
+    createStatusParam("RxPtCrbarAFuA",  0x1,  1, 28); // PassThrough FIFO Almost Full
+    createStatusParam("RxTransTimeA",   0x1,  1, 29); // Timeout Pri/Sec FIFO transfer
+    createStatusParam("RxPriFifFulA",   0x1,  1, 30); // Rcvd pckt but stack almost fu
     createStatusParam("RxPtCrbarFulA",  0x1,  1, 31); // Packet received while the Pass-through FIFO almost full.
 
     createStatusParam("RxNumErrsB",     0x2,  8,  0);

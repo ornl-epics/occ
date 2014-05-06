@@ -21,10 +21,10 @@ class BaseModulePlugin : public BasePlugin {
         enum Command {
             CMD_NONE                = 0,
             CMD_INITIALIZE          = 1,    //!< Trigger RO module initialization
-            CMD_READ_STATUS         = 2,    //!< Trigger reading status from module
-            CMD_WRITE_CONFIG        = 3,    //!< Write current configuration to module
-            CMD_READ_CONFIG         = 4,    //!< Read actual configuration from module and populate PVs accordingly
-            CMD_RESET_CONFIG        = 5,    //!< Reset configuration to default values
+            CMD_WRITE_CONFIG        = 2,    //!< Write current configuration to module
+            CMD_READ_CONFIG         = 3,    //!< Read actual configuration from module and populate PVs accordingly
+            CMD_RESET_CONFIG        = 4,    //!< Reset configuration to default values
+            CMD_READ_STATUS         = 5,    //!< Trigger reading status from module
         };
 
         /**

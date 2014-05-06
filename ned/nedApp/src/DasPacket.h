@@ -51,12 +51,12 @@ struct DasPacket
             CMD_READ_CONFIG             = 0x21, //!< Read module configuration
             CMD_READ_STATUS             = 0x22, //!< Read module status
             CMD_WRITE_CONFIG            = 0x30, //!< Write module configuration
+            RSP_ACK                     = 0x41, //!< Acknowledgement to the command, the command that is being acknowledged is in payload[0]
             CMD_DISCOVER                = 0x80, //!< Discover modules
             CMD_START                   = 0x82, //!< Start acquisition
             CMD_STOP                    = 0x83, //!< Stop acquisition
             CMD_TSYNC                   = 0x84, //!< TSYNC packet
             CMD_RTDL                    = 0x85, //!< RTDL is a command packet, but can also be data packet if info == 0xFC
-            RSP_ACK                     = 0x41, //!< Acknowledgement to the command, the command that is being acknowledged is in payload
         };
 
         /**
