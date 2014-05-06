@@ -2678,3 +2678,834 @@ record(bo, "$(P)$(R)SysReset")
     field(ZNAM, "disable")
     field(ONAM, "enable")
 }
+record(bo, "$(P)$(R)Configured")
+{
+    field(DESC, "Configured")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Configured")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "not configured")
+    field(ONAM, "configured")
+}
+record(bo, "$(P)$(R)AcquireStat")
+{
+    field(DESC, "Acquiring data")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))AcquireStat")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "not acquiring")
+    field(ONAM, "acquiring")
+}
+record(bo, "$(P)$(R)ProgramErr")
+{
+    field(DESC, "WRITE_CNFG during ACQUISITION")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))ProgramErr")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no error")
+    field(ONAM, "error")
+}
+record(bo, "$(P)$(R)PktLenErr")
+{
+    field(DESC, "Packet length error")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))PktLenErr")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no error")
+    field(ONAM, "error")
+}
+record(bo, "$(P)$(R)UnknwnCmdErr")
+{
+    field(DESC, "Unrecognized command error")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))UnknwnCmdErr")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no error")
+    field(ONAM, "error")
+}
+record(bo, "$(P)$(R)LvdsTxFifFul")
+{
+    field(DESC, "LVDS TxFIFO went full")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))LvdsTxFifFul")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "not full")
+    field(ONAM, "full")
+}
+record(bo, "$(P)$(R)LvdsCmdErr")
+{
+    field(DESC, "LVDS command error")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))LvdsCmdErr")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no error")
+    field(ONAM, "error")
+}
+record(bo, "$(P)$(R)EepromInitOk")
+{
+    field(DESC, "EEPROM initialization status")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))EepromInitOk")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "not ok")
+    field(ONAM, "ok")
+}
+record(longout, "$(P)$(R)RxNumErrsA")
+{
+    field(DESC, "Error Counter")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))RxNumErrsA")
+    field(SCAN, "I/O Intr")
+}
+record(mbbo, "$(P)$(R)RxErrFlagsA")
+{
+    field(DESC, "Error flags")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))RxErrFlagsA")
+    field(SCAN, "I/O Intr")
+    field(ZRVL, "8")
+    field(ZRST, "partial packet t")
+    field(ZRVL, "9")
+    field(ZRST, "SOF/address swit")
+    field(ZRVL, "10")
+    field(ZRST, "EOF/address swit")
+    field(ZRVL, "11")
+    field(ZRST, "SOF/hdr switch")
+    field(ZRVL, "12")
+    field(ZRST, "EOF/hdr switch")
+    field(ZRVL, "13")
+    field(ZRST, "SOF/payload swit")
+    field(ZRVL, "14")
+    field(ZRST, "EOF/payload swit")
+    field(ZRVL, "15")
+    field(ZRST, "SOF/CRC switch")
+    field(ZRVL, "16")
+    field(ZRST, "EOF/CRC switch")
+    field(ZRVL, "17")
+    field(ZRST, "CRC low word")
+    field(ZRVL, "18")
+    field(ZRST, "CRC high word")
+    field(ZRVL, "19")
+    field(ZRST, "pri FIFO almost ")
+    field(ZRVL, "20")
+    field(ZRST, "sec FIFO almost ")
+}
+record(bo, "$(P)$(R)RxGoodPacketA")
+{
+    field(DESC, "Last packet was good")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))RxGoodPacketA")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no")
+    field(ONAM, "yes")
+}
+record(bo, "$(P)$(R)RxPriFifNotEA")
+{
+    field(DESC, "Stack FIFO Not Empty")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))RxPriFifNotEA")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "empty")
+    field(ONAM, "not empty")
+}
+record(bo, "$(P)$(R)RxPriFifAFulA")
+{
+    field(DESC, "Stack FIFO Almost Full")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))RxPriFifAFulA")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "not full")
+    field(ONAM, "almost full")
+}
+record(bo, "$(P)$(R)RxSecFifNotEA")
+{
+    field(DESC, "Secondary FIFO Not Empty")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))RxSecFifNotEA")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "empty")
+    field(ONAM, "not empty")
+}
+record(bo, "$(P)$(R)RxSecFifAFulA")
+{
+    field(DESC, "Secondary FIFO Almost Full")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))RxSecFifAFulA")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "not full")
+    field(ONAM, "almost full")
+}
+record(bo, "$(P)$(R)RxPtCrsbNotEA")
+{
+    field(DESC, "PassThrough FIFO Not Empty")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))RxPtCrsbNotEA")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "empty")
+    field(ONAM, "not empty")
+}
+record(bo, "$(P)$(R)RxPtCrbarAFuA")
+{
+    field(DESC, "PassThrough FIFO Almost Full")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))RxPtCrbarAFuA")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "not full")
+    field(ONAM, "almost full")
+}
+record(bo, "$(P)$(R)RxTransTimeA")
+{
+    field(DESC, "Timeout Pri/Sec FIFO transfer")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))RxTransTimeA")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no timeout")
+    field(ONAM, "timeout")
+}
+record(bo, "$(P)$(R)RxPriFifFulA")
+{
+    field(DESC, "Rcvd pckt but stack almost fu")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))RxPriFifFulA")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no")
+    field(ONAM, "yes")
+}
+record(bo, "$(P)$(R)RxPtCrbarFulA")
+{
+    field(DESC, "Packet received while the Pas")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))RxPtCrbarFulA")
+    field(SCAN, "I/O Intr")
+}
+record(bo, "$(P)$(R)RxGoodPacketB")
+{
+    field(DESC, "Good packet. When set, this i")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))RxGoodPacketB")
+    field(SCAN, "I/O Intr")
+}
+record(bo, "$(P)$(R)RxPriFifNotEB")
+{
+    field(DESC, "Stack FIFO Not Empty")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))RxPriFifNotEB")
+    field(SCAN, "I/O Intr")
+}
+record(bo, "$(P)$(R)RxPriFifAFulB")
+{
+    field(DESC, "Stack FIFO Almost Full")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))RxPriFifAFulB")
+    field(SCAN, "I/O Intr")
+}
+record(bo, "$(P)$(R)RxSecFifNotEB")
+{
+    field(DESC, "Secondary FIFO Not Empty")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))RxSecFifNotEB")
+    field(SCAN, "I/O Intr")
+}
+record(bo, "$(P)$(R)RxSecFifAFulB")
+{
+    field(DESC, "Secondary FIFO Almost Full")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))RxSecFifAFulB")
+    field(SCAN, "I/O Intr")
+}
+record(bo, "$(P)$(R)RxPtCrsbNotEB")
+{
+    field(DESC, "Pass-through FIFO to Crossbar")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))RxPtCrsbNotEB")
+    field(SCAN, "I/O Intr")
+}
+record(bo, "$(P)$(R)RxPtCrbarAFuB")
+{
+    field(DESC, "Pass-through FIFO to Crossbar")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))RxPtCrbarAFuB")
+    field(SCAN, "I/O Intr")
+}
+record(bo, "$(P)$(R)RxTransTimeB")
+{
+    field(DESC, "Timeout in transferring data ")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))RxTransTimeB")
+    field(SCAN, "I/O Intr")
+}
+record(bo, "$(P)$(R)RxPriFifFulB")
+{
+    field(DESC, "Packet received while the Sta")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))RxPriFifFulB")
+    field(SCAN, "I/O Intr")
+}
+record(bo, "$(P)$(R)RxPtCrbarFulB")
+{
+    field(DESC, "Packet received while the Pas")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))RxPtCrbarFulB")
+    field(SCAN, "I/O Intr")
+}
+record(mbbo, "$(P)$(R)Ch0RxFlags")
+{
+    field(DESC, "Error flags")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch0RxFlags")
+    field(SCAN, "I/O Intr")
+    field(ZRVL, "0")
+    field(ZRST, "parity error")
+    field(ZRVL, "1")
+    field(ZRST, "packet type inco")
+    field(ZRVL, "2")
+    field(ZRST, "first word/last ")
+    field(ZRVL, "3")
+    field(ZRST, "packet size over")
+    field(ZRVL, "4")
+    field(ZRST, "parser FIFO time")
+    field(ZRVL, "5")
+    field(ZRST, "missing first wo")
+    field(ZRVL, "6")
+    field(ZRST, "first word befor")
+    field(ZRVL, "7")
+    field(ZRST, "out FIFO full")
+}
+record(mbbo, "$(P)$(R)Ch0RxStatus")
+{
+    field(DESC, "Status OK")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch0RxStatus")
+    field(SCAN, "I/O Intr")
+    field(ZRVL, "0")
+    field(ZRST, "good cmd packet")
+    field(ZRVL, "1")
+    field(ZRST, "good data packet")
+}
+record(bo, "$(P)$(R)Ch0RxHasData")
+{
+    field(DESC, "External FIFO contains data")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch0RxHasData")
+    field(SCAN, "I/O Intr")
+}
+record(bo, "$(P)$(R)Ch0RxFifoAlFu")
+{
+    field(DESC, "External FIFO almost full")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch0RxFifoAlFu")
+    field(SCAN, "I/O Intr")
+}
+record(bo, "$(P)$(R)Ch0RxParsHD")
+{
+    field(DESC, "Channel Link Packet Parser FI")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch0RxParsHD")
+    field(SCAN, "I/O Intr")
+}
+record(bo, "$(P)$(R)Ch0RxParsAF")
+{
+    field(DESC, "Channel Link Packet Parser FI")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch0RxParsAF")
+    field(SCAN, "I/O Intr")
+}
+record(bo, "$(P)$(R)Ch0ExtFifEn")
+{
+    field(DESC, "External FIFO Read Enable ass")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch0ExtFifEn")
+    field(SCAN, "I/O Intr")
+}
+record(bo, "$(P)$(R)Ch0ParsFifEn")
+{
+    field(DESC, "Channel Link Packet Parser FI")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch0ParsFifEn")
+    field(SCAN, "I/O Intr")
+}
+record(longout, "$(P)$(R)Ch0NumErrors")
+{
+    field(DESC, "Number of data packets with e")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch0NumErrors")
+    field(SCAN, "I/O Intr")
+}
+record(mbbo, "$(P)$(R)Ch1RxFlags")
+{
+    field(DESC, "Error flags")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch1RxFlags")
+    field(SCAN, "I/O Intr")
+    field(ZRVL, "0")
+    field(ZRST, "parity error")
+    field(ZRVL, "1")
+    field(ZRST, "packet type inco")
+    field(ZRVL, "2")
+    field(ZRST, "first word/last ")
+    field(ZRVL, "3")
+    field(ZRST, "packet size over")
+    field(ZRVL, "4")
+    field(ZRST, "parser FIFO time")
+    field(ZRVL, "5")
+    field(ZRST, "missing first wo")
+    field(ZRVL, "6")
+    field(ZRST, "first word befor")
+    field(ZRVL, "7")
+    field(ZRST, "out FIFO full")
+}
+record(mbbo, "$(P)$(R)Ch1RxStatus")
+{
+    field(DESC, "Status OK")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch1RxStatus")
+    field(SCAN, "I/O Intr")
+    field(ZRVL, "0")
+    field(ZRST, "good cmd packet")
+    field(ZRVL, "1")
+    field(ZRST, "good data packet")
+}
+record(bo, "$(P)$(R)Ch1RxHasData")
+{
+    field(DESC, "External FIFO contains data")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch1RxHasData")
+    field(SCAN, "I/O Intr")
+}
+record(bo, "$(P)$(R)Ch1RxFifoAlFu")
+{
+    field(DESC, "External FIFO almost full")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch1RxFifoAlFu")
+    field(SCAN, "I/O Intr")
+}
+record(bo, "$(P)$(R)Ch1RxParsHD")
+{
+    field(DESC, "Channel Link Packet Parser FI")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch1RxParsHD")
+    field(SCAN, "I/O Intr")
+}
+record(bo, "$(P)$(R)Ch1RxParsAF")
+{
+    field(DESC, "Channel Link Packet Parser FI")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch1RxParsAF")
+    field(SCAN, "I/O Intr")
+}
+record(bo, "$(P)$(R)Ch1ExtFifEn")
+{
+    field(DESC, "External FIFO Read Enable ass")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch1ExtFifEn")
+    field(SCAN, "I/O Intr")
+}
+record(bo, "$(P)$(R)Ch1ParsFifEn")
+{
+    field(DESC, "Channel Link Packet Parser FI")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch1ParsFifEn")
+    field(SCAN, "I/O Intr")
+}
+record(longout, "$(P)$(R)Ch1NumErrors")
+{
+    field(DESC, "Number of data packets with e")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch1NumErrors")
+    field(SCAN, "I/O Intr")
+}
+record(mbbo, "$(P)$(R)Ch2RxFlags")
+{
+    field(DESC, "Error flags")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch2RxFlags")
+    field(SCAN, "I/O Intr")
+    field(ZRVL, "0")
+    field(ZRST, "parity error")
+    field(ZRVL, "1")
+    field(ZRST, "packet type inco")
+    field(ZRVL, "2")
+    field(ZRST, "first word/last ")
+    field(ZRVL, "3")
+    field(ZRST, "packet size over")
+    field(ZRVL, "4")
+    field(ZRST, "parser FIFO time")
+    field(ZRVL, "5")
+    field(ZRST, "missing first wo")
+    field(ZRVL, "6")
+    field(ZRST, "first word befor")
+    field(ZRVL, "7")
+    field(ZRST, "out FIFO full")
+}
+record(mbbo, "$(P)$(R)Ch2RxStatus")
+{
+    field(DESC, "Status OK")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch2RxStatus")
+    field(SCAN, "I/O Intr")
+    field(ZRVL, "0")
+    field(ZRST, "good cmd packet")
+    field(ZRVL, "1")
+    field(ZRST, "good data packet")
+}
+record(bo, "$(P)$(R)Ch2RxHasData")
+{
+    field(DESC, "External FIFO contains data")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch2RxHasData")
+    field(SCAN, "I/O Intr")
+}
+record(bo, "$(P)$(R)Ch2RxFifoAlFu")
+{
+    field(DESC, "External FIFO almost full")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch2RxFifoAlFu")
+    field(SCAN, "I/O Intr")
+}
+record(bo, "$(P)$(R)Ch2RxParsHD")
+{
+    field(DESC, "Channel Link Packet Parser FI")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch2RxParsHD")
+    field(SCAN, "I/O Intr")
+}
+record(bo, "$(P)$(R)Ch2RxParsAF")
+{
+    field(DESC, "Channel Link Packet Parser FI")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch2RxParsAF")
+    field(SCAN, "I/O Intr")
+}
+record(bo, "$(P)$(R)Ch2ExtFifEn")
+{
+    field(DESC, "External FIFO Read Enable ass")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch2ExtFifEn")
+    field(SCAN, "I/O Intr")
+}
+record(bo, "$(P)$(R)Ch2ParsFifEn")
+{
+    field(DESC, "Channel Link Packet Parser FI")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch2ParsFifEn")
+    field(SCAN, "I/O Intr")
+}
+record(longout, "$(P)$(R)Ch2NumErrors")
+{
+    field(DESC, "Number of data packets with e")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch2NumErrors")
+    field(SCAN, "I/O Intr")
+}
+record(mbbo, "$(P)$(R)Ch3RxFlags")
+{
+    field(DESC, "Error flags")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch3RxFlags")
+    field(SCAN, "I/O Intr")
+    field(ZRVL, "0")
+    field(ZRST, "parity error")
+    field(ZRVL, "1")
+    field(ZRST, "packet type inco")
+    field(ZRVL, "2")
+    field(ZRST, "first word/last ")
+    field(ZRVL, "3")
+    field(ZRST, "packet size over")
+    field(ZRVL, "4")
+    field(ZRST, "parser FIFO time")
+    field(ZRVL, "5")
+    field(ZRST, "missing first wo")
+    field(ZRVL, "6")
+    field(ZRST, "first word befor")
+    field(ZRVL, "7")
+    field(ZRST, "out FIFO full")
+}
+record(mbbo, "$(P)$(R)Ch3RxStatus")
+{
+    field(DESC, "Status OK")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch3RxStatus")
+    field(SCAN, "I/O Intr")
+    field(ZRVL, "0")
+    field(ZRST, "good cmd packet")
+    field(ZRVL, "1")
+    field(ZRST, "good data packet")
+}
+record(bo, "$(P)$(R)Ch3RxHasData")
+{
+    field(DESC, "External FIFO contains data")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch3RxHasData")
+    field(SCAN, "I/O Intr")
+}
+record(bo, "$(P)$(R)Ch3RxFifoAlFu")
+{
+    field(DESC, "External FIFO almost full")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch3RxFifoAlFu")
+    field(SCAN, "I/O Intr")
+}
+record(bo, "$(P)$(R)Ch3RxParsHD")
+{
+    field(DESC, "Channel Link Packet Parser FI")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch3RxParsHD")
+    field(SCAN, "I/O Intr")
+}
+record(bo, "$(P)$(R)Ch3RxParsAF")
+{
+    field(DESC, "Channel Link Packet Parser FI")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch3RxParsAF")
+    field(SCAN, "I/O Intr")
+}
+record(bo, "$(P)$(R)Ch3ExtFifEn")
+{
+    field(DESC, "External FIFO Read Enable ass")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch3ExtFifEn")
+    field(SCAN, "I/O Intr")
+}
+record(bo, "$(P)$(R)Ch3ParsFifEn")
+{
+    field(DESC, "Channel Link Packet Parser FI")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch3ParsFifEn")
+    field(SCAN, "I/O Intr")
+}
+record(longout, "$(P)$(R)Ch3NumErrors")
+{
+    field(DESC, "Number of data packets with e")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch3NumErrors")
+    field(SCAN, "I/O Intr")
+}
+record(mbbo, "$(P)$(R)Ch4RxFlags")
+{
+    field(DESC, "Error flags")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch4RxFlags")
+    field(SCAN, "I/O Intr")
+    field(ZRVL, "0")
+    field(ZRST, "parity error")
+    field(ZRVL, "1")
+    field(ZRST, "packet type inco")
+    field(ZRVL, "2")
+    field(ZRST, "first word/last ")
+    field(ZRVL, "3")
+    field(ZRST, "packet size over")
+    field(ZRVL, "4")
+    field(ZRST, "parser FIFO time")
+    field(ZRVL, "5")
+    field(ZRST, "missing first wo")
+    field(ZRVL, "6")
+    field(ZRST, "first word befor")
+    field(ZRVL, "7")
+    field(ZRST, "out FIFO full")
+}
+record(mbbo, "$(P)$(R)Ch4RxStatus")
+{
+    field(DESC, "Status OK")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch4RxStatus")
+    field(SCAN, "I/O Intr")
+    field(ZRVL, "0")
+    field(ZRST, "good cmd packet")
+    field(ZRVL, "1")
+    field(ZRST, "good data packet")
+}
+record(bo, "$(P)$(R)Ch4RxHasData")
+{
+    field(DESC, "External FIFO contains data")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch4RxHasData")
+    field(SCAN, "I/O Intr")
+}
+record(bo, "$(P)$(R)Ch4RxFifoAlFu")
+{
+    field(DESC, "External FIFO almost full")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch4RxFifoAlFu")
+    field(SCAN, "I/O Intr")
+}
+record(bo, "$(P)$(R)Ch4RxParsHD")
+{
+    field(DESC, "Channel Link Packet Parser FI")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch4RxParsHD")
+    field(SCAN, "I/O Intr")
+}
+record(bo, "$(P)$(R)Ch4RxParsAF")
+{
+    field(DESC, "Channel Link Packet Parser FI")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch4RxParsAF")
+    field(SCAN, "I/O Intr")
+}
+record(bo, "$(P)$(R)Ch4ExtFifEn")
+{
+    field(DESC, "External FIFO Read Enable ass")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch4ExtFifEn")
+    field(SCAN, "I/O Intr")
+}
+record(bo, "$(P)$(R)Ch4ParsFifEn")
+{
+    field(DESC, "Channel Link Packet Parser FI")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch4ParsFifEn")
+    field(SCAN, "I/O Intr")
+}
+record(longout, "$(P)$(R)Ch4NumErrors")
+{
+    field(DESC, "Number of data packets with e")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch4NumErrors")
+    field(SCAN, "I/O Intr")
+}
+record(mbbo, "$(P)$(R)Ch5RxFlags")
+{
+    field(DESC, "Error flags")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch5RxFlags")
+    field(SCAN, "I/O Intr")
+    field(ZRVL, "0")
+    field(ZRST, "parity error")
+    field(ZRVL, "1")
+    field(ZRST, "packet type inco")
+    field(ZRVL, "2")
+    field(ZRST, "first word/last ")
+    field(ZRVL, "3")
+    field(ZRST, "packet size over")
+    field(ZRVL, "4")
+    field(ZRST, "parser FIFO time")
+    field(ZRVL, "5")
+    field(ZRST, "missing first wo")
+    field(ZRVL, "6")
+    field(ZRST, "first word befor")
+    field(ZRVL, "7")
+    field(ZRST, "out FIFO full")
+}
+record(mbbo, "$(P)$(R)Ch5RxStatus")
+{
+    field(DESC, "Status OK")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch5RxStatus")
+    field(SCAN, "I/O Intr")
+    field(ZRVL, "0")
+    field(ZRST, "good cmd packet")
+    field(ZRVL, "1")
+    field(ZRST, "good data packet")
+}
+record(bo, "$(P)$(R)Ch5RxHasData")
+{
+    field(DESC, "External FIFO contains data")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch5RxHasData")
+    field(SCAN, "I/O Intr")
+}
+record(bo, "$(P)$(R)Ch5RxFifoAlFu")
+{
+    field(DESC, "External FIFO almost full")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch5RxFifoAlFu")
+    field(SCAN, "I/O Intr")
+}
+record(bo, "$(P)$(R)Ch5RxParsHD")
+{
+    field(DESC, "Channel Link Packet Parser FI")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch5RxParsHD")
+    field(SCAN, "I/O Intr")
+}
+record(bo, "$(P)$(R)Ch5RxParsAF")
+{
+    field(DESC, "Channel Link Packet Parser FI")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch5RxParsAF")
+    field(SCAN, "I/O Intr")
+}
+record(bo, "$(P)$(R)Ch5ExtFifEn")
+{
+    field(DESC, "External FIFO Read Enable ass")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch5ExtFifEn")
+    field(SCAN, "I/O Intr")
+}
+record(bo, "$(P)$(R)Ch5ParsFifEn")
+{
+    field(DESC, "Channel Link Packet Parser FI")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch5ParsFifEn")
+    field(SCAN, "I/O Intr")
+}
+record(longout, "$(P)$(R)Ch5NumErrors")
+{
+    field(DESC, "Number of data packets with e")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch5NumErrors")
+    field(SCAN, "I/O Intr")
+}
+record(longout, "$(P)$(R)NumGoodPkts")
+{
+    field(DESC, "Good data packet counter")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))NumGoodPkts")
+    field(SCAN, "I/O Intr")
+}
+record(longout, "$(P)$(R)MetadataInfo0")
+{
+    field(DESC, "Metadata channel info - bitfi")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))MetadataInfo0")
+    field(SCAN, "I/O Intr")
+}
+record(longout, "$(P)$(R)MetadataInfo1")
+{
+    field(DESC, "Metadata channel info - bitfi")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))MetadataInfo1")
+    field(SCAN, "I/O Intr")
+}
+record(longout, "$(P)$(R)MetadataInfo2")
+{
+    field(DESC, "Metadata channel info - bitfi")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))MetadataInfo2")
+    field(SCAN, "I/O Intr")
+}
+record(longout, "$(P)$(R)DetailInfo")
+{
+    field(DESC, "Detailed info - bitfields too")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))DetailInfo")
+    field(SCAN, "I/O Intr")
+}
+record(longout, "$(P)$(R)TofOffset")
+{
+    field(DESC, "TOF offset")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))TofOffset")
+    field(SCAN, "I/O Intr")
+}
+record(longout, "$(P)$(R)RtdlInfo")
+{
+    field(DESC, "RTDL info - bitfields too fai")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))RtdlInfo")
+    field(SCAN, "I/O Intr")
+}
+record(longout, "$(P)$(R)NumBadRtdl")
+{
+    field(DESC, "Number of RTDL frames with CR")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))NumBadRtdl")
+    field(SCAN, "I/O Intr")
+}
+record(longout, "$(P)$(R)NumBadData")
+{
+    field(DESC, "Number of Event Link frames w")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))NumBadData")
+    field(SCAN, "I/O Intr")
+}

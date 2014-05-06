@@ -1,7 +1,7 @@
 #!/usr/bin/perl -s
 
 # Parse lines like this and transform them into EPICS records:
-# createConfigParam("LvdsRxNoEr5", 'E', 0x0,  1, 16, 0); // LVDS ignore errors (0=discard erronous packet,1=keep all packets)
+# createStatusParam("UartByteErr", 0x0,  1, 29); // UART: Byte error              (0=no error,1=error)
 # The name and description are truncd to match EPICS string specifications
 
 if (!defined $name_prefix || !defined $input_file) {
@@ -30,8 +30,8 @@ sub trunc {
 open (INFILE, $input_file);
 foreach $line ( <INFILE> ) {
     chomp($line);
-    if ($line =~ m/createConfigParam *\( *"([a-zA-Z0-9_]+)" *, *'([0-9A-F])' *, *([0-9xX]+) *, *([0-9]+) *, *([0-9]+) *, *([0-9]+).*\/\/ *(.*)$/) {
-        my ($name,$section,$offset,$width,$shift,$val,$comment) = ($1,$2,$3,$4,$5,$6,$7);
+    if ($line =~ m/createStatusParam *\( *"([a-zA-Z0-9_]+)" *, *([0-9xX]+) *, *([0-9]+) *, *([0-9]+).*\/\/ *(.*)$/) {
+        my ($name,$offset,$width,$shift,$comment) = ($1,$2,$3,$4,$5);
         $comment =~ /^\s*([^\(]*)\(?(.*)\)?$/;
         my ($desc, $valstr) = ($1, $2);
         $valstr =~ s/\)$//;
@@ -46,7 +46,6 @@ foreach $line ( <INFILE> ) {
             print ("    field(DTYP, \"asynInt32\")\n");
             print ("    field(OUT,  \"\@asyn(\$(PORT),\$(ADDR),\$(TIMEOUT))$name\")\n");
 	    print ("    field(SCAN, \"I/O Intr\")\n");
-	    print ("    field(VAL,  \"$val\")\n");
             print ("\}\n");
         } elsif ($width == 1) {
             print ("record(bo, \"\$(P)\$(R)$name\")\n");
@@ -55,8 +54,7 @@ foreach $line ( <INFILE> ) {
             print ("    field(DTYP, \"asynInt32\")\n");
             print ("    field(OUT,  \"\@asyn(\$(PORT),\$(ADDR),\$(TIMEOUT))$name\")\n");
             print ("    field(SCAN, \"I/O Intr\")\n");
-	    print ("    field(VAL,  \"$val\")\n");
-            if ($valstr =~ m/([0-9]) *= *([^,]+), *([0-9]) *= *(.+)/) {
+            if ($valstr =~ m/([0-9]+) *= *([^,]+), *([0-9]+) *= *(.+)$/) {
                 my ($zval,$znam,$oval,$onam) = ($1,$2,$3,$4);
                 if ($zval != 0) { my $temp=$znam; $znam=$onam; $onam=$temp; }
                 $znam = trunc($znam, $MAX_BO_xNAM_LEN, $name, "ZNAM");
@@ -72,9 +70,8 @@ foreach $line ( <INFILE> ) {
             print ("    field(DTYP, \"asynInt32\")\n");
             print ("    field(OUT,  \"\@asyn(\$(PORT),\$(ADDR),\$(TIMEOUT))$name\")\n");
             print ("    field(SCAN, \"I/O Intr\")\n");
-	    print ("    field(VAL,  \"$val\")\n");
-            foreach (split(',', $valstr)) {
-                my ($xval,$xnam) = split(/=/, $_);
+            foreach (split(',',$valstr)) {
+                my ($xval,$xnam) = split('=', $_);
                 $xnam = trunc($xnam, $MAX_MBBO_xNAM_LEN, $name, $nams[$i]);
                 print ("    field($vals[$i], \"$xval\")\n");
                 print ("    field($nams[$i], \"$xnam\")\n");
@@ -87,10 +84,8 @@ foreach $line ( <INFILE> ) {
             print ("    field(DTYP, \"asynInt32\")\n");
             print ("    field(OUT,  \"\@asyn(\$(PORT),\$(ADDR),\$(TIMEOUT))$name\")\n");
             print ("    field(SCAN, \"I/O Intr\")\n");
-	    print ("    field(VAL,  \"$val\")\n");
             print ("\}\n");
         }
     }
 }
 close (INFILE);
-

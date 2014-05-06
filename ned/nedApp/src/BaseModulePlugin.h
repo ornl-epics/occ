@@ -50,7 +50,8 @@ class BaseModulePlugin : public BasePlugin {
 
     protected: // variables
         uint32_t m_hardwareId;
-        std::map<int, StatusParamDesc> m_statusParams; //!< Map of exported status parameters
+        uint32_t m_statusPayloadLength;                 //!< Size in bytes of the READ_STATUS request/response payload, calculated dynamically by createStatusParam()
+        std::map<int, StatusParamDesc> m_statusParams;  //!< Map of exported status parameters
 
     private: // variables
         ConnectionType m_connType;

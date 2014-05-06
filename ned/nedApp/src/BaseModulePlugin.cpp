@@ -63,6 +63,8 @@ void BaseModulePlugin::createStatusParam(const char *name, uint32_t offset, uint
     desc.shift = shift;
     desc.width = nBits;
     m_statusParams[index] = desc;
+
+    m_statusPayloadLength = std::max(m_statusPayloadLength, (offset+1)*4);
 }
 
 DasPacket *BaseModulePlugin::createOpticalPacket(uint32_t destination, DasPacket::CommandType command, uint32_t *payload, uint32_t length)

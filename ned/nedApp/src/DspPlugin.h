@@ -67,6 +67,17 @@ class DspPlugin : public BaseModulePlugin {
         void rspVersionRead(const DasPacket *packet);
 
         /**
+         * Overload READ_STATUS response handler.
+         *
+         * Overloaded function checks for proper response length
+         * and manages state machine accordingly. It then calls
+         * base function.
+         *
+         * @param[in] packet DAS packet with verified READ_STATUS response.
+         */
+        void rspReadStatus(const DasPacket *packet);
+
+        /**
          * Construct configuration data and send it to module.
          *
          * Configuration data is gathered from configuration parameters

@@ -42,7 +42,6 @@ DspPlugin::DspPlugin(const char *portName, const char *dispatcherPortName, const
     createParam("Command",      asynParamInt32, &Command);
     createParam("Status",       asynParamInt32, &Status);
 
-
     createConfigParams();
     createStatusParams();
 
@@ -86,7 +85,7 @@ void DspPlugin::rspVersionRead(const DasPacket *packet)
     const RspVersion *payload = reinterpret_cast<const RspVersion*>(packet->payload);
 
     if (packet->getPayloadLength() != sizeof(RspVersion)) {
-        LOG_ERROR("Received unexpected READ_VERSION response for this DSP type, received %u, expected %lu", packet->payload_length, sizeof(RspVersion));
+        LOG_ERROR("Received unexpected READ_VERSION response for this DSP type; received %u, expected %lu", packet->payload_length, sizeof(RspVersion));
         //status = m_stateMachine.transition(VERSION_READ_MISMATCH);
     } else {
         char date[20];
@@ -108,6 +107,15 @@ void DspPlugin::rspVersionRead(const DasPacket *packet)
     }
 
     callParamCallbacks();
+}
+
+void DspPlugin::rspReadStatus(const DasPacket *packet)
+{
+    if (packet->getPayloadLength() != m_statusPayloadLength) {
+        LOG_ERROR("Received unexpected READ_STATUS response for this DSP type; received %u, expected %lu", packet->getPayloadLength(), m_statusPayloadLength);
+        return;
+    }
+    BaseModulePlugin::rspReadStatus(packet);
 }
 
 void DspPlugin::reqCfgWrite()
@@ -656,7 +664,7 @@ void DspPlugin::createConfigParams() {
 void DspPlugin::createStatusParams()
 {
 //      BLXXX:Det:DspX:| sig name  |                     | EPICS record description  | (bi and mbbi description)
-    createStatusParam("Configured",     0x0,  1,  0); // Configured (Section 2)        (0=not configured,1=configured)
+    createStatusParam("Configured",     0x0,  1,  0); // Configured                    (0=not configured,1=configured)
     createStatusParam("AcquireStat",    0x0,  1,  1); // Acquiring data                (0=not acquiring,1=acquiring)
     createStatusParam("ProgramErr",     0x0,  1,  2); // WRITE_CNFG during ACQUISITION (0=no error,1=error)
     createStatusParam("PktLenErr",      0x0,  1,  3); // Packet length error           (0=no error,1=error)
@@ -671,15 +679,15 @@ void DspPlugin::createStatusParams()
 
     createStatusParam("RxNumErrsA",     0x1,  8,  0); // Error Counter
     createStatusParam("RxErrFlagsA",    0x1, 13,  8); // Error flags (8=partial packet timeout,9=SOF/address switch,10=EOF/address switch,11=SOF/hdr switch,12=EOF/hdr switch,13=SOF/payload switch,14=EOF/payload switch,15=SOF/CRC switch,16=EOF/CRC switch,17=CRC low word,18=CRC high word,19=pri FIFO almost full,20=sec FIFO almost full)
-    createStatusParam("RxGoodPacketA",  0x1,  1, 21); // Last packet was good
-    createStatusParam("RxPriFifNotEA",  0x1,  1, 23); // Stack FIFO Not Empty
-    createStatusParam("RxPriFifAFulA",  0x1,  1, 24); // Stack FIFO Almost Full
-    createStatusParam("RxSecFifNotEA",  0x1,  1, 25); // Secondary FIFO Not Empty
-    createStatusParam("RxSecFifAFulA",  0x1,  1, 26); // Secondary FIFO Almost Full
-    createStatusParam("RxPtCrsbNotEA",  0x1,  1, 27); // PassThrough FIFO Not Empty
-    createStatusParam("RxPtCrbarAFuA",  0x1,  1, 28); // PassThrough FIFO Almost Full
-    createStatusParam("RxTransTimeA",   0x1,  1, 29); // Timeout Pri/Sec FIFO transfer
-    createStatusParam("RxPriFifFulA",   0x1,  1, 30); // Rcvd pckt but stack almost fu
+    createStatusParam("RxGoodPacketA",  0x1,  1, 21); // Last packet was good          (0=no,1=yes)
+    createStatusParam("RxPriFifNotEA",  0x1,  1, 23); // Stack FIFO Not Empty          (0=empty,1=not empty)
+    createStatusParam("RxPriFifAFulA",  0x1,  1, 24); // Stack FIFO Almost Full        (0=not full,1=almost full)
+    createStatusParam("RxSecFifNotEA",  0x1,  1, 25); // Secondary FIFO Not Empty      (0=empty,1=not empty)
+    createStatusParam("RxSecFifAFulA",  0x1,  1, 26); // Secondary FIFO Almost Full    (0=not full,1=almost full)
+    createStatusParam("RxPtCrsbNotEA",  0x1,  1, 27); // PassThrough FIFO Not Empty    (0=empty,1=not empty)
+    createStatusParam("RxPtCrbarAFuA",  0x1,  1, 28); // PassThrough FIFO Almost Full  (0=not full,1=almost full)
+    createStatusParam("RxTransTimeA",   0x1,  1, 29); // Timeout Pri/Sec FIFO transfer (0=no timeout,1=timeout)
+    createStatusParam("RxPriFifFulA",   0x1,  1, 30); // Rcvd pckt but stack almost fu (0=no,1=yes)
     createStatusParam("RxPtCrbarFulA",  0x1,  1, 31); // Packet received while the Pass-through FIFO almost full.
 
     createStatusParam("RxNumErrsB",     0x2,  8,  0);
