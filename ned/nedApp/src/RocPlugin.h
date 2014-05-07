@@ -96,7 +96,7 @@ class RocPlugin : public BaseModulePlugin {
          */
         void timeout(DasPacket::CommandType command);
 
-    private:
+    private: // asyn parameters
         #define FIRST_ROCPLUGIN_PARAM HardwareVer
         int HardwareVer;    //!< Module hardware version
         int HardwareRev;    //!< Module hardware revision

@@ -16,6 +16,7 @@ DB += DiscoverPlugin.template
 DB += AdaraPlugin.template
 DB += DspPlugin.template
 DB += RocPlugin.template
+DB += DumpPlugin.template
 
 #----------------------------------------------------
 # If <anyname>.db template is not named <anyname>*.template add

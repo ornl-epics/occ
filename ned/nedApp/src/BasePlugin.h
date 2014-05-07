@@ -130,8 +130,6 @@ class BasePlugin : public asynPortDriver {
          *
          * BasePlugin guarantees to put a lock around this function.
          *
-         * @todo: NO NEED TO release(last), just release everything!!!
-         *
          * @param[in] packetList List of received packets.
          * @return Last packet from the list that this function processed, or 0 for none.
          */

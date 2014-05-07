@@ -87,7 +87,7 @@ class DspPlugin : public BaseModulePlugin {
          */
         void noResponseCleanup(DasPacket::CommandType cmd);
 
-    private:
+    private: // asyn parameters
         #define FIRST_DSPPLUGIN_PARAM Command
         int HardwareVer;    //!< Module hardware version
         int HardwareRev;    //!< Module hardware revision
