@@ -32,4 +32,8 @@ RocPluginConfigure("roc1", "$(PORT)", "20.39.216.73", "5.x/5.x", 1)
 dbLoadRecords("../../db/RocPlugin.template","P=$(PREFIX),R=roc1:,PORT=roc1,ADDR=0,TIMEOUT=1")
 dbLoadRecords("../../db/BasePlugin.template","P=$(PREFIX),R=roc1:,PORT=roc1,ADDR=0,TIMEOUT=1")
 
+DumpPluginConfigure("dump", "$(PORT)", 0)
+dbLoadRecords("../../db/DumpPlugin.template","P=$(PREFIX),R=dump:,PORT=dump,ADDR=0,TIMEOUT=1")
+dbLoadRecords("../../db/BasePlugin.template","P=$(PREFIX),R=dump:,PORT=dump,ADDR=0,TIMEOUT=1")
+
 iocInit()
