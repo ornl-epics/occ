@@ -22,12 +22,12 @@
  * to reconnect immediately.
  *
  * AdaraPlugin provides following asyn parameters:
- * asyn param name      | asyn param index | asyn param type | init val | mode | Description
- * -------------------- | ---------------- | --------------- | -------- | ---- | -----------
- * LISTEN_IP            | ListenIP         | asynParamOctet  | <empty>  | RW   | Hostname or IP address to listen to
- * LISTEN_PORT          | ListenPort       | asynParamInt32  | 5656     | RW   | Port number to listen to
- * CLIENT_IP            | ClientIP         | asynParamOctet  | <empty>  | RO   | IP of ADARA client if connected, or empty string
- * TRANSMITTED_COUNT    | TransmittedCount | asynParamInt32  | 0        | RO   | Number of packets sent to ADARA
+ * asyn param    | asyn param type | init val | mode | Description
+ * ------------- | --------------- | -------- | ---- | -----------
+ * ListenIp      | asynParamOctet  | <empty>  | RW   | Hostname or IP address to listen to
+ * ListenPort    | asynParamInt32  | 5656     | RW   | Port number to listen to
+ * ClientIp      | asynParamOctet  | <empty>  | RO   | IP of ADARA client if connected, or empty string
+ * TxCount       | asynParamInt32  | 0        | RO   | Number of packets sent to ADARA
  */
 
 class AdaraPlugin : public BasePlugin {
@@ -68,8 +68,8 @@ class AdaraPlugin : public BasePlugin {
         int ListenIP;
         int ListenPort;
         int ClientIP;
-        int TransmittedCount;
-        #define LAST_ADARAPLUGIN_PARAM TransmittedCount
+        int TxCount;
+        #define LAST_ADARAPLUGIN_PARAM TxCount
 
     private:
         int m_listenSock;           //!< Socket for incoming connections, -1 when not listening

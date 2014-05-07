@@ -11,9 +11,9 @@ EPICS_REGISTER_PLUGIN(DiscoverPlugin, 2, "Port name", string, "Dispatcher port n
 DiscoverPlugin::DiscoverPlugin(const char *portName, const char *dispatcherPortName)
     : BasePlugin(portName, dispatcherPortName, REASON_OCCDATA, 1, NUM_DISCOVERPLUGIN_PARAMS)
 {
-    createParam("TRIGGER",              asynParamInt32, &Trigger);
-    createParam("DISCOVERED_TOTAL",     asynParamInt32, &DiscoveredTotal);
-    createParam("DISCOVERED_DSPS",      asynParamInt32, &DiscoveredDsps);
+    createParam("Command",              asynParamInt32, &Command);
+    createParam("NumModules",           asynParamInt32, &DiscoveredTotal);
+    createParam("NumDsps",              asynParamInt32, &DiscoveredDsps);
 
     setIntegerParam(DiscoveredTotal, 0);
     setIntegerParam(DiscoveredDsps,  0);
@@ -29,7 +29,7 @@ DiscoverPlugin::DiscoverPlugin(const char *portName, const char *dispatcherPortN
 
 asynStatus DiscoverPlugin::writeInt32(asynUser *pasynUser, epicsInt32 value)
 {
-    if (pasynUser->reason == Trigger) {
+    if (pasynUser->reason == Command) {
         m_discovered.clear();
         reqDiscover();
         return asynSuccess;
@@ -42,9 +42,9 @@ void DiscoverPlugin::processData(const DasPacketList * const packetList)
     int nReceived = 0;
     int nProcessed = 0;
     int nDiscoveredTotal = 0;
-    getIntegerParam(ReceivedCount,  &nReceived);
-    getIntegerParam(ProcessedCount, &nProcessed);
-    getIntegerParam(DiscoveredTotal,&nDiscoveredTotal);
+    getIntegerParam(RxCount,         &nReceived);
+    getIntegerParam(ProcCount,       &nProcessed);
+    getIntegerParam(DiscoveredTotal, &nDiscoveredTotal);
 
     for (const DasPacket *packet = packetList->first(); packet != 0; packet = packetList->next(packet)) {
         nReceived++;
@@ -84,9 +84,9 @@ void DiscoverPlugin::processData(const DasPacketList * const packetList)
         nProcessed++;
     }
 
-    setIntegerParam(DiscoveredTotal,nDiscoveredTotal);
-    setIntegerParam(ReceivedCount,  nReceived);
-    setIntegerParam(ProcessedCount, nProcessed);
+    setIntegerParam(DiscoveredTotal, nDiscoveredTotal);
+    setIntegerParam(RxCount,         nReceived);
+    setIntegerParam(ProcCount,       nProcessed);
     callParamCallbacks();
 }
 

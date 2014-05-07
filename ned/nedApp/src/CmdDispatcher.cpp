@@ -41,8 +41,8 @@ void CmdDispatcher::processData(const DasPacketList * const packetList)
     }
 
     // Update parameters
-    setIntegerParam(ProcessedCount,     m_nProcessed);
-    setIntegerParam(ReceivedCount,      m_nReceived);
+    setIntegerParam(ProcCount,  m_nProcessed);
+    setIntegerParam(RxCount,    m_nReceived);
     callParamCallbacks();
 }
 

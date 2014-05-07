@@ -26,17 +26,17 @@ AdaraPlugin::AdaraPlugin(const char *portName, const char *dispatcherPortName, i
     , m_nProcessed(0)
     , m_nReceived(0)
 {
-    createParam("LISTEN_IP",            asynParamOctet,     &ListenIP);
-    createParam("LISTEN_PORT",          asynParamInt32,     &ListenPort);
-    createParam("CLIENT_IP",            asynParamOctet,     &ClientIP);
-    createParam("TRANSMITTED_COUNT",    asynParamInt32,     &TransmittedCount);
+    createParam("ListenIp",     asynParamOctet,     &ListenIP);
+    createParam("ListenPort",   asynParamInt32,     &ListenPort);
+    createParam("ClientIp",     asynParamOctet,     &ClientIP);
+    createParam("TxCount",      asynParamInt32,     &TxCount);
 
-    setStringParam(ListenIP,            "");
-    setStringParam(ClientIP,            "");
-    setIntegerParam(ListenPort,         DEFAULT_LISTEN_IP_PORT);
-    setIntegerParam(TransmittedCount,   m_nTransmitted);
-    setIntegerParam(ProcessedCount,     m_nProcessed);
-    setIntegerParam(ReceivedCount,      m_nReceived);
+    setStringParam(ListenIP,        "");
+    setStringParam(ClientIP,        "");
+    setIntegerParam(ListenPort,     DEFAULT_LISTEN_IP_PORT);
+    setIntegerParam(TxCount,        m_nTransmitted);
+    setIntegerParam(ProcCount,      m_nProcessed);
+    setIntegerParam(RxCount,        m_nReceived);
 }
 
 AdaraPlugin::~AdaraPlugin()
@@ -105,9 +105,9 @@ void AdaraPlugin::processData(const DasPacketList * const packetList)
     }
 
     // Update parameters
-    setIntegerParam(TransmittedCount,   m_nTransmitted);
-    setIntegerParam(ProcessedCount,     m_nProcessed);
-    setIntegerParam(ReceivedCount,      m_nReceived);
+    setIntegerParam(TxCount,    m_nTransmitted);
+    setIntegerParam(ProcCount,  m_nProcessed);
+    setIntegerParam(RxCount,    m_nReceived);
     callParamCallbacks();
 }
 

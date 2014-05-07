@@ -20,9 +20,9 @@ record(mbbo, "$(P)$(R)Command")
     field(FRVL, "4")
     field(ZRST, "No command")
     field(ONST, "Initialize")
-    field(TWST, "Write config")
-    field(THST, "Read config")
-    field(FRST, "Reset config")
+    field(TWST, "Read status")
+    field(THST, "Write config")
+    field(FRST, "Read config")
 }
 record(stringin, "$(P)$(R)HwDate")
 {

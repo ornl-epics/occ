@@ -74,11 +74,11 @@ class Timer;
  * the EPICS shell. Use #EPICS_REGISTER_PLUGIN macro to export plugin to EPICS.
  *
  * BasePlugin provides following asyn parameters:
- * asyn param name      | asyn param index | asyn param type | init val | mode | Description
- * -------------------- | ---------------- | --------------- | -------- | ---- | -----------
- * ENABLE_CALLBACKS     | EnableCallbacks  | asynParamInt32  | 0        | RW   | Shall the plugin register for data callbacks (1) or not (0)
- * RECEIVED_COUNT       | ReceivedCount    | asynParamInt32  | 0        | RO   | Number of packets received, to be populated by derived classes
- * PROCESSED_COUNT      | ProcessedCount   | asynParamInt32  | 0        | RO   | Number of packets processed, to be populated by derived classes
+ * asyn param    | asyn param type | init val | mode | Description                   |
+ * ------------- | --------------- | -------- | ---- | ------------------------------
+ * Enable        | asynParamInt32  | 0        | RW   | Enable or disable plugin
+ * RxCount       | asynParamInt32  | 0        | RO   | Number of packets received
+ * ProcCount     | asynParamInt32  | 0        | RO   | Number of packets processed
  */
 class BasePlugin : public asynPortDriver {
 	public:
@@ -129,8 +129,6 @@ class BasePlugin : public asynPortDriver {
          * wants to modify data it must copy it to new memory and work there.
          *
          * BasePlugin guarantees to put a lock around this function.
-         *
-         * @todo: NO NEED TO release(last), just release everything!!!
          *
          * @param[in] packetList List of received packets.
          * @return Last packet from the list that this function processed, or 0 for none.
@@ -186,11 +184,11 @@ class BasePlugin : public asynPortDriver {
         const char *getParamName(int index);
 
     protected:
-        #define FIRST_BASEPLUGIN_PARAM EnableCallbacks
-        int EnableCallbacks;
-        int ReceivedCount;
-        int ProcessedCount;
-        #define LAST_BASEPLUGIN_PARAM ProcessedCount
+        #define FIRST_BASEPLUGIN_PARAM Enable
+        int Enable;
+        int RxCount;
+        int ProcCount;
+        #define LAST_BASEPLUGIN_PARAM ProcCount
 
         /**
          * Enable or disable callbacks from dispatcher.
