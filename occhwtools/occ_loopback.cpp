@@ -376,7 +376,7 @@ void *receive_from_occ(void *arg) {
         while (remain > 0) {
             struct occ_packet_header *hdr = (struct occ_packet_header *)data;
             unsigned char *payload = data + sizeof(struct occ_packet_header);
-            size_t packet_len = __occ_packet_align(sizeof(struct occ_packet_header) + hdr->payload_length);
+            size_t packet_len = __occ_packet_align(sizeof(struct occ_packet_header) + (hdr->payload_length & 0xFFFF));
             if (packet_len > OCC_MAX_PACKET_SIZE) {
                 // Acknowledge everything but skip processing the rest
                 cerr << "Bad packet based on length check (" << packet_len << ">1800), skipping... (" << hex << data << dec << endl;
@@ -398,6 +398,11 @@ void *receive_from_occ(void *arg) {
                 shutdown = true;
                 break;
             }
+
+            // PCIe temporary QWord alignment workaround
+            // When FPGA pads packet to QWord, MSB is set and the last dword is garbage
+            if (hdr->payload_length & (0x1 << 31))
+                packet_len += 4;
 
             remain -= packet_len;
             data += packet_len;
@@ -440,6 +445,11 @@ int main(int argc, char **argv) {
         cerr << "ERROR: cannot initialize OCC interface" << endl;
         return 3;
     }
+
+    // For some yet unidentified reason RX enable flag is not propagated
+    // fast enough to PCIe board. It should be investigated and ultimatetely
+    // fixed in the driver/API instead of here.
+    usleep(1000);
 
     do {
 
