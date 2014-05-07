@@ -20,19 +20,15 @@ RocPlugin::RocPlugin(const char *portName, const char *dispatcherPortName, const
     : BaseModulePlugin(portName, dispatcherPortName, hardwareId, BaseModulePlugin::CONN_TYPE_LVDS,
                        blocking, NUM_ROCPLUGIN_PARAMS + NUM_ROCPLUGIN_STATUSPARAMS)
     , m_version(version)
-    , m_stateMachine(STAT_NOT_INITIALIZED)
 {
     createParam("HwDate",       asynParamOctet, &FirmwareDate);
     createParam("HwVer",        asynParamInt32, &HardwareVer);
     createParam("HwRev",        asynParamInt32, &HardwareRev);
     createParam("FwVer",        asynParamInt32, &FirmwareVer);
     createParam("FwRev",        asynParamInt32, &FirmwareRev);
-    createParam("Command",      asynParamInt32, &Command);
-    createParam("Status",       asynParamInt32, &Status);
 
     if (m_version == "5.x/5.x") {
         createStatusParams_V5();
-        rspReadVersion = std::bind(&RocPlugin::rspReadVersion_V5_5x, this, std::placeholders::_1);
 /*
     } else if (m_version == "2.x/5.x") {
         createStatusParams_V2_5x();
@@ -46,121 +42,26 @@ RocPlugin::RocPlugin(const char *portName, const char *dispatcherPortName, const
         return;
     }
 
-    m_statusPayloadSize = 0;
-    for (std::map<int, BaseModulePlugin::StatusParamDesc>::iterator it=m_statusParams.begin(); it != m_statusParams.end(); it++) {
-        if (m_statusPayloadSize < it->second.offset)
-            m_statusPayloadSize = it->second.offset;
-    }
-    m_statusPayloadSize++;
-
-    m_stateMachine.addState(STAT_NOT_INITIALIZED,   DISCOVER_OK,                STAT_TYPE_VERIFIED);
-    m_stateMachine.addState(STAT_NOT_INITIALIZED,   DISCOVER_MISMATCH,          STAT_TYPE_MISMATCH);
-    m_stateMachine.addState(STAT_NOT_INITIALIZED,   VERSION_READ_OK,            STAT_VERSION_VERIFIED);
-    m_stateMachine.addState(STAT_NOT_INITIALIZED,   VERSION_READ_MISMATCH,      STAT_VERSION_MISMATCH);
-    m_stateMachine.addState(STAT_TYPE_VERIFIED,     VERSION_READ_OK,            STAT_READY);
-    m_stateMachine.addState(STAT_TYPE_VERIFIED,     VERSION_READ_MISMATCH,      STAT_VERSION_MISMATCH);
-    m_stateMachine.addState(STAT_TYPE_VERIFIED,     TIMEOUT,                    STAT_TIMEOUT);
-    m_stateMachine.addState(STAT_VERSION_VERIFIED,  DISCOVER_OK,                STAT_READY);
-    m_stateMachine.addState(STAT_VERSION_VERIFIED,  DISCOVER_MISMATCH,          STAT_VERSION_MISMATCH);
-    m_stateMachine.addState(STAT_VERSION_VERIFIED,  TIMEOUT,                    STAT_TIMEOUT);
-
-    setIntegerParam(Status, STAT_NOT_INITIALIZED);
     callParamCallbacks();
     setCallbacks(true);
 }
 
-asynStatus RocPlugin::writeInt32(asynUser *pasynUser, epicsInt32 value)
+bool RocPlugin::rspDiscover(const DasPacket *packet)
 {
-    std::function<void(void)> timeoutCb;
-    if (pasynUser->reason == Command) {
-        switch (value) {
-        case BaseModulePlugin::CMD_INITIALIZE:
-            sendToDispatcher(DasPacket::CMD_DISCOVER);
-            sendToDispatcher(DasPacket::CMD_READ_VERSION);
-            timeoutCb = std::bind(&RocPlugin::timeout, this, DasPacket::CMD_READ_VERSION);
-            scheduleCallback(timeoutCb, NO_RESPONSE_TIMEOUT);
-            break;
-        case BaseModulePlugin::CMD_READ_STATUS:
-            sendToDispatcher(DasPacket::CMD_READ_STATUS);
-            break;
-        default:
-            LOG_ERROR("Unrecognized command '%d'", value);
-            return asynError;
-        }
-        return asynSuccess;
+    return (packet->cmdinfo.module_type == DasPacket::MOD_TYPE_ROC);
+}
+
+bool RocPlugin::rspReadVersion(const DasPacket *packet)
+{
+    if (m_version == "5.x/5.x") {
+        return rspReadVersion_V5_5x(packet);
     }
-    return BaseModulePlugin::writeInt32(pasynUser, value);
+    return false;
 }
 
-
-void RocPlugin::processData(const DasPacketList * const packetList)
+bool RocPlugin::rspReadVersion_V5_5x(const DasPacket *packet)
 {
-    int nReceived = 0;
-    int nProcessed = 0;
-    int status;
-    getIntegerParam(RxCount,    &nReceived);
-    getIntegerParam(ProcCount,  &nProcessed);
-    getIntegerParam(Status,     &status);
-
-    for (const DasPacket *packet = packetList->first(); packet != 0; packet = packetList->next(packet)) {
-        nReceived++;
-
-        if (!packet->isResponse())
-            continue;
-
-        // Silently skip packets we're not interested in
-        if (!packet->isResponse() || packet->getSourceAddress() != m_hardwareId)
-            continue;
-
-        // Parse only responses valid in pre-initialization state
-        switch (packet->cmdinfo.command) {
-        case DasPacket::CMD_DISCOVER:
-            rspDiscover(packet);
-            nProcessed++;
-            break;
-        case DasPacket::CMD_READ_VERSION:
-            rspReadVersion(packet);
-            nProcessed++;
-            break;
-        default:
-            break;
-        }
-
-        if (status != STAT_READY) {
-            LOG_WARN("Module type and versions not yet verified, ignoring packet");
-            continue;
-        }
-
-        switch (packet->cmdinfo.command) {
-        case DasPacket::CMD_READ_STATUS:
-            rspReadStatus(packet);
-            nProcessed++;
-            break;
-        default:
-            LOG_WARN("Received unhandled response 0x%02X", packet->cmdinfo.command);
-            break;
-        }
-    }
-
-    setIntegerParam(RxCount,    nReceived);
-    setIntegerParam(ProcCount,  nProcessed);
-    callParamCallbacks();
-}
-
-void RocPlugin::rspDiscover(const DasPacket *packet)
-{
-    enum Status status;
-    if (packet->cmdinfo.module_type == DasPacket::MOD_TYPE_ROC)
-        status = m_stateMachine.transition(DISCOVER_OK);
-    else
-        status = m_stateMachine.transition(DISCOVER_MISMATCH);
-    setIntegerParam(Status, status);
-    callParamCallbacks();
-}
-
-void RocPlugin::rspReadVersion_V5_5x(const DasPacket *packet)
-{
-    enum Status status;
+    char date[20];
 
     struct RspReadVersionV5 {
 #ifdef BITFIELD_LSB_FIRST
@@ -180,44 +81,31 @@ void RocPlugin::rspReadVersion_V5_5x(const DasPacket *packet)
 
     if (packet->getPayloadLength() != sizeof(RspReadVersionV5)) {
         LOG_ERROR("Received unexpected READ_VERSION response for this ROC type, received %u, expected %lu", packet->payload_length, sizeof(RspReadVersionV5));
-        status = m_stateMachine.transition(VERSION_READ_MISMATCH);
-    } else {
-        char date[20];
-        setIntegerParam(HardwareVer, response->hw_version);
-        setIntegerParam(HardwareRev, response->hw_revision);
-        setIntegerParam(FirmwareVer, response->fw_version);
-        setIntegerParam(FirmwareRev, response->fw_revision);
-        snprintf(date, sizeof(date), "%d%d/%d/%d", HEX_BYTE_TO_DEC(response->year >> 8),
-                                                   HEX_BYTE_TO_DEC(response->year),
-                                                   HEX_BYTE_TO_DEC(response->month),
-                                                   HEX_BYTE_TO_DEC(response->day));
-        setStringParam(HardwareDate, date);
-
-        if (response->hw_version == 5 && response->fw_version == 5) {
-            status = m_stateMachine.transition(VERSION_READ_OK);
-        } else {
-            status = m_stateMachine.transition(VERSION_READ_MISMATCH);
-            LOG_ERROR("ROC version does not match configuration: %d.%d/%d.%d != %s", response->hw_version,
-                                                                                     response->hw_revision,
-                                                                                     response->fw_version,
-                                                                                     response->fw_revision,
-                                                                                     m_version.c_str());
-        }
-        setIntegerParam(Status, status);
+        return false;
     }
+
+    setIntegerParam(HardwareVer, response->hw_version);
+    setIntegerParam(HardwareRev, response->hw_revision);
+    setIntegerParam(FirmwareVer, response->fw_version);
+    setIntegerParam(FirmwareRev, response->fw_revision);
+    snprintf(date, sizeof(date), "%d%d/%d/%d", HEX_BYTE_TO_DEC(response->year >> 8),
+                                               HEX_BYTE_TO_DEC(response->year),
+                                               HEX_BYTE_TO_DEC(response->month),
+                                               HEX_BYTE_TO_DEC(response->day));
+    setStringParam(HardwareDate, date);
 
     callParamCallbacks();
-}
 
-void RocPlugin::rspReadStatus(const DasPacket *packet)
-{
-    // This function could not yet be verified. ROC V5 5.2 is sending us 64bytes but we only know
-    // 28 of them. dcomserver knows 32 bytes for V5 5.0 so we're still missing half of them.
-    if (packet->getPayloadLength() != m_statusPayloadSize) {
-        LOG_ERROR("Status response packet size mismatch, expected %uB got %uB (ROC version mismatch?)", m_statusPayloadSize, packet->getPayloadLength());
-        return;
+    if (response->hw_version != 5 || response->fw_version != 5) {
+        LOG_ERROR("ROC version does not match configuration: %d.%d/%d.%d != %s", response->hw_version,
+                                                                                 response->hw_revision,
+                                                                                 response->fw_version,
+                                                                                 response->fw_revision,
+                                                                                 m_version.c_str());
+        return false;
     }
-    BaseModulePlugin::rspReadStatus(packet);
+
+    return true;
 }
 
 void RocPlugin::timeout(DasPacket::CommandType command)

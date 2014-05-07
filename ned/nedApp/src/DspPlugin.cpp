@@ -21,44 +21,34 @@ DspPlugin::DspPlugin(const char *portName, const char *dispatcherPortName, const
     : BaseModulePlugin(portName, dispatcherPortName, hardwareId, BaseModulePlugin::CONN_TYPE_OPTICAL,
                        blocking, NUM_DSPPLUGIN_PARAMS + NUM_DSPPLUGIN_CONFIGPARAMS + NUM_DSPPLUGIN_CONFIGPARAMS)
 {
-    struct in_addr hwid;
-    if (strncasecmp(hardwareId, "0x", 2) == 0) {
-        char *endptr;
-        m_hardwareId = strtoul(hardwareId, &endptr, 16);
-        if (*endptr != 0)
-            m_hardwareId = 0;
-    } else if (hostToIPAddr(hardwareId, &hwid) == 0) {
-            m_hardwareId = ntohl(hwid.s_addr);
-    }
-    if (m_hardwareId == 0)
-        LOG_ERROR("Invalid hardware id '%s'", hardwareId);
 
-    createParam("HwDate",       asynParamOctet, &FirmwareDate);
+    createParam("HwDate",       asynParamOctet, &HardwareDate);
     createParam("HwVer",        asynParamInt32, &HardwareVer);
     createParam("HwRev",        asynParamInt32, &HardwareRev);
+    createParam("FwDate",       asynParamOctet, &FirmwareDate);
     createParam("FwVer",        asynParamInt32, &FirmwareVer);
     createParam("FwRev",        asynParamInt32, &FirmwareRev);
-    createParam("FwDate",       asynParamOctet, &FirmwareDate);
-    createParam("Command",      asynParamInt32, &Command);
-    createParam("Status",       asynParamInt32, &Status);
 
     createConfigParams();
     createStatusParams();
 
     if (m_configParams.size() != NUM_DSPPLUGIN_CONFIGPARAMS) {
-        LOG_ERROR("Number of config params mismatch, expected %d but got %d", NUM_DSPPLUGIN_CONFIGPARAMS, m_configParams.size());
+        LOG_ERROR("Number of config params mismatch, expected %d but got %lu", NUM_DSPPLUGIN_CONFIGPARAMS, m_configParams.size());
         return;
     }
-
-    setIntegerParam(Status, STAT_NOT_INITIALIZED);
 
     callParamCallbacks();
     setCallbacks(true);
 }
 
-void DspPlugin::rspVersionRead(const DasPacket *packet)
+bool DspPlugin::rspDiscover(const DasPacket *packet)
 {
+    return (packet->cmdinfo.module_type == DasPacket::MOD_TYPE_DSP);
+}
 
+bool DspPlugin::rspReadVersion(const DasPacket *packet)
+{
+    char date[20];
     struct RspVersion {
 #ifdef BITFIELD_LSB_FIRST
         struct {
@@ -86,232 +76,26 @@ void DspPlugin::rspVersionRead(const DasPacket *packet)
 
     if (packet->getPayloadLength() != sizeof(RspVersion)) {
         LOG_ERROR("Received unexpected READ_VERSION response for this DSP type; received %u, expected %lu", packet->payload_length, sizeof(RspVersion));
-        //status = m_stateMachine.transition(VERSION_READ_MISMATCH);
-    } else {
-        char date[20];
-
-        setIntegerParam(HardwareVer, payload->hardware.version);
-        setIntegerParam(HardwareRev, payload->hardware.revision);
-        snprintf(date, sizeof(date), "20%d/%d/%d", HEX_BYTE_TO_DEC(payload->hardware.year),
-                                                   HEX_BYTE_TO_DEC(payload->hardware.month),
-                                                   HEX_BYTE_TO_DEC(payload->hardware.day));
-        setStringParam(HardwareDate, date);
-
-        setIntegerParam(FirmwareVer, payload->firmware.version);
-        setIntegerParam(FirmwareRev, payload->firmware.revision);
-        snprintf(date, sizeof(date), "20%d/%d/%d", HEX_BYTE_TO_DEC(payload->firmware.year),
-                                                   HEX_BYTE_TO_DEC(payload->firmware.month),
-                                                   HEX_BYTE_TO_DEC(payload->firmware.day));
-
-        setStringParam(FirmwareDate, date);
+        return false;
     }
+
+    setIntegerParam(HardwareVer, payload->hardware.version);
+    setIntegerParam(HardwareRev, payload->hardware.revision);
+    snprintf(date, sizeof(date), "20%d/%d/%d", HEX_BYTE_TO_DEC(payload->hardware.year),
+                                               HEX_BYTE_TO_DEC(payload->hardware.month),
+                                               HEX_BYTE_TO_DEC(payload->hardware.day));
+    setStringParam(HardwareDate, date);
+
+    setIntegerParam(FirmwareVer, payload->firmware.version);
+    setIntegerParam(FirmwareRev, payload->firmware.revision);
+    snprintf(date, sizeof(date), "20%d/%d/%d", HEX_BYTE_TO_DEC(payload->firmware.year),
+                                               HEX_BYTE_TO_DEC(payload->firmware.month),
+                                               HEX_BYTE_TO_DEC(payload->firmware.day));
+
+    setStringParam(FirmwareDate, date);
 
     callParamCallbacks();
-}
-
-void DspPlugin::rspReadStatus(const DasPacket *packet)
-{
-    if (packet->getPayloadLength() != m_statusPayloadLength) {
-        LOG_ERROR("Received unexpected READ_STATUS response for this DSP type; received %u, expected %lu", packet->getPayloadLength(), m_statusPayloadLength);
-        return;
-    }
-    BaseModulePlugin::rspReadStatus(packet);
-}
-
-void DspPlugin::reqCfgWrite()
-{
-    uint32_t size = 0;
-    for (char i='0'; i<='A'; i++)
-        size += m_configSectionSizes[i];
-    for (char i='A'; i<='F'; i++)
-        size += m_configSectionSizes[i];
-
-    uint32_t data[size];
-    for (uint32_t i=0; i<size; i++)
-        data[i] = 0;
-
-    int offset = 0;
-    for (int i='B'; i<='F'; i++) {
-        offset += configureSection(i, &data[offset], size - offset);
-    }
-    sendToDispatcher(DasPacket::CMD_WRITE_CONFIG, data, size);
-}
-
-void DspPlugin::rspCfgRead(const DasPacket *packet)
-{
-    uint32_t configSize = 0;
-    for (char i='0'; i<='9'; i++)
-        configSize += m_configSectionSizes[i];
-    for (char i='A'; i<='F'; i++)
-        configSize += m_configSectionSizes[i];
-    if (packet->getPayloadLength() != (configSize*sizeof(int32_t))) {
-        LOG_ERROR("Configuration response packet too short (%d b, expecting %d b)", packet->payload_length, configSize);
-        return;
-    }
-
-    for (std::map<int, struct ParamDesc>::iterator it=m_configParams.begin(); it != m_configParams.end(); it++) {
-        uint32_t offset = getCfgSectionOffset(it->second.section) + it->second.offset;
-        int divider = it->second.mask & ~(it->second.mask << 1);
-        int value = (packet->payload[offset] & it->second.mask) >> divider;
-        setIntegerParam(it->first, value);
-    }
-    callParamCallbacks();
-}
-
-void DspPlugin::cfgReset()
-{
-    for (std::map<int, struct ParamDesc>::iterator it=m_configParams.begin(); it != m_configParams.end(); it++) {
-        setIntegerParam(it->first, it->second.initVal);
-    }
-    callParamCallbacks();
-}
-
-asynStatus DspPlugin::writeInt32(asynUser *pasynUser, epicsInt32 value)
-{
-    if (pasynUser->reason == Command) {
-        switch (value) {
-        case BaseModulePlugin::CMD_INITIALIZE:
-            //sendToDispatcher(DasPacket::CMD_DISCOVER);
-            sendToDispatcher(DasPacket::CMD_READ_VERSION);
-            return asynSuccess;
-        case BaseModulePlugin::CMD_READ_STATUS:
-            sendToDispatcher(DasPacket::CMD_READ_STATUS);
-            return asynSuccess;
-        case BaseModulePlugin::CMD_READ_CONFIG:
-            sendToDispatcher(DasPacket::CMD_READ_CONFIG);
-            return asynSuccess;
-        case BaseModulePlugin::CMD_WRITE_CONFIG:
-            reqCfgWrite();
-            return asynSuccess;
-        case BaseModulePlugin::CMD_RESET_CONFIG:
-            cfgReset();
-            return asynSuccess;
-        case BaseModulePlugin::CMD_NONE:
-            return asynSuccess;
-        default:
-            LOG_ERROR("Unrecognized command '%d'", value);
-            return asynError;
-        }
-    }
-    std::map<int, struct ParamDesc>::iterator it = m_configParams.find(pasynUser->reason);
-    if (it != m_configParams.end()) {
-        int multiplier = it->second.mask & ~(it->second.mask << 1);
-        if ((value * multiplier) & ~(it->second.mask)) {
-            LOG_ERROR("Parameter %s value %d out of bounds", getParamName(it->first), value);
-            return asynError;
-        } else {
-            setIntegerParam(it->first, value);
-            callParamCallbacks();
-            return asynSuccess;
-        }
-    }
-    return BasePlugin::writeInt32(pasynUser, value);
-}
-
-asynStatus DspPlugin::readInt32(asynUser *pasynUser, epicsInt32 *value)
-{
-    std::map<int, struct ParamDesc>::iterator it = m_configParams.find(pasynUser->reason);
-    if (it != m_configParams.end())
-        return getIntegerParam(it->first, value);
-    return BasePlugin::readInt32(pasynUser, value);
-}
-
-void DspPlugin::processData(const DasPacketList * const packetList)
-{
-    int nReceived = 0;
-    int nProcessed = 0;
-    getIntegerParam(RxCount,    &nReceived);
-    getIntegerParam(ProcCount,  &nProcessed);
-
-    for (const DasPacket *packet = packetList->first(); packet != 0; packet = packetList->next(packet)) {
-        nReceived++;
-
-        // Silently skip packets we're not interested in
-        if (!packet->isResponse() || packet->getSourceAddress() != m_hardwareId)
-            continue;
-
-        switch (packet->cmdinfo.command) {
-        case DasPacket::CMD_READ_VERSION:
-            rspVersionRead(packet);
-            nProcessed++;
-            break;
-        case DasPacket::CMD_READ_CONFIG:
-            rspCfgRead(packet);
-            nProcessed++;
-            break;
-        case DasPacket::CMD_READ_STATUS:
-            rspReadStatus(packet);
-            nProcessed++;
-            break;
-        case DasPacket::RSP_ACK:
-            switch (packet->getPayload()[0]) {
-            case DasPacket::CMD_WRITE_CONFIG:
-                // TODO:
-            default:
-                break;
-            }
-            break;
-        }
-
-        nProcessed++;
-    }
-
-    setIntegerParam(RxCount,    nReceived);
-    setIntegerParam(ProcCount,  nProcessed);
-    callParamCallbacks();
-}
-
-uint32_t DspPlugin::configureSection(char section, uint32_t *data, uint32_t count)
-{
-    uint32_t sectionSize = m_configSectionSizes[section];
-
-    if (sectionSize == 0) {
-        return 0;
-    } else if (count < sectionSize) {
-        // TODO: error, exception?
-        return 0;
-    }
-
-    for (uint32_t i=0; i<sectionSize; i++)
-        data[i] = 0;
-
-    for (std::map<int, struct ParamDesc>::iterator it=m_configParams.begin(); it != m_configParams.end(); it++) {
-        if (it->second.section == section) {
-            if (it->second.offset >= sectionSize) {
-                // This should not happen. It's certainly error when creating parameters.
-                LOG_ERROR("Parameter %s offset %d is beyond section boundary %d", getParamName(it->first), it->second.offset, sectionSize);
-                return 0;
-            }
-            int multiplier = it->second.mask & ~(it->second.mask << 1);
-            int value = 0;
-            if (getIntegerParam(it->first, &value) != asynSuccess) {
-                // This should not happen. It's certainly error when creating and parameters.
-                LOG_ERROR("Failed to get parameter %s value", getParamName(it->first));
-                return 0;
-            }
-            data[it->second.offset] |= (value * multiplier) & it->second.mask;
-        }
-    }
-    return sectionSize;
-}
-
-uint32_t DspPlugin::getCfgSectionOffset(char section)
-{
-    uint32_t offset = 0;
-    switch (section) {
-    case 'F':
-        offset += m_configSectionSizes['E'];
-    case 'E':
-        offset += m_configSectionSizes['D'];
-    case 'D':
-        offset += m_configSectionSizes['C'];
-    case 'C':
-        offset += m_configSectionSizes['B'];
-    case 'B':
-        offset += m_configSectionSizes['A'];
-    default:
-        return offset;
-    }
+    return true;
 }
 
 void DspPlugin::expectResponse(DasPacket::CommandType cmd, std::function<void(const DasPacket *)> &cb, double timeout)
@@ -331,34 +115,6 @@ void DspPlugin::noResponseCleanup(DasPacket::CommandType cmd)
         default:
             break;
     }
-}
-
-void DspPlugin::createConfigParam(const char *name, char section, uint32_t offset, uint32_t nBits, uint32_t shift, int value) {
-
-    if ((shift + nBits) > 32) {
-        LOG_ERROR("DSP config parameters cannot shift over 32 bits, %d bits shifted for %d requested", nBits, shift);
-        return;
-    }
-
-    uint32_t mask = ((1ULL << nBits) - 1) << shift;
-    int multiplier = mask & ~(mask << 1);
-    if ((value * multiplier) & ~mask) {
-        LOG_ERROR("DSP config parameter %s value %d out of bounds", name, value);
-        return;
-    }
-
-    if (m_configSectionSizes[section] < (offset + 1))
-        m_configSectionSizes[section] = offset + 1;
-
-    int index;
-    createParam(name, asynParamInt32, &index);
-    setIntegerParam(index, value);
-    ParamDesc desc;
-    desc.section = section;
-    desc.offset  = offset;
-    desc.mask    = mask;
-    desc.initVal = value;
-    m_configParams[index] = desc;
 }
 
 void DspPlugin::createConfigParams() {
