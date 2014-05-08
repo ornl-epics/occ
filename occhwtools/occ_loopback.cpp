@@ -377,6 +377,8 @@ void *receive_from_occ(void *arg) {
             struct occ_packet_header *hdr = (struct occ_packet_header *)data;
             unsigned char *payload = data + sizeof(struct occ_packet_header);
             size_t packet_len = __occ_packet_align(sizeof(struct occ_packet_header) + (hdr->payload_length & 0xFFFF));
+            uint32_t padding = 0;
+
             if (packet_len > OCC_MAX_PACKET_SIZE) {
                 // Acknowledge everything but skip processing the rest
                 cerr << "Bad packet based on length check (" << packet_len << ">1800), skipping... (" << hex << data << dec << endl;
@@ -393,16 +395,21 @@ void *receive_from_occ(void *arg) {
                     outfile.write(reinterpret_cast<const char *>(payload), hdr->payload_length);
             }
 
+            // bit 32 of payload length may be set by FPGA to indicate
+            // an extra Dword padding.  If so, we clear bit 32.
+            if ((hdr->payload_length & 0xFFFF) != hdr->payload_length) {
+                hdr->payload_length &= 0xFFFF;
+                padding = 4;
+            }
+
             if (!compareWithSent(ctx, data, packet_len)) {
                 status->error = "Received data mismatch";
                 shutdown = true;
                 break;
             }
 
-            // PCIe temporary QWord alignment workaround
-            // When FPGA pads packet to QWord, MSB is set and the last dword is garbage
-            if (hdr->payload_length & (0x1 << 31))
-                packet_len += 4;
+            // If FPGA padded the packet, we adjust accordingly
+            packet_len += padding;
 
             remain -= packet_len;
             data += packet_len;
