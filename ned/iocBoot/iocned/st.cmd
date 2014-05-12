@@ -28,7 +28,7 @@ DiscoverPluginConfigure("Disc", "$(PORT)")
 dbLoadRecords("../../db/DiscoverPlugin.template","P=$(PREFIX),R=disc:,PORT=Disc,ADDR=0,TIMEOUT=1")
 dbLoadRecords("../../db/BasePlugin.template","P=$(PREFIX),R=disc:,PORT=Disc,ADDR=0,TIMEOUT=1")
 
-RocPluginConfigure("roc1", "$(PORT)", "20.39.216.73", "5.x/5.x", 1)
+RocPluginConfigure("roc1", "$(PORT)", "20.39.216.73", "5.2/5.2", 1)
 dbLoadRecords("../../db/RocPlugin.template","P=$(PREFIX),R=roc1:,PORT=roc1,ADDR=0,TIMEOUT=1")
 dbLoadRecords("../../db/BasePlugin.template","P=$(PREFIX),R=roc1:,PORT=roc1,ADDR=0,TIMEOUT=1")
 

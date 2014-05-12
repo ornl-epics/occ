@@ -7,7 +7,35 @@
 #include <map>
 
 /**
- * Abstract module plugin.
+ * Base class for all plugins working with particular module.
+ *
+ * The BaseModulePlugin provides functionality common to all modules
+ * handler plugins. It's able to construct outgoing packet with all
+ * the raw fields. It filters out incoming packets which don't originate
+ * from the connected module and invokes appropriate response handler
+ * for each response, which can be overloaded by derived classes.
+ * It also hides the complexity of connection type and simplifies it
+ * to a single "is module behind the DSP" question, which is discussed
+ * in details in next section.
+ *
+ * Submodules connected through DSP use LVDS connection and their
+ * responses contain 16-bit data fields packet into 24-bit LVDS
+ * words. Extra 8-bits are used by the LVDS channel for parity,
+ * start/stop bits etc. DSP on the other hand sends 32-bit data
+ * fields and the CRC at the end of the packet checks the correctness
+ * of all the data. When an LVDS packet is passing the DSP, DSP
+ * might transform it. When sending a packet to the module behind
+ * the DSP, DSP expects to received LVDS packet tagged as pass-thru.
+ * OCC header destination is not used, instead the destination address
+ * must be included as first two dwords in the packet's payload.
+ * The actual payload follows in 16-bit words. Each dword in the
+ * pass-thru OCC packet must have upper 8 bits cleared, and the LVDS
+ * control bits must be calculated.
+ * Receiving response from a module behind the DSP is different.
+ * DSP transforms the response from submodules. It takes away
+ * LVDS control bits and joins 2 LVDS 16-bit data fields into
+ * single 32-bit dword field - first LVDS word in lower-part of dword
+ * and second LVDS word in upper-part of dword
  *
  * General plugin parameters:
  * asyn param    | asyn param type | init val | mode | Description
@@ -54,18 +82,6 @@ class BaseModulePlugin : public BasePlugin {
         };
 
         /**
-         * Connection type for the module.
-         *
-         * DSP modules are connected to OCC directly through optics. DSP submodules
-         * are connected to DSP through LVDS. In that case DSP passes thru almost
-         * as-is. Optical packet and LVDS packets differ slightly.
-         */
-        enum ConnectionType {
-            CONN_TYPE_OPTICAL,
-            CONN_TYPE_LVDS,
-        };
-
-        /**
          * Structure describing the status parameters obtained from modules.
          */
         struct StatusParamDesc {
@@ -94,7 +110,7 @@ class BaseModulePlugin : public BasePlugin {
         StateMachine<enum Status, int> m_stateMachine;  //!< State machine for the current status
 
     private: // variables
-        ConnectionType m_connType;
+        bool m_behindDsp;
         std::map<char, uint32_t> m_configSectionSizes;
         std::map<char, uint32_t> m_configSectionOffsets;
 
@@ -109,11 +125,11 @@ class BaseModulePlugin : public BasePlugin {
 	     * @param[in] dispatcherPortName Name of the dispatcher asyn port to connect to.
 	     * @param[in] hardwareId Hardware ID of the module, can be in IP format (xxx.xxx.xxx.xxx) or
          *                       in hex number string in big-endian byte order (0x15FACB2D equals to IP 21.250.203.45)
-         * @param[in] conn Type of connection this module is using. Depending on this parameter, outgoing packets are created differently.
+         * @param[in] behindDsp Is this module behind the DSP which transforms some of the packets?
          * @param[in] blocking Flag whether the processing should be done in the context of caller thread or in background thread.
          * @param[in] numParams The number of parameters that the derived class supports.
          */
-        BaseModulePlugin(const char *portName, const char *dispatcherPortName, const char *hardwareId, ConnectionType conn, int blocking=0, int numParams=0);
+        BaseModulePlugin(const char *portName, const char *dispatcherPortName, const char *hardwareId, bool behindDsp, int blocking=0, int numParams=0);
 
         /**
          * Destructor
@@ -226,6 +242,22 @@ class BaseModulePlugin : public BasePlugin {
 
         /**
          * Create and register single integer status parameter.
+         *
+         * Status parameter is an individual status entity exported by module.
+         * It can be a flag that some event occured or it can be a value like
+         * number of errors. The createStatusParam() function covers them all.
+         * Parameters don't exceed 32 bits. However, they can span
+         * over 32bit boundary if they're shifted.
+         * This function recognizes whether it's working with submodule and
+         * calculates the real offset in the response. The offset parameter
+         * should thus be specified in format used by the module (word 7 on LVDS
+         * should be specified as offset 0x7 and dword 7 on DSP should also be
+         * specified as 0x7).
+         *
+         * @param[in] name Parameter name must be unique within the plugin scope.
+         * @param[in] offset word/dword offset within the payload.
+         * @param[in] nBits Width of the parameter in number of bits.
+         * @param[in] shift Starting bit position within the word/dword.
          */
         void createStatusParam(const char *name, uint32_t offset, uint32_t nBits, uint32_t shift);
 

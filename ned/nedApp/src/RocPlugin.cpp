@@ -14,21 +14,21 @@
 
 EPICS_REGISTER_PLUGIN(RocPlugin, 5, "Port name", string, "Dispatcher port name", string, "Hardware ID", string, "Hw & SW version", string, "Blocking", int);
 
-const unsigned RocPlugin::NUM_ROCPLUGIN_STATUSPARAMS    = 200;  //!< Since supporting multiple versions with different number of PVs, this is just a maximum value
+const unsigned RocPlugin::NUM_ROCPLUGIN_STATUSPARAMS    = 300;  //!< Since supporting multiple versions with different number of PVs, this is just a maximum value
 
 RocPlugin::RocPlugin(const char *portName, const char *dispatcherPortName, const char *hardwareId, const char *version, int blocking)
-    : BaseModulePlugin(portName, dispatcherPortName, hardwareId, BaseModulePlugin::CONN_TYPE_LVDS,
+    : BaseModulePlugin(portName, dispatcherPortName, hardwareId, true,
                        blocking, NUM_ROCPLUGIN_PARAMS + NUM_ROCPLUGIN_STATUSPARAMS)
     , m_version(version)
 {
-    createParam("HwDate",       asynParamOctet, &FirmwareDate);
+    createParam("HwDate",       asynParamOctet, &HardwareDate);
     createParam("HwVer",        asynParamInt32, &HardwareVer);
     createParam("HwRev",        asynParamInt32, &HardwareRev);
     createParam("FwVer",        asynParamInt32, &FirmwareVer);
     createParam("FwRev",        asynParamInt32, &FirmwareRev);
 
-    if (m_version == "5.x/5.x") {
-        createStatusParams_V5();
+    if (m_version == "5.2/5.2") {
+        createStatusParams_V5_52();
 /*
     } else if (m_version == "2.x/5.x") {
         createStatusParams_V2_5x();
@@ -53,7 +53,7 @@ bool RocPlugin::rspDiscover(const DasPacket *packet)
 
 bool RocPlugin::rspReadVersion(const DasPacket *packet)
 {
-    if (m_version == "5.x/5.x") {
+    if (m_version == "5.2/5.2") {
         return rspReadVersion_V5_5x(packet);
     }
     return false;
@@ -116,7 +116,7 @@ void RocPlugin::timeout(DasPacket::CommandType command)
     }
 }
 
-void RocPlugin::createStatusParams_V5()
+void RocPlugin::createStatusParams_V5_52()
 {
 //    BLXXX:Det:RocXXX:| sig nam |                       | EPICS record description  | (bi and mbbi description)
     createStatusParam("UartByteErr",    0x0,  1, 13); // UART: Byte error              (0=no error,1=error)
@@ -133,6 +133,7 @@ void RocPlugin::createStatusParams_V5()
     createStatusParam("LvdsTypeErr",    0x0,  1,  1); // LVDS data type error.         (0=no error,1=error)
     createStatusParam("LvdsParErr",     0x0,  1,  0); // LVDS parity error.            (0=no error,1=error)
 
+    createStatusParam("LvdsVerDet",     0x1,  1, 14); // LVDS VERIFY detected          (0=not detected,1=detected)
     createStatusParam("IntFifoFull",    0x1,  1, 13); // Internal Data FIFO Almost ful (0=not full,1=full)
     createStatusParam("IntFifoEmp",     0x1,  1, 12); // Internal Data FIFO Empty flag (0=not empty,1=empty)
     createStatusParam("CalcBadFin",     0x1,  1, 11); // Calc: Bad Final Calculation.  (0=no error,1=error)
@@ -141,14 +142,14 @@ void RocPlugin::createStatusParams_V5()
     createStatusParam("CalcBadCnt",     0x1,  1,  8); // Calc: Bad word count.         (0=no error,1=error)
     createStatusParam("DataFifoFul",    0x1,  1,  7); // Data FIFO Almost full flag.   (0=not full,1=almost full)
     createStatusParam("DataFifoEmp",    0x1,  1,  6); // Data FIFO Empty flag.         (0=not empty,1=empty)
-    createStatusParam("HVStatus",       0x1,  1,  5); // High Voltage Status bit
+    createStatusParam("HVStatus",       0x1,  1,  5); // High Voltage Status bit       (0=no,1=yes)
     createStatusParam("CalcActive",     0x1,  1,  4); // Calculation: Active           (0=not active,1=active)
     createStatusParam("AcquireStat",    0x1,  1,  3); // Acquiring data                (0=not acquiring,1=acquiring)
     createStatusParam("Discovered",     0x1,  1,  2); // Discovered.                   (0=not discovered,1=discovered)
     createStatusParam("Configured2",    0x1,  1,  1); // Configured (Section 2)        (0=not configured,1=configured)
     createStatusParam("Configured1",    0x1,  1,  0); // Configured (Section 1)        (0=not configured,1=configured)
 
-    createStatusParam("RisEdgeA",       0x2,  8,  8); // Rising edge in A[8:1]
+    createStatusParam("RisEdgeA",       0x2,  8,  8); // Discriminator A set
     createStatusParam("SysrstBHigh",    0x2,  1,  7); // SYSRST_B Got HIGH             (0=no,1=yes)
     createStatusParam("SysrstBLow",     0x2,  1,  6); // SYSRST_B Got LOW              (0=no,1=yes)
     createStatusParam("TxenBHigh",      0x2,  1,  5); // TXEN_B Got HIGH               (0=no,1=yes)
@@ -158,393 +159,245 @@ void RocPlugin::createStatusParams_V5()
     createStatusParam("TclkHigh",       0x2,  1,  1); // TCLK Got HIGH                 (0=no,1=yes)
     createStatusParam("TclkLow",        0x2,  1,  0); // TCLK Got LOW                  (0=no,1=yes)
 
-    createStatusParam("RisEdgeSum",     0x3,  8,  8); // Rising edge in SUM[8:1]
-    createStatusParam("RisEdgeB",       0x3,  8,  0); // Rising edge in B[8:1]
+    createStatusParam("RisEdgeSum",     0x3,  8,  8); // Discriminator SUM set
+    createStatusParam("RisEdgeB",       0x3,  8,  0); // Discriminator B set
 
-    createStatusParam("A1AutoAdjEn",    0x4,  1, 15); // A1 Auto-Adjust Active         (0=not active,1=active)
-    createStatusParam("A1AdjSample",    0x4,  1, 14); // A1 Auto-Adjust Got sample     (0=no sample,1=got sample)
-    createStatusParam("A1AdjSamLim",    0x4,  1, 13); // A1 Auto-Adjust Sample limit   (0=not active,1=active)
-    createStatusParam("A1AdjSloLim",    0x4,  1, 12); // A1 Auto-Adjust Slope limit    (0=not active,1=active)
-    createStatusParam("A1AdjOffLim",    0x4,  1, 11); // A1 Auto-Adjust Offset limit   (0=not active,1=active)
-    createStatusParam("A1AdjSlXLim",    0x4,  1, 10); // A1 Auto-Adjust Slope? limit   (0=not active,1=active)
-    createStatusParam("A1AdjOverfl",    0x4,  1,  9); // A1 Auto-Adjust overflow       (0=no,1=yes)
-    createStatusParam("A1InOffset",     0x4,  9,  0); // A1 Input Offset value
+    createStatusParam("Ch1AAdjEn",      0x4,  1, 15); // Chan1 A Auto-Adjust Active    (0=not active,1=active)
+    createStatusParam("Ch1AAdjTrig",    0x4,  1, 14); // Chan1 A Auto-Adjust Got sampl (0=no sample,1=got sample)
+    createStatusParam("Ch1AAdjSamL",    0x4,  1, 13); // Chan1 A Auto-Adjust Sample li (0=not active,1=active)
+    createStatusParam("Ch1ASlopLim",    0x4,  1, 12); // Chan1 A Auto-Adjust Slope lim (0=not active,1=active)
+    createStatusParam("Ch1AOffLim",     0x4,  1, 11); // Chan1 A Auto-Adjust Offset li (0=not active,1=active)
+    createStatusParam("Ch1ASlopLi1",    0x4,  1, 10); // Chan1 A Auto-Adjust Slope? li (0=not active,1=active)
+    createStatusParam("Ch1AOverflw",    0x4,  1,  9); // Chan1 A Auto-Adjust overflow  (0=no,1=yes)
+    createStatusParam("Ch1ASlope",      0x4,  9,  0); // Chan1 A Input Offset value
 
-    createStatusParam("A2AdcOff",       0x5,  8,  8); // A2 ADC Offset value
-    createStatusParam("A1AdcOff",       0x5,  8,  0); // A1 ADC Offset value
+    createStatusParam("Ch1BAdcOff",     0x5,  8,  8); // Chan1 B ADC Offset value
+    createStatusParam("Ch1AAdcOff",     0x5,  8,  0); // Chan1 A ADC Offset value
 
-    createStatusParam("A2AutoAdjEn",    0x6,  1, 15); // A2 Auto-Adjust Active         (0=not active,1=active)
-    createStatusParam("A2AdjSample",    0x6,  1, 14); // A2 Auto-Adjust Got sample     (0=no sample,1=got sample)
-    createStatusParam("A2AdjSamLim",    0x6,  1, 13); // A2 Auto-Adjust Sample limit   (0=not active,1=active)
-    createStatusParam("A2AdjSloLim",    0x6,  1, 12); // A2 Auto-Adjust Slope limit    (0=not active,1=active)
-    createStatusParam("A2AdjOffLim",    0x6,  1, 11); // A2 Auto-Adjust Offset limit   (0=not active,1=active)
-    createStatusParam("A2AdjSlXLim",    0x6,  1, 10); // A2 Auto-Adjust Slope? limit   (0=not active,1=active)
-    createStatusParam("A2AdjOverfl",    0x6,  1,  9); // A2 Auto-Adjust overflow       (0=no,1=yes)
-    createStatusParam("A2InOffset",     0x6,  9,  0); // A2 Input Offset value
+    createStatusParam("Ch1BAdjEn",      0x6,  1, 15); // Chan1 B Auto-Adjust Active    (0=not active,1=active)
+    createStatusParam("Ch1BAdjTrig",    0x6,  1, 14); // Chan1 B Auto-Adjust Got sampl (0=no sample,1=got sample)
+    createStatusParam("Ch1BAdjSamL",    0x6,  1, 13); // Chan1 B Auto-Adjust Sample li (0=not active,1=active)
+    createStatusParam("Ch1BSlopLim",    0x6,  1, 12); // Chan1 B Auto-Adjust Slope lim (0=not active,1=active)
+    createStatusParam("Ch1BOffLim",     0x6,  1, 11); // Chan1 B Auto-Adjust Offset li (0=not active,1=active)
+    createStatusParam("Ch1BSlopLi1",    0x6,  1, 10); // Chan1 B Auto-Adjust Slope? li (0=not active,1=active)
+    createStatusParam("Ch1BOverflw",    0x6,  1,  9); // Chan1 B Auto-Adjust overflow  (0=no,1=yes)
+    createStatusParam("Ch1BSlope",      0x6,  9,  0); // Chan1 B Input Offset value
 
-    createStatusParam("A3AutoAdjEn",    0x7,  1, 15); // A3 Auto-Adjust Active         (0=not active,1=active)
-    createStatusParam("A3AdjSample",    0x7,  1, 14); // A3 Auto-Adjust Got sample     (0=no sample,1=got sample)
-    createStatusParam("A3AdjSamLim",    0x7,  1, 13); // A3 Auto-Adjust Sample limit   (0=not active,1=active)
-    createStatusParam("A3AdjSloLim",    0x7,  1, 12); // A3 Auto-Adjust Slope limit    (0=not active,1=active)
-    createStatusParam("A3AdjOffLim",    0x7,  1, 11); // A3 Auto-Adjust Offset limit   (0=not active,1=active)
-    createStatusParam("A3AdjSlXLim",    0x7,  1, 10); // A3 Auto-Adjust Slope? limit   (0=not active,1=active)
-    createStatusParam("A3AdjOverfl",    0x7,  1,  9); // A3 Auto-Adjust overflow       (0=no,1=yes)
-    createStatusParam("A3InOffset",     0x7,  9,  0); // A3 Input Offset value
+    // NOTE: The next parameter spans over the LVDS words (16bits) *and* it also spans over the
+    //       OCC dword (32 bits). BaseModulePlugin::createStatusParam() and BaseModulePlugin:rspReadStatus()
+    //       functions are smart enough to accomodate the behaviour.
+    createStatusParam("Ch2ASlope",      0x7,  9,  8); // Chan2 A input offset value
+    createStatusParam("Ch1AdcMax",      0x7,  1,  7); // Chan1 got ADC max             (0=no,1=yes)
+    createStatusParam("Ch1AdcMin",      0x7,  1,  6); // Chan1 got ADC min             (0=no,1=yes)
+    createStatusParam("Ch1MDEv",        0x7,  1,  5); // Chan1 got multi-discp event   (0=no,1=yes)
+    createStatusParam("Ch1Ev",          0x7,  1,  4); // Chan1 got event               (0=no,1=yes)
+    createStatusParam("Ch1FifFul",      0x7,  1,  3); // Chan1 FIFO full detectec      (0=no,1=yes)
+    createStatusParam("Ch1FifAmFF",     0x7,  1,  2); // Chan1 FIFO almost full detec  (0=no,1=yes)
+    createStatusParam("Ch1FifAmFul",    0x7,  1,  1); // Chan1 FIFO almost full        (0=no,1=yes)
+    createStatusParam("Ch1NotEmpty",    0x7,  1,  0); // Chan1 FIFO has data           (0=no,1=yes)
 
-    createStatusParam("A4AdcOff",       0x8,  8,  8); // A4 ADC Offset value
-    createStatusParam("A3AdcOff",       0x8,  8,  0); // A3 ADC Offset value
+    createStatusParam("Ch2AAdcOff",     0x8,  8,  8); // Chan2 A ADC Offset value
+    createStatusParam("Ch2AAdjEn",      0x8,  1,  7); // Chan2 A Auto-Adjust Active    (0=not active,1=active)
+    createStatusParam("Ch2AAdjTrig",    0x8,  1,  6); // Chan2 A Auto-Adjust Got sampl (0=no sample,1=got sample)
+    createStatusParam("Ch2AAdjSamL",    0x8,  1,  5); // Chan2 A Auto-Adjust Sample li (0=not active,1=active)
+    createStatusParam("Ch2ASlopLim",    0x8,  1,  4); // Chan2 A Auto-Adjust Slope lim (0=not active,1=active)
+    createStatusParam("Ch2AOffLim",     0x8,  1,  3); // Chan2 A Auto-Adjust Offset li (0=not active,1=active)
+    createStatusParam("Ch2ASlopLi1",    0x8,  1,  2); // Chan2 A Auto-Adjust Slope? li (0=not active,1=active)
+    createStatusParam("Ch2AOverflw",    0x8,  1,  1); // Chan2 A Auto-Adjust overflow  (0=no,1=yes)
 
-    createStatusParam("A4AutoAdjEn",    0x9,  1, 15); // A4 Auto-Adjust Active         (0=not active,1=active)
-    createStatusParam("A4AdjSample",    0x9,  1, 14); // A4 Auto-Adjust Got sample     (0=no sample,1=got sample)
-    createStatusParam("A4AdjSamLim",    0x9,  1, 13); // A4 Auto-Adjust Sample limit   (0=not active,1=active)
-    createStatusParam("A4AdjSloLim",    0x9,  1, 12); // A4 Auto-Adjust Slope limit    (0=not active,1=active)
-    createStatusParam("A4AdjOffLim",    0x9,  1, 11); // A4 Auto-Adjust Offset limit   (0=not active,1=active)
-    createStatusParam("A4AdjSlXLim",    0x9,  1, 10); // A4 Auto-Adjust Slope? limit   (0=not active,1=active)
-    createStatusParam("A4AdjOverfl",    0x9,  1,  9); // A4 Auto-Adjust overflow       (0=no,1=yes)
-    createStatusParam("A4InOffset",     0x9,  9,  0); // A4 Input Offset value
+    createStatusParam("Ch2BSlope",      0x9,  9,  8); // Chan2 B input offset value
+    createStatusParam("Ch2BAdcOff",     0x9,  8,  0); // Chan2 B ADC Offset value
 
-    createStatusParam("A5AutoAdjEn",    0xA,  1, 15); // A5 Auto-Adjust Active         (0=not active,1=active)
-    createStatusParam("A5AdjSample",    0xA,  1, 14); // A5 Auto-Adjust Got sample     (0=no sample,1=got sample)
-    createStatusParam("A5AdjSamLim",    0xA,  1, 13); // A5 Auto-Adjust Sample limit   (0=not active,1=active)
-    createStatusParam("A5AdjSloLim",    0xA,  1, 12); // A5 Auto-Adjust Slope limit    (0=not active,1=active)
-    createStatusParam("A5AdjOffLim",    0xA,  1, 11); // A5 Auto-Adjust Offset limit   (0=not active,1=active)
-    createStatusParam("A5AdjSlXLim",    0xA,  1, 10); // A5 Auto-Adjust Slope? limit   (0=not active,1=active)
-    createStatusParam("A5AdjOverfl",    0xA,  1,  9); // A5 Auto-Adjust overflow       (0=no,1=yes)
-    createStatusParam("A5InOffset",     0xA,  9,  0); // A5 Input Offset value
+    createStatusParam("Ch2AdcMax",      0xA,  1, 15); // Chan2 got ADC max             (0=no,1=yes)
+    createStatusParam("Ch2AdcMin",      0xA,  1, 14); // Chan2 got ADC min             (0=no,1=yes)
+    createStatusParam("Ch2MDEv",        0xA,  1, 13); // Chan2 got multi-discp event   (0=no,1=yes)
+    createStatusParam("Ch2Ev",          0xA,  1, 12); // Chan2 got event               (0=no,1=yes)
+    createStatusParam("Ch2FifFul",      0xA,  1, 11); // Chan2 FIFO full detectec      (0=no,1=yes)
+    createStatusParam("Ch2FifAmFF",     0xA,  1, 10); // Chan2 FIFO almost full detec  (0=no,1=yes)
+    createStatusParam("Ch2FifAmFul",    0xA,  1,  9); // Chan2 FIFO almost full        (0=no,1=yes)
+    createStatusParam("Ch2NotEmpty",    0xA,  1,  8); // Chan2 FIFO has data           (0=no,1=yes)
+    createStatusParam("Ch2BAdjEn",      0xA,  1,  7); // Chan2 B Auto-Adjust Active    (0=not active,1=active)
+    createStatusParam("Ch2BAdjTrig",    0xA,  1,  6); // Chan2 B Auto-Adjust Got sampl (0=no sample,1=got sample)
+    createStatusParam("Ch2BAdjSamL",    0xA,  1,  5); // Chan2 B Auto-Adjust Sample li (0=not active,1=active)
+    createStatusParam("Ch2BSlopLim",    0xA,  1,  4); // Chan2 B Auto-Adjust Slope lim (0=not active,1=active)
+    createStatusParam("Ch2BOffLim",     0xA,  1,  3); // Chan2 B Auto-Adjust Offset li (0=not active,1=active)
+    createStatusParam("Ch2BSlopLi1",    0xA,  1,  2); // Chan2 B Auto-Adjust Slope? li (0=not active,1=active)
+    createStatusParam("Ch2BOverflw",    0xA,  1,  1); // Chan2 B Auto-Adjust overflow  (0=no,1=yes)
 
-    createStatusParam("A6AdcOff",       0xB,  8,  8); // A6 ADC Offset value
-    createStatusParam("A5AdcOff",       0xB,  8,  0); // A5 ADC Offset value
+    createStatusParam("Ch3AAdjEn",      0xB,  1, 15); // Chan3 A Auto-Adjust Active    (0=not active,1=active)
+    createStatusParam("Ch3AAdjTrig",    0xB,  1, 14); // Chan3 A Auto-Adjust Got sampl (0=no sample,1=got sample)
+    createStatusParam("Ch3AAdjSamL",    0xB,  1, 13); // Chan3 A Auto-Adjust Sample li (0=not active,1=active)
+    createStatusParam("Ch3ASlopLim",    0xB,  1, 12); // Chan3 A Auto-Adjust Slope lim (0=not active,1=active)
+    createStatusParam("Ch3AOffLim",     0xB,  1, 11); // Chan3 A Auto-Adjust Offset li (0=not active,1=active)
+    createStatusParam("Ch3ASlopLi1",    0xB,  1, 10); // Chan3 A Auto-Adjust Slope? li (0=not active,1=active)
+    createStatusParam("Ch3AOverflw",    0xB,  1,  9); // Chan3 A Auto-Adjust overflow  (0=no,1=yes)
+    createStatusParam("Ch3ASlope",      0xB,  9,  0); // Chan3 A input offset value
 
-    createStatusParam("A6AutoAdjEn",    0xC,  1, 15); // A6 Auto-Adjust Active         (0=not active,1=active)
-    createStatusParam("A6AdjSample",    0xC,  1, 14); // A6 Auto-Adjust Got sample     (0=no sample,1=got sample)
-    createStatusParam("A6AdjSamLim",    0xC,  1, 13); // A6 Auto-Adjust Sample limit   (0=not active,1=active)
-    createStatusParam("A6AdjSloLim",    0xC,  1, 12); // A6 Auto-Adjust Slope limit    (0=not active,1=active)
-    createStatusParam("A6AdjOffLim",    0xC,  1, 11); // A6 Auto-Adjust Offset limit   (0=not active,1=active)
-    createStatusParam("A6AdjSlXLim",    0xC,  1, 10); // A6 Auto-Adjust Slope? limit   (0=not active,1=active)
-    createStatusParam("A6AdjOverfl",    0xC,  1,  9); // A6 Auto-Adjust overflow       (0=no,1=yes)
-    createStatusParam("A6InOffset",     0xC,  9,  0); // A6 Input Offset value
+    createStatusParam("Ch3AAdcOff",     0xC,  8,  0); // Chan3 A ADC Offset value
+    createStatusParam("Ch3BAdcOff",     0xC,  8,  8); // Chan3 B ADC Offset value
 
-    createStatusParam("A7AutoAdjEn",    0xD,  1, 15); // A7 Auto-Adjust Active         (0=not active,1=active)
-    createStatusParam("A7AdjSample",    0xD,  1, 14); // A7 Auto-Adjust Got sample     (0=no sample,1=got sample)
-    createStatusParam("A7AdjSamLim",    0xD,  1, 13); // A7 Auto-Adjust Sample limit   (0=not active,1=active)
-    createStatusParam("A7AdjSloLim",    0xD,  1, 12); // A7 Auto-Adjust Slope limit    (0=not active,1=active)
-    createStatusParam("A7AdjOffLim",    0xD,  1, 11); // A7 Auto-Adjust Offset limit   (0=not active,1=active)
-    createStatusParam("A7AdjSlXLim",    0xD,  1, 10); // A7 Auto-Adjust Slope? limit   (0=not active,1=active)
-    createStatusParam("A7AdjOverfl",    0xD,  1,  9); // A7 Auto-Adjust overflow       (0=no,1=yes)
-    createStatusParam("A7InOffset",     0xD,  9,  0); // A7 Input Offset value
+    createStatusParam("Ch3BAdjEn",      0xD,  1, 15); // Chan3 B Auto-Adjust Active    (0=not active,1=active)
+    createStatusParam("Ch3BAdjTrig",    0xD,  1, 14); // Chan3 B Auto-Adjust Got sampl (0=no sample,1=got sample)
+    createStatusParam("Ch3BAdjSamL",    0xD,  1, 13); // Chan3 B Auto-Adjust Sample li (0=not active,1=active)
+    createStatusParam("Ch3BSlopLim",    0xD,  1, 12); // Chan3 B Auto-Adjust Slope lim (0=not active,1=active)
+    createStatusParam("Ch3BOffLim",     0xD,  1, 11); // Chan3 B Auto-Adjust Offset li (0=not active,1=active)
+    createStatusParam("Ch3BSlopLi1",    0xD,  1, 10); // Chan3 B Auto-Adjust Slope? li (0=not active,1=active)
+    createStatusParam("Ch3BOverflw",    0xD,  1,  9); // Chan3 B Auto-Adjust overflow  (0=no,1=yes)
+    createStatusParam("Ch3BSlope",      0xD,  9,  0); // Chan3 B input offset value
 
-    createStatusParam("A8AdcOff",       0xE,  8,  8); // A8 ADC Offset value
-    createStatusParam("A7AdcOff",       0xE,  8,  0); // A7 ADC Offset value
+    createStatusParam("Ch4ASlope",      0xE,  9,  8); // Chan4 A input offset value
+    createStatusParam("Ch3AdcMax",      0xE,  1,  7); // Chan3 got ADC max             (0=no,1=yes)
+    createStatusParam("Ch3AdcMin",      0xE,  1,  6); // Chan3 got ADC min             (0=no,1=yes)
+    createStatusParam("Ch3MDEv",        0xE,  1,  5); // Chan3 got multi-discp event   (0=no,1=yes)
+    createStatusParam("Ch3Ev",          0xE,  1,  4); // Chan3 got event               (0=no,1=yes)
+    createStatusParam("Ch3FifFul",      0xE,  1,  3); // Chan3 FIFO full detectec      (0=no,1=yes)
+    createStatusParam("Ch3FifAmFF",     0xE,  1,  2); // Chan3 FIFO almost full detec  (0=no,1=yes)
+    createStatusParam("Ch3FifAmFul",    0xE,  1,  1); // Chan3 FIFO almost full        (0=no,1=yes)
+    createStatusParam("Ch3NotEmpty",    0xE,  1,  0); // Chan3 FIFO has data           (0=no,1=yes)
 
-    createStatusParam("A8AutoAdjEn",    0xF,  1, 15); // A8 Auto-Adjust Active         (0=not active,1=active)
-    createStatusParam("A8AdjSample",    0xF,  1, 14); // A8 Auto-Adjust Got sample     (0=no sample,1=got sample)
-    createStatusParam("A8AdjSamLim",    0xF,  1, 13); // A8 Auto-Adjust Sample limit   (0=not active,1=active)
-    createStatusParam("A8AdjSloLim",    0xF,  1, 12); // A8 Auto-Adjust Slope limit    (0=not active,1=active)
-    createStatusParam("A8AdjOffLim",    0xF,  1, 11); // A8 Auto-Adjust Offset limit   (0=not active,1=active)
-    createStatusParam("A8AdjSlXLim",    0xF,  1, 10); // A8 Auto-Adjust Slope? limit   (0=not active,1=active)
-    createStatusParam("A8AdjOverfl",    0xF,  1,  9); // A8 Auto-Adjust overflow       (0=no,1=yes)
-    createStatusParam("A8InOffset",     0xF,  9,  0); // A8 Input Offset value
+    createStatusParam("Ch4AAdcOff",     0xF,  8,  8); // Chan4 A ADC Offset value
+    createStatusParam("Ch4AAdjEn",      0xF,  1,  7); // Chan4 A Auto-Adjust Active    (0=not active,1=active)
+    createStatusParam("Ch4AAdjTrig",    0xF,  1,  6); // Chan4 A Auto-Adjust Got sampl (0=no sample,1=got sample)
+    createStatusParam("Ch4AAdjSamL",    0xF,  1,  5); // Chan4 A Auto-Adjust Sample li (0=not active,1=active)
+    createStatusParam("Ch4ASlopLim",    0xF,  1,  4); // Chan4 A Auto-Adjust Slope lim (0=not active,1=active)
+    createStatusParam("Ch4AOffLim",     0xF,  1,  3); // Chan4 A Auto-Adjust Offset li (0=not active,1=active)
+    createStatusParam("Ch4ASlopLi1",    0xF,  1,  2); // Chan4 A Auto-Adjust Slope? li (0=not active,1=active)
+    createStatusParam("Ch4AOverflw",    0xF,  1,  1); // Chan4 A Auto-Adjust overflow  (0=no,1=yes)
 
-    createStatusParam("B1AutoAdjEn",    0x10, 1, 15); // B1 Auto-Adjust Active         (0=not active,1=active)
-    createStatusParam("B1AdjSample",    0x10, 1, 14); // B1 Auto-Adjust Got sample     (0=no sample,1=got sample)
-    createStatusParam("B1AdjSamLim",    0x10, 1, 13); // B1 Auto-Adjust Sample limit   (0=not active,1=active)
-    createStatusParam("B1AdjSloLim",    0x10, 1, 12); // B1 Auto-Adjust Slope limit    (0=not active,1=active)
-    createStatusParam("B1AdjOffLim",    0x10, 1, 11); // B1 Auto-Adjust Offset limit   (0=not active,1=active)
-    createStatusParam("B1AdjSlXLim",    0x10, 1, 10); // B1 Auto-Adjust Slope? limit   (0=not active,1=active)
-    createStatusParam("B1AdjOverfl",    0x10, 1,  9); // B1 Auto-Adjust overflow       (0=no,1=yes)
-    createStatusParam("B1InOffset",     0x10, 9,  0); // B1 Input Offset value
+    createStatusParam("Ch4BSlope",      0x10, 9,  8); // Chan4 B input offset value
+    createStatusParam("Ch4BAdcOff",     0x10, 8,  0); // Chan4 B ADC Offset value
 
-    createStatusParam("B2AdcOff",       0x11, 8,  8); // B2 ADC Offset value
-    createStatusParam("B1AdcOff",       0x11, 8,  0); // B1 ADC Offset value
+    createStatusParam("Ch4AdcMax",      0x11, 1, 15); // Chan4 got ADC max             (0=no,1=yes)
+    createStatusParam("Ch4AdcMin",      0x11, 1, 14); // Chan4 got ADC min             (0=no,1=yes)
+    createStatusParam("Ch4MDEv",        0x11, 1, 13); // Chan4 got multi-discp event   (0=no,1=yes)
+    createStatusParam("Ch4Ev",          0x11, 1, 12); // Chan4 got event               (0=no,1=yes)
+    createStatusParam("Ch4FifFul",      0x11, 1, 11); // Chan4 FIFO full detectec      (0=no,1=yes)
+    createStatusParam("Ch4FifAmFF",     0x11, 1, 10); // Chan4 FIFO almost full detec  (0=no,1=yes)
+    createStatusParam("Ch4FifAmFul",    0x11, 1,  9); // Chan4 FIFO almost full        (0=no,1=yes)
+    createStatusParam("Ch4NotEmpty",    0x11, 1,  8); // Chan4 FIFO has data           (0=no,1=yes)
+    createStatusParam("Ch4BAdjEn",      0x11, 1,  7); // Chan4 B Auto-Adjust Active    (0=not active,1=active)
+    createStatusParam("Ch4BAdjTrig",    0x11, 1,  6); // Chan4 B Auto-Adjust Got sampl (0=no sample,1=got sample)
+    createStatusParam("Ch4BAdjSamL",    0x11, 1,  5); // Chan4 B Auto-Adjust Sample li (0=not active,1=active)
+    createStatusParam("Ch4BSlopLim",    0x11, 1,  4); // Chan4 B Auto-Adjust Slope lim (0=not active,1=active)
+    createStatusParam("Ch4BOffLim",     0x11, 1,  3); // Chan4 B Auto-Adjust Offset li (0=not active,1=active)
+    createStatusParam("Ch4BSlopLi1",    0x11, 1,  2); // Chan4 B Auto-Adjust Slope? li (0=not active,1=active)
+    createStatusParam("Ch4BOverflw",    0x11, 1,  1); // Chan4 B Auto-Adjust overflow  (0=no,1=yes)
 
-    createStatusParam("B2AutoAdjEn",    0x12, 1, 15); // B2 Auto-Adjust Active         (0=not active,1=active)
-    createStatusParam("B2AdjSample",    0x12, 1, 14); // B2 Auto-Adjust Got sample     (0=no sample,1=got sample)
-    createStatusParam("B2AdjSamLim",    0x12, 1, 13); // B2 Auto-Adjust Sample limit   (0=not active,1=active)
-    createStatusParam("B2AdjSloLim",    0x12, 1, 12); // B2 Auto-Adjust Slope limit    (0=not active,1=active)
-    createStatusParam("B2AdjOffLim",    0x12, 1, 11); // B2 Auto-Adjust Offset limit   (0=not active,1=active)
-    createStatusParam("B2AdjSlXLim",    0x12, 1, 10); // B2 Auto-Adjust Slope? limit   (0=not active,1=active)
-    createStatusParam("B2AdjOverfl",    0x12, 1,  9); // B2 Auto-Adjust overflow       (0=no,1=yes)
-    createStatusParam("B2InOffset",     0x12, 9,  0); // B2 Input Offset value
+    createStatusParam("Ch5AAdjEn",      0x12, 1, 15); // Chan5 A Auto-Adjust Active    (0=not active,1=active)
+    createStatusParam("Ch5AAdjTrig",    0x12, 1, 14); // Chan5 A Auto-Adjust Got sampl (0=no sample,1=got sample)
+    createStatusParam("Ch5AAdjSamL",    0x12, 1, 13); // Chan5 A Auto-Adjust Sample li (0=not active,1=active)
+    createStatusParam("Ch5ASlopLim",    0x12, 1, 12); // Chan5 A Auto-Adjust Slope lim (0=not active,1=active)
+    createStatusParam("Ch5AOffLim",     0x12, 1, 11); // Chan5 A Auto-Adjust Offset li (0=not active,1=active)
+    createStatusParam("Ch5ASlopLi1",    0x12, 1, 10); // Chan5 A Auto-Adjust Slope? li (0=not active,1=active)
+    createStatusParam("Ch5AOverflw",    0x12, 1,  9); // Chan5 A Auto-Adjust overflow  (0=no,1=yes)
+    createStatusParam("Ch5ASlope",      0x12, 9,  0); // Chan5 A Input Offset value
 
-    createStatusParam("B3AutoAdjEn",    0x13, 1, 15); // B3 Auto-Adjust Active         (0=not active,1=active)
-    createStatusParam("B3AdjSample",    0x13, 1, 14); // B3 Auto-Adjust Got sample     (0=no sample,1=got sample)
-    createStatusParam("B3AdjSamLim",    0x13, 1, 13); // B3 Auto-Adjust Sample limit   (0=not active,1=active)
-    createStatusParam("B3AdjSloLim",    0x13, 1, 12); // B3 Auto-Adjust Slope limit    (0=not active,1=active)
-    createStatusParam("B3AdjOffLim",    0x13, 1, 11); // B3 Auto-Adjust Offset limit   (0=not active,1=active)
-    createStatusParam("B3AdjSlXLim",    0x13, 1, 10); // B3 Auto-Adjust Slope? limit   (0=not active,1=active)
-    createStatusParam("B3AdjOverfl",    0x13, 1,  9); // B3 Auto-Adjust overflow       (0=no,1=yes)
-    createStatusParam("B3InOffset",     0x13, 9,  0); // B3 Input Offset value
+    createStatusParam("Ch5BAdcOff",     0x13, 8,  8); // Chan5 B ADC Offset value
+    createStatusParam("Ch5AAdcOff",     0x13, 8,  0); // Chan5 A ADC Offset value
 
-    createStatusParam("B4AdcOff",       0x14, 8,  8); // B4 ADC Offset value
-    createStatusParam("B3AdcOff",       0x14, 8,  0); // B3 ADC Offset value
+    createStatusParam("Ch5BAdjEn",      0x14, 1, 15); // Chan5 B Auto-Adjust Active    (0=not active,1=active)
+    createStatusParam("Ch5BAdjTrig",    0x14, 1, 14); // Chan5 B Auto-Adjust Got sampl (0=no sample,1=got sample)
+    createStatusParam("Ch5BAdjSamL",    0x14, 1, 13); // Chan5 B Auto-Adjust Sample li (0=not active,1=active)
+    createStatusParam("Ch5BSlopLim",    0x14, 1, 12); // Chan5 B Auto-Adjust Slope lim (0=not active,1=active)
+    createStatusParam("Ch5BOffLim",     0x14, 1, 11); // Chan5 B Auto-Adjust Offset li (0=not active,1=active)
+    createStatusParam("Ch5BSlopLi1",    0x14, 1, 10); // Chan5 B Auto-Adjust Slope? li (0=not active,1=active)
+    createStatusParam("Ch5BOverflw",    0x14, 1,  9); // Chan5 B Auto-Adjust overflow  (0=no,1=yes)
+    createStatusParam("Ch5BSlope",      0x14, 9,  0); // Chan5 B Input Offset value
 
-    createStatusParam("B4AutoAdjEn",    0x15, 1, 15); // B4 Auto-Adjust Active         (0=not active,1=active)
-    createStatusParam("B4AdjSample",    0x15, 1, 14); // B4 Auto-Adjust Got sample     (0=no sample,1=got sample)
-    createStatusParam("B4AdjSamLim",    0x15, 1, 13); // B4 Auto-Adjust Sample limit   (0=not active,1=active)
-    createStatusParam("B4AdjSloLim",    0x15, 1, 12); // B4 Auto-Adjust Slope limit    (0=not active,1=active)
-    createStatusParam("B4AdjOffLim",    0x15, 1, 11); // B4 Auto-Adjust Offset limit   (0=not active,1=active)
-    createStatusParam("B4AdjSlXLim",    0x15, 1, 10); // B4 Auto-Adjust Slope? limit   (0=not active,1=active)
-    createStatusParam("B4AdjOverfl",    0x15, 1,  9); // B4 Auto-Adjust overflow       (0=no,1=yes)
-    createStatusParam("B4InOffset",     0x15, 0,  0); // B4 Input Offset value
+    createStatusParam("Ch6ASlope",      0x15, 9,  8); // Chan6 A input offset value
+    createStatusParam("Ch5AdcMax",      0x15, 1,  7); // Chan5 got ADC max             (0=no,1=yes)
+    createStatusParam("Ch5AdcMin",      0x15, 1,  6); // Chan5 got ADC min             (0=no,1=yes)
+    createStatusParam("Ch5MDEv",        0x15, 1,  5); // Chan5 got multi-discp event   (0=no,1=yes)
+    createStatusParam("Ch5Ev",          0x15, 1,  4); // Chan5 got event               (0=no,1=yes)
+    createStatusParam("Ch5FifFul",      0x15, 1,  3); // Chan5 FIFO full detectec      (0=no,1=yes)
+    createStatusParam("Ch5FifAmFF",     0x15, 1,  2); // Chan5 FIFO almost full detec  (0=no,1=yes)
+    createStatusParam("Ch5FifAmFul",    0x15, 1,  1); // Chan5 FIFO almost full        (0=no,1=yes)
+    createStatusParam("Ch5NotEmpty",    0x15, 1,  0); // Chan5 FIFO has data           (0=no,1=yes)
 
-    createStatusParam("B5AutoAdjEn",    0x16, 1, 15); // B5 Auto-Adjust Active         (0=not active,1=active)
-    createStatusParam("B5AdjSample",    0x16, 1, 14); // B5 Auto-Adjust Got sample     (0=no sample,1=got sample)
-    createStatusParam("B5AdjSamLim",    0x16, 1, 13); // B5 Auto-Adjust Sample limit   (0=not active,1=active)
-    createStatusParam("B5AdjSloLim",    0x16, 1, 12); // B5 Auto-Adjust Slope limit    (0=not active,1=active)
-    createStatusParam("B5AdjOffLim",    0x16, 1, 11); // B5 Auto-Adjust Offset limit   (0=not active,1=active)
-    createStatusParam("B5AdjSlXLim",    0x16, 1, 10); // B5 Auto-Adjust Slope? limit   (0=not active,1=active)
-    createStatusParam("B5AdjOverfl",    0x16, 1,  9); // B5 Auto-Adjust overflow       (0=no,1=yes)
-    createStatusParam("B5InOffset",     0x16, 9,  0); // B5 Input Offset value
+    createStatusParam("Ch6AAdcOff",     0x16, 8,  8); // Chan6 A ADC Offset value
+    createStatusParam("Ch6AAdjEn",      0x16, 1,  7); // Chan6 A Auto-Adjust Active    (0=not active,1=active)
+    createStatusParam("Ch6AAdjTrig",    0x16, 1,  6); // Chan6 A Auto-Adjust Got sampl (0=no sample,1=got sample)
+    createStatusParam("Ch6AAdjSamL",    0x16, 1,  5); // Chan6 A Auto-Adjust Sample li (0=not active,1=active)
+    createStatusParam("Ch6ASlopLim",    0x16, 1,  4); // Chan6 A Auto-Adjust Slope lim (0=not active,1=active)
+    createStatusParam("Ch6AOffLim",     0x16, 1,  3); // Chan6 A Auto-Adjust Offset li (0=not active,1=active)
+    createStatusParam("Ch6ASlopLi1",    0x16, 1,  2); // Chan6 A Auto-Adjust Slope? li (0=not active,1=active)
+    createStatusParam("Ch6AOverflw",    0x16, 1,  1); // Chan6 A Auto-Adjust overflow  (0=no,1=yes)
 
-    createStatusParam("B6AdcOff",       0x17, 8,  8); // B6 ADC Offset value
-    createStatusParam("B5AdcOff",       0x17, 8,  0); // B5 ADC Offset value
+    createStatusParam("Ch6BSlope",      0x17, 9,  8); // Chan6 B input offset value
+    createStatusParam("Ch6BAdcOff",     0x17, 8,  0); // Chan6 B ADC Offset value
 
-    createStatusParam("B6AutoAdjEn",    0x18, 1, 15); // B6 Auto-Adjust Active         (0=not active,1=active)
-    createStatusParam("B6AdjSample",    0x18, 1, 14); // B6 Auto-Adjust Got sample     (0=no sample,1=got sample)
-    createStatusParam("B6AdjSamLim",    0x18, 1, 13); // B6 Auto-Adjust Sample limit   (0=not active,1=active)
-    createStatusParam("B6AdjSloLim",    0x18, 1, 12); // B6 Auto-Adjust Slope limit    (0=not active,1=active)
-    createStatusParam("B6AdjOffLim",    0x18, 1, 11); // B6 Auto-Adjust Offset limit   (0=not active,1=active)
-    createStatusParam("B6AdjSlXLim",    0x18, 1, 10); // B6 Auto-Adjust Slope? limit   (0=not active,1=active)
-    createStatusParam("B6AdjOverfl",    0x18, 1,  9); // B6 Auto-Adjust overflow       (0=no,1=yes)
-    createStatusParam("B6InOffset",     0x18, 9,  0); // B6 Input Offset value
+    createStatusParam("Ch6AdcMax",      0x18, 1, 15); // Chan6 got ADC max             (0=no,1=yes)
+    createStatusParam("Ch6AdcMin",      0x18, 1, 14); // Chan6 got ADC min             (0=no,1=yes)
+    createStatusParam("Ch6MDEv",        0x18, 1, 13); // Chan6 got multi-discp event   (0=no,1=yes)
+    createStatusParam("Ch6Ev",          0x18, 1, 12); // Chan6 got event               (0=no,1=yes)
+    createStatusParam("Ch6FifFul",      0x18, 1, 11); // Chan6 FIFO full detectec      (0=no,1=yes)
+    createStatusParam("Ch6FifAmFF",     0x18, 1, 10); // Chan6 FIFO almost full detec  (0=no,1=yes)
+    createStatusParam("Ch6FifAmFul",    0x18, 1,  9); // Chan6 FIFO almost full        (0=no,1=yes)
+    createStatusParam("Ch6NotEmpty",    0x18, 1,  8); // Chan6 FIFO has data           (0=no,1=yes)
+    createStatusParam("Ch6BAdjEn",      0x18, 1,  7); // Chan6 B Auto-Adjust Active    (0=not active,1=active)
+    createStatusParam("Ch6BAdjTrig",    0x18, 1,  6); // Chan6 B Auto-Adjust Got sampl (0=no sample,1=got sample)
+    createStatusParam("Ch6BAdjSamL",    0x18, 1,  5); // Chan6 B Auto-Adjust Sample li (0=not active,1=active)
+    createStatusParam("Ch6BSlopLim",    0x18, 1,  4); // Chan6 B Auto-Adjust Slope lim (0=not active,1=active)
+    createStatusParam("Ch6BOffLim",     0x18, 1,  3); // Chan6 B Auto-Adjust Offset li (0=not active,1=active)
+    createStatusParam("Ch6BSlopLi1",    0x18, 1,  2); // Chan6 B Auto-Adjust Slope? li (0=not active,1=active)
+    createStatusParam("Ch6BOverflw",    0x18, 1,  1); // Chan6 B Auto-Adjust overflow  (0=no,1=yes)
 
-    createStatusParam("B7AutoAdjEn",    0x19, 1, 15); // B7 Auto-Adjust Active         (0=not active,1=active)
-    createStatusParam("B7AdjSample",    0x19, 1, 14); // B7 Auto-Adjust Got sample     (0=no sample,1=got sample)
-    createStatusParam("B7AdjSamLim",    0x19, 1, 13); // B7 Auto-Adjust Sample limit   (0=not active,1=active)
-    createStatusParam("B7AdjSloLim",    0x19, 1, 12); // B7 Auto-Adjust Slope limit    (0=not active,1=active)
-    createStatusParam("B7AdjOffLim",    0x19, 1, 11); // B7 Auto-Adjust Offset limit   (0=not active,1=active)
-    createStatusParam("B7AdjSlXLim",    0x19, 1, 10); // B7 Auto-Adjust Slope? limit   (0=not active,1=active)
-    createStatusParam("B7AdjOverfl",    0x19, 1,  9); // B7 Auto-Adjust overflow       (0=no,1=yes)
-    createStatusParam("B7InOffset",     0x19, 0,  0); // B7 Input Offset value
+    createStatusParam("Ch7AAdjEn",      0x19, 1, 15); // Chan7 A Auto-Adjust Active    (0=not active,1=active)
+    createStatusParam("Ch7AAdjTrig",    0x19, 1, 14); // Chan7 A Auto-Adjust Got sampl (0=no sample,1=got sample)
+    createStatusParam("Ch7AAdjSamL",    0x19, 1, 13); // Chan7 A Auto-Adjust Sample li (0=not active,1=active)
+    createStatusParam("Ch7ASlopLim",    0x19, 1, 12); // Chan7 A Auto-Adjust Slope lim (0=not active,1=active)
+    createStatusParam("Ch7AOffLim",     0x19, 1, 11); // Chan7 A Auto-Adjust Offset li (0=not active,1=active)
+    createStatusParam("Ch7ASlopLi1",    0x19, 1, 10); // Chan7 A Auto-Adjust Slope? li (0=not active,1=active)
+    createStatusParam("Ch7AOverflw",    0x19, 1,  9); // Chan7 A Auto-Adjust overflow  (0=no,1=yes)
+    createStatusParam("Ch7ASlope",      0x19, 9,  0); // Chan7 A input offset value
 
-    createStatusParam("B8AdcOff",       0x1A, 8,  8); // B8 ADC Offset value
-    createStatusParam("B7AdcOff",       0x1A, 8,  0); // B7 ADC Offset value
+    createStatusParam("Ch7AAdcOff",     0x1A, 8,  0); // Chan7 A ADC Offset value
+    createStatusParam("Ch7BAdcOff",     0x1A, 8,  8); // Chan7 B ADC Offset value
 
-    createStatusParam("B8AutoAdjEn",    0x1B, 1, 15); // B8 Auto-Adjust Active         (0=not active,1=active)
-    createStatusParam("B8AdjSample",    0x1B, 1, 14); // B8 Auto-Adjust Got sample     (0=no sample,1=got sample)
-    createStatusParam("B8AdjSamLim",    0x1B, 1, 13); // B8 Auto-Adjust Sample limit   (0=not active,1=active)
-    createStatusParam("B8AdjSloLim",    0x1B, 1, 12); // B8 Auto-Adjust Slope limit    (0=not active,1=active)
-    createStatusParam("B8AdjOffLim",    0x1B, 1, 11); // B8 Auto-Adjust Offset limit   (0=not active,1=active)
-    createStatusParam("B8AdjSlXLim",    0x1B, 1, 10); // B8 Auto-Adjust Slope? limit   (0=not active,1=active)
-    createStatusParam("B8AdjOverfl",    0x1B, 1,  9); // B8 Auto-Adjust overflow       (0=no,1=yes)
-    createStatusParam("B8InOffset",     0x1B, 0,  0); // B8 Input Offset value
+    createStatusParam("Ch7BAdjEn",      0x1B, 1, 15); // Chan7 B Auto-Adjust Active    (0=not active,1=active)
+    createStatusParam("Ch7BAdjTrig",    0x1B, 1, 14); // Chan7 B Auto-Adjust Got sampl (0=no sample,1=got sample)
+    createStatusParam("Ch7BAdjSamL",    0x1B, 1, 13); // Chan7 B Auto-Adjust Sample li (0=not active,1=active)
+    createStatusParam("Ch7BSlopLim",    0x1B, 1, 12); // Chan7 B Auto-Adjust Slope lim (0=not active,1=active)
+    createStatusParam("Ch7BOffLim",     0x1B, 1, 11); // Chan7 B Auto-Adjust Offset li (0=not active,1=active)
+    createStatusParam("Ch7BSlopLi1",    0x1B, 1, 10); // Chan7 B Auto-Adjust Slope? li (0=not active,1=active)
+    createStatusParam("Ch7BOverflw",    0x1B, 1,  9); // Chan7 B Auto-Adjust overflow  (0=no,1=yes)
+    createStatusParam("Ch7BSlope",      0x1B, 9,  0); // Chan7 B input offset value
+
+    createStatusParam("Ch8ASlope",      0x1C, 9,  8); // Chan8 A input offset value
+    createStatusParam("Ch7AdcMax",      0x1C, 1,  7); // Chan7 got ADC max             (0=no,1=yes)
+    createStatusParam("Ch7AdcMin",      0x1C, 1,  6); // Chan7 got ADC min             (0=no,1=yes)
+    createStatusParam("Ch7MDEv",        0x1C, 1,  5); // Chan7 got multi-discp event   (0=no,1=yes)
+    createStatusParam("Ch7Ev",          0x1C, 1,  4); // Chan7 got event               (0=no,1=yes)
+    createStatusParam("Ch7FifFul",      0x1C, 1,  3); // Chan7 FIFO full detectec      (0=no,1=yes)
+    createStatusParam("Ch7FifAmFF",     0x1C, 1,  2); // Chan7 FIFO almost full detec  (0=no,1=yes)
+    createStatusParam("Ch7FifAmFul",    0x1C, 1,  1); // Chan7 FIFO almost full        (0=no,1=yes)
+    createStatusParam("Ch7NotEmpty",    0x1C, 1,  0); // Chan7 FIFO has data           (0=no,1=yes)
+
+    createStatusParam("Ch8AAdcOff",     0x1D, 8,  8); // Chan8 A ADC Offset value
+    createStatusParam("Ch8AAdjEn",      0x1D, 1,  7); // Chan8 A Auto-Adjust Active    (0=not active,1=active)
+    createStatusParam("Ch8AAdjTrig",    0x1D, 1,  6); // Chan8 A Auto-Adjust Got sampl (0=no sample,1=got sample)
+    createStatusParam("Ch8AAdjSamL",    0x1D, 1,  5); // Chan8 A Auto-Adjust Sample li (0=not active,1=active)
+    createStatusParam("Ch8ASlopLim",    0x1D, 1,  4); // Chan8 A Auto-Adjust Slope lim (0=not active,1=active)
+    createStatusParam("Ch8AOffLim",     0x1D, 1,  3); // Chan8 A Auto-Adjust Offset li (0=not active,1=active)
+    createStatusParam("Ch8ASlopLi1",    0x1D, 1,  2); // Chan8 A Auto-Adjust Slope? li (0=not active,1=active)
+    createStatusParam("Ch8AOverflw",    0x1D, 1,  1); // Chan8 A Auto-Adjust overflow  (0=no,1=yes)
+
+    createStatusParam("Ch8BSlope",      0x1E, 9,  8); // Chan8 B input offset value
+    createStatusParam("Ch8BAdcOff",     0x1E, 8,  0); // Chan8 B ADC Offset value
+
+    createStatusParam("Ch8AdcMax",      0x1F, 1, 15); // Chan8 got ADC max             (0=no,1=yes)
+    createStatusParam("Ch8AdcMin",      0x1F, 1, 14); // Chan8 got ADC min             (0=no,1=yes)
+    createStatusParam("Ch8MDEv",        0x1F, 1, 13); // Chan8 got multi-discp event   (0=no,1=yes)
+    createStatusParam("Ch8Ev",          0x1F, 1, 12); // Chan8 got event               (0=no,1=yes)
+    createStatusParam("Ch8FifFul",      0x1F, 1, 11); // Chan8 FIFO full detectec      (0=no,1=yes)
+    createStatusParam("Ch8FifAmFF",     0x1F, 1, 10); // Chan8 FIFO almost full detec  (0=no,1=yes)
+    createStatusParam("Ch8FifAmFul",    0x1F, 1,  9); // Chan8 FIFO almost full        (0=no,1=yes)
+    createStatusParam("Ch8NotEmpty",    0x1F, 1,  8); // Chan8 FIFO has data           (0=no,1=yes)
+    createStatusParam("Ch8BAdjEn",      0x1F, 1,  7); // Chan8 B Auto-Adjust Active    (0=not active,1=active)
+    createStatusParam("Ch8BAdjTrig",    0x1F, 1,  6); // Chan8 B Auto-Adjust Got sampl (0=no sample,1=got sample)
+    createStatusParam("Ch8BAdjSamL",    0x1F, 1,  5); // Chan8 B Auto-Adjust Sample li (0=not active,1=active)
+    createStatusParam("Ch8BSlopLim",    0x1F, 1,  4); // Chan8 B Auto-Adjust Slope lim (0=not active,1=active)
+    createStatusParam("Ch8BOffLim",     0x1F, 1,  3); // Chan8 B Auto-Adjust Offset li (0=not active,1=active)
+    createStatusParam("Ch8BSlopLi1",    0x1F, 1,  2); // Chan8 B Auto-Adjust Slope? li (0=not active,1=active)
+    createStatusParam("Ch8BOverflw",    0x1F, 1,  1); // Chan8 B Auto-Adjust overflow  (0=no,1=yes)
 }
-
-/*
- * Following functions have not yet been verified, still they represent direct match to the LPSD document
- *
-void RocPlugin::createStatusParams_V2_5x()
-{
-//    BLXXX:Det:RocXXX:| sig nam |                       | EPICS record description  | (bi and mbbi description)
-    createStatusParam("LogicErr",       0x0,  1, 15); // WRITE_CNFG during ACQUISITION (0=no error,1=error)
-    createStatusParam("CmdLenErr",      0x0,  1, 14); // Command length error          (0=no error,1=error)
-    createStatusParam("UnknownCmd",     0x0,  1, 13); // Unrecognized command error    (0=no error,1=error)
-    createStatusParam("IntFifoFull",    0x1,  1, 12); // Internal Data FIFO Almost ful (0=not full,1=full)
-    createStatusParam("IntFifoEmp",     0x1,  1, 11); // Internal Data FIFO Empty flag (0=not empty,1=empty)
-    createStatusParam("CalcBadFin",     0x1,  1, 10); // Calc: Bad Final Calculation.  (0=no error,1=error)
-    createStatusParam("CalcBadEff",     0x1,  1,  9); // Calc: Bad Effective Calculati (0=no error,1=error)
-    createStatusParam("CalcBadOver",    0x1,  1,  8); // Calc: Data overflow detected. (0=no error,1=error)
-    createStatusParam("CalcBadCnt",     0x1,  1,  7); // Calc: Bad word count.         (0=no error,1=error)
-    createStatusParam("LvdsFifoFul",    0x0,  1,  6); // LVDS FIFO went full.          (0=not full,1=full)
-    createStatusParam("LvdsStartEr",    0x0,  1,  5); // LVDS start before stop bit    (0=no error,1=error)
-    createStatusParam("LvdsNoStart",    0x0,  1,  4); // LVDS data without start.      (0=no error,1=error)
-    createStatusParam("LvdsTimeout",    0x0,  1,  3); // LVDS packet timeout.          (0=no timeout,1=timeout)
-    createStatusParam("LvdsLenErr",     0x0,  1,  2); // LVDS packet length error.     (0=no error,1=error)
-    createStatusParam("LvdsTypeErr",    0x0,  1,  1); // LVDS data type error.         (0=no error,1=error)
-    createStatusParam("LvdsParErr",     0x0,  1,  0); // LVDS parity error.            (0=no error,1=error)
-
-    createStatusParam("LvdsPwrDown",    0x1,  1,  9); // Got LVDS powerdown sequence   (0=no,1=yes)
-    createStatusParam("RcvdSysRst",     0x1,  1,  8); // Got system reset              (0=no,1=yes)
-    createStatusParam("RcvdTimeErr",    0x1,  1,  1); // Got timer error               (0=no error,1=error)
-    createStatusParam("RcvdFatalEr",    0x1,  1,  0); // Got fatal error               (0=no error,1=error)
-
-    createStatusParam("DataRdyChan",    0x2,  8,  8); // Data ready channel
-    createStatusParam("ChanProg",       0x2,  8,  0); // Channel programmed
-
-    createStatusParam("HVStatus",       0x3,  1, 15); // High Voltage Status bit       (0=no error,1=error)
-    createStatusParam("CalcFifoFul",    0x3,  1, 14); // Calc: FIFO almost full        (0=not full,1=almost full)
-    createStatusParam("CalcFifoDat",    0x3,  1, 13); // Calc: FIFO has data           (0=no,1=yes)
-    createStatusParam("CalcInFifF",     0x3,  1, 12); // Calc: Input FIFO almost full  (0=not full,1=almost full)
-    createStatusParam("CalcInFifD",     0x3,  1, 11); // Calc: Input FIFO almost full  (0=not full,1=almost full)
-    createStatusParam("TxenBHigh",      0x3,  1, 10); // TXEN_B Got HIGH               (0=no,1=yes)
-    createStatusParam("TxenBLow",       0x3,  1,  9); // TXEN_B Got LOW                (0=no,1=yes)
-    createStatusParam("SysrstBHigh",    0x3,  1,  8); // SYSRST_B Got HIGH             (0=no,1=yes)
-    createStatusParam("SysrstBLow",     0x3,  1,  7); // SYSRST_B Got LOW              (0=no,1=yes)
-    createStatusParam("TsyncHigh",      0x3,  1,  6); // TSYNC Got HIGH                (0=no,1=yes)
-    createStatusParam("TsyncLow",       0x3,  1,  5); // TSYNC Got LOW                 (0=no,1=yes)
-    createStatusParam("TclkHigh",       0x3,  1,  4); // TCLK Got HIGH                 (0=no,1=yes)
-    createStatusParam("TclkLow",        0x3,  1,  3); // TCLK Got LOW                  (0=no,1=yes)
-    createStatusParam("CalcActive",     0x3,  1,  2); // Calculation: Active           (0=not active,1=active)
-    createStatusParam("AcquireStat",    0x3,  1,  1); // Acquiring data                (0=not acquiring,1=acquiring)
-    createStatusParam("Discovered",     0x3,  1,  0); // Discovered.                   (0=not discovered,1=discovered)
-
-    for (unsigned i=0; i<NUM_CHANNELS; i++) {
-        createChannelStatusParam("A%uAutoAdjEn", i+1, 0x0+i,  1, 15); // Ai Auto-Adjust Active         (0=not active,1=active)
-        createChannelStatusParam("A%uAdjSample", i+1, 0x0+i,  1, 14); // Ai Auto-Adjust Got sample     (0=no sample,1=got sample)
-        createChannelStatusParam("A%uAdjSamLim", i+1, 0x0+i,  1, 13); // Ai Auto-Adjust Sample limit   (0=not active,1=active)
-        createChannelStatusParam("A%uAdjSloLim", i+1, 0x0+i,  1, 12); // Ai Auto-Adjust Slope limit    (0=not active,1=active)
-        createChannelStatusParam("A%uAdjOffLim", i+1, 0x0+i,  1, 11); // Ai Auto-Adjust Offset limit   (0=not active,1=active)
-        createChannelStatusParam("A%uAdjSlXLim", i+1, 0x0+i,  1, 10); // Ai Auto-Adjust Slope? limit   (0=not active,1=active)
-        createChannelStatusParam("A%uAdjOverfl", i+1, 0x0+i,  1,  9); // Ai Auto-Adjust overflow       (0=no,1=yes)
-        createChannelStatusParam("A%uInOffset",  i+1, 0x0+i,  9,  0); // A Input Offset value
-
-        createChannelStatusParam("A%uAdcOff",    i+1, 0x1+i,  8,  8); // Ai ADC Offset value
-        createChannelStatusParam("B%uAdcOff",    i+1, 0x1+i,  8,  0); // Bi ADC Offset value
-
-        createChannelStatusParam("B%uAutoAdjEn", i+1, 0x2+i,  1, 15); // Bi Auto-Adjust Active         (0=not active,1=active)
-        createChannelStatusParam("B%uAdjSample", i+1, 0x2+i,  1, 14); // Bi Auto-Adjust Got sample     (0=no sample,1=got sample)
-        createChannelStatusParam("B%uAdjSamLim", i+1, 0x2+i,  1, 13); // Bi Auto-Adjust Sample limit   (0=not active,1=active)
-        createChannelStatusParam("B%uAdjSloLim", i+1, 0x2+i,  1, 12); // Bi Auto-Adjust Slope limit    (0=not active,1=active)
-        createChannelStatusParam("B%uAdjOffLim", i+1, 0x2+i,  1, 11); // Bi Auto-Adjust Offset limit   (0=not active,1=active)
-        createChannelStatusParam("B%uAdjSlXLim", i+1, 0x2+i,  1, 10); // Bi Auto-Adjust Slope? limit   (0=not active,1=active)
-        createChannelStatusParam("B%uAdjOverfl", i+1, 0x2+i,  1,  9); // Bi Auto-Adjust overflow       (0=no,1=yes)
-        createChannelStatusParam("B%uInOffset",  i+1, 0x2+i,  9,  0); // B Input Offset value
-
-        createChannelStatusParam("Ch%uMulDiscE", i+1, 0x3+i,  1, 15); // A multi-disc event occured    (0=no,1=yes)
-        createChannelStatusParam("Ch%uEvent",    i+1, 0x3+i,  1, 14); // An event occured              (0=no,1=yes)
-        createChannelStatusParam("Ch%uUnknwCmd", i+1, 0x3+i,  1, 13); // Unrecognized command          (0=no error,1=error)
-        createChannelStatusParam("Ch%uPktLenEr", i+1, 0x3+i,  1, 12); // Packet length error           (0=no error,1=error)
-        createChannelStatusParam("Ch%uLogicErr", i+1, 0x3+i,  1, 11); // WRITE_CNFG during ACQUISITION (0=no error,1=error)
-        createChannelStatusParam("Ch%uMaxAdc",   i+1, 0x3+i,  1, 10); // A max ADC condition occurred  (0=no,1=yes)
-        createChannelStatusParam("Ch%uMinAdc",   i+1, 0x3+i,  1,  9); // A min ADC condition occurred  (0=no,1=yes)
-        createChannelStatusParam("Ch%uFifoFull", i+1, 0x3+i,  1,  8); // Event FIFO almost full        (0=no,1=yes)
-        createChannelStatusParam("Ch%uAdcFifFu", i+1, 0x3+i,  1,  7); // ADC FIFO went full            (0=no,1=yes)
-        createChannelStatusParam("Ch%uAdcFifAF", i+1, 0x3+i,  1,  6); // ADC FIFO almost full          (0=no,1=yes)
-        createChannelStatusParam("Ch%uAdcFifFF", i+1, 0x3+i,  1,  5); // ADC FIFO almost full flag     (0=no,1=yes)
-        createChannelStatusParam("Ch%uAdcFifEm", i+1, 0x3+i,  1,  4); // ADC FIFO empty                (0=no,1=yes)
-        createChannelStatusParam("Ch%uOutputEm", i+1, 0x3+i,  1,  3); // Output FIFO almost full       (0=no,1=yes)
-        createChannelStatusParam("Ch%uAcqStat",  i+1, 0x3+i,  1,  2); // Acquiring data                (0=no,1=yes)
-        createChannelStatusParam("Ch%uEnabled",  i+1, 0x3+i,  1,  1); // Channel enabled               (0=no,1=yes)
-        createChannelStatusParam("Ch%uConfigrd", i+1, 0x3+i,  1,  0); // Configured                    (0=no,1=yes)
-    }
-}
-
-void RocPlugin::createStatusParams_V2_45()
-{
-//    BLXXX:Det:RocXXX:| sig nam |                       | EPICS record description  | (bi and mbbi description)
-    createStatusParam("LogicErr",       0x0,  1, 15); // WRITE_CNFG during ACQUISITION (0=no error,1=error)
-    createStatusParam("CmdLenErr",      0x0,  1, 14); // Command length error          (0=no error,1=error)
-    createStatusParam("UnknownCmd",     0x0,  1, 13); // Unrecognized command error    (0=no error,1=error)
-    createStatusParam("IntFifoFull",    0x0,  1, 12); // Internal Data FIFO Almost ful (0=not full,1=full)
-    createStatusParam("IntFifoEmp",     0x0,  1, 11); // Internal Data FIFO Empty flag (0=not empty,1=empty)
-    createStatusParam("CalcBadFin",     0x0,  1, 10); // Calc: Bad Final Calculation.  (0=no error,1=error)
-    createStatusParam("CalcBadEff",     0x0,  1,  9); // Calc: Bad Effective Calculati (0=no error,1=error)
-    createStatusParam("CalcBadOver",    0x0,  1,  8); // Calc: Data overflow detected. (0=no error,1=error)
-    createStatusParam("CalcBadCnt",     0x0,  1,  7); // Calc: Bad word count.         (0=no error,1=error)
-    createStatusParam("LvdsFifoFul",    0x0,  1,  6); // LVDS FIFO went full.          (0=not full,1=full)
-    createStatusParam("LvdsStartEr",    0x0,  1,  5); // LVDS start before stop bit    (0=no error,1=error)
-    createStatusParam("LvdsNoStart",    0x0,  1,  4); // LVDS data without start.      (0=no error,1=error)
-    createStatusParam("LvdsTimeout",    0x0,  1,  3); // LVDS packet timeout.          (0=no timeout,1=timeout)
-    createStatusParam("LvdsLenErr",     0x0,  1,  2); // LVDS packet length error.     (0=no error,1=error)
-    createStatusParam("LvdsTypeErr",    0x0,  1,  1); // LVDS data type error.         (0=no error,1=error)
-    createStatusParam("LvdsParErr",     0x0,  1,  0); // LVDS parity error.            (0=no error,1=error)
-
-    createStatusParam("LvdsPwrDown",    0x1,  1,  9); // Got LVDS powerdown sequence   (0=no,1=yes)
-    createStatusParam("RcvdSysRst",     0x1,  1,  8); // Got system reset              (0=no,1=yes)
-    createStatusParam("RcvdTimeErr",    0x1,  1,  1); // Got timer error               (0=no error,1=error)
-    createStatusParam("RcvdFatalEr",    0x1,  1,  0); // Got fatal error               (0=no error,1=error)
-
-    createStatusParam("DataRdyChan",    0x2,  8,  8); // Data ready channel
-    createStatusParam("ChanProg",       0x2,  8,  0); // Channel programmed
-
-    createStatusParam("CalcFifoFul",    0x3,  1, 14); // Calc: FIFO almost full        (0=not full,1=almost full)
-    createStatusParam("CalcFifoDat",    0x3,  1, 13); // Calc: FIFO has data           (0=no,1=yes)
-    createStatusParam("CalcInFifF",     0x3,  1, 12); // Calc: Input FIFO almost full  (0=not full,1=almost full)
-    createStatusParam("CalcInFifD",     0x3,  1, 11); // Calc: Input FIFO almost full  (0=not full,1=almost full)
-    createStatusParam("HVStatus",       0x3,  1, 10); // High Voltage Status bit       (0=no error,1=error)
-    createStatusParam("TsyncGood",      0x3,  1,  9); // Good TSYNC                    (0=no,1=yes)
-    createStatusParam("TsyncInRang",    0x3,  1,  8); // TSYNC in specification range  (0=no,1=yes)
-    createStatusParam("TsyncHigh",      0x3,  1,  7); // TSYNC Got HIGH                (0=no,1=yes)
-    createStatusParam("TsyncLow",       0x3,  1,  6); // TSYNC Got LOW                 (0=no,1=yes)
-    createStatusParam("TclkGood",       0x3,  1,  5); // Good TCLK                     (0=no,1=yes)
-    createStatusParam("TclkInRange",    0x3,  1,  4); // TCLK in specification range   (0=no,1=yes)
-    createStatusParam("TclkRcvd",       0x3,  1,  3); // Got TCLK                      (0=no,1=yes)
-    createStatusParam("CalcActive",     0x3,  1,  2); // Calculation: Active           (0=not active,1=active)
-    createStatusParam("AcquireStat",    0x3,  1,  1); // Acquiring data                (0=not acquiring,1=acquiring)
-    createStatusParam("Discovered",     0x3,  1,  0); // Discovered.                   (0=not discovered,1=discovered)
-
-    for (unsigned i=0; i<NUM_CHANNELS; i++) {
-        createChannelStatusParam("B%uAdcCorrV",  i+1, 0x1+i,  8,  8); // Bi ADC correction value
-        createChannelStatusParam("A%uAdcCorrV",  i+1, 0x1+i,  8,  0); // Ai ADC correction value
-
-        createChannelStatusParam("A%uOvrflRst",  i+1, 0x1+i,  1, 15); // Ai Auto-Adjust overflow reset (0=not active,1=active)
-        createChannelStatusParam("A%uAdjOffLim", i+1, 0x1+i,  1, 14); // Ai Auto-Adjust Offset limit   (0=not active,1=active)
-        createChannelStatusParam("A%uAdjSlXLim", i+1, 0x1+i,  1, 13); // Ai Auto-Adjust Slope? limit   (0=not active,1=active)
-        createChannelStatusParam("A%uAdjOverfl", i+1, 0x1+i,  1, 12); // Ai Auto-Adjust overflow       (0=no,1=yes)
-        createChannelStatusParam("A%uInOffset",  i+1, 0x1+i,  9,  0); // Ai Input Offset value
-
-        createChannelStatusParam("B%uOvrflRst",  i+1, 0x2+i,  1, 15); // Bi Auto-Adjust overflow reset (0=not active,1=active)
-        createChannelStatusParam("B%uAdjOffLim", i+1, 0x2+i,  1, 14); // Bi Auto-Adjust Offset limit   (0=not active,1=active)
-        createChannelStatusParam("B%uAdjSlXLim", i+1, 0x2+i,  1, 13); // Bi Auto-Adjust Slope? limit   (0=not active,1=active)
-        createChannelStatusParam("B%uAdjOverfl", i+1, 0x2+i,  1, 12); // Bi Auto-Adjust overflow       (0=no,1=yes)
-        createChannelStatusParam("B%uInOffset",  i+1, 0x2+i,  9,  0); // Bi Input Offset value
-
-        createChannelStatusParam("Ch%uAdcFifAF", i+1, 0x3+i,  1, 15); // ADC FIFO almost full          (0=no,1=yes)
-        createChannelStatusParam("Ch%uTimeOvrf", i+1, 0x3+i,  1, 14); // Timestamp overflow occurred   (0=no,1=yes)
-        createChannelStatusParam("Ch%uUnknwCmd", i+1, 0x3+i,  1, 13); // Unrecognized command          (0=no error,1=error)
-        createChannelStatusParam("Ch%uPktLenEr", i+1, 0x3+i,  1, 12); // Packet length error           (0=no error,1=error)
-        createChannelStatusParam("Ch%uLogicErr", i+1, 0x3+i,  1, 11); // WRITE_CNFG during ACQUISITION (0=no error,1=error)
-        createChannelStatusParam("Ch%uPosDiscr", i+1, 0x3+i,  1, 10); // Got positive init discriminat (0=no,1=yes)
-        createChannelStatusParam("Ch%uNegDiscr", i+1, 0x3+i,  1,  9); // Got negative init discriminat (0=no,1=yes)
-        createChannelStatusParam("Ch%uOutputEm", i+1, 0x3+i,  1,  8); // Output FIFO almost full       (0=no,1=yes)
-        createChannelStatusParam("Ch%uMinAdc",   i+1, 0x3+i,  1,  7); // A min ADC condition occurred  (0=no,1=yes)
-        createChannelStatusParam("Ch%uMaxAdc",   i+1, 0x3+i,  1,  6); // A max ADC condition occurred  (0=no,1=yes)
-        createChannelStatusParam("Ch%uMulDiscE", i+1, 0x3+i,  1,  5); // A multi-disc event occured    (0=no,1=yes)
-        createChannelStatusParam("Ch%uAdcFifFu", i+1, 0x3+i,  1,  4); // ADC FIFO went full            (0=no,1=yes)
-        createChannelStatusParam("Ch%uOutEmpty", i+1, 0x3+i,  1,  3); // Output emptry flag            (0=no,1=yes)
-        createChannelStatusParam("Ch%uAcqStat",  i+1, 0x3+i,  1,  2); // Acquiring data                (0=no,1=yes)
-        createChannelStatusParam("Ch%uEnabled",  i+1, 0x3+i,  1,  1); // Channel enabled               (0=no,1=yes)
-        createChannelStatusParam("Ch%uConfigrd", i+1, 0x3+i,  1,  0); // Configured                    (0=no,1=yes)
-    }
-}
-
-void RocPlugin::createStatusParams_V2_41()
-{
-//    BLXXX:Det:RocXXX:| sig nam |                       | EPICS record description  | (bi and mbbi description)
-    createStatusParam("DataRdyChan",    0x0,  8,  8); // Data ready channel
-    createStatusParam("ChanProg",       0x0,  8,  0); // Channel programmed
-
-    createStatusParam("CalcError",      0x1,  1, 15); // Calculation error             (0=no error,1=error)
-    createStatusParam("CalcBadPkt",     0x1,  1, 14); // Calculation bad packet        (0=no error,1=error)
-    createStatusParam("LvdsLenErr",     0x1,  1, 13); // LVDS packet length error      (0=no error,1=error)
-    createStatusParam("HVStatus",       0x1,  1, 12); // High Voltage Status bit       (0=no error,1=error)
-    createStatusParam("LogicErr",       0x1,  1, 11); // WRITE_CNFG during ACQUISITION (0=no error,1=error)
-    createStatusParam("LvdsTimeout",    0x1,  1, 10); // LVDS packet timeout.          (0=no timeout,1=timeout)
-    createStatusParam("LvdsTypeErr",    0x1,  1,  9); // LVDS data type error.         (0=no error,1=error)
-    createStatusParam("UnknownCmd",     0x1,  1,  8); // Unrecognized command error    (0=no error,1=error)
-    createStatusParam("LvdsParErr",     0x1,  1,  7); // LVDS parity error.            (0=no error,1=error)
-    createStatusParam("LvdsTimeout",    0x1,  1,  6); // LVDS packet timeout           (0=no timeout,1=timeout)
-    createStatusParam("Busy",           0x1,  1,  5); // Busy bit is set               (0=no,1=yes)
-    createStatusParam("RcvdTimeErr",    0x1,  1,  4); // Got timer error               (0=no error,1=error)
-    createStatusParam("LvdsStartEr",    0x0,  1,  3); // LVDS packet start issue       (0=no error,1=error)
-    createStatusParam("AcquireStat",    0x3,  1,  2); // Acquiring data                (0=not acquiring,1=acquiring)
-    createStatusParam("Discovered",     0x3,  1,  1); // Discovered.                   (0=not discovered,1=discovered)
-    createStatusParam("HwIdValid",      0x3,  1,  0); // Hardware ID valid             (0=no,1=yes)
-
-    for (unsigned i=0; i<NUM_CHANNELS; i++) {
-        createChannelStatusParam("Ch%uAdcFifAF", i+1, 0x3+i,  1, 15); // ADC FIFO almost full          (0=no,1=yes)
-        createChannelStatusParam("Ch%uTimeOvrf", i+1, 0x3+i,  1, 14); // Timestamp overflow occurred   (0=no,1=yes)
-        createChannelStatusParam("Ch%uUnknwCmd", i+1, 0x3+i,  1, 13); // Unrecognized command          (0=no error,1=error)
-        createChannelStatusParam("Ch%uPktLenEr", i+1, 0x3+i,  1, 12); // Packet length error           (0=no error,1=error)
-        createChannelStatusParam("Ch%uLogicErr", i+1, 0x3+i,  1, 11); // WRITE_CNFG during ACQUISITION (0=no error,1=error)
-        createChannelStatusParam("Ch%uPosDiscr", i+1, 0x3+i,  1, 10); // Got positive init discriminat (0=no,1=yes)
-        createChannelStatusParam("Ch%uNegDiscr", i+1, 0x3+i,  1,  9); // Got negative init discriminat (0=no,1=yes)
-        createChannelStatusParam("Ch%uOutputEm", i+1, 0x3+i,  1,  8); // Output FIFO almost full       (0=no,1=yes)
-        createChannelStatusParam("Ch%uMinAdc",   i+1, 0x3+i,  1,  7); // A min ADC condition occurred  (0=no,1=yes)
-        createChannelStatusParam("Ch%uMaxAdc",   i+1, 0x3+i,  1,  6); // A max ADC condition occurred  (0=no,1=yes)
-        createChannelStatusParam("Ch%uMulDiscE", i+1, 0x3+i,  1,  5); // A multi-disc event occured    (0=no,1=yes)
-        createChannelStatusParam("Ch%uAdcFifFu", i+1, 0x3+i,  1,  4); // ADC FIFO went full            (0=no,1=yes)
-        createChannelStatusParam("Ch%uOutEmpty", i+1, 0x3+i,  1,  3); // Output emptry flag            (0=no,1=yes)
-        createChannelStatusParam("Ch%uAcqStat",  i+1, 0x3+i,  1,  2); // Acquiring data                (0=no,1=yes)
-        createChannelStatusParam("Ch%uEnabled",  i+1, 0x3+i,  1,  1); // Channel enabled               (0=no,1=yes)
-        createChannelStatusParam("Ch%uConfigrd", i+1, 0x3+i,  1,  0); // Configured                    (0=no,1=yes)
-    }
-}
-
-void RocPlugin::createChannelStatusParam(const char *fmt, unsigned channel, uint32_t offset, uint32_t nBits, uint32_t shift)
-{
-    char name[20];
-    snprintf(name, sizeof(name), fmt, channel);
-    createStatusParam(name, offset, nBits, shift);
-}
-*/

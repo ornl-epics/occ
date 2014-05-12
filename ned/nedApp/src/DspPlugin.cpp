@@ -18,7 +18,7 @@ const unsigned DspPlugin::NUM_DSPPLUGIN_STATUSPARAMS    = 100;
 const double DspPlugin::DSP_RESPONSE_TIMEOUT            = 1.0;
 
 DspPlugin::DspPlugin(const char *portName, const char *dispatcherPortName, const char *hardwareId, int blocking)
-    : BaseModulePlugin(portName, dispatcherPortName, hardwareId, BaseModulePlugin::CONN_TYPE_OPTICAL,
+    : BaseModulePlugin(portName, dispatcherPortName, hardwareId, false,
                        blocking, NUM_DSPPLUGIN_PARAMS + NUM_DSPPLUGIN_CONFIGPARAMS + NUM_DSPPLUGIN_CONFIGPARAMS)
 {
 

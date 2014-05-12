@@ -7,12 +7,12 @@
 #define NUM_BASEMODULEPLUGIN_PARAMS ((int)(&LAST_BASEMODULEPLUGIN_PARAM - &FIRST_BASEMODULEPLUGIN_PARAM + 1))
 
 BaseModulePlugin::BaseModulePlugin(const char *portName, const char *dispatcherPortName, const char *hardwareId,
-                                   ConnectionType conn, int blocking, int numParams)
+                                   bool behindDsp, int blocking, int numParams)
     : BasePlugin(portName, dispatcherPortName, REASON_OCCDATA, blocking, NUM_BASEMODULEPLUGIN_PARAMS + numParams,
                  1, asynOctetMask | asynInt32Mask | asynDrvUserMask, asynOctetMask | asynInt32Mask)
     , m_hardwareId(parseHardwareId(hardwareId))
     , m_stateMachine(STAT_NOT_INITIALIZED)
-    , m_connType(conn)
+    , m_behindDsp(behindDsp)
 {
     if (m_hardwareId == 0) {
         LOG_ERROR("Invalid hardware id '%s'", hardwareId);
@@ -84,7 +84,7 @@ asynStatus BaseModulePlugin::writeInt32(asynUser *pasynUser, epicsInt32 value)
 void BaseModulePlugin::sendToDispatcher(DasPacket::CommandType command, uint32_t *payload, uint32_t length)
 {
     DasPacket *packet;
-    if (m_connType == CONN_TYPE_LVDS)
+    if (m_behindDsp)
         packet = createLvdsPacket(m_hardwareId, command, payload, length);
     else
         packet = createOpticalPacket(m_hardwareId, command, payload, length);
@@ -232,7 +232,11 @@ bool BaseModulePlugin::rspReadStatus(const DasPacket *packet)
 
     const uint32_t *payload = packet->getPayload();
     for (std::map<int, StatusParamDesc>::iterator it=m_statusParams.begin(); it != m_statusParams.end(); it++) {
-        int value = (payload[it->second.offset] >> it->second.shift) & ((0x1 << it->second.width) - 1);
+        int value = payload[it->second.offset] >> it->second.shift;
+        if ((it->second.shift + it->second.width) > 32) {
+            value |= payload[it->second.offset + 1] << (32 - it->second.shift);
+        }
+        value &= (0x1 << it->second.width) - 1;
         setIntegerParam(it->first, value);
     }
     callParamCallbacks();
@@ -241,16 +245,17 @@ bool BaseModulePlugin::rspReadStatus(const DasPacket *packet)
 
 void BaseModulePlugin::createStatusParam(const char *name, uint32_t offset, uint32_t nBits, uint32_t shift)
 {
-    if ((shift + nBits) > 32) {
-        LOG_ERROR("Module status parameter '%s' cannot shift over 32 bits, %d bits shifted for %d requested", name, nBits, shift);
-        return;
-    }
-
     int index;
     if (createParam(name, asynParamInt32, &index) != asynSuccess) {
         LOG_ERROR("Module status parameter '%s' cannot be created (already exist?)", name);
         return;
     }
+
+    if (m_behindDsp) {
+        shift += (offset % 2 == 0 ? 0 : 16);
+        offset /= 2;
+    }
+
     StatusParamDesc desc;
     desc.offset = offset;
     desc.shift = shift;

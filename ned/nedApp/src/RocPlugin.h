@@ -68,27 +68,7 @@ class RocPlugin : public BaseModulePlugin {
         /**
          * Create and register all status ROC V5 parameters to be exposed to EPICS.
          */
-        void createStatusParams_V5();
-
-        /**
-         * Create and register all status ROC V2 firmware 5.x parameters to be exposed to EPICS.
-         */
-        void createStatusParams_V2_5x();
-
-        /**
-         * Create and register all status ROC V2 firmware 4.5 parameters to be exposed to EPICS.
-         */
-        void createStatusParams_V2_45();
-
-        /**
-         * Create and register all status ROC V2 firmware 4.1 parameters to be exposed to EPICS.
-         */
-        void createStatusParams_V2_41();
-
-        /**
-         * Create and register single integer status parameter.
-         */
-        void createChannelStatusParam(const char *name, unsigned channel, uint32_t offset, uint32_t nBits, uint32_t shift);
+        void createStatusParams_V5_52();
 
         /**
          * Based on current state machine state, detect whether the response has been
@@ -103,8 +83,7 @@ class RocPlugin : public BaseModulePlugin {
         int HardwareDate;   //!< Module hardware date
         int FirmwareVer;    //!< Module firmware version
         int FirmwareRev;    //!< Module firmware revision
-        int FirmwareDate;   //!< Module firmware date
-        #define LAST_ROCPLUGIN_PARAM FirmwareDate
+        #define LAST_ROCPLUGIN_PARAM FirmwareRev
 
 };
 
