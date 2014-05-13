@@ -15,6 +15,7 @@
 EPICS_REGISTER_PLUGIN(RocPlugin, 5, "Port name", string, "Dispatcher port name", string, "Hardware ID", string, "Hw & SW version", string, "Blocking", int);
 
 const unsigned RocPlugin::NUM_ROCPLUGIN_STATUSPARAMS    = 300;  //!< Since supporting multiple versions with different number of PVs, this is just a maximum value
+const float    RocPlugin::NO_RESPONSE_TIMEOUT           = 1.0;
 
 RocPlugin::RocPlugin(const char *portName, const char *dispatcherPortName, const char *hardwareId, const char *version, int blocking)
     : BaseModulePlugin(portName, dispatcherPortName, hardwareId, true,

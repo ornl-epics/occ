@@ -1,6 +1,6 @@
 TOP=../..
 
-OCCLIB_DIR=/home/kvx/work/git/detectors/occlib
+OCCLIB_DIR=$(TOP)/../occlib
 
 include $(TOP)/configure/CONFIG
 #----------------------------------------

@@ -19,7 +19,7 @@ class RocPlugin : public BaseModulePlugin {
     private: // structures and definitions
         static const unsigned NUM_ROCPLUGIN_STATUSPARAMS;   //!< This is used as a runtime assert check and must match number of status parameters
         static const unsigned NUM_CHANNELS = 8;             //!< Number of channels connected to ROC
-        static const float    NO_RESPONSE_TIMEOUT = 1.0;    //!< Timeout to wait for response from ROC, in seconds
+        static const float    NO_RESPONSE_TIMEOUT;          //!< Timeout to wait for response from ROC, in seconds
 
     private: // variables
         std::string m_version;              //!< Version string as passed to constructor

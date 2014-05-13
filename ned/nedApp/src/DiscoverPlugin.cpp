@@ -20,10 +20,6 @@ DiscoverPlugin::DiscoverPlugin(const char *portName, const char *dispatcherPortN
 
     setCallbacks(true);
 
-    bool parity;
-    parity = BaseModulePlugin::evenParity(0xA);
-    parity = BaseModulePlugin::evenParity(0xB);
-
     callParamCallbacks();
 }
 
