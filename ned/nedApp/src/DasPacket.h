@@ -63,19 +63,19 @@ struct DasPacket
          * Type of modules
          */
         enum ModuleType {
-            MOD_TYPE_ROC                = 32,   //!< ROC (or LPSD) module
-            MOD_TYPE_AROC               = 33,   //!< AROC
-            MOD_TYPE_HROC               = 34,
-            MOD_TYPE_BLNROC             = 37,
-            MOD_TYPE_CROC               = 41,
-            MOD_TYPE_IROC               = 42,
-            MOD_TYPE_BIDIMROC           = 43,
-            MOD_TYPE_DSP                = 48,
-            MOD_TYPE_SANSROC            = 64,
-            MOD_TYPE_ACPC               = 160,
-            MOD_TYPE_ACPCFEM            = 161,
-            MOD_TYPE_FFC                = 162,
-            MOD_TYPE_FEM                = 170,
+            MOD_TYPE_ROC                = 0x20,   //!< ROC (or LPSD) module
+            MOD_TYPE_AROC               = 0x21,   //!< AROC
+            MOD_TYPE_HROC               = 0x22,
+            MOD_TYPE_BLNROC             = 0x25,
+            MOD_TYPE_CROC               = 0x29,
+            MOD_TYPE_IROC               = 0x2A,
+            MOD_TYPE_BIDIMROC           = 0x2B,
+            MOD_TYPE_DSP                = 0x30,
+            MOD_TYPE_SANSROC            = 0x40,
+            MOD_TYPE_ACPC               = 0xA0,
+            MOD_TYPE_ACPCFEM            = 0xA1,
+            MOD_TYPE_FFC                = 0xA2,
+            MOD_TYPE_FEM                = 0xAA,
         };
 
         static const uint32_t MinLength = 6*4;  //!< Minumum total length of any DAS packet, at least the header must be present

@@ -64,6 +64,8 @@
 		<Unit filename="DmaCopier.h" />
 		<Unit filename="DspPlugin.cpp" />
 		<Unit filename="DspPlugin.h" />
+		<Unit filename="DumpPlugin.cpp" />
+		<Unit filename="DumpPlugin.h" />
 		<Unit filename="EpicsRegister.h" />
 		<Unit filename="Log.h" />
 		<Unit filename="OccPortDriver.cpp" />
