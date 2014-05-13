@@ -32,7 +32,12 @@ const DasPacket *DasPacketList::next(const DasPacket *current) const
     if (m_refcount != 0) {
         // Basic boundary check for current packet, rest is taken care of by _verifyPacket
         if (m_address <= currAddr && currAddr < (m_address + m_length)) {
-            const DasPacket *tmp = reinterpret_cast<const DasPacket *>(currAddr + current->length());
+            uint32_t packetLen = current->length();
+#ifdef DWORD_PADDING_WORKAROUND
+            if (((packetLen + 7) & ~7) != packetLen)
+                packetLen += 4;
+#endif
+            const DasPacket *tmp = reinterpret_cast<const DasPacket *>(currAddr + packetLen);
             pkt = _verifyPacket(tmp);
         }
     }
@@ -91,6 +96,25 @@ bool DasPacketList::reset(const uint8_t *addr, uint32_t length)
         m_length = length;
         m_refcount = 1;
         reseted = true;
+#ifdef DWORD_PADDING_WORKAROUND
+        DasPacket *packet = (DasPacket *)addr;
+        uint32_t remain = length;
+        uint32_t len = 0;
+DasPacket *prev = 0;
+        while (remain > sizeof(DasPacket)) {
+            packet->payload_length &= 0xFFFF;
+            if (packet->getAlignedLength() == 0) {
+                int breakpoint = 1;
+            }
+            len = packet->getAlignedLength();
+            remain -= len;
+            prev = packet;
+            packet = (DasPacket *)((uint8_t *)packet + len);
+            if (remain < 200) {
+                int breakpoint = 1;
+            }
+        }
+#endif
     }
     m_lock.unlock();
 

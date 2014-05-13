@@ -229,6 +229,15 @@ struct DasPacket
          */
         uint32_t getPayloadLength() const;
 
+#ifdef DWORD_PADDING_WORKAROUND
+        uint32_t getAlignedLength() const {
+            uint32_t len = length();
+            if (((len + 7) & ~7) != len)
+                len += 4;
+            return len;
+        }
+#endif
+
     private:
 
         /**

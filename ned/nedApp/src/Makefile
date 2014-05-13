@@ -15,6 +15,9 @@ include $(TOP)/configure/CONFIG
 # 
 USR_CXXFLAGS += -DBITFIELD_LSB_FIRST
 USR_CXXFLAGS += -std=c++0x
+# The temporary DWord alignment workaround in FPGA is to set bit 31 in the
+# packet header length.
+USR_CXXFLAGS += -DDWORD_PADDING_WORKAROUND
 CXXFLAGS = -Wall -g -ggdb $(USR_CXXFLAGS)
 
 # Product
