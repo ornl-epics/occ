@@ -1397,3 +1397,1851 @@ record(longout, "$(P)$(R)Ch7ASlope")
     field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch7ASlope")
     field(SCAN, "I/O Intr")
 }
+record(longout, "$(P)$(R)Ch1PosIdx")
+{
+    field(DESC, "Chan1 position index")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch1PosIdx")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "0")
+}
+record(longout, "$(P)$(R)Ch2PosIdx")
+{
+    field(DESC, "Chan2 position index")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch2PosIdx")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "256")
+}
+record(longout, "$(P)$(R)Ch3PosIdx")
+{
+    field(DESC, "Chan3 position index")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch3PosIdx")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "512")
+}
+record(longout, "$(P)$(R)Ch4PosIdx")
+{
+    field(DESC, "Chan4 position index")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch4PosIdx")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "768")
+}
+record(longout, "$(P)$(R)Ch5PosIdx")
+{
+    field(DESC, "Chan5 position index")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch5PosIdx")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "1024")
+}
+record(longout, "$(P)$(R)Ch6PosIdx")
+{
+    field(DESC, "Chan6 position index")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch6PosIdx")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "1280")
+}
+record(longout, "$(P)$(R)Ch7PosIdx")
+{
+    field(DESC, "Chan7 position index")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch7PosIdx")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "1536")
+}
+record(longout, "$(P)$(R)Ch8PosIdx")
+{
+    field(DESC, "Chan8 position index")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch8PosIdx")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "1792")
+}
+record(longout, "$(P)$(R)Ch1AInOff")
+{
+    field(DESC, "Chan1 A input offset")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch1AInOff")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "100")
+}
+record(longout, "$(P)$(R)Ch2AInOff")
+{
+    field(DESC, "Chan2 A input offset")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch2AInOff")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "100")
+}
+record(longout, "$(P)$(R)Ch3AInOff")
+{
+    field(DESC, "Chan3 A input offset")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch3AInOff")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "100")
+}
+record(longout, "$(P)$(R)Ch4AInOff")
+{
+    field(DESC, "Chan4 A input offset")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch4AInOff")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "100")
+}
+record(longout, "$(P)$(R)Ch5AInOff")
+{
+    field(DESC, "Chan5 A input offset")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch5AInOff")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "100")
+}
+record(longout, "$(P)$(R)Ch6AInOff")
+{
+    field(DESC, "Chan6 A input offset")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch6AInOff")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "100")
+}
+record(longout, "$(P)$(R)Ch7AInOff")
+{
+    field(DESC, "Chan7 A input offset")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch7AInOff")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "100")
+}
+record(longout, "$(P)$(R)Ch8AInOff")
+{
+    field(DESC, "Chan8 A input offset")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch8AInOff")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "100")
+}
+record(longout, "$(P)$(R)Ch1BInOff")
+{
+    field(DESC, "Chan1 B input offset")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch1BInOff")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "100")
+}
+record(longout, "$(P)$(R)Ch2BInOff")
+{
+    field(DESC, "Chan2 B input offset")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch2BInOff")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "100")
+}
+record(longout, "$(P)$(R)Ch3BInOff")
+{
+    field(DESC, "Chan3 B input offset")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch3BInOff")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "100")
+}
+record(longout, "$(P)$(R)Ch4BInOff")
+{
+    field(DESC, "Chan4 B input offset")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch4BInOff")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "100")
+}
+record(longout, "$(P)$(R)Ch5BInOff")
+{
+    field(DESC, "Chan5 B input offset")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch5BInOff")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "100")
+}
+record(longout, "$(P)$(R)Ch6BInOff")
+{
+    field(DESC, "Chan6 B input offset")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch6BInOff")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "100")
+}
+record(longout, "$(P)$(R)Ch7BInOff")
+{
+    field(DESC, "Chan7 B input offset")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch7BInOff")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "100")
+}
+record(longout, "$(P)$(R)Ch8BInOff")
+{
+    field(DESC, "Chan8 B input offset")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch8BInOff")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "100")
+}
+record(longout, "$(P)$(R)Ch1AAdcOff")
+{
+    field(DESC, "Chan1 A ADC offset")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch1AAdcOff")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "100")
+}
+record(longout, "$(P)$(R)Ch2AAdcOff")
+{
+    field(DESC, "Chan2 A ADC offset")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch2AAdcOff")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "100")
+}
+record(longout, "$(P)$(R)Ch3AAdcOff")
+{
+    field(DESC, "Chan3 A ADC offset")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch3AAdcOff")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "100")
+}
+record(longout, "$(P)$(R)Ch4AAdcOff")
+{
+    field(DESC, "Chan4 A ADC offset")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch4AAdcOff")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "100")
+}
+record(longout, "$(P)$(R)Ch5AAdcOff")
+{
+    field(DESC, "Chan5 A ADC offset")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch5AAdcOff")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "100")
+}
+record(longout, "$(P)$(R)Ch6AAdcOff")
+{
+    field(DESC, "Chan6 A ADC offset")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch6AAdcOff")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "100")
+}
+record(longout, "$(P)$(R)Ch7AAdcOff")
+{
+    field(DESC, "Chan7 A ADC offset")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch7AAdcOff")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "100")
+}
+record(longout, "$(P)$(R)Ch8AAdcOff")
+{
+    field(DESC, "Chan8 A ADC offset")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch8AAdcOff")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "100")
+}
+record(longout, "$(P)$(R)Ch1BAdcOff")
+{
+    field(DESC, "Chan1 B ADC offset")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch1BAdcOff")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "100")
+}
+record(longout, "$(P)$(R)Ch2BAdcOff")
+{
+    field(DESC, "Chan2 B ADC offset")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch2BAdcOff")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "100")
+}
+record(longout, "$(P)$(R)Ch3BAdcOff")
+{
+    field(DESC, "Chan3 B ADC offset")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch3BAdcOff")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "100")
+}
+record(longout, "$(P)$(R)Ch4BAdcOff")
+{
+    field(DESC, "Chan4 B ADC offset")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch4BAdcOff")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "100")
+}
+record(longout, "$(P)$(R)Ch5BAdcOff")
+{
+    field(DESC, "Chan5 B ADC offset")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch5BAdcOff")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "100")
+}
+record(longout, "$(P)$(R)Ch6BAdcOff")
+{
+    field(DESC, "Chan6 B ADC offset")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch6BAdcOff")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "100")
+}
+record(longout, "$(P)$(R)Ch7BAdcOff")
+{
+    field(DESC, "Chan7 B ADC offset")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch7BAdcOff")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "100")
+}
+record(longout, "$(P)$(R)Ch8BAdcOff")
+{
+    field(DESC, "Chan8 B ADC offset")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch8BAdcOff")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "100")
+}
+record(longout, "$(P)$(R)Ch1AThresh")
+{
+    field(DESC, "Chan1 A threshold")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch1AThresh")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "400")
+}
+record(longout, "$(P)$(R)Ch2AThresh")
+{
+    field(DESC, "Chan2 A threshold")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch2AThresh")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "400")
+}
+record(longout, "$(P)$(R)Ch3AThresh")
+{
+    field(DESC, "Chan3 A threshold")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch3AThresh")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "400")
+}
+record(longout, "$(P)$(R)Ch4AThresh")
+{
+    field(DESC, "Chan4 A threshold")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch4AThresh")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "400")
+}
+record(longout, "$(P)$(R)Ch5AThresh")
+{
+    field(DESC, "Chan5 A threshold")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch5AThresh")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "400")
+}
+record(longout, "$(P)$(R)Ch6AThresh")
+{
+    field(DESC, "Chan6 A threshold")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch6AThresh")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "400")
+}
+record(longout, "$(P)$(R)Ch7AThresh")
+{
+    field(DESC, "Chan7 A threshold")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch7AThresh")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "400")
+}
+record(longout, "$(P)$(R)Ch8AThresh")
+{
+    field(DESC, "Chan8 A threshold")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch8AThresh")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "400")
+}
+record(longout, "$(P)$(R)Ch1BThresh")
+{
+    field(DESC, "Chan1 B threshold")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch1BThresh")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "400")
+}
+record(longout, "$(P)$(R)Ch2BThresh")
+{
+    field(DESC, "Chan2 B threshold")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch2BThresh")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "400")
+}
+record(longout, "$(P)$(R)Ch3BThresh")
+{
+    field(DESC, "Chan3 B threshold")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch3BThresh")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "400")
+}
+record(longout, "$(P)$(R)Ch4BThresh")
+{
+    field(DESC, "Chan4 B threshold")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch4BThresh")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "400")
+}
+record(longout, "$(P)$(R)Ch5BThresh")
+{
+    field(DESC, "Chan5 B threshold")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch5BThresh")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "400")
+}
+record(longout, "$(P)$(R)Ch6BThresh")
+{
+    field(DESC, "Chan6 B threshold")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch6BThresh")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "400")
+}
+record(longout, "$(P)$(R)Ch7BThresh")
+{
+    field(DESC, "Chan7 B threshold")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch7BThresh")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "400")
+}
+record(longout, "$(P)$(R)Ch8BThresh")
+{
+    field(DESC, "Chan8 B threshold")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch8BThresh")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "400")
+}
+record(longout, "$(P)$(R)Ch1AFulScal")
+{
+    field(DESC, "Chan1 A full scale")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch1AFulScal")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "10")
+}
+record(longout, "$(P)$(R)Ch2AFulScal")
+{
+    field(DESC, "Chan2 A full scale")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch2AFulScal")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "10")
+}
+record(longout, "$(P)$(R)Ch3AFulScal")
+{
+    field(DESC, "Chan3 A full scale")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch3AFulScal")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "10")
+}
+record(longout, "$(P)$(R)Ch4AFulScal")
+{
+    field(DESC, "Chan4 A full scale")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch4AFulScal")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "10")
+}
+record(longout, "$(P)$(R)Ch5AFulScal")
+{
+    field(DESC, "Chan5 A full scale")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch5AFulScal")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "10")
+}
+record(longout, "$(P)$(R)Ch6AFulScal")
+{
+    field(DESC, "Chan6 A full scale")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch6AFulScal")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "10")
+}
+record(longout, "$(P)$(R)Ch7AFulScal")
+{
+    field(DESC, "Chan7 A full scale")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch7AFulScal")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "10")
+}
+record(longout, "$(P)$(R)Ch8AFulScal")
+{
+    field(DESC, "Chan8 A full scale")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch8AFulScal")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "10")
+}
+record(longout, "$(P)$(R)Ch1BFulScal")
+{
+    field(DESC, "Chan1 B full scale")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch1BFulScal")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "10")
+}
+record(longout, "$(P)$(R)Ch2BFulScal")
+{
+    field(DESC, "Chan2 B full scale")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch2BFulScal")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "10")
+}
+record(longout, "$(P)$(R)Ch3BFulScal")
+{
+    field(DESC, "Chan3 B full scale")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch3BFulScal")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "10")
+}
+record(longout, "$(P)$(R)Ch4BFulScal")
+{
+    field(DESC, "Chan4 B full scale")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch4BFulScal")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "10")
+}
+record(longout, "$(P)$(R)Ch5BFulScal")
+{
+    field(DESC, "Chan5 B full scale")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch5BFulScal")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "10")
+}
+record(longout, "$(P)$(R)Ch6BFulScal")
+{
+    field(DESC, "Chan6 B full scale")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch6BFulScal")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "10")
+}
+record(longout, "$(P)$(R)Ch7BFulScal")
+{
+    field(DESC, "Chan7 B full scale")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch7BFulScal")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "10")
+}
+record(longout, "$(P)$(R)Ch8BFulScal")
+{
+    field(DESC, "Chan8 B full scale")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch8BFulScal")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "10")
+}
+record(longout, "$(P)$(R)Ch1AGainAdj")
+{
+    field(DESC, "Chan1 A gain adjust")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch1AGainAdj")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "0")
+}
+record(longout, "$(P)$(R)Ch2AGainAdj")
+{
+    field(DESC, "Chan2 A gain adjust")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch2AGainAdj")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "0")
+}
+record(longout, "$(P)$(R)Ch3AGainAdj")
+{
+    field(DESC, "Chan3 A gain adjust")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch3AGainAdj")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "0")
+}
+record(longout, "$(P)$(R)Ch4AGainAdj")
+{
+    field(DESC, "Chan4 A gain adjust")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch4AGainAdj")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "0")
+}
+record(longout, "$(P)$(R)Ch5AGainAdj")
+{
+    field(DESC, "Chan5 A gain adjust")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch5AGainAdj")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "0")
+}
+record(longout, "$(P)$(R)Ch6AGainAdj")
+{
+    field(DESC, "Chan6 A gain adjust")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch6AGainAdj")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "0")
+}
+record(longout, "$(P)$(R)Ch7AGainAdj")
+{
+    field(DESC, "Chan7 A gain adjust")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch7AGainAdj")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "0")
+}
+record(longout, "$(P)$(R)Ch8AGainAdj")
+{
+    field(DESC, "Chan8 A gain adjust")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch8AGainAdj")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "0")
+}
+record(longout, "$(P)$(R)Ch1BGainAdj")
+{
+    field(DESC, "Chan1 B gain adjust")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch1BGainAdj")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "0")
+}
+record(longout, "$(P)$(R)Ch2BGainAdj")
+{
+    field(DESC, "Chan2 B gain adjust")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch2BGainAdj")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "0")
+}
+record(longout, "$(P)$(R)Ch3BGainAdj")
+{
+    field(DESC, "Chan3 B gain adjust")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch3BGainAdj")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "0")
+}
+record(longout, "$(P)$(R)Ch4BGainAdj")
+{
+    field(DESC, "Chan4 B gain adjust")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch4BGainAdj")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "0")
+}
+record(longout, "$(P)$(R)Ch5BGainAdj")
+{
+    field(DESC, "Chan5 B gain adjust")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch5BGainAdj")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "0")
+}
+record(longout, "$(P)$(R)Ch6BGainAdj")
+{
+    field(DESC, "Chan6 B gain adjust")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch6BGainAdj")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "0")
+}
+record(longout, "$(P)$(R)Ch7BGainAdj")
+{
+    field(DESC, "Chan7 B gain adjust")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch7BGainAdj")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "0")
+}
+record(longout, "$(P)$(R)Ch8BGainAdj")
+{
+    field(DESC, "Chan8 B gain adjust")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch8BGainAdj")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "0")
+}
+record(longout, "$(P)$(R)Ch1AScale")
+{
+    field(DESC, "Chan1 A scale")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch1AScale")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "2048")
+}
+record(longout, "$(P)$(R)Ch2AScale")
+{
+    field(DESC, "Chan2 A scale")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch2AScale")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "2048")
+}
+record(longout, "$(P)$(R)Ch3AScale")
+{
+    field(DESC, "Chan3 A scale")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch3AScale")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "2048")
+}
+record(longout, "$(P)$(R)Ch4AScale")
+{
+    field(DESC, "Chan4 A scale")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch4AScale")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "2048")
+}
+record(longout, "$(P)$(R)Ch5AScale")
+{
+    field(DESC, "Chan5 A scale")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch5AScale")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "2048")
+}
+record(longout, "$(P)$(R)Ch6AScale")
+{
+    field(DESC, "Chan6 A scale")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch6AScale")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "2048")
+}
+record(longout, "$(P)$(R)Ch7AScale")
+{
+    field(DESC, "Chan7 A scale")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch7AScale")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "2048")
+}
+record(longout, "$(P)$(R)Ch8AScale")
+{
+    field(DESC, "Chan8 A scale")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch8AScale")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "2048")
+}
+record(longout, "$(P)$(R)Ch1BScale")
+{
+    field(DESC, "Chan1 B scale")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch1BScale")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "2048")
+}
+record(longout, "$(P)$(R)Ch2BScale")
+{
+    field(DESC, "Chan2 B scale")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch2BScale")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "2048")
+}
+record(longout, "$(P)$(R)Ch3BScale")
+{
+    field(DESC, "Chan3 B scale")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch3BScale")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "2048")
+}
+record(longout, "$(P)$(R)Ch4BScale")
+{
+    field(DESC, "Chan4 B scale")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch4BScale")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "2048")
+}
+record(longout, "$(P)$(R)Ch5BScale")
+{
+    field(DESC, "Chan5 B scale")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch5BScale")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "2048")
+}
+record(longout, "$(P)$(R)Ch6BScale")
+{
+    field(DESC, "Chan6 B scale")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch6BScale")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "2048")
+}
+record(longout, "$(P)$(R)Ch7BScale")
+{
+    field(DESC, "Chan7 B scale")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch7BScale")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "2048")
+}
+record(longout, "$(P)$(R)Ch8BScale")
+{
+    field(DESC, "Chan8 B scale")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch8BScale")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "2048")
+}
+record(longout, "$(P)$(R)Ch1AOffset")
+{
+    field(DESC, "Chan1 A offset")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch1AOffset")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "1600")
+}
+record(longout, "$(P)$(R)Ch2AOffset")
+{
+    field(DESC, "Chan2 A offset")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch2AOffset")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "1600")
+}
+record(longout, "$(P)$(R)Ch3AOffset")
+{
+    field(DESC, "Chan3 A offset")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch3AOffset")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "1600")
+}
+record(longout, "$(P)$(R)Ch4AOffset")
+{
+    field(DESC, "Chan4 A offset")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch4AOffset")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "1600")
+}
+record(longout, "$(P)$(R)Ch5AOffset")
+{
+    field(DESC, "Chan5 A offset")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch5AOffset")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "1600")
+}
+record(longout, "$(P)$(R)Ch6AOffset")
+{
+    field(DESC, "Chan6 A offset")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch6AOffset")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "1600")
+}
+record(longout, "$(P)$(R)Ch7AOffset")
+{
+    field(DESC, "Chan7 A offset")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch7AOffset")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "1600")
+}
+record(longout, "$(P)$(R)Ch8AOffset")
+{
+    field(DESC, "Chan8 A offset")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch8AOffset")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "1600")
+}
+record(longout, "$(P)$(R)Ch1BOffset")
+{
+    field(DESC, "Chan1 B offset")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch1BOffset")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "1600")
+}
+record(longout, "$(P)$(R)Ch2BOffset")
+{
+    field(DESC, "Chan2 B offset")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch2BOffset")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "1600")
+}
+record(longout, "$(P)$(R)Ch3BOffset")
+{
+    field(DESC, "Chan3 B offset")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch3BOffset")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "1600")
+}
+record(longout, "$(P)$(R)Ch4BOffset")
+{
+    field(DESC, "Chan4 B offset")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch4BOffset")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "1600")
+}
+record(longout, "$(P)$(R)Ch5BOffset")
+{
+    field(DESC, "Chan5 B offset")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch5BOffset")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "1600")
+}
+record(longout, "$(P)$(R)Ch6BOffset")
+{
+    field(DESC, "Chan6 B offset")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch6BOffset")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "1600")
+}
+record(longout, "$(P)$(R)Ch7BOffset")
+{
+    field(DESC, "Chan7 B offset")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch7BOffset")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "1600")
+}
+record(longout, "$(P)$(R)Ch8BOffset")
+{
+    field(DESC, "Chan8 B offset")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch8BOffset")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "1600")
+}
+record(longout, "$(P)$(R)Ch1AAvgMin")
+{
+    field(DESC, "Chan1 A average minimum")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch1AAvgMin")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "100")
+}
+record(longout, "$(P)$(R)Ch2AAvgMin")
+{
+    field(DESC, "Chan2 A average minimum")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch2AAvgMin")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "100")
+}
+record(longout, "$(P)$(R)Ch3AAvgMin")
+{
+    field(DESC, "Chan3 A average minimum")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch3AAvgMin")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "100")
+}
+record(longout, "$(P)$(R)Ch4AAvgMin")
+{
+    field(DESC, "Chan4 A average minimum")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch4AAvgMin")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "100")
+}
+record(longout, "$(P)$(R)Ch5AAvgMin")
+{
+    field(DESC, "Chan5 A average minimum")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch5AAvgMin")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "100")
+}
+record(longout, "$(P)$(R)Ch6AAvgMin")
+{
+    field(DESC, "Chan6 A average minimum")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch6AAvgMin")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "100")
+}
+record(longout, "$(P)$(R)Ch7AAvgMin")
+{
+    field(DESC, "Chan7 A average minimum")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch7AAvgMin")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "100")
+}
+record(longout, "$(P)$(R)Ch8AAvgMin")
+{
+    field(DESC, "Chan8 A average minimum")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch8AAvgMin")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "100")
+}
+record(longout, "$(P)$(R)Ch1BAvgMin")
+{
+    field(DESC, "Chan1 B average minimum")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch1BAvgMin")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "100")
+}
+record(longout, "$(P)$(R)Ch2BAvgMin")
+{
+    field(DESC, "Chan2 B average minimum")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch2BAvgMin")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "100")
+}
+record(longout, "$(P)$(R)Ch3BAvgMin")
+{
+    field(DESC, "Chan3 B average minimum")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch3BAvgMin")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "100")
+}
+record(longout, "$(P)$(R)Ch4BAvgMin")
+{
+    field(DESC, "Chan4 B average minimum")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch4BAvgMin")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "100")
+}
+record(longout, "$(P)$(R)Ch5BAvgMin")
+{
+    field(DESC, "Chan5 B average minimum")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch5BAvgMin")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "100")
+}
+record(longout, "$(P)$(R)Ch6BAvgMin")
+{
+    field(DESC, "Chan6 B average minimum")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch6BAvgMin")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "100")
+}
+record(longout, "$(P)$(R)Ch7BAvgMin")
+{
+    field(DESC, "Chan7 B average minimum")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch7BAvgMin")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "100")
+}
+record(longout, "$(P)$(R)Ch8BAvgMin")
+{
+    field(DESC, "Chan8 B average minimum")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch8BAvgMin")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "100")
+}
+record(longout, "$(P)$(R)Ch1AAvgMax")
+{
+    field(DESC, "Chan1 A average maximum")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch1AAvgMax")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "1000")
+}
+record(longout, "$(P)$(R)Ch2AAvgMax")
+{
+    field(DESC, "Chan2 A average maximum")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch2AAvgMax")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "1000")
+}
+record(longout, "$(P)$(R)Ch3AAvgMax")
+{
+    field(DESC, "Chan3 A average maximum")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch3AAvgMax")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "1000")
+}
+record(longout, "$(P)$(R)Ch4AAvgMax")
+{
+    field(DESC, "Chan4 A average maximum")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch4AAvgMax")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "1000")
+}
+record(longout, "$(P)$(R)Ch5AAvgMax")
+{
+    field(DESC, "Chan5 A average maximum")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch5AAvgMax")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "1000")
+}
+record(longout, "$(P)$(R)Ch6AAvgMax")
+{
+    field(DESC, "Chan6 A average maximum")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch6AAvgMax")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "1000")
+}
+record(longout, "$(P)$(R)Ch7AAvgMax")
+{
+    field(DESC, "Chan7 A average maximum")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch7AAvgMax")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "1000")
+}
+record(longout, "$(P)$(R)Ch8AAvgMax")
+{
+    field(DESC, "Chan8 A average maximum")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch8AAvgMax")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "1000")
+}
+record(longout, "$(P)$(R)Ch1BAvgMax")
+{
+    field(DESC, "Chan1 B average maximum")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch1BAvgMax")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "1000")
+}
+record(longout, "$(P)$(R)Ch2BAvgMax")
+{
+    field(DESC, "Chan2 B average maximum")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch2BAvgMax")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "1000")
+}
+record(longout, "$(P)$(R)Ch3BAvgMax")
+{
+    field(DESC, "Chan3 B average maximum")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch3BAvgMax")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "1000")
+}
+record(longout, "$(P)$(R)Ch4BAvgMax")
+{
+    field(DESC, "Chan4 B average maximum")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch4BAvgMax")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "1000")
+}
+record(longout, "$(P)$(R)Ch5BAvgMax")
+{
+    field(DESC, "Chan5 B average maximum")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch5BAvgMax")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "1000")
+}
+record(longout, "$(P)$(R)Ch6BAvgMax")
+{
+    field(DESC, "Chan6 B average maximum")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch6BAvgMax")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "1000")
+}
+record(longout, "$(P)$(R)Ch7BAvgMax")
+{
+    field(DESC, "Chan7 B average maximum")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch7BAvgMax")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "1000")
+}
+record(longout, "$(P)$(R)Ch8BAvgMax")
+{
+    field(DESC, "Chan8 B average maximum")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch8BAvgMax")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "1000")
+}
+record(longout, "$(P)$(R)Ch1ASamMin")
+{
+    field(DESC, "Chan1 A sample minimum")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch1ASamMin")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "100")
+}
+record(longout, "$(P)$(R)Ch2ASamMin")
+{
+    field(DESC, "Chan2 A sample minimum")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch2ASamMin")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "100")
+}
+record(longout, "$(P)$(R)Ch3ASamMin")
+{
+    field(DESC, "Chan3 A sample minimum")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch3ASamMin")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "100")
+}
+record(longout, "$(P)$(R)Ch4ASamMin")
+{
+    field(DESC, "Chan4 A sample minimum")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch4ASamMin")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "100")
+}
+record(longout, "$(P)$(R)Ch5ASamMin")
+{
+    field(DESC, "Chan5 A sample minimum")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch5ASamMin")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "100")
+}
+record(longout, "$(P)$(R)Ch6ASamMin")
+{
+    field(DESC, "Chan6 A sample minimum")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch6ASamMin")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "100")
+}
+record(longout, "$(P)$(R)Ch7ASamMin")
+{
+    field(DESC, "Chan7 A sample minimum")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch7ASamMin")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "100")
+}
+record(longout, "$(P)$(R)Ch8ASamMin")
+{
+    field(DESC, "Chan8 A sample minimum")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch8ASamMin")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "100")
+}
+record(longout, "$(P)$(R)Ch1BSamMin")
+{
+    field(DESC, "Chan1 B sample minimum")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch1BSamMin")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "100")
+}
+record(longout, "$(P)$(R)Ch2BSamMin")
+{
+    field(DESC, "Chan2 B sample minimum")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch2BSamMin")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "100")
+}
+record(longout, "$(P)$(R)Ch3BSamMin")
+{
+    field(DESC, "Chan3 B sample minimum")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch3BSamMin")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "100")
+}
+record(longout, "$(P)$(R)Ch4BSamMin")
+{
+    field(DESC, "Chan4 B sample minimum")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch4BSamMin")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "100")
+}
+record(longout, "$(P)$(R)Ch5BSamMin")
+{
+    field(DESC, "Chan5 B sample minimum")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch5BSamMin")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "100")
+}
+record(longout, "$(P)$(R)Ch6BSamMin")
+{
+    field(DESC, "Chan6 B sample minimum")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch6BSamMin")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "100")
+}
+record(longout, "$(P)$(R)Ch7BSamMin")
+{
+    field(DESC, "Chan7 B sample minimum")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch7BSamMin")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "100")
+}
+record(longout, "$(P)$(R)Ch8BSamMin")
+{
+    field(DESC, "Chan8 B sample minimum")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch8BSamMin")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "100")
+}
+record(longout, "$(P)$(R)Ch1ASamMax")
+{
+    field(DESC, "Chan1 A sample maximum")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch1ASamMax")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "1000")
+}
+record(longout, "$(P)$(R)Ch2ASamMax")
+{
+    field(DESC, "Chan2 A sample maximum")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch2ASamMax")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "1000")
+}
+record(longout, "$(P)$(R)Ch3ASamMax")
+{
+    field(DESC, "Chan3 A sample maximum")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch3ASamMax")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "1000")
+}
+record(longout, "$(P)$(R)Ch4ASamMax")
+{
+    field(DESC, "Chan4 A sample maximum")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch4ASamMax")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "1000")
+}
+record(longout, "$(P)$(R)Ch5ASamMax")
+{
+    field(DESC, "Chan5 A sample maximum")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch5ASamMax")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "1000")
+}
+record(longout, "$(P)$(R)Ch6ASamMax")
+{
+    field(DESC, "Chan6 A sample maximum")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch6ASamMax")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "1000")
+}
+record(longout, "$(P)$(R)Ch7ASamMax")
+{
+    field(DESC, "Chan7 A sample maximum")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch7ASamMax")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "1000")
+}
+record(longout, "$(P)$(R)Ch8ASamMax")
+{
+    field(DESC, "Chan8 A sample maximum")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch8ASamMax")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "1000")
+}
+record(longout, "$(P)$(R)Ch1BSamMax")
+{
+    field(DESC, "Chan1 B sample maximum")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch1BSamMax")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "1000")
+}
+record(longout, "$(P)$(R)Ch2BSamMax")
+{
+    field(DESC, "Chan2 B sample maximum")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch2BSamMax")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "1000")
+}
+record(longout, "$(P)$(R)Ch3BSamMax")
+{
+    field(DESC, "Chan3 B sample maximum")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch3BSamMax")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "1000")
+}
+record(longout, "$(P)$(R)Ch4BSamMax")
+{
+    field(DESC, "Chan4 B sample maximum")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch4BSamMax")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "1000")
+}
+record(longout, "$(P)$(R)Ch5BSamMax")
+{
+    field(DESC, "Chan5 B sample maximum")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch5BSamMax")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "1000")
+}
+record(longout, "$(P)$(R)Ch6BSamMax")
+{
+    field(DESC, "Chan6 B sample maximum")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch6BSamMax")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "1000")
+}
+record(longout, "$(P)$(R)Ch7BSamMax")
+{
+    field(DESC, "Chan7 B sample maximum")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch7BSamMax")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "1000")
+}
+record(longout, "$(P)$(R)Ch8BSamMax")
+{
+    field(DESC, "Chan8 B sample maximum")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch8BSamMax")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "1000")
+}
+record(longout, "$(P)$(R)Ch8BSlopMax")
+{
+    field(DESC, "Maximum slope")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch8BSlopMax")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "0")
+}
+record(bo, "$(P)$(R)Ch1Enable")
+{
+    field(DESC, "Chan1 enable")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch1Enable")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "1")
+    field(ZNAM, "disable")
+    field(ONAM, "enable")
+}
+record(bo, "$(P)$(R)Ch2Enable")
+{
+    field(DESC, "Chan2 enable")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch2Enable")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "1")
+    field(ZNAM, "disable")
+    field(ONAM, "enable")
+}
+record(bo, "$(P)$(R)Ch3Enable")
+{
+    field(DESC, "Chan3 enable")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch3Enable")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "1")
+    field(ZNAM, "disable")
+    field(ONAM, "enable")
+}
+record(bo, "$(P)$(R)Ch4Enable")
+{
+    field(DESC, "Chan4 enable")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch4Enable")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "1")
+    field(ZNAM, "disable")
+    field(ONAM, "enable")
+}
+record(bo, "$(P)$(R)Ch5Enable")
+{
+    field(DESC, "Chan5 enable")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch5Enable")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "1")
+    field(ZNAM, "disable")
+    field(ONAM, "enable")
+}
+record(bo, "$(P)$(R)Ch6Enable")
+{
+    field(DESC, "Chan6 enable")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch6Enable")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "1")
+    field(ZNAM, "disable")
+    field(ONAM, "enable")
+}
+record(bo, "$(P)$(R)Ch7Enable")
+{
+    field(DESC, "Chan7 enable")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch7Enable")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "1")
+    field(ZNAM, "disable")
+    field(ONAM, "enable")
+}
+record(bo, "$(P)$(R)Ch8Enable")
+{
+    field(DESC, "Chan8 enable")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch8Enable")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "1")
+    field(ZNAM, "disable")
+    field(ONAM, "enable")
+}
+record(bo, "$(P)$(R)Ch1VerbEn")
+{
+    field(DESC, "Chan1 verbose enable")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch1VerbEn")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "0")
+    field(ZNAM, "disable")
+    field(ONAM, "enable")
+}
+record(bo, "$(P)$(R)Ch2VerbEn")
+{
+    field(DESC, "Chan2 verbose enable")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch2VerbEn")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "0")
+    field(ZNAM, "disable")
+    field(ONAM, "enable")
+}
+record(bo, "$(P)$(R)Ch3VerbEn")
+{
+    field(DESC, "Chan3 verbose enable")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch3VerbEn")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "0")
+    field(ZNAM, "disable")
+    field(ONAM, "enable")
+}
+record(bo, "$(P)$(R)Ch4VerbEn")
+{
+    field(DESC, "Chan4 verbose enable")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch4VerbEn")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "0")
+    field(ZNAM, "disable")
+    field(ONAM, "enable")
+}
+record(bo, "$(P)$(R)Ch5VerbEn")
+{
+    field(DESC, "Chan5 verbose enable")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch5VerbEn")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "0")
+    field(ZNAM, "disable")
+    field(ONAM, "enable")
+}
+record(bo, "$(P)$(R)Ch6VerbEn")
+{
+    field(DESC, "Chan6 verbose enable")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch6VerbEn")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "0")
+    field(ZNAM, "disable")
+    field(ONAM, "enable")
+}
+record(bo, "$(P)$(R)Ch7VerbEn")
+{
+    field(DESC, "Chan7 verbose enable")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch7VerbEn")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "0")
+    field(ZNAM, "disable")
+    field(ONAM, "enable")
+}
+record(bo, "$(P)$(R)Ch8VerbEn")
+{
+    field(DESC, "Chan8 verbose enable")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch8VerbEn")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "0")
+    field(ZNAM, "disable")
+    field(ONAM, "enable")
+}
+record(longout, "$(P)$(R)TimeVetoLo")
+{
+    field(DESC, "Timestamp veto low")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))TimeVetoLo")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "0")
+}
+record(longout, "$(P)$(R)TimeVetoHi")
+{
+    field(DESC, "Timestamp veto high")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))TimeVetoHi")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "0")
+}
+record(longout, "$(P)$(R)FakeTrigDel")
+{
+    field(DESC, "Fake trigger perios")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))FakeTrigDel")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "20000")
+}
+record(longout, "$(P)$(R)MinAdcVal")
+{
+    field(DESC, "Fake trigger perios")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))MinAdcVal")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "100")
+}
+record(longout, "$(P)$(R)MaxAdcVal")
+{
+    field(DESC, "Fake trigger perios")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))MaxAdcVal")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "1000")
+}
+record(longout, "$(P)$(R)MinDisWidth")
+{
+    field(DESC, "Minimum discriminator width")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))MinDisWidth")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "1")
+}
+record(longout, "$(P)$(R)Sample1")
+{
+    field(DESC, "Sample 1 point [0:10]")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Sample1")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "2")
+}
+record(longout, "$(P)$(R)Sample2")
+{
+    field(DESC, "Sample 1 point [2:50]")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Sample2")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "14")
+}
+record(bo, "$(P)$(R)LvdsRate")
+{
+    field(DESC, "LVDS output rate")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))LvdsRate")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "1")
+    field(ZNAM, "20Mhz")
+    field(ONAM, "40Mhz")
+}
+record(bo, "$(P)$(R)AutoCorrSam")
+{
+    field(DESC, "Auto correction sample mode")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))AutoCorrSam")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "0")
+    field(ZNAM, "TSYNC")
+    field(ONAM, "fake trigger")
+}
+record(bo, "$(P)$(R)EdgeDetecEn")
+{
+    field(DESC, "Edge detect enable")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))EdgeDetecEn")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "1")
+    field(ZNAM, "disable")
+    field(ONAM, "enable")
+}
+record(mbbo, "$(P)$(R)MastDiscSel")
+{
+    field(DESC, "Master discriminator select")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))MastDiscSel")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "0")
+    field(ZRVL, "0")
+    field(ZRST, "SUM discr")
+    field(ZRVL, "1")
+    field(ZRST, "A discr")
+    field(ZRVL, "2")
+    field(ZRST, "B discr")
+    field(ZRVL, "3")
+    field(ZRST, "all")
+}
+record(bo, "$(P)$(R)Enable")
+{
+    field(DESC, "ROC enable acquisition")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Enable")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "1")
+    field(ZNAM, "disable")
+    field(ONAM, "enable")
+}
+record(bo, "$(P)$(R)AutoCorr")
+{
+    field(DESC, "Auto correction mode")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))AutoCorr")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "0")
+    field(ZNAM, "enabled")
+    field(ONAM, "disabled")
+}
+record(bo, "$(P)$(R)HighResMode")
+{
+    field(DESC, "High resolution mode")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))HighResMode")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "1")
+    field(ZNAM, "low res 0-127")
+    field(ONAM, "high res 0-255")
+}
+record(mbbo, "$(P)$(R)OutputMode")
+{
+    field(DESC, "Output mode")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))OutputMode")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "0")
+    field(ZRVL, "0")
+    field(ZRST, "normal")
+    field(ZRVL, "1")
+    field(ZRST, "raw")
+    field(ZRVL, "2")
+    field(ZRST, "extended")
+}
+record(mbbo, "$(P)$(R)AcqMode")
+{
+    field(DESC, "Output mode")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))AcqMode")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "0")
+    field(ZRVL, "0")
+    field(ZRST, "normal")
+    field(ZRVL, "1")
+    field(ZRST, "verbose")
+    field(ZRVL, "2")
+    field(ZRST, "fake trigger")
+}
+record(bo, "$(P)$(R)TxEnable")
+{
+    field(DESC, "TX enable")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))TxEnable")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "1")
+    field(ZNAM, "external")
+    field(ONAM, "always enabled")
+}
+record(bo, "$(P)$(R)TsyncSel")
+{
+    field(DESC, "TSYNC select")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))TsyncSel")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "0")
+    field(ZNAM, "external")
+    field(ONAM, "internal 60Hz")
+}
+record(bo, "$(P)$(R)TclkSel")
+{
+    field(DESC, "TCLK select")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))TclkSel")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "0")
+    field(ZNAM, "external")
+    field(ONAM, "internal 10MHz")
+}
+record(bo, "$(P)$(R)Reset")
+{
+    field(DESC, "Reset enable")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Reset")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "0")
+    field(ZNAM, "disable")
+    field(ONAM, "enable")
+}

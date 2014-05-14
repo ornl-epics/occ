@@ -265,19 +265,19 @@ void BaseModulePlugin::createStatusParam(const char *name, uint32_t offset, uint
     m_statusPayloadLength = std::max(m_statusPayloadLength, (offset+1)*4);
 }
 
-void BaseModulePlugin::createConfigParam(const char *name, char section, uint32_t offset, uint32_t nBits, uint32_t shift, int value) {
-
-    if ((shift + nBits) > 32) {
-        LOG_ERROR("Module config parameters cannot shift over 32 bits, %d bits shifted for %d requested", nBits, shift);
-        return;
-    }
-
+void BaseModulePlugin::createConfigParam(const char *name, char section, uint32_t offset, uint32_t nBits, uint32_t shift, int value)
+{
     int index;
     if (createParam(name, asynParamInt32, &index) != asynSuccess) {
         LOG_ERROR("Module config parameter '%s' cannot be created (already exist?)", name);
         return;
     }
     setIntegerParam(index, value);
+
+    if (m_behindDsp) {
+        shift += (offset % 2 == 0 ? 0 : 16);
+        offset /= 2;
+    }
 
     ConfigParamDesc desc;
     desc.section = section;
@@ -306,23 +306,34 @@ DasPacket *BaseModulePlugin::createLvdsPacket(uint32_t destination, DasPacket::C
 {
     DasPacket *packet = DasPacket::create((2+length)*sizeof(uint32_t), reinterpret_cast<uint8_t *>(payload));
     if (packet) {
+        uint32_t offset = 0;
         packet->source = DasPacket::HWID_SELF;
         packet->destination = 0;
         packet->cmdinfo.is_command = true;
         packet->cmdinfo.is_passthru = true;
         packet->cmdinfo.lvds_all_one = 0x3;
         packet->cmdinfo.lvds_global = (destination == DasPacket::HWID_BROADCAST);
-        packet->cmdinfo.lvds_parity = evenParity(command);
+        packet->cmdinfo.lvds_parity = evenParity(command) ^ packet->cmdinfo.lvds_global;
         packet->cmdinfo.command = command;
         if (destination != DasPacket::HWID_BROADCAST) {
-            packet->payload[0] = destination & 0xFFFF;
-            packet->payload[0] |= (evenParity(packet->payload[0]) << 16);
-            packet->payload[1] = (destination >> 16 ) & 0xFFFF;
-            packet->payload[1] |= (evenParity(packet->payload[1]) << 16); // last bit changes parity
-            packet->payload[1] |= (0x1 << 17);
+            packet->payload[offset] = destination & 0xFFFF;
+            packet->payload[offset] |= (evenParity(packet->payload[offset]) << 16);
+            offset++;
+            packet->payload[offset] = (destination >> 16 ) & 0xFFFF;
+            packet->payload[offset] |= (evenParity(packet->payload[offset]) << 16);
+            offset++;
         } else {
-            packet->payload_length = 0;
+            packet->payload_length -= 2;
         }
+        for (uint32_t i=0; i<length; i++) {
+            packet->payload[offset] = payload[i] & 0xFFFF;
+            packet->payload[offset] |= evenParity(packet->payload[offset]) << 16;
+            offset++;
+            packet->payload[offset] = (payload[i] >> 16) & 0xFFFF;
+            packet->payload[offset] |= evenParity(packet->payload[offset]) << 16;
+            offset++;
+        }
+        packet->payload[offset] ^= (0x3 << 16); // last dword flips parity
     }
     return packet;
 }
@@ -359,7 +370,7 @@ void BaseModulePlugin::recalculateConfigParams()
     // Section sizes have already been calculated in createConfigParams()
 
     // Calculate section offsets
-    m_configSectionOffsets['0'] = 0x0;
+    m_configSectionOffsets['1'] = 0x0;
     for (char i='1'; i<='9'; i++) {
         m_configSectionOffsets[i] = m_configSectionOffsets[i-1] + m_configSectionSizes[i-1];
         LOG_WARN("Section '%c' size=%u offset=%u", i, m_configSectionSizes[i], m_configSectionOffsets[i]);

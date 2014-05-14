@@ -71,6 +71,11 @@ class RocPlugin : public BaseModulePlugin {
         void createStatusParams_V5_52();
 
         /**
+         * Create and register all config ROC V5 parameters to be exposed to EPICS.
+         */
+        void createConfigParams_V5_52();
+
+        /**
          * Based on current state machine state, detect whether the response has been
          * handled. Move to timeout state otherwise.
          */
