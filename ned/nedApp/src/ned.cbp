@@ -67,6 +67,8 @@
 		<Unit filename="DumpPlugin.cpp" />
 		<Unit filename="DumpPlugin.h" />
 		<Unit filename="EpicsRegister.h" />
+		<Unit filename="FemPlugin.cpp" />
+		<Unit filename="FemPlugin.h" />
 		<Unit filename="Log.h" />
 		<Unit filename="OccPortDriver.cpp" />
 		<Unit filename="OccPortDriver.h" />

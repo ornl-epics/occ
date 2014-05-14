@@ -16,6 +16,7 @@ DB += DiscoverPlugin.template
 DB += AdaraPlugin.template
 DB += DspPlugin.template
 DB += RocPlugin.template
+DB += FemPlugin.template
 DB += DumpPlugin.template
 
 #----------------------------------------------------
