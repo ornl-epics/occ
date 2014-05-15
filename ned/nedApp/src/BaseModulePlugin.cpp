@@ -311,9 +311,9 @@ DasPacket *BaseModulePlugin::createLvdsPacket(uint32_t destination, DasPacket::C
         packet->destination = 0;
         packet->cmdinfo.is_command = true;
         packet->cmdinfo.is_passthru = true;
-        packet->cmdinfo.lvds_all_one = 0x3;
-        packet->cmdinfo.lvds_global = (destination == DasPacket::HWID_BROADCAST);
-        packet->cmdinfo.lvds_parity = evenParity(command) ^ packet->cmdinfo.lvds_global;
+        packet->cmdinfo.lvds_cmd = true;
+        packet->cmdinfo.lvds_start = true;
+        packet->cmdinfo.lvds_parity = evenParity(packet->info & 0xFFFFFF);
         packet->cmdinfo.command = command;
         if (destination != DasPacket::HWID_BROADCAST) {
             packet->payload[offset] = destination & 0xFFFF;
@@ -333,7 +333,11 @@ DasPacket *BaseModulePlugin::createLvdsPacket(uint32_t destination, DasPacket::C
             packet->payload[offset] |= evenParity(packet->payload[offset]) << 16;
             offset++;
         }
-        packet->payload[offset] ^= (0x3 << 16); // last dword flips parity
+        if (offset > 0) {
+            offset--;
+            packet->payload[offset] |= (0x1 << 17); // Last word bit...
+            packet->payload[offset] ^= (0x1 << 16); // ... also flips parity
+        }
     }
     return packet;
 }

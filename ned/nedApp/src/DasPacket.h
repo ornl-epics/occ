@@ -95,8 +95,9 @@ struct DasPacket
                 enum CommandType command:8;     //!< 8 bits describing DAS module commands
                 enum ModuleType module_type:8;  //!< 15:8 bits describing module type
                 unsigned lvds_parity:1;         //!< LVDS parity bit
-                unsigned lvds_global:1;         //!< When set, send to everyone, otherwise 2 dwords in the payload specify the address
-                unsigned lvds_all_one:2;        //!< Until figure out what they are, always 11
+                unsigned lvds_last:1;           //!< Only last word in a LVDS packet should have this set to 1
+                unsigned lvds_start:1;          //!< Only first word in a LVDS packet should have this set to 1
+                unsigned lvds_cmd:1;            //!< Command(1)/Data(0) indicator
                 unsigned unused:8;              //!< TODO: unknown
                 unsigned is_chain:1;            //!< TODO: what is it?
                 unsigned is_response:1;         //!< If 1 the packet is response to a command
