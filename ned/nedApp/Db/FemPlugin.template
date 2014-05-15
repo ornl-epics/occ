@@ -1,4 +1,69 @@
-record(bo, "$(P)$(R)Ch2FifoFull")
+record(mbbi, "$(P)$(R)Status")
+{
+    field(PINI, "YES")
+    field(DTYP, "asynInt32")
+    field(INP,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Status")
+    field(ZRVL, "0")
+    field(ZRST, "OK")
+    field(SCAN, "I/O Intr")
+}
+record(mbbo, "$(P)$(R)Command")
+{
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Command")
+    field(ZRVL, "0")
+    field(ONVL, "1")
+    field(TWVL, "2")
+    field(THVL, "3")
+    field(FRVL, "4")
+    field(ZRST, "No command")
+    field(ONST, "Initialize")
+    field(TWST, "Read status")
+    field(THST, "Write config")
+    field(FRST, "Read config")
+}
+record(stringin, "$(P)$(R)HwDate")
+{
+    field(DTYP, "asynOctetRead")
+    field(INP,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))HwDate")
+    field(VAL,  "Unknown")
+    field(SCAN, "I/O Intr")
+}
+record(longin, "$(P)$(R)HwRev")
+{
+    field(DTYP,  "asynInt32")
+    field(INP,   "@asyn($(PORT),$(ADDR),$(TIMEOUT))HwRev")
+    field(VAL,   "0")
+    field(SCAN, "I/O Intr")
+}
+record(longin, "$(P)$(R)HwVer")
+{
+    field(DTYP,  "asynInt32")
+    field(INP,   "@asyn($(PORT),$(ADDR),$(TIMEOUT))HwVer")
+    field(VAL,   "0")
+    field(SCAN, "I/O Intr")
+}
+record(stringin, "$(P)$(R)FirmwareDate")
+{
+    field(DTYP, "asynOctetRead")
+    field(INP,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))FwDate")
+    field(VAL,  "Unknown")
+    field(SCAN, "I/O Intr")
+}
+record(longin, "$(P)$(R)FirmwareRev")
+{
+    field(DTYP,  "asynInt32")
+    field(INP,   "@asyn($(PORT),$(ADDR),$(TIMEOUT))FwRev")
+    field(VAL,   "0")
+    field(SCAN, "I/O Intr")
+}
+record(longin, "$(P)$(R)FirmwareVer")
+{
+    field(DTYP,  "asynInt32")
+    field(INP,   "@asyn($(PORT),$(ADDR),$(TIMEOUT))FwVer")
+    field(VAL,   "0")
+    field(SCAN, "I/O Intr")
+}record(bo, "$(P)$(R)Ch2FifoFull")
 {
     field(DESC, "Chan2 FIFO went full")
     field(DTYP, "asynInt32")
