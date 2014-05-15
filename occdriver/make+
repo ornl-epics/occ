@@ -1,0 +1,4 @@
+make
+rmmod sns_ocb
+insmod sns-ocb.ko
+chmod 666 /dev/snsocb*
