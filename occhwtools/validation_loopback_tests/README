@@ -1,0 +1,25 @@
+occ_validation.py [-d <occ device> -r <repeat count> -hv]
+
+Options:
+  -d <occ device>    : Defaults to /dev/snsocb0
+  -r <repeat count>  : Number of times to test each input file
+  -h                 : Print help (this file)
+  -v                 : Verbose mode (prints stdout from occ_loopback)
+
+This Python program is an automated validation test of the OCC card and 
+software, using occ_loopback.
+
+The validation program will run occ_loopback for each of the input binary files
+contained in the /validation_test_files directory, subject to certain filename 
+conventions which must be followed, described below.
+
+FILENAME CONVENTIONS:
+
+If the filename contains the text "raw", the '-r' flag will be appended
+to the occ_loopback command line to indicate raw mode processing (i.e., the
+binary file contains DAS packets).
+
+The filename must be suffixed with ".vlt" (as in validation loopback test) in
+order for the validation program to process the file.
+
+[Greg Guyotte 5/14/2014]
