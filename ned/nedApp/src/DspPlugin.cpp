@@ -351,7 +351,7 @@ void DspPlugin::createConfigParams() {
     createConfigParam("LvdsCmdFiltM",  'E', 0x1, 16, 16, 0); // LVDS command filter mask
 
     createConfigParam("LvdsTxTclkMo",  'E', 0x2,  1,  0, 0); // LVDS TX control TCLK mode     (0=TCLK from int,1=TCLK from LVDS)
-    createConfigParam("LvdsTxTcCtrl",  'E', 0x2,  2,  2, 0); // LVDS TX control T&C TCLK mode (0-1=TCLK,2=always 0,3=always 1)
+    createConfigParam("LvdsTxTcCtrl",  'E', 0x2,  2,  2, 0); // LVDS TX control T&C TCLK mode (0=TCLK,1=TCLK,2=always 0,3=always 1)
     createConfigParam("LvdsTscynoMo",  'E', 0x2,  2,  4, 3); // LVDS TSYNC_O mode             (0=local TSYNC,1=TSYNC from TREF,2=TSYNC from LVDS,3=TSYNC from opt)
     createConfigParam("LvdsTxTsyncC",  'E', 0x2,  2,  6, 0); // LVDS TSYNC_NORMAL control     (0=polarity,1=TSYNC WIDTH,2=always 0,3=always 1)
     createConfigParam("LvdsTxSysrCt",  'E', 0x2,  2,  8, 0); // LVDS T&C SYSRST# buffer ctrl  (0=sysrst,1=sysrst,2=always 0,3=always 1)
@@ -402,7 +402,7 @@ void DspPlugin::createConfigParams() {
     createConfigParam("FakeTrigInfo",  'E', 0xA, 32,  0, 0); // Fake Trigger Information
 
     createConfigParam("SysResetMode",  'F', 0x0,  2,  0, 0); // Reset mode => SYSRST_O#        (0=not used,1=not used,2=from LVDS T&C,3=from optical T&C)
-    createConfigParam("SysStartStopM", 'F', 0x0,  3,  4, 0); // Start/Stop mode                (0=normal, 1=fake data mode,2-3=not defined)
+    createConfigParam("SysStartStopM", 'F', 0x0,  3,  4, 0); // Start/Stop mode                (0=normal, 1=fake data mode,2=not defined,3=not defined)
     createConfigParam("SysFakeTrigEn", 'F', 0x0,  1,  7, 0); // Fake metadata trigger enable   (0=disabled,1=enabled)
     createConfigParam("SysFastSendEn", 'F', 0x0,  1,  8, 0); // Send data immediately switch   (0=big packets,1=send immediately)
     createConfigParam("SysPassthruEn", 'F', 0x0,  1,  9, 0); // Response for passthru command  (0=don't send,1=send)

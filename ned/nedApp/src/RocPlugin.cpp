@@ -6,12 +6,12 @@
 
 EPICS_REGISTER_PLUGIN(RocPlugin, 5, "Port name", string, "Dispatcher port name", string, "Hardware ID", string, "Hw & SW version", string, "Blocking", int);
 
-const unsigned RocPlugin::NUM_ROCPLUGIN_STATUSPARAMS    = 300;  //!< Since supporting multiple versions with different number of PVs, this is just a maximum value
+const unsigned RocPlugin::NUM_ROCPLUGIN_DYNPARAMS       = 500;  //!< Since supporting multiple versions with different number of PVs, this is just a maximum value
 const float    RocPlugin::NO_RESPONSE_TIMEOUT           = 1.0;
 
 RocPlugin::RocPlugin(const char *portName, const char *dispatcherPortName, const char *hardwareId, const char *version, int blocking)
     : BaseModulePlugin(portName, dispatcherPortName, hardwareId, true,
-                       blocking, NUM_ROCPLUGIN_PARAMS + NUM_ROCPLUGIN_STATUSPARAMS)
+                       blocking, NUM_ROCPLUGIN_PARAMS + NUM_ROCPLUGIN_DYNPARAMS)
     , m_version(version)
 {
     createParam("HwDate",       asynParamOctet, &HardwareDate);
@@ -22,6 +22,7 @@ RocPlugin::RocPlugin(const char *portName, const char *dispatcherPortName, const
 
     if (m_version == "5.2/5.2") {
         createStatusParams_V5_52();
+        createConfigParams_V5_52();
 /*
     } else if (m_version == "2.x/5.x") {
         createStatusParams_V2_5x();
@@ -34,6 +35,8 @@ RocPlugin::RocPlugin(const char *portName, const char *dispatcherPortName, const
         LOG_ERROR("Unsupported ROC version '%s'", version);
         return;
     }
+
+    LOG_DEBUG("Number of configured dynamic parameters: %u", m_statusParams.size() + m_configParams.size());
 
     callParamCallbacks();
     setCallbacks(true);
@@ -164,8 +167,8 @@ void RocPlugin::createStatusParams_V5_52()
     createStatusParam("Ch1AOverflw",    0x4,  1,  9); // Chan1 A Auto-Adjust overflow  (0=no,1=yes)
     createStatusParam("Ch1ASlope",      0x4,  9,  0); // Chan1 A Input Offset value
 
-    createStatusParam("Ch1BAdcOff",     0x5,  8,  8); // Chan1 B ADC Offset value
-    createStatusParam("Ch1AAdcOff",     0x5,  8,  0); // Chan1 A ADC Offset value
+    createStatusParam("Ch1BAdcOffs",    0x5,  8,  8); // Chan1 B ADC Offset value
+    createStatusParam("Ch1AAdcOffs",    0x5,  8,  0); // Chan1 A ADC Offset value
 
     createStatusParam("Ch1BAdjEn",      0x6,  1, 15); // Chan1 B Auto-Adjust Active    (0=not active,1=active)
     createStatusParam("Ch1BAdjTrig",    0x6,  1, 14); // Chan1 B Auto-Adjust Got sampl (0=no sample,1=got sample)
@@ -189,7 +192,7 @@ void RocPlugin::createStatusParams_V5_52()
     createStatusParam("Ch1FifAmFul",    0x7,  1,  1); // Chan1 FIFO almost full        (0=no,1=yes)
     createStatusParam("Ch1NotEmpty",    0x7,  1,  0); // Chan1 FIFO has data           (0=no,1=yes)
 
-    createStatusParam("Ch2AAdcOff",     0x8,  8,  8); // Chan2 A ADC Offset value
+    createStatusParam("Ch2AAdcOffs",    0x8,  8,  8); // Chan2 A ADC Offset value
     createStatusParam("Ch2AAdjEn",      0x8,  1,  7); // Chan2 A Auto-Adjust Active    (0=not active,1=active)
     createStatusParam("Ch2AAdjTrig",    0x8,  1,  6); // Chan2 A Auto-Adjust Got sampl (0=no sample,1=got sample)
     createStatusParam("Ch2AAdjSamL",    0x8,  1,  5); // Chan2 A Auto-Adjust Sample li (0=not active,1=active)
@@ -199,7 +202,7 @@ void RocPlugin::createStatusParams_V5_52()
     createStatusParam("Ch2AOverflw",    0x8,  1,  1); // Chan2 A Auto-Adjust overflow  (0=no,1=yes)
 
     createStatusParam("Ch2BSlope",      0x9,  9,  8); // Chan2 B input offset value
-    createStatusParam("Ch2BAdcOff",     0x9,  8,  0); // Chan2 B ADC Offset value
+    createStatusParam("Ch2BAdcOffs",    0x9,  8,  0); // Chan2 B ADC Offset value
 
     createStatusParam("Ch2AdcMax",      0xA,  1, 15); // Chan2 got ADC max             (0=no,1=yes)
     createStatusParam("Ch2AdcMin",      0xA,  1, 14); // Chan2 got ADC min             (0=no,1=yes)
@@ -226,8 +229,8 @@ void RocPlugin::createStatusParams_V5_52()
     createStatusParam("Ch3AOverflw",    0xB,  1,  9); // Chan3 A Auto-Adjust overflow  (0=no,1=yes)
     createStatusParam("Ch3ASlope",      0xB,  9,  0); // Chan3 A input offset value
 
-    createStatusParam("Ch3AAdcOff",     0xC,  8,  0); // Chan3 A ADC Offset value
-    createStatusParam("Ch3BAdcOff",     0xC,  8,  8); // Chan3 B ADC Offset value
+    createStatusParam("Ch3AAdcOffs",    0xC,  8,  0); // Chan3 A ADC Offset value
+    createStatusParam("Ch3BAdcOffs",    0xC,  8,  8); // Chan3 B ADC Offset value
 
     createStatusParam("Ch3BAdjEn",      0xD,  1, 15); // Chan3 B Auto-Adjust Active    (0=not active,1=active)
     createStatusParam("Ch3BAdjTrig",    0xD,  1, 14); // Chan3 B Auto-Adjust Got sampl (0=no sample,1=got sample)
@@ -248,7 +251,7 @@ void RocPlugin::createStatusParams_V5_52()
     createStatusParam("Ch3FifAmFul",    0xE,  1,  1); // Chan3 FIFO almost full        (0=no,1=yes)
     createStatusParam("Ch3NotEmpty",    0xE,  1,  0); // Chan3 FIFO has data           (0=no,1=yes)
 
-    createStatusParam("Ch4AAdcOff",     0xF,  8,  8); // Chan4 A ADC Offset value
+    createStatusParam("Ch4AAdcOffs",    0xF,  8,  8); // Chan4 A ADC Offset value
     createStatusParam("Ch4AAdjEn",      0xF,  1,  7); // Chan4 A Auto-Adjust Active    (0=not active,1=active)
     createStatusParam("Ch4AAdjTrig",    0xF,  1,  6); // Chan4 A Auto-Adjust Got sampl (0=no sample,1=got sample)
     createStatusParam("Ch4AAdjSamL",    0xF,  1,  5); // Chan4 A Auto-Adjust Sample li (0=not active,1=active)
@@ -258,7 +261,7 @@ void RocPlugin::createStatusParams_V5_52()
     createStatusParam("Ch4AOverflw",    0xF,  1,  1); // Chan4 A Auto-Adjust overflow  (0=no,1=yes)
 
     createStatusParam("Ch4BSlope",      0x10, 9,  8); // Chan4 B input offset value
-    createStatusParam("Ch4BAdcOff",     0x10, 8,  0); // Chan4 B ADC Offset value
+    createStatusParam("Ch4BAdcOffs",    0x10, 8,  0); // Chan4 B ADC Offset value
 
     createStatusParam("Ch4AdcMax",      0x11, 1, 15); // Chan4 got ADC max             (0=no,1=yes)
     createStatusParam("Ch4AdcMin",      0x11, 1, 14); // Chan4 got ADC min             (0=no,1=yes)
@@ -285,8 +288,8 @@ void RocPlugin::createStatusParams_V5_52()
     createStatusParam("Ch5AOverflw",    0x12, 1,  9); // Chan5 A Auto-Adjust overflow  (0=no,1=yes)
     createStatusParam("Ch5ASlope",      0x12, 9,  0); // Chan5 A Input Offset value
 
-    createStatusParam("Ch5BAdcOff",     0x13, 8,  8); // Chan5 B ADC Offset value
-    createStatusParam("Ch5AAdcOff",     0x13, 8,  0); // Chan5 A ADC Offset value
+    createStatusParam("Ch5BAdcOffs",    0x13, 8,  8); // Chan5 B ADC Offset value
+    createStatusParam("Ch5AAdcOffs",    0x13, 8,  0); // Chan5 A ADC Offset value
 
     createStatusParam("Ch5BAdjEn",      0x14, 1, 15); // Chan5 B Auto-Adjust Active    (0=not active,1=active)
     createStatusParam("Ch5BAdjTrig",    0x14, 1, 14); // Chan5 B Auto-Adjust Got sampl (0=no sample,1=got sample)
@@ -307,7 +310,7 @@ void RocPlugin::createStatusParams_V5_52()
     createStatusParam("Ch5FifAmFul",    0x15, 1,  1); // Chan5 FIFO almost full        (0=no,1=yes)
     createStatusParam("Ch5NotEmpty",    0x15, 1,  0); // Chan5 FIFO has data           (0=no,1=yes)
 
-    createStatusParam("Ch6AAdcOff",     0x16, 8,  8); // Chan6 A ADC Offset value
+    createStatusParam("Ch6AAdcOffs",    0x16, 8,  8); // Chan6 A ADC Offset value
     createStatusParam("Ch6AAdjEn",      0x16, 1,  7); // Chan6 A Auto-Adjust Active    (0=not active,1=active)
     createStatusParam("Ch6AAdjTrig",    0x16, 1,  6); // Chan6 A Auto-Adjust Got sampl (0=no sample,1=got sample)
     createStatusParam("Ch6AAdjSamL",    0x16, 1,  5); // Chan6 A Auto-Adjust Sample li (0=not active,1=active)
@@ -317,7 +320,7 @@ void RocPlugin::createStatusParams_V5_52()
     createStatusParam("Ch6AOverflw",    0x16, 1,  1); // Chan6 A Auto-Adjust overflow  (0=no,1=yes)
 
     createStatusParam("Ch6BSlope",      0x17, 9,  8); // Chan6 B input offset value
-    createStatusParam("Ch6BAdcOff",     0x17, 8,  0); // Chan6 B ADC Offset value
+    createStatusParam("Ch6BAdcOffs",    0x17, 8,  0); // Chan6 B ADC Offset value
 
     createStatusParam("Ch6AdcMax",      0x18, 1, 15); // Chan6 got ADC max             (0=no,1=yes)
     createStatusParam("Ch6AdcMin",      0x18, 1, 14); // Chan6 got ADC min             (0=no,1=yes)
@@ -344,8 +347,8 @@ void RocPlugin::createStatusParams_V5_52()
     createStatusParam("Ch7AOverflw",    0x19, 1,  9); // Chan7 A Auto-Adjust overflow  (0=no,1=yes)
     createStatusParam("Ch7ASlope",      0x19, 9,  0); // Chan7 A input offset value
 
-    createStatusParam("Ch7AAdcOff",     0x1A, 8,  0); // Chan7 A ADC Offset value
-    createStatusParam("Ch7BAdcOff",     0x1A, 8,  8); // Chan7 B ADC Offset value
+    createStatusParam("Ch7AAdcOffs",    0x1A, 8,  0); // Chan7 A ADC Offset value
+    createStatusParam("Ch7BAdcOffs",    0x1A, 8,  8); // Chan7 B ADC Offset value
 
     createStatusParam("Ch7BAdjEn",      0x1B, 1, 15); // Chan7 B Auto-Adjust Active    (0=not active,1=active)
     createStatusParam("Ch7BAdjTrig",    0x1B, 1, 14); // Chan7 B Auto-Adjust Got sampl (0=no sample,1=got sample)
@@ -366,7 +369,7 @@ void RocPlugin::createStatusParams_V5_52()
     createStatusParam("Ch7FifAmFul",    0x1C, 1,  1); // Chan7 FIFO almost full        (0=no,1=yes)
     createStatusParam("Ch7NotEmpty",    0x1C, 1,  0); // Chan7 FIFO has data           (0=no,1=yes)
 
-    createStatusParam("Ch8AAdcOff",     0x1D, 8,  8); // Chan8 A ADC Offset value
+    createStatusParam("Ch8AAdcOffs",    0x1D, 8,  8); // Chan8 A ADC Offset value
     createStatusParam("Ch8AAdjEn",      0x1D, 1,  7); // Chan8 A Auto-Adjust Active    (0=not active,1=active)
     createStatusParam("Ch8AAdjTrig",    0x1D, 1,  6); // Chan8 A Auto-Adjust Got sampl (0=no sample,1=got sample)
     createStatusParam("Ch8AAdjSamL",    0x1D, 1,  5); // Chan8 A Auto-Adjust Sample li (0=not active,1=active)
@@ -376,7 +379,7 @@ void RocPlugin::createStatusParams_V5_52()
     createStatusParam("Ch8AOverflw",    0x1D, 1,  1); // Chan8 A Auto-Adjust overflow  (0=no,1=yes)
 
     createStatusParam("Ch8BSlope",      0x1E, 9,  8); // Chan8 B input offset value
-    createStatusParam("Ch8BAdcOff",     0x1E, 8,  0); // Chan8 B ADC Offset value
+    createStatusParam("Ch8BAdcOffs",    0x1E, 8,  0); // Chan8 B ADC Offset value
 
     createStatusParam("Ch8AdcMax",      0x1F, 1, 15); // Chan8 got ADC max             (0=no,1=yes)
     createStatusParam("Ch8AdcMin",      0x1F, 1, 14); // Chan8 got ADC min             (0=no,1=yes)
@@ -628,7 +631,7 @@ void RocPlugin::createConfigParams_V5_52()
     createConfigParam("AutoCorrSam", 'F', 0x0,  1, 14, 0);     // Auto correction sample mode   (0=TSYNC,1=fake trigger)
     createConfigParam("EdgeDetecEn", 'F', 0x0,  1, 13, 1);     // Edge detect enable            (0=disable,1=enable)
     createConfigParam("MastDiscSel", 'F', 0x0,  2, 11, 0);     // Master discriminator select   (0=SUM discr,1=A discr,2=B discr,3=all)
-    createConfigParam("Enable",      'F', 0x0,  1, 10, 1);     // ROC enable acquisition        (0=disable,1=enable)
+    createConfigParam("EnableAcq",   'F', 0x0,  1, 10, 1);     // ROC enable acquisition        (0=disable,1=enable)
     createConfigParam("AutoCorr",    'F', 0x0,  1, 9,  0);     // Auto correction mode          (0=enabled,1=disabled)
     createConfigParam("HighResMode", 'F', 0x0,  1, 8,  1);     // High resolution mode          (0=low res 0-127,1=high res 0-255)
     createConfigParam("OutputMode",  'F', 0x0,  2, 6,  0);     // Output mode                   (0=normal,1=raw,2=extended)

@@ -6,11 +6,11 @@
 
 EPICS_REGISTER_PLUGIN(FemPlugin, 5, "Port name", string, "Dispatcher port name", string, "Hardware ID", string, "Hw & SW version", string, "Blocking", int);
 
-const unsigned FemPlugin::NUM_FEMPLUGIN_STATUSPARAMS    = 300;  //!< Since supporting multiple versions with different number of PVs, this is just a maximum value
+const unsigned FemPlugin::NUM_FEMPLUGIN_DYNPARAMS       = 250;
 
 FemPlugin::FemPlugin(const char *portName, const char *dispatcherPortName, const char *hardwareId, const char *version, int blocking)
     : BaseModulePlugin(portName, dispatcherPortName, hardwareId, true,
-                       blocking, NUM_FEMPLUGIN_PARAMS + NUM_FEMPLUGIN_STATUSPARAMS)
+                       blocking, NUM_FEMPLUGIN_PARAMS + NUM_FEMPLUGIN_DYNPARAMS)
     , m_version(version)
 {
     createParam("HwDate",       asynParamOctet, &HardwareDate);
@@ -22,10 +22,13 @@ FemPlugin::FemPlugin(const char *portName, const char *dispatcherPortName, const
 
     if (m_version == "10.0/5.0") {
         createStatusParams_V10();
+        createConfigParams_V10();
     } else {
         LOG_ERROR("Unsupported FEM version '%s'", version);
         return;
     }
+
+    LOG_DEBUG("Number of configured dynamic parameters: %u", m_statusParams.size() + m_configParams.size());
 
     callParamCallbacks();
     setCallbacks(true);
@@ -319,7 +322,6 @@ void FemPlugin::createConfigParams_V10()
 
     createConfigParam("VerboseDisc",  'F', 0x0,  1, 15, 0);     // Verbose discover              (0=disable,1=enable)
     createConfigParam("VerboseRsp",   'F', 0x0,  1, 14, 0);     // Verbose command response      (0=disable,1=enable)
-    createConfigParam("Ch10Disable",  'F', 0x0,  1, 13, 0);     // Chan10 disable                (0=enable,1=disable)
     createConfigParam("Ch10Disable",  'F', 0x0,  1, 13, 0);     // Chan10 disable                (0=enable,1=disable)
     createConfigParam("Ch9Disable",   'F', 0x0,  1, 12, 0);     // Chan9 disable                 (0=enable,1=disable)
     createConfigParam("Ch8Disable",   'F', 0x0,  1, 11, 0);     // Chan8 disable                 (0=enable,1=disable)

@@ -17,7 +17,7 @@
  */
 class FemPlugin : public BaseModulePlugin {
     private: // structures and definitions
-        static const unsigned NUM_FEMPLUGIN_STATUSPARAMS;   //!< This is used as a runtime assert check and must match number of status parameters
+        static const unsigned NUM_FEMPLUGIN_DYNPARAMS;  //!< Maximum number of asyn parameters, including the status and configuration parameters
 
     private: // variables
         std::string m_version;              //!< Version string as passed to constructor

@@ -356,7 +356,7 @@ uint32_t BaseModulePlugin::parseHardwareId(const std::string &text)
 {
     uint32_t id = 0;
 
-    if (text.substr(2) == "0x") {
+    if (text.substr(0, 2) == "0x") {
         char *endptr;
         id = strtoul(text.c_str(), &endptr, 16);
         if (*endptr != 0)
