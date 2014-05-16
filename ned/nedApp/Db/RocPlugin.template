@@ -1845,6 +1845,70 @@ record(longout, "$(P)$(R)Ch8BThresh")
     field(SCAN, "I/O Intr")
     field(VAL,  "400")
 }
+record(longout, "$(P)$(R)Ch1PosThres")
+{
+    field(DESC, "Chan1 positive threshold")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch1PosThres")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "400")
+}
+record(longout, "$(P)$(R)Ch2PosThres")
+{
+    field(DESC, "Chan2 positive threshold")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch2PosThres")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "400")
+}
+record(longout, "$(P)$(R)Ch3PosThres")
+{
+    field(DESC, "Chan3 positive threshold")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch3PosThres")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "400")
+}
+record(longout, "$(P)$(R)Ch4PosThres")
+{
+    field(DESC, "Chan4 positive threshold")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch4PosThres")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "400")
+}
+record(longout, "$(P)$(R)Ch5PosThres")
+{
+    field(DESC, "Chan5 positive threshold")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch5PosThres")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "400")
+}
+record(longout, "$(P)$(R)Ch6PosThres")
+{
+    field(DESC, "Chan6 positive threshold")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch6PosThres")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "400")
+}
+record(longout, "$(P)$(R)Ch7PosThres")
+{
+    field(DESC, "Chan7 positive threshold")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch7PosThres")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "400")
+}
+record(longout, "$(P)$(R)Ch8PosThres")
+{
+    field(DESC, "Chan8 positive threshold")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch8PosThres")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "400")
+}
 record(longout, "$(P)$(R)Ch1AFulScal")
 {
     field(DESC, "Chan1 A full scale")
@@ -2356,6 +2420,70 @@ record(longout, "$(P)$(R)Ch8BOffset")
     field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch8BOffset")
     field(SCAN, "I/O Intr")
     field(VAL,  "1600")
+}
+record(longout, "$(P)$(R)Ch1ScaleFac")
+{
+    field(DESC, "Chan1 scale factor")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch1ScaleFac")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "2048")
+}
+record(longout, "$(P)$(R)Ch2ScaleFac")
+{
+    field(DESC, "Chan2 scale factor")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch2ScaleFac")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "2048")
+}
+record(longout, "$(P)$(R)Ch3ScaleFac")
+{
+    field(DESC, "Chan3 scale factor")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch3ScaleFac")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "2048")
+}
+record(longout, "$(P)$(R)Ch4ScaleFac")
+{
+    field(DESC, "Chan4 scale factor")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch4ScaleFac")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "2048")
+}
+record(longout, "$(P)$(R)Ch5ScaleFac")
+{
+    field(DESC, "Chan5 scale factor")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch5ScaleFac")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "2048")
+}
+record(longout, "$(P)$(R)Ch6ScaleFac")
+{
+    field(DESC, "Chan6 scale factor")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch6ScaleFac")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "2048")
+}
+record(longout, "$(P)$(R)Ch7ScaleFac")
+{
+    field(DESC, "Chan7 scale factor")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch7ScaleFac")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "2048")
+}
+record(longout, "$(P)$(R)Ch8ScaleFac")
+{
+    field(DESC, "Chan8 scale factor")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch8ScaleFac")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "2048")
 }
 record(longout, "$(P)$(R)Ch1AAvgMin")
 {
@@ -3055,7 +3183,7 @@ record(longout, "$(P)$(R)TimeVetoHi")
 }
 record(longout, "$(P)$(R)FakeTrigDel")
 {
-    field(DESC, "Fake trigger perios")
+    field(DESC, "Fake trigger delay")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))FakeTrigDel")
     field(SCAN, "I/O Intr")
@@ -3063,7 +3191,7 @@ record(longout, "$(P)$(R)FakeTrigDel")
 }
 record(longout, "$(P)$(R)MinAdcVal")
 {
-    field(DESC, "Fake trigger perios")
+    field(DESC, "Fake trigger periods")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))MinAdcVal")
     field(SCAN, "I/O Intr")
@@ -3071,7 +3199,7 @@ record(longout, "$(P)$(R)MinAdcVal")
 }
 record(longout, "$(P)$(R)MaxAdcVal")
 {
-    field(DESC, "Fake trigger perios")
+    field(DESC, "Fake trigger periods")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))MaxAdcVal")
     field(SCAN, "I/O Intr")
@@ -3100,6 +3228,14 @@ record(longout, "$(P)$(R)Sample2")
     field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Sample2")
     field(SCAN, "I/O Intr")
     field(VAL,  "14")
+}
+record(longout, "$(P)$(R)TsyncDelay")
+{
+    field(DESC, "TSYNC delay")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))TsyncDelay")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "0")
 }
 record(bo, "$(P)$(R)LvdsRate")
 {

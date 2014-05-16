@@ -461,73 +461,91 @@ void RocPlugin::createConfigParams_V5_52()
     createConfigParam("Ch7BThresh",  '2', 0x2E, 12, 0, 400);   // Chan7 B threshold
     createConfigParam("Ch8BThresh",  '2', 0x2F, 12, 0, 400);   // Chan8 B threshold
 
-    createConfigParam("Ch1AFulScal", '2', 0x30, 12, 0, 10);    // Chan1 A full scale
-    createConfigParam("Ch2AFulScal", '2', 0x31, 12, 0, 10);    // Chan2 A full scale
-    createConfigParam("Ch3AFulScal", '2', 0x32, 12, 0, 10);    // Chan3 A full scale
-    createConfigParam("Ch4AFulScal", '2', 0x33, 12, 0, 10);    // Chan4 A full scale
-    createConfigParam("Ch5AFulScal", '2', 0x34, 12, 0, 10);    // Chan5 A full scale
-    createConfigParam("Ch6AFulScal", '2', 0x35, 12, 0, 10);    // Chan6 A full scale
-    createConfigParam("Ch7AFulScal", '2', 0x36, 12, 0, 10);    // Chan7 A full scale
-    createConfigParam("Ch8AFulScal", '2', 0x37, 12, 0, 10);    // Chan8 A full scale
-    createConfigParam("Ch1BFulScal", '2', 0x38, 12, 0, 10);    // Chan1 B full scale
-    createConfigParam("Ch2BFulScal", '2', 0x39, 12, 0, 10);    // Chan2 B full scale
-    createConfigParam("Ch3BFulScal", '2', 0x3A, 12, 0, 10);    // Chan3 B full scale
-    createConfigParam("Ch4BFulScal", '2', 0x3B, 12, 0, 10);    // Chan4 B full scale
-    createConfigParam("Ch5BFulScal", '2', 0x3C, 12, 0, 10);    // Chan5 B full scale
-    createConfigParam("Ch6BFulScal", '2', 0x3D, 12, 0, 10);    // Chan6 B full scale
-    createConfigParam("Ch7BFulScal", '2', 0x3E, 12, 0, 10);    // Chan7 B full scale
-    createConfigParam("Ch8BFulScal", '2', 0x3F, 12, 0, 10);    // Chan8 B full scale
+    createConfigParam("Ch1PosThres", '2', 0x30, 12, 0, 400);   // Chan1 positive threshold
+    createConfigParam("Ch2PosThres", '2', 0x31, 12, 0, 400);   // Chan2 positive threshold
+    createConfigParam("Ch3PosThres", '2', 0x32, 12, 0, 400);   // Chan3 positive threshold
+    createConfigParam("Ch4PosThres", '2', 0x33, 12, 0, 400);   // Chan4 positive threshold
+    createConfigParam("Ch5PosThres", '2', 0x34, 12, 0, 400);   // Chan5 positive threshold
+    createConfigParam("Ch6PosThres", '2', 0x35, 12, 0, 400);   // Chan6 positive threshold
+    createConfigParam("Ch7PosThres", '2', 0x36, 12, 0, 400);   // Chan7 positive threshold
+    createConfigParam("Ch8PosThres", '2', 0x37, 12, 0, 400);   // Chan8 positive threshold
+    createConfigParam("Ch1AFulScal", '2', 0x38, 12, 0, 10);    // Chan1 A full scale
+    createConfigParam("Ch2AFulScal", '2', 0x39, 12, 0, 10);    // Chan2 A full scale
+    createConfigParam("Ch3AFulScal", '2', 0x3A, 12, 0, 10);    // Chan3 A full scale
+    createConfigParam("Ch4AFulScal", '2', 0x3B, 12, 0, 10);    // Chan4 A full scale
+    createConfigParam("Ch5AFulScal", '2', 0x3C, 12, 0, 10);    // Chan5 A full scale
+    createConfigParam("Ch6AFulScal", '2', 0x3D, 12, 0, 10);    // Chan6 A full scale
+    createConfigParam("Ch7AFulScal", '2', 0x3E, 12, 0, 10);    // Chan7 A full scale
+    createConfigParam("Ch8AFulScal", '2', 0x3F, 12, 0, 10);    // Chan8 A full scale
 
-    createConfigParam("Ch1AGainAdj", '2', 0x40, 12, 0, 0);     // Chan1 A gain adjust
-    createConfigParam("Ch2AGainAdj", '2', 0x41, 12, 0, 0);     // Chan2 A gain adjust
-    createConfigParam("Ch3AGainAdj", '2', 0x42, 12, 0, 0);     // Chan3 A gain adjust
-    createConfigParam("Ch4AGainAdj", '2', 0x43, 12, 0, 0);     // Chan4 A gain adjust
-    createConfigParam("Ch5AGainAdj", '2', 0x44, 12, 0, 0);     // Chan5 A gain adjust
-    createConfigParam("Ch6AGainAdj", '2', 0x45, 12, 0, 0);     // Chan6 A gain adjust
-    createConfigParam("Ch7AGainAdj", '2', 0x46, 12, 0, 0);     // Chan7 A gain adjust
-    createConfigParam("Ch8AGainAdj", '2', 0x47, 12, 0, 0);     // Chan8 A gain adjust
-    createConfigParam("Ch1BGainAdj", '2', 0x48, 12, 0, 0);     // Chan1 B gain adjust
-    createConfigParam("Ch2BGainAdj", '2', 0x49, 12, 0, 0);     // Chan2 B gain adjust
-    createConfigParam("Ch3BGainAdj", '2', 0x4A, 12, 0, 0);     // Chan3 B gain adjust
-    createConfigParam("Ch4BGainAdj", '2', 0x4B, 12, 0, 0);     // Chan4 B gain adjust
-    createConfigParam("Ch5BGainAdj", '2', 0x4C, 12, 0, 0);     // Chan5 B gain adjust
-    createConfigParam("Ch6BGainAdj", '2', 0x4D, 12, 0, 0);     // Chan6 B gain adjust
-    createConfigParam("Ch7BGainAdj", '2', 0x4E, 12, 0, 0);     // Chan7 B gain adjust
-    createConfigParam("Ch8BGainAdj", '2', 0x4F, 12, 0, 0);     // Chan8 B gain adjust
+    createConfigParam("Ch1BFulScal", '2', 0x40, 12, 0, 10);    // Chan1 B full scale
+    createConfigParam("Ch2BFulScal", '2', 0x41, 12, 0, 10);    // Chan2 B full scale
+    createConfigParam("Ch3BFulScal", '2', 0x42, 12, 0, 10);    // Chan3 B full scale
+    createConfigParam("Ch4BFulScal", '2', 0x43, 12, 0, 10);    // Chan4 B full scale
+    createConfigParam("Ch5BFulScal", '2', 0x44, 12, 0, 10);    // Chan5 B full scale
+    createConfigParam("Ch6BFulScal", '2', 0x45, 12, 0, 10);    // Chan6 B full scale
+    createConfigParam("Ch7BFulScal", '2', 0x46, 12, 0, 10);    // Chan7 B full scale
+    createConfigParam("Ch8BFulScal", '2', 0x47, 12, 0, 10);    // Chan8 B full scale
+    createConfigParam("Ch1AGainAdj", '2', 0x48, 12, 0, 0);     // Chan1 A gain adjust
+    createConfigParam("Ch2AGainAdj", '2', 0x49, 12, 0, 0);     // Chan2 A gain adjust
+    createConfigParam("Ch3AGainAdj", '2', 0x4A, 12, 0, 0);     // Chan3 A gain adjust
+    createConfigParam("Ch4AGainAdj", '2', 0x4B, 12, 0, 0);     // Chan4 A gain adjust
+    createConfigParam("Ch5AGainAdj", '2', 0x4C, 12, 0, 0);     // Chan5 A gain adjust
+    createConfigParam("Ch6AGainAdj", '2', 0x4D, 12, 0, 0);     // Chan6 A gain adjust
+    createConfigParam("Ch7AGainAdj", '2', 0x4E, 12, 0, 0);     // Chan7 A gain adjust
+    createConfigParam("Ch8AGainAdj", '2', 0x4F, 12, 0, 0);     // Chan8 A gain adjust
 
-    createConfigParam("Ch1AScale",   'B', 0x0,  12, 0, 2048);  // Chan1 A scale
-    createConfigParam("Ch2AScale",   'B', 0x1,  12, 0, 2048);  // Chan2 A scale
-    createConfigParam("Ch3AScale",   'B', 0x2,  12, 0, 2048);  // Chan3 A scale
-    createConfigParam("Ch4AScale",   'B', 0x3,  12, 0, 2048);  // Chan4 A scale
-    createConfigParam("Ch5AScale",   'B', 0x4,  12, 0, 2048);  // Chan5 A scale
-    createConfigParam("Ch6AScale",   'B', 0x5,  12, 0, 2048);  // Chan6 A scale
-    createConfigParam("Ch7AScale",   'B', 0x6,  12, 0, 2048);  // Chan7 A scale
-    createConfigParam("Ch8AScale",   'B', 0x7,  12, 0, 2048);  // Chan8 A scale
-    createConfigParam("Ch1BScale",   'B', 0x8,  12, 0, 2048);  // Chan1 B scale
-    createConfigParam("Ch2BScale",   'B', 0x9,  12, 0, 2048);  // Chan2 B scale
-    createConfigParam("Ch3BScale",   'B', 0xA,  12, 0, 2048);  // Chan3 B scale
-    createConfigParam("Ch4BScale",   'B', 0xB,  12, 0, 2048);  // Chan4 B scale
-    createConfigParam("Ch5BScale",   'B', 0xC,  12, 0, 2048);  // Chan5 B scale
-    createConfigParam("Ch6BScale",   'B', 0xD,  12, 0, 2048);  // Chan6 B scale
-    createConfigParam("Ch7BScale",   'B', 0xE,  12, 0, 2048);  // Chan7 B scale
-    createConfigParam("Ch8BScale",   'B', 0xF,  12, 0, 2048);  // Chan8 B scale
+    createConfigParam("Ch1BGainAdj", '2', 0x50, 12, 0, 0);     // Chan1 B gain adjust
+    createConfigParam("Ch2BGainAdj", '2', 0x51, 12, 0, 0);     // Chan2 B gain adjust
+    createConfigParam("Ch3BGainAdj", '2', 0x52, 12, 0, 0);     // Chan3 B gain adjust
+    createConfigParam("Ch4BGainAdj", '2', 0x53, 12, 0, 0);     // Chan4 B gain adjust
+    createConfigParam("Ch5BGainAdj", '2', 0x54, 12, 0, 0);     // Chan5 B gain adjust
+    createConfigParam("Ch6BGainAdj", '2', 0x55, 12, 0, 0);     // Chan6 B gain adjust
+    createConfigParam("Ch7BGainAdj", '2', 0x56, 12, 0, 0);     // Chan7 B gain adjust
+    createConfigParam("Ch8BGainAdj", '2', 0x57, 12, 0, 0);     // Chan8 B gain adjust
 
-    createConfigParam("Ch1AOffset",  'B', 0x10, 12, 0, 1600);  // Chan1 A offset
-    createConfigParam("Ch2AOffset",  'B', 0x11, 12, 0, 1600);  // Chan2 A offset
-    createConfigParam("Ch3AOffset",  'B', 0x12, 12, 0, 1600);  // Chan3 A offset
-    createConfigParam("Ch4AOffset",  'B', 0x13, 12, 0, 1600);  // Chan4 A offset
-    createConfigParam("Ch5AOffset",  'B', 0x14, 12, 0, 1600);  // Chan5 A offset
-    createConfigParam("Ch6AOffset",  'B', 0x15, 12, 0, 1600);  // Chan6 A offset
-    createConfigParam("Ch7AOffset",  'B', 0x16, 12, 0, 1600);  // Chan7 A offset
-    createConfigParam("Ch8AOffset",  'B', 0x17, 12, 0, 1600);  // Chan8 A offset
-    createConfigParam("Ch1BOffset",  'B', 0x18, 12, 0, 1600);  // Chan1 B offset
-    createConfigParam("Ch2BOffset",  'B', 0x19, 12, 0, 1600);  // Chan2 B offset
-    createConfigParam("Ch3BOffset",  'B', 0x1A, 12, 0, 1600);  // Chan3 B offset
-    createConfigParam("Ch4BOffset",  'B', 0x1B, 12, 0, 1600);  // Chan4 B offset
-    createConfigParam("Ch5BOffset",  'B', 0x1C, 12, 0, 1600);  // Chan5 B offset
-    createConfigParam("Ch6BOffset",  'B', 0x1D, 12, 0, 1600);  // Chan6 B offset
-    createConfigParam("Ch7BOffset",  'B', 0x1E, 12, 0, 1600);  // Chan7 B offset
-    createConfigParam("Ch8BOffset",  'B', 0x1F, 12, 0, 1600);  // Chan8 B offset
+    createConfigParam("Ch1AScale",   '3', 0x0,  12, 0, 2048);  // Chan1 A scale
+    createConfigParam("Ch2AScale",   '3', 0x1,  12, 0, 2048);  // Chan2 A scale
+    createConfigParam("Ch3AScale",   '3', 0x2,  12, 0, 2048);  // Chan3 A scale
+    createConfigParam("Ch4AScale",   '3', 0x3,  12, 0, 2048);  // Chan4 A scale
+    createConfigParam("Ch5AScale",   '3', 0x4,  12, 0, 2048);  // Chan5 A scale
+    createConfigParam("Ch6AScale",   '3', 0x5,  12, 0, 2048);  // Chan6 A scale
+    createConfigParam("Ch7AScale",   '3', 0x6,  12, 0, 2048);  // Chan7 A scale
+    createConfigParam("Ch8AScale",   '3', 0x7,  12, 0, 2048);  // Chan8 A scale
+    createConfigParam("Ch1BScale",   '3', 0x8,  12, 0, 2048);  // Chan1 B scale
+    createConfigParam("Ch2BScale",   '3', 0x9,  12, 0, 2048);  // Chan2 B scale
+    createConfigParam("Ch3BScale",   '3', 0xA,  12, 0, 2048);  // Chan3 B scale
+    createConfigParam("Ch4BScale",   '3', 0xB,  12, 0, 2048);  // Chan4 B scale
+    createConfigParam("Ch5BScale",   '3', 0xC,  12, 0, 2048);  // Chan5 B scale
+    createConfigParam("Ch6BScale",   '3', 0xD,  12, 0, 2048);  // Chan6 B scale
+    createConfigParam("Ch7BScale",   '3', 0xE,  12, 0, 2048);  // Chan7 B scale
+    createConfigParam("Ch8BScale",   '3', 0xF,  12, 0, 2048);  // Chan8 B scale
+
+    createConfigParam("Ch1AOffset",  '3', 0x10, 12, 0, 1600);  // Chan1 A offset
+    createConfigParam("Ch2AOffset",  '3', 0x11, 12, 0, 1600);  // Chan2 A offset
+    createConfigParam("Ch3AOffset",  '3', 0x12, 12, 0, 1600);  // Chan3 A offset
+    createConfigParam("Ch4AOffset",  '3', 0x13, 12, 0, 1600);  // Chan4 A offset
+    createConfigParam("Ch5AOffset",  '3', 0x14, 12, 0, 1600);  // Chan5 A offset
+    createConfigParam("Ch6AOffset",  '3', 0x15, 12, 0, 1600);  // Chan6 A offset
+    createConfigParam("Ch7AOffset",  '3', 0x16, 12, 0, 1600);  // Chan7 A offset
+    createConfigParam("Ch8AOffset",  '3', 0x17, 12, 0, 1600);  // Chan8 A offset
+    createConfigParam("Ch1BOffset",  '3', 0x18, 12, 0, 1600);  // Chan1 B offset
+    createConfigParam("Ch2BOffset",  '3', 0x19, 12, 0, 1600);  // Chan2 B offset
+    createConfigParam("Ch3BOffset",  '3', 0x1A, 12, 0, 1600);  // Chan3 B offset
+    createConfigParam("Ch4BOffset",  '3', 0x1B, 12, 0, 1600);  // Chan4 B offset
+    createConfigParam("Ch5BOffset",  '3', 0x1C, 12, 0, 1600);  // Chan5 B offset
+    createConfigParam("Ch6BOffset",  '3', 0x1D, 12, 0, 1600);  // Chan6 B offset
+    createConfigParam("Ch7BOffset",  '3', 0x1E, 12, 0, 1600);  // Chan7 B offset
+    createConfigParam("Ch8BOffset",  '3', 0x1F, 12, 0, 1600);  // Chan8 B offset
+
+    createConfigParam("Ch1ScaleFac", '4', 0x0,  12, 0, 2048);  // Chan1 scale factor
+    createConfigParam("Ch2ScaleFac", '4', 0x1,  12, 0, 2048);  // Chan2 scale factor
+    createConfigParam("Ch3ScaleFac", '4', 0x2,  12, 0, 2048);  // Chan3 scale factor
+    createConfigParam("Ch4ScaleFac", '4', 0x3,  12, 0, 2048);  // Chan4 scale factor
+    createConfigParam("Ch5ScaleFac", '4', 0x4,  12, 0, 2048);  // Chan5 scale factor
+    createConfigParam("Ch6ScaleFac", '4', 0x5,  12, 0, 2048);  // Chan6 scale factor
+    createConfigParam("Ch7ScaleFac", '4', 0x6,  12, 0, 2048);  // Chan7 scale factor
+    createConfigParam("Ch8ScaleFac", '4', 0x7,  12, 0, 2048);  // Chan8 scale factor
 
     createConfigParam("Ch1AAvgMin",  'C', 0x0,  12, 0, 100);   // Chan1 A average minimum
     createConfigParam("Ch2AAvgMin",  'C', 0x1,  12, 0, 100);   // Chan2 A average minimum
@@ -618,14 +636,15 @@ void RocPlugin::createConfigParams_V5_52()
     createConfigParam("Ch8VerbEn",   'E', 0x0,  1, 15, 0);     // Chan8 verbose enable          (0=disable,1=enable)
 
     createConfigParam("TimeVetoLo",  'E', 0x1,  32, 0, 0);     // Timestamp veto low
-    createConfigParam("TimeVetoHi",  'E', 0x3,  32, 0, 0x0FFFFFFF); // Timestamp veto high
-    createConfigParam("FakeTrigDel", 'E', 0x5,  16, 0, 20000); // Fake trigger perios
-    createConfigParam("MinAdcVal",   'E', 0x6,  16, 0, 100);   // Fake trigger perios
-    createConfigParam("MaxAdcVal",   'E', 0x7,  16, 0, 1000);  // Fake trigger perios
+    createConfigParam("TimeVetoHi",  'E', 0x3,  32, 0, 0);     // Timestamp veto high
+    createConfigParam("FakeTrigDel", 'E', 0x5,  16, 0, 20000); // Fake trigger delay
+    createConfigParam("MinAdcVal",   'E', 0x6,  16, 0, 100);   // Fake trigger periods
+    createConfigParam("MaxAdcVal",   'E', 0x7,  16, 0, 1000);  // Fake trigger periods
     createConfigParam("IntRelease",  'E', 0x8,  16, 0, -6);    // Integrator releas pnt [-6:-1]
     createConfigParam("MinDisWidth", 'E', 0x9,  12, 0, 1);     // Minimum discriminator width
     createConfigParam("Sample1",     'E', 0xA,  4,  0, 2);     // Sample 1 point [0:10]
     createConfigParam("Sample2",     'E', 0xB,  6,  0, 14);    // Sample 1 point [2:50]
+    createConfigParam("TsyncDelay",  'E', 0xC,  32, 0, 0);     // TSYNC delay
 
     createConfigParam("LvdsRate",    'F', 0x0,  1, 15, 1);     // LVDS output rate              (0=20Mhz,1=40Mhz)
     createConfigParam("AutoCorrSam", 'F', 0x0,  1, 14, 0);     // Auto correction sample mode   (0=TSYNC,1=fake trigger)
