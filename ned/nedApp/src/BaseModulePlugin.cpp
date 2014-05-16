@@ -68,7 +68,7 @@ asynStatus BaseModulePlugin::writeInt32(asynUser *pasynUser, epicsInt32 value)
     }
     std::map<int, struct ConfigParamDesc>::iterator it = m_configParams.find(pasynUser->reason);
     if (it != m_configParams.end()) {
-        int mask = (0x1 << it->second.width) - 1;
+        uint32_t mask = (0x1ULL << it->second.width) - 1;
         if ((value & mask) != value) {
             LOG_ERROR("Parameter %s value %d out of bounds", getParamName(it->first), value);
             return asynError;
@@ -100,13 +100,15 @@ void BaseModulePlugin::reqConfigWrite()
     if (m_configPayloadLength == 0)
         recalculateConfigParams();
 
-    uint32_t data[m_configPayloadLength];
-    for (uint32_t i=0; i<m_configPayloadLength; i++)
+    uint32_t length = ((m_configPayloadLength + 3) & ~3) / 4;
+    uint32_t data[length];
+    for (uint32_t i=0; i<length; i++)
         data[i] = 0;
 
     for (std::map<int, struct ConfigParamDesc>::iterator it=m_configParams.begin(); it != m_configParams.end(); it++) {
         int offset = m_configSectionOffsets[it->second.section] + it->second.offset;
-        int mask = (0x1 << it->second.width) - 1;
+        uint32_t mask = (0x1ULL << it->second.width) - 1;
+        int shift = it->second.shift;
         int value = 0;
 
         if (getIntegerParam(it->first, &value) != asynSuccess) {
@@ -118,11 +120,26 @@ void BaseModulePlugin::reqConfigWrite()
             // This should not happen. It's certainly error when setting new value for parameter
             LOG_WARN("Parameter %s value out of range", getParamName(it->first));
         }
+        value &= mask;
 
-        data[offset] |= ((value & mask) << it->second.shift);
+        if (m_behindDsp) {
+            shift += (offset % 2 == 0 ? 0 : 16);
+            offset /= 2;
+        }
+
+        if (offset >= length) {
+            // Unlikely, but rather sure than sorry
+            LOG_ERROR("Parameter %s offset out of range", getParamName(it->first));
+            continue;
+        }
+
+        data[offset] |= value << shift;
+        if ((it->second.width + shift) > 32) {
+            data[offset+1] |= value >> (it->second.width -(32 - shift + 1));
+        }
     }
 
-    sendToDispatcher(DasPacket::CMD_WRITE_CONFIG, data, m_configPayloadLength);
+    sendToDispatcher(DasPacket::CMD_WRITE_CONFIG, data, length);
 }
 
 void BaseModulePlugin::processData(const DasPacketList * const packetList)
@@ -215,8 +232,16 @@ bool BaseModulePlugin::rspReadConfig(const DasPacket *packet)
     const uint32_t *payload = packet->getPayload();
     for (std::map<int, ConfigParamDesc>::iterator it=m_configParams.begin(); it != m_configParams.end(); it++) {
         int offset = m_configSectionOffsets[it->second.section] + it->second.offset;
-        int mask = (0x1 << it->second.width) - 1;
-        int value = (payload[offset] >> it->second.shift) & mask;
+        int shift = it->second.shift;
+        if (m_behindDsp) {
+            shift += (offset % 2 == 0 ? 0 : 16);
+            offset /= 2;
+        }
+        int value = payload[offset] >> shift;
+        if ((shift + it->second.width) > 32) {
+            value |= payload[offset + 1] << (32 - shift);
+        }
+        value &= (0x1ULL << it->second.width) - 1;
         setIntegerParam(it->first, value);
     }
     callParamCallbacks();
@@ -232,11 +257,17 @@ bool BaseModulePlugin::rspReadStatus(const DasPacket *packet)
 
     const uint32_t *payload = packet->getPayload();
     for (std::map<int, StatusParamDesc>::iterator it=m_statusParams.begin(); it != m_statusParams.end(); it++) {
-        int value = payload[it->second.offset] >> it->second.shift;
-        if ((it->second.shift + it->second.width) > 32) {
-            value |= payload[it->second.offset + 1] << (32 - it->second.shift);
+        int offset = it->second.offset;
+        int shift = it->second.shift;
+        if (m_behindDsp) {
+            shift += (offset % 2 == 0 ? 0 : 16);
+            offset /= 2;
         }
-        value &= (0x1 << it->second.width) - 1;
+        int value = payload[offset] >> shift;
+        if ((shift + it->second.width) > 32) {
+            value |= payload[offset + 1] << (32 - shift);
+        }
+        value &= (0x1ULL << it->second.width) - 1;
         setIntegerParam(it->first, value);
     }
     callParamCallbacks();
@@ -251,18 +282,17 @@ void BaseModulePlugin::createStatusParam(const char *name, uint32_t offset, uint
         return;
     }
 
-    if (m_behindDsp) {
-        shift += (offset % 2 == 0 ? 0 : 16);
-        offset /= 2;
-    }
-
     StatusParamDesc desc;
     desc.offset = offset;
     desc.shift = shift;
     desc.width = nBits;
     m_statusParams[index] = desc;
 
-    m_statusPayloadLength = std::max(m_statusPayloadLength, (offset+1)*4);
+    uint32_t length = offset +1;
+    if (m_behindDsp && nBits > 16)
+        length++;
+    uint32_t wordsize = (m_behindDsp ? 2 : 4);
+    m_statusPayloadLength = std::max(m_statusPayloadLength, length*wordsize);
 }
 
 void BaseModulePlugin::createConfigParam(const char *name, char section, uint32_t offset, uint32_t nBits, uint32_t shift, int value)
@@ -274,11 +304,6 @@ void BaseModulePlugin::createConfigParam(const char *name, char section, uint32_
     }
     setIntegerParam(index, value);
 
-    if (m_behindDsp) {
-        shift += (offset % 2 == 0 ? 0 : 16);
-        offset /= 2;
-    }
-
     ConfigParamDesc desc;
     desc.section = section;
     desc.offset  = offset;
@@ -287,7 +312,10 @@ void BaseModulePlugin::createConfigParam(const char *name, char section, uint32_
     desc.initVal = value;
     m_configParams[index] = desc;
 
-    m_configSectionSizes[section] = std::max(m_configSectionSizes[section], offset+1);
+    uint32_t length = offset + 1;
+    if (m_behindDsp && nBits > 16)
+        length++;
+    m_configSectionSizes[section] = std::max(m_configSectionSizes[section], length);
 }
 
 DasPacket *BaseModulePlugin::createOpticalPacket(uint32_t destination, DasPacket::CommandType command, uint32_t *payload, uint32_t length)
@@ -390,5 +418,7 @@ void BaseModulePlugin::recalculateConfigParams()
     }
 
     // Calculate total required payload size in bytes
-    m_configPayloadLength = 4 * (m_configSectionOffsets['F'] + m_configSectionSizes['F']);
+    m_configPayloadLength = m_configSectionOffsets['F'] + m_configSectionSizes['F'];
+    int wordsize = (m_behindDsp ? 2 : 4);
+    m_configPayloadLength *= wordsize;
 }

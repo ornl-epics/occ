@@ -111,8 +111,8 @@ class BaseModulePlugin : public BasePlugin {
 
     private: // variables
         bool m_behindDsp;
-        std::map<char, uint32_t> m_configSectionSizes;
-        std::map<char, uint32_t> m_configSectionOffsets;
+        std::map<char, uint32_t> m_configSectionSizes;  //!< Configuration section sizes, in words (word=2B for submodules, =4B for DSPs)
+        std::map<char, uint32_t> m_configSectionOffsets;//!< Status response payload size, in words (word=2B for submodules, =4B for DSPs)
 
     public: // functions
 
