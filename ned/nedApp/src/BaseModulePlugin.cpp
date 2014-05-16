@@ -69,7 +69,7 @@ asynStatus BaseModulePlugin::writeInt32(asynUser *pasynUser, epicsInt32 value)
     std::map<int, struct ConfigParamDesc>::iterator it = m_configParams.find(pasynUser->reason);
     if (it != m_configParams.end()) {
         uint32_t mask = (0x1ULL << it->second.width) - 1;
-        if ((value & mask) != value) {
+        if (static_cast<int>(value & mask) != value) {
             LOG_ERROR("Parameter %s value %d out of bounds", getParamName(it->first), value);
             return asynError;
         } else {
@@ -106,7 +106,7 @@ void BaseModulePlugin::reqConfigWrite()
         data[i] = 0;
 
     for (std::map<int, struct ConfigParamDesc>::iterator it=m_configParams.begin(); it != m_configParams.end(); it++) {
-        int offset = m_configSectionOffsets[it->second.section] + it->second.offset;
+        uint32_t offset = m_configSectionOffsets[it->second.section] + it->second.offset;
         uint32_t mask = (0x1ULL << it->second.width) - 1;
         int shift = it->second.shift;
         int value = 0;
@@ -116,7 +116,7 @@ void BaseModulePlugin::reqConfigWrite()
             LOG_ERROR("Failed to get parameter %s value", getParamName(it->first));
             return;
         }
-        if ((value & mask) != value) {
+        if (static_cast<int>(value & mask) != value) {
             // This should not happen. It's certainly error when setting new value for parameter
             LOG_WARN("Parameter %s value out of range", getParamName(it->first));
         }

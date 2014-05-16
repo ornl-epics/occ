@@ -36,7 +36,7 @@ RocPlugin::RocPlugin(const char *portName, const char *dispatcherPortName, const
         return;
     }
 
-    LOG_DEBUG("Number of configured dynamic parameters: %u", m_statusParams.size() + m_configParams.size());
+    LOG_DEBUG("Number of configured dynamic parameters: %zu", m_statusParams.size() + m_configParams.size());
 
     callParamCallbacks();
     setCallbacks(true);
