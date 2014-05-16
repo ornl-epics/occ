@@ -304,17 +304,17 @@ DasPacket *BaseModulePlugin::createOpticalPacket(uint32_t destination, DasPacket
 
 DasPacket *BaseModulePlugin::createLvdsPacket(uint32_t destination, DasPacket::CommandType command, uint32_t *payload, uint32_t length)
 {
-    DasPacket *packet = DasPacket::create((2+length)*sizeof(uint32_t), reinterpret_cast<uint8_t *>(payload));
+    DasPacket *packet = DasPacket::create((2+2*length)*sizeof(uint32_t));
     if (packet) {
         uint32_t offset = 0;
         packet->source = DasPacket::HWID_SELF;
         packet->destination = 0;
+        packet->cmdinfo.command = command;
         packet->cmdinfo.is_command = true;
         packet->cmdinfo.is_passthru = true;
         packet->cmdinfo.lvds_cmd = true;
         packet->cmdinfo.lvds_start = true;
         packet->cmdinfo.lvds_parity = evenParity(packet->info & 0xFFFFFF);
-        packet->cmdinfo.command = command;
         if (destination != DasPacket::HWID_BROADCAST) {
             packet->payload[offset] = destination & 0xFFFF;
             packet->payload[offset] |= (evenParity(packet->payload[offset]) << 16);
@@ -323,7 +323,7 @@ DasPacket *BaseModulePlugin::createLvdsPacket(uint32_t destination, DasPacket::C
             packet->payload[offset] |= (evenParity(packet->payload[offset]) << 16);
             offset++;
         } else {
-            packet->payload_length -= 2;
+            packet->payload_length -= 2*sizeof(uint32_t);
         }
         for (uint32_t i=0; i<length; i++) {
             packet->payload[offset] = payload[i] & 0xFFFF;
@@ -337,6 +337,9 @@ DasPacket *BaseModulePlugin::createLvdsPacket(uint32_t destination, DasPacket::C
             offset--;
             packet->payload[offset] |= (0x1 << 17); // Last word bit...
             packet->payload[offset] ^= (0x1 << 16); // ... also flips parity
+        } else {
+            packet->cmdinfo.lvds_stop = true;
+            packet->cmdinfo.lvds_parity ^= 0x1;
         }
     }
     return packet;

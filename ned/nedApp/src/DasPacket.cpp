@@ -54,6 +54,7 @@
 DasPacket *DasPacket::create(uint32_t payloadLen, const uint8_t *payload)
 {
     DasPacket *packet = 0;
+    payloadLen = (payloadLen + 3) & ~3;
     void *addr = malloc(sizeof(DasPacket) + payloadLen);
     if (addr)
         packet = new (addr) DasPacket(payloadLen, payload);
@@ -64,7 +65,7 @@ DasPacket::DasPacket(uint32_t payloadLen, const uint8_t *payload_)
     : destination(0)
     , source(0)
     , info(0)
-    , payload_length((payloadLen + 3 ) & ~3)
+    , payload_length(payloadLen)
     , reserved1(0)
     , reserved2(0)
 {
