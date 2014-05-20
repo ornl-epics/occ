@@ -28,6 +28,7 @@ struct DasPacket
         DasPacket(uint32_t datalen);
 
         uint32_t length() const;
+        uint32_t alignedLength() const;
         uint32_t payloadLength() const;
 
         bool isCommand() const;

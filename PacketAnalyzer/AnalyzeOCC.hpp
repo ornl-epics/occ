@@ -12,7 +12,7 @@ class LabPacket;
 class AnalyzeOCC : public OccAdapter
 {
     public:
-        AnalyzeOCC(const std::string &devfile);
+        AnalyzeOCC(const std::string &devfile, bool dmadump);
 
         void process(bool no_analyze);
         virtual void showMetrics() {};
@@ -45,8 +45,13 @@ class AnalyzeOCC : public OccAdapter
 
     private:
         uint32_t m_rampCounter;
+        void *m_dmaBufferPtr;
+        uint32_t m_dmaBufferSize;
+        bool m_dmadump;
 
         void analyzePacket(const LabPacket * const packet);
+
+        void dumpDmaMemory();
 };
 
 #endif // ANALYZEOCC_HPP

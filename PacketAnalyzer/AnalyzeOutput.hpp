@@ -10,7 +10,7 @@ class LabPacket;
 class AnalyzeOutput : public AnalyzeOCC
 {
     public:
-        AnalyzeOutput(const std::string &devfile, const std::string &dumpfile);
+        AnalyzeOutput(const std::string &devfile, const std::string &dumpfile, bool dmadump);
         ~AnalyzeOutput();
 
         void showMetrics();

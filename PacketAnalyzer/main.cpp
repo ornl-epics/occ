@@ -31,6 +31,7 @@ static void usage(const char *progname) {
     cout << "  -e, --pcie-gen-rate RATE Enable the onboard PCIe FPGA data generator with" << endl;
     cout << "                           selected neutron data rate (multiples of 122,189 Hz)" << endl;
     cout << "  -n, --no-analyze         Don't analyze packets, only consume them" << endl;
+    cout << "  -c, --dmadump            Enable DMA memory dump in case of an error" << endl;
     cout << endl;
 }
 
@@ -41,6 +42,7 @@ int main(int argc, char **argv)
     struct sigaction sigact;
     uint32_t pcie_generator_rate = 0;
     bool no_analyze = false;
+    bool dmadump = false;
 
     sigact.sa_handler = &sighandler;
     sigact.sa_flags = 0;
@@ -73,6 +75,9 @@ int main(int argc, char **argv)
         if (key == "-n" || key == "--no-analyze") {
             no_analyze = true;
         }
+        if (key == "-m" || key == "--dmadump") {
+            dmadump = true;
+        }
     }
 
     if (devfile == NULL) {
@@ -82,7 +87,7 @@ int main(int argc, char **argv)
 
     try {
         shutdown = false;
-        AnalyzeOutput analyzer(devfile, dumpfile);
+        AnalyzeOutput analyzer(devfile, dumpfile, dmadump);
         if (pcie_generator_rate != 0)
             analyzer.enablePcieGenerator(pcie_generator_rate);
         analyzer.process(no_analyze);

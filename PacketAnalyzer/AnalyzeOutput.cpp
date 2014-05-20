@@ -10,8 +10,8 @@ using namespace std;
 #define MAX_EVENTS_PER_PACKET               1800
 #define PRINT_RATELIMIT                     1e9 // define how often to print metrics [in ns]
 
-AnalyzeOutput::AnalyzeOutput(const string &devfile, const string &dumpfile) :
-    AnalyzeOCC(devfile),
+AnalyzeOutput::AnalyzeOutput(const string &devfile, const string &dumpfile, bool dmadump) :
+    AnalyzeOCC(devfile, dmadump),
     m_dumpFile(dumpfile),
     m_dumpStream(dumpfile.c_str(), ofstream::out | ofstream::binary),
     m_lastPrintTime(0)

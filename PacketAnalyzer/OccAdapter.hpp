@@ -15,6 +15,7 @@ class OccAdapter {
         void reset(bool rx_enable);
         bool isPcie();
         void enablePcieGenerator(uint32_t rate);
+        uint32_t getDmaSize();
     protected:
         struct occ_handle *m_occ;
 

@@ -2,6 +2,7 @@
 #include "LabPacket.hpp"
 
 #include <errno.h>
+#include <fcntl.h>
 
 #include <occlib.h>
 #include <stdexcept>
@@ -12,10 +13,16 @@ extern bool shutdown;
 
 using namespace std;
 
-AnalyzeOCC::AnalyzeOCC(const string &devfile) :
+#define DMADUMP_PATH       "dmadump"
+
+AnalyzeOCC::AnalyzeOCC(const string &devfile, bool dmadump) :
     OccAdapter(devfile),
-    m_rampCounter(-1)
+    m_rampCounter(-1),
+    m_dmaBufferPtr(0),
+    m_dmaBufferSize(0),
+    m_dmadump(dmadump)
 {
+    m_dmaBufferSize = getDmaSize();
 }
 
 void AnalyzeOCC::process(bool no_analyze)
@@ -32,11 +39,15 @@ void AnalyzeOCC::process(bool no_analyze)
             if (ret == -ETIME)
                 continue;
             if (ret == -ECONNRESET) {
-                if (occ_reset(m_occ) != 0)
+                if (occ_reset(m_occ) != 0) {
+                    dumpDmaMemory();
                     throw runtime_error("Failed to read from OCC device - " + occErrorString(ret));
+                }
                 continue;
             }
         }
+        if (m_dmaBufferPtr == 0)
+            m_dmaBufferPtr = data;
 
         for (it = data; it < (data + datalen); ) {
             LabPacket *packet;
@@ -51,8 +62,13 @@ void AnalyzeOCC::process(bool no_analyze)
                 // data might put the offset for the next packet right in the
                 // middle of some packet, possible mistranslation of the length
                 // and baam. Better to start over.
+                if (m_dmadump) {
+                    dumpDmaMemory();
+                    throw runtime_error("Bad packet length detected, DMA memory dumped");
+                }
                 if (occ_reset(m_occ) != 0)
                     throw runtime_error("Failed to gracefully recover corrupted queue");
+                break;
             }
             if (!no_analyze)
                 analyzePacket(packet);
@@ -63,7 +79,7 @@ void AnalyzeOCC::process(bool no_analyze)
 
             showMetrics();
 
-            it += packet->length();
+            it += packet->alignedLength();
         }
 
         if ((it - data) > 0) {
@@ -141,5 +157,16 @@ void AnalyzeOCC::analyzePacket(const LabPacket * const packet)
 
     if (!good) {
         dumpPacket(packet, errorOffset);
+    }
+}
+
+void AnalyzeOCC::dumpDmaMemory()
+{
+    if (m_dmaBufferPtr && m_dmadump) {
+        int fd = open(DMADUMP_PATH, O_WRONLY | O_CREAT | O_TRUNC, (mode_t)00666);
+        if (fd == -1)
+            throw runtime_error("Failed to open coredump file");
+        write(fd, m_dmaBufferPtr, m_dmaBufferSize);
+        close(fd);
     }
 }
