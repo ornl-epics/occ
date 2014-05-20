@@ -2,10 +2,24 @@
 
 < ../../iocBoot/iocned/envPaths
 
+epicsEnvSet IOCNAME bl99-iocned
+
 ## Register all support components
 dbLoadDatabase("../../dbd/ned.dbd",0,0)
 ned_registerRecordDeviceDriver(pdbbase) 
 
+# Autosave
+epicsEnvSet SAVE_DIR /home/controls/var/$(IOCNAME)
+system("install -m 777 -d $(SAVE_DIR)")
+save_restoreSet_Debug(0)
+save_restoreSet_status_prefix("BL7:IOCNAME:")
+set_requestfile_path("$(SAVE_DIR)")
+set_savefile_path("$(SAVE_DIR)")
+save_restoreSet_NumSeqFiles(3)
+save_restoreSet_SeqPeriodInSeconds(600)
+###set_pass0_restoreFile("$(IOCNAME).sav")
+###set_pass0_restoreFile("$(IOCNAME)_pass0.sav")
+set_pass1_restoreFile("$(IOCNAME).sav")
 
 ## Load record instances
 epicsEnvSet("PREFIX", "SNS:")
@@ -46,3 +60,12 @@ dbLoadRecords("../../db/FemPlugin.template","P=$(PREFIX),R=fem1:,PORT=fem1,ADDR=
 dbLoadRecords("../../db/BasePlugin.template","P=$(PREFIX),R=fem1:,PORT=fem1,ADDR=0,TIMEOUT=1")
 
 iocInit()
+
+# Create request file and start periodic 'save'
+makeAutosaveFileFromDbInfo("$(SAVE_DIR)/$(IOCNAME).req", "autosaveFields")
+###makeAutosaveFileFromDbInfo("$(SAVE_DIR)/$(IOCNAME)_pass0.req", "autosaveFields_pass0")
+create_monitor_set("$(IOCNAME).req", 30)
+###create_monitor_set("$(IOCNAME)_pass0.req", 30)
+
+# Display status
+save_restoreShow(10)
