@@ -48,6 +48,8 @@
 		<Unit filename="BaseModulePlugin.h" />
 		<Unit filename="BasePlugin.cpp" />
 		<Unit filename="BasePlugin.h" />
+		<Unit filename="BaseSocketPlugin.cpp" />
+		<Unit filename="BaseSocketPlugin.h" />
 		<Unit filename="CircularBuffer.cpp" />
 		<Unit filename="CircularBuffer.h" />
 		<Unit filename="CmdDispatcher.cpp" />
@@ -72,6 +74,8 @@
 		<Unit filename="Log.h" />
 		<Unit filename="OccPortDriver.cpp" />
 		<Unit filename="OccPortDriver.h" />
+		<Unit filename="ProxyPlugin.cpp" />
+		<Unit filename="ProxyPlugin.h" />
 		<Unit filename="RocPlugin.cpp" />
 		<Unit filename="RocPlugin.h" />
 		<Unit filename="StateMachine.h" />
@@ -81,7 +85,7 @@
 		<Unit filename="unittest/testCircularBuffer.cpp" />
 		<Extensions>
 			<code_completion />
-			<envvars />
+			<envvars set="default" />
 			<debugger />
 		</Extensions>
 	</Project>

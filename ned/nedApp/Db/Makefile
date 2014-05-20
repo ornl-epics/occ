@@ -13,7 +13,7 @@ include $(TOP)/configure/CONFIG
 DB += ned.template
 DB += BasePlugin.template
 DB += DiscoverPlugin.template
-DB += AdaraPlugin.template
+DB += BaseSocketPlugin.template
 DB += DspPlugin.template
 DB += RocPlugin.template
 DB += FemPlugin.template
