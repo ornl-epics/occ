@@ -65,12 +65,21 @@ ned_SRCS  += FemPlugin.cpp
 ned_SRCS  += DiscoverPlugin.cpp
 ned_SRCS  += DumpPlugin.cpp
 
+ned_DOXS  += DspPlugin.dox
+ned_DOXS  += RocPlugin.dox
+ned_DOXS  += FemPlugin.dox
+
 #===========================
 
 include $(TOP)/configure/RULES
 #----------------------------------------
 #  ADD RULES AFTER THIS LINE
 
-doc: Doxyfile
-	./extract_module_params.sh DspPlugin.cpp > DspPlugin.dox
-	doxygen
+%.dox: %.cpp
+	./tools/export2doxy.pl -input_file=$^ > $@
+
+doc: Doxyfile $(ned_DOXS)
+	doxygen >/dev/null
+
+clean::
+	rm -f $(ned_DOXS)
