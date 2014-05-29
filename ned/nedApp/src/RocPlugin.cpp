@@ -44,11 +44,15 @@ RocPlugin::RocPlugin(const char *portName, const char *dispatcherPortName, const
 
 bool RocPlugin::rspDiscover(const DasPacket *packet)
 {
-    return (packet->cmdinfo.module_type == DasPacket::MOD_TYPE_ROC);
+    return (BaseModulePlugin::rspDiscover(packet) &&
+            packet->cmdinfo.module_type == DasPacket::MOD_TYPE_ROC);
 }
 
 bool RocPlugin::rspReadVersion(const DasPacket *packet)
 {
+    if (!BaseModulePlugin::rspReadVersion(packet))
+        return false;
+
     if (m_version == "5.2/5.2") {
         return rspReadVersion_V5_5x(packet);
     }
@@ -102,14 +106,6 @@ bool RocPlugin::rspReadVersion_V5_5x(const DasPacket *packet)
     }
 
     return true;
-}
-
-void RocPlugin::timeout(DasPacket::CommandType command)
-{
-    if (command == DasPacket::CMD_READ_VERSION) {
-        // Proper states definition takes place and do the right job
-        m_stateMachine.transition(TIMEOUT);
-    }
 }
 
 void RocPlugin::createStatusParams_V5_52()

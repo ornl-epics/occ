@@ -34,11 +34,33 @@ class Timer : private epicsTimerNotify {
          */
         bool schedule(std::function<void()> &callback, double delay);
 
+        /**
+         * Cancel the timer.
+         *
+         * EPICS timer, while thread safe, does not give us notification whether canceling
+         * it was done before or after it expired. Since the callers of this class are
+         * always locked while calling this class, let's help them determine whether or not
+         * timer expired when canceled. It would be wrong to call directly the EPICS timer
+         * cancel, see their notes.
+         *
+         * @retval true if task has been scheduled and it call to this function canceled it
+         * @retval false if task has already been executed
+         */
+        bool cancel();
+
+        /**
+         * Is a task scheduled and waiting to be executed.
+         *
+         * @return true if task has been scheduled and it hasn't yet been processed or canceled
+         */
+         bool isActive();
+
     private:
         epicsTimerQueueActive &m_queue;
         epicsTimer &m_timer;
         std::function<void()> m_callback;
         void *m_ctx;
+        bool m_active;
 
         expireStatus expire(const epicsTime & currentTime);
 };

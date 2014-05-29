@@ -75,12 +75,6 @@ class RocPlugin : public BaseModulePlugin {
          */
         void createConfigParams_V5_52();
 
-        /**
-         * Based on current state machine state, detect whether the response has been
-         * handled. Move to timeout state otherwise.
-         */
-        void timeout(DasPacket::CommandType command);
-
     private: // asyn parameters
         #define FIRST_ROCPLUGIN_PARAM HardwareVer
         int HardwareVer;    //!< Module hardware version

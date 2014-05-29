@@ -64,29 +64,6 @@ class DspPlugin : public BaseModulePlugin {
          */
         void createStatusParams();
 
-        /**
-         * Setup the expected next response and a timeout routine.
-         *
-         * When the next command is received, it must be the one specified in
-         * command parameter. In that case the callback is invoked.
-         * If the received command does not match expected one, error is
-         * reported and next expected command is cleared.
-         * If no command is received during the specified time, the
-         * noRespondeCleanup() function is called.
-         *
-         * @param[in] cmd Command to wait for.
-         * @param[in] cb Callback to run when command is received.
-         * @param[in] timeout The time to wait for response before calling the cleanup function.
-         */
-        void expectResponse(DasPacket::CommandType cmd, std::function<void(const DasPacket *)> &cb, double timeout=DSP_RESPONSE_TIMEOUT);
-
-        /**
-         * Cleanup function called from Timer.
-         *
-         * It gets called in any case, whether the response ... TODO
-         */
-        void noResponseCleanup(DasPacket::CommandType cmd);
-
     private: // asyn parameters
         #define FIRST_DSPPLUGIN_PARAM Command
         int HardwareVer;    //!< Module hardware version

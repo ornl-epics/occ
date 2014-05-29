@@ -3,8 +3,14 @@
 
 #include "BasePlugin.h"
 #include "StateMachine.h"
+#include "Timer.h"
 
 #include <map>
+
+#define SM_ACTION_CMD(a)        (a)
+#define SM_ACTION_ACK(a)        ((a) | (0x1 << 16))
+#define SM_ACTION_ERR(a)        ((a) | (0x1 << 17))
+#define SM_ACTION_TIMEOUT(a)    ((a) | (0x1 << 18))
 
 /**
  * Base class for all plugins working with particular module.
@@ -55,30 +61,22 @@ class BaseModulePlugin : public BasePlugin {
             CMD_READ_STATUS         = 2,    //!< Trigger reading status from module
             CMD_WRITE_CONFIG        = 3,    //!< Write current configuration to module
             CMD_READ_CONFIG         = 4,    //!< Read actual configuration from module and populate PVs accordingly
+            CMD_START               = 5,    //!< Start acquisition
+            CMD_STOP                = 6,    //!< Stop acquisition
         };
 
         /**
          * Valid statuses of the plugin.
          */
-        enum Status {
-            STAT_NOT_INITIALIZED    = 0,    //!< RocPlugin has not yet been initialized
-            STAT_TIMEOUT            = 1,    //!< Module is not responding to commands
-            STAT_TYPE_MISMATCH      = 2,    //!< Module with given address is not ROC board
-            STAT_VERSION_MISMATCH   = 3,    //!< Actual module version does not match configured one
-            STAT_TYPE_VERIFIED      = 10,   //!< Module type has been verified to be ROC board
-            STAT_VERSION_VERIFIED   = 11,   //!< Module version has been verified to match configured one
-            STAT_READY              = 12,   //!< Module is ready
-        };
-
-        /**
-         * Valid state machine actions.
-         */
-        enum Action {
-            DISCOVER_OK,                    //!< Received valid DISCOVER response which matches ROC type
-            DISCOVER_MISMATCH,              //!< Received invalid DISCOVER response which doesn't match ROC type
-            VERSION_READ_OK,                //!< Received valid READ_STATUS response which matches configured version
-            VERSION_READ_MISMATCH,          //!< Received invalid READ_STATUS response which doesn't match configured version
-            TIMEOUT,                        //!< Timeout occurred
+        enum State {
+            ST_NOT_INITIALIZED      = 0,    //!< RocPlugin has not yet been initialized
+            ST_ERROR                = 1,    //!< Error state
+            ST_TIMEOUT              = 3,    //!< Plugin is initialized, communication with module has been tested and module version/type have been verified
+            ST_WAITING_TYPE_RSP     = 4,    //!< Module type has been verified to be ROC board
+            ST_TYPE_VERIFIED        = 5,    //!< Module version has been verified to match configured one
+            ST_WAITING_VER_RSP      = 6,    //!< Waiting for READ_VERSION response
+            ST_WAITING              = 7,
+            ST_READY                = 8,
         };
 
         /**
@@ -101,18 +99,21 @@ class BaseModulePlugin : public BasePlugin {
             int initVal;            //!< Initial value after object is created or configuration reset is being requested
         };
 
+        static const float NO_RESPONSE_TIMEOUT;         //!< Number of seconds to wait for module response
+
     protected: // variables
         uint32_t m_hardwareId;                          //!< Hardware ID which this plugin is connected to
         uint32_t m_statusPayloadLength;                 //!< Size in bytes of the READ_STATUS request/response payload, calculated dynamically by createStatusParam()
         uint32_t m_configPayloadLength;                 //!< Size in bytes of the READ_CONFIG request/response payload, calculated dynamically by createConfigParam()
         std::map<int, StatusParamDesc> m_statusParams;  //!< Map of exported status parameters
         std::map<int, ConfigParamDesc> m_configParams;  //!< Map of exported config parameters
-        StateMachine<enum Status, int> m_stateMachine;  //!< State machine for the current status
+        StateMachine<State, int> m_stateMachine;        //!< State machine for the current status
 
     private: // variables
         bool m_behindDsp;
         std::map<char, uint32_t> m_configSectionSizes;  //!< Configuration section sizes, in words (word=2B for submodules, =4B for DSPs)
         std::map<char, uint32_t> m_configSectionOffsets;//!< Status response payload size, in words (word=2B for submodules, =4B for DSPs)
+        std::shared_ptr<Timer> m_timeoutTimer;          //!< Currently running timer for response timeout handling, based on state machine only one should be required at any time
 
     public: // functions
 
@@ -163,22 +164,6 @@ class BaseModulePlugin : public BasePlugin {
         void sendToDispatcher(DasPacket::CommandType command, uint32_t *payload=0, uint32_t length=0);
 
         /**
-         * Build WRITE_CONFIG payload and send it to module.
-         *
-         * Configuration data is gathered from configuration parameters
-         * and their current values. Configuration packet is created with
-         * configuration data attached and sent to OCC, but not waited for
-         * response.
-         * Access to this function should be locked before calling it or
-         * otherwise configuration data inconsistencies can occur. Luckily,
-         * this function gets triggered from parameter update, which is
-         * already locked.
-         *
-         * This function is asynchronous but does not wait for response.
-         */
-        void reqConfigWrite();
-
-        /**
          * Overloaded incoming data handler.
          *
          * Function iterates through receives packets and silently skipping
@@ -205,20 +190,66 @@ class BaseModulePlugin : public BasePlugin {
         virtual bool processResponse(const DasPacket *packet);
 
         /**
-         * Abstract handler for DISCOVER response.
+         * Called when discover request to the module should be made.
+         *
+         * Base implementation simply sends a DISCOVER command and sets up
+         * timeout callback.
+         */
+        virtual void reqDiscover();
+
+        /**
+         * Default handler for DISCOVER response.
+         *
+         * Only check for timeout.
          *
          * @param[in] packet with response to DISCOVER
-         * @return true if packet was parsed and type of module is ROC.
+         * @return true if timeout has not yet expired, false otherwise.
          */
         virtual bool rspDiscover(const DasPacket *packet) = 0;
 
         /**
-         * Abstract handler for READ_VERSION response.
+         * Called when read version request to the module should be made.
+         *
+         * Base implementation simply sends a READ_VERSION command and sets up
+         * timeout callback.
+         */
+        virtual void reqReadVersion();
+
+        /**
+         * Default handler for READ_VERSION response.
+         *
+         * Only check for timeout.
          *
          * @param[in] packet with response to READ_VERSION
+         * @return true if timeout has not yet expired, false otherwise.
+         */
+        virtual bool rspReadVersion(const DasPacket *packet);
+
+        /**
+         * Called when read status request to the module should be made.
+         *
+         * Base implementation simply sends a READ_STATUS command and sets up
+         * timeout callback.
+         */
+        virtual void reqReadStatus();
+
+        /**
+         * Default handler for READ_STATUS response.
+         *
+         * Read the packet payload and populate status parameters.
+         *
+         * @param[in] packet with response to READ_STATUS
          * @return true if packet was parsed and module version verified.
          */
-        virtual bool rspReadVersion(const DasPacket *packet) = 0;
+        virtual bool rspReadStatus(const DasPacket *packet);
+
+        /**
+         * Called when read config request to the module should be made.
+         *
+         * Base implementation simply sends a READ_CONFIG command and sets up
+         * timeout callback.
+         */
+        virtual void reqReadConfig();
 
         /**
          * Default handler for READ_CONFIG response.
@@ -231,14 +262,32 @@ class BaseModulePlugin : public BasePlugin {
         virtual bool rspReadConfig(const DasPacket *packet);
 
         /**
-         * Default handler for READ_STATUS response.
+         * Build WRITE_CONFIG payload and send it to module.
          *
-         * Read the packet payload and populate status parameters.
+         * Configuration data is gathered from configuration parameters
+         * and their current values. Configuration packet is created with
+         * configuration data attached and sent to OCC, but not waited for
+         * response.
+         * Access to this function should be locked before calling it or
+         * otherwise configuration data inconsistencies can occur. Luckily,
+         * this function gets triggered from parameter update, which is
+         * already locked.
+         *
+         * This function is asynchronous but does not wait for response.
+         */
+        virtual void reqWriteConfig();
+
+        /**
+         * Default handler for READ_CONFIG response.
+         *
+         * Default implementation checks whether timeout callbacks has already
+         * kicked in and cancels still pending timeout timer.
          *
          * @param[in] packet with response to READ_STATUS
-         * @return true if packet was parsed and module version verified.
+         * @retval true Timeout has not yet occurred
+         * @retval false Timeout has occurred and response is invalid.
          */
-        virtual bool rspReadStatus(const DasPacket *packet);
+        virtual bool rspWriteConfig(const DasPacket *packet);
 
         /**
          * Create and register single integer status parameter.
@@ -304,6 +353,45 @@ class BaseModulePlugin : public BasePlugin {
          * @return Parsed hardware ID or 0 on error.
          */
         static uint32_t parseHardwareId(const std::string &text);
+
+        /**
+         * A no-response cleanup function.
+         *
+         * The timeout callback gets called always, even when the response
+         * was received and processed. There's no timeout cancel mechanism
+         * in place. Based on the action passed as parameter and current
+         * state machine state, function detects whether the response was
+         * received or not.
+         *
+         * @param[in] command Command sent to module for which response should be received.
+         * @return true if the timeout function did the cleanup, that is received was *not* received.
+         */
+        virtual bool noResponseCleanup(DasPacket::CommandType command);
+
+        /**
+         * Request a custom callback function to be called at some time in the future.
+         *
+         * Uses BasePlugin::scheduleCallback() for scheduling the BaseModulePlugin::noResponseTimeout()
+         * function and stores the timer as a member variable.
+         *
+         * Function expects the Plugin to be locked.
+         *
+         * @param[in] command Expected command response
+         * @param[in] delay Delay from now when to invoke the function, in seconds.
+         * @retval true if callback was scheduled
+         * @retval false if callback was not scheduled
+         */
+        bool scheduleTimeoutCallback(DasPacket::CommandType command, double delay);
+
+        /**
+         * Cancel any pending timeout callback and release the timer.
+         *
+         * Function expects the Plugin to be locked.
+         *
+         * @retval true if future callback was canceled
+         * @retval false if callback was already invoked and it hasn't been canceled
+         */
+        bool cancelTimeoutCallback();
 
     private: // functions
         /**

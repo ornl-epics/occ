@@ -7,6 +7,8 @@
 #include <stdint.h>
 #include <string>
 #include <functional>
+#include <list>
+#include <memory>
 #include <asynPortDriver.h>
 #include <epicsMessageQueue.h>
 #include <epicsThread.h>
@@ -172,8 +174,9 @@ class BasePlugin : public asynPortDriver {
          *
          * @param[in] callback Function to be called after delay expires.
          * @param[in] delay Delay from now when to invoke the function, in seconds.
+         * @return active or inactive timer
          */
-        bool scheduleCallback(std::function<void(void)> &callback, double delay);
+        std::shared_ptr<Timer> scheduleCallback(std::function<void(void)> &callback, double delay);
 
         /**
          * Return the name of the asyn parameter.
@@ -205,11 +208,12 @@ class BasePlugin : public asynPortDriver {
         std::string m_dispatcherPortName;           //!< Dispatcher port name
         epicsThreadId m_threadId;                   //!< Thread ID if created during constructor, 0 otherwise
         bool m_shutdown;                            //!< Flag to shutdown the thread, used in conjunction with messageQueue wakeup
+        std::list<std::shared_ptr<Timer> > m_timers;//!< List of timers currently scheduled
 
         /**
          * Called from epicsTimer when timer expires.
          */
-        void timerExpire(Timer *timer, std::function<void(void)> callback);
+        void timerExpire(std::shared_ptr<Timer> &timer, std::function<void(void)> callback);
 
     public: // public only for C linkage, don't use outside the class
         /**

@@ -43,7 +43,8 @@ DspPlugin::DspPlugin(const char *portName, const char *dispatcherPortName, const
 
 bool DspPlugin::rspDiscover(const DasPacket *packet)
 {
-    return (packet->cmdinfo.module_type == DasPacket::MOD_TYPE_DSP);
+    return (BaseModulePlugin::rspDiscover(packet) &&
+            packet->cmdinfo.module_type == DasPacket::MOD_TYPE_DSP);
 }
 
 bool DspPlugin::rspReadVersion(const DasPacket *packet)
@@ -72,6 +73,9 @@ bool DspPlugin::rspReadVersion(const DasPacket *packet)
 #endif
     };
 
+    if (!BaseModulePlugin::rspReadVersion(packet))
+        return false;
+
     const RspVersion *payload = reinterpret_cast<const RspVersion*>(packet->payload);
 
     if (packet->getPayloadLength() != sizeof(RspVersion)) {
@@ -96,25 +100,6 @@ bool DspPlugin::rspReadVersion(const DasPacket *packet)
 
     callParamCallbacks();
     return true;
-}
-
-void DspPlugin::expectResponse(DasPacket::CommandType cmd, std::function<void(const DasPacket *)> &cb, double timeout)
-{
-    // TODO: introduce state-machine or other response tracking
-    std::function<void(void)> timeoutCb = std::bind(&DspPlugin::noResponseCleanup, this, DasPacket::CMD_READ_CONFIG);
-    scheduleCallback(timeoutCb, timeout);
-}
-
-void DspPlugin::noResponseCleanup(DasPacket::CommandType cmd)
-{
-    // Since called, no response was obtained in the given time window.
-    switch (cmd) {
-        case DasPacket::CMD_READ_VERSION:
-            LOG_ERROR("Timeout waiting for DSP version response");
-            break;
-        default:
-            break;
-    }
 }
 
 void DspPlugin::createConfigParams() {

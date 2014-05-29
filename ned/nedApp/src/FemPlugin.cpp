@@ -36,11 +36,15 @@ FemPlugin::FemPlugin(const char *portName, const char *dispatcherPortName, const
 
 bool FemPlugin::rspDiscover(const DasPacket *packet)
 {
-    return (packet->cmdinfo.module_type == DasPacket::MOD_TYPE_FEM);
+    return (BaseModulePlugin::rspDiscover(packet) &&
+            packet->cmdinfo.module_type == DasPacket::MOD_TYPE_FEM);
 }
 
 bool FemPlugin::rspReadVersion(const DasPacket *packet)
 {
+    if (!BaseModulePlugin::rspReadVersion(packet))
+        return false;
+
     if (m_version == "10.0/5.0") {
         return rspReadVersion_V10(packet);
     }
