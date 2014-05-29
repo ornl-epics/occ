@@ -30,10 +30,10 @@ BasePlugin::BasePlugin(const char *portName, const char *dispatcherPortName, int
                        int priority, int stackSize)
 	: asynPortDriver(portName, maxAddr, NUM_BASEPLUGIN_PARAMS + numParams, interfaceMask | defaultInterfaceMask,
 	                 interruptMask | defaultInterruptMask, asynFlags, autoConnect, priority, stackSize)
-    , m_asynGenericPointerInterrupt(0)
-    , m_messageQueue(MESSAGE_QUEUE_SIZE, sizeof(void*))
     , m_portName(portName)
     , m_dispatcherPortName(dispatcherPortName)
+    , m_asynGenericPointerInterrupt(0)
+    , m_messageQueue(MESSAGE_QUEUE_SIZE, sizeof(void*))
     , m_threadId(0)
     , m_shutdown(false)
 {

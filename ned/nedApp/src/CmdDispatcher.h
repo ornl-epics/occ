@@ -43,6 +43,11 @@ class CmdDispatcher : public BasePlugin {
          * @param[in] last Pointer to the address in memory of the last packet to be sent.
          */
         void sendToPlugins(const DasPacket *first, const DasPacket *last);
+
+        /**
+         * Overloaded method used when plugins send data to us.
+         */
+        asynStatus writeGenericPointer(asynUser *pasynUser, void *pointer);
 };
 
 #endif // CMD_DISPATCHER_H

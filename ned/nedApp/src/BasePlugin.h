@@ -186,13 +186,6 @@ class BasePlugin : public asynPortDriver {
          */
         const char *getParamName(int index);
 
-    protected:
-        #define FIRST_BASEPLUGIN_PARAM Enable
-        int Enable;
-        int RxCount;
-        int ProcCount;
-        #define LAST_BASEPLUGIN_PARAM ProcCount
-
         /**
          * Enable or disable callbacks from dispatcher.
          *
@@ -200,12 +193,14 @@ class BasePlugin : public asynPortDriver {
          */
         asynStatus setCallbacks(bool enable);
 
-    private:
+    protected:
         asynUser *m_pasynuser;                      //!< asynUser handler for asyn management
-        void *m_asynGenericPointerInterrupt;        //!< Generic pointer interrupt handler
-        epicsMessageQueue m_messageQueue;           //!< Message queue for non-blocking mode
         std::string m_portName;                     //!< Port name
         std::string m_dispatcherPortName;           //!< Dispatcher port name
+
+    private:
+        void *m_asynGenericPointerInterrupt;        //!< Generic pointer interrupt handler
+        epicsMessageQueue m_messageQueue;           //!< Message queue for non-blocking mode
         epicsThreadId m_threadId;                   //!< Thread ID if created during constructor, 0 otherwise
         bool m_shutdown;                            //!< Flag to shutdown the thread, used in conjunction with messageQueue wakeup
         std::list<std::shared_ptr<Timer> > m_timers;//!< List of timers currently scheduled
@@ -229,6 +224,14 @@ class BasePlugin : public asynPortDriver {
          * Thread will automatically stop when PluginBlockingCallbacks is set to 0.
          */
         void processDataThread();
+
+    protected:
+        #define FIRST_BASEPLUGIN_PARAM Enable
+        int Enable;
+        int RxCount;
+        int ProcCount;
+        #define LAST_BASEPLUGIN_PARAM ProcCount
+
 
 };
 

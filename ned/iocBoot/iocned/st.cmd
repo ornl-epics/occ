@@ -29,6 +29,9 @@ dbLoadRecords("../../db/ned.template","P=$(PREFIX),R=ocb1:,PORT=$(PORT),ADDR=0,T
 nedConfigure("$(PORT)", 0, 4000000)
 #nedConfigure("$(PORT)", 0, 0)
 
+CmdDispatcherConfigure("cmd", "$(PORT)")
+dbLoadRecords("../../db/BasePlugin.template","P=$(PREFIX),R=cmd:,PORT=cmd,ADDR=0,TIMEOUT=1")
+
 #CmdPluginConfigure("Test", "$(PORT)")
 AdaraPluginConfigure("Adara1", "$(PORT)")
 dbLoadRecords("../../db/BaseSocketPlugin.template","P=$(PREFIX),R=adara1:,PORT=Adara1,ADDR=0,TIMEOUT=1")

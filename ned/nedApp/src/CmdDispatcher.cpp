@@ -8,13 +8,16 @@ static const int asynAutoConnect   = 1;
 static const int asynPriority      = 0;
 static const int asynStackSize     = 0;
 
+EPICS_REGISTER_PLUGIN(CmdDispatcher, 2, "Port name", string, "Dispatcher port name", string);
+
 CmdDispatcher::CmdDispatcher(const char *portName, const char *connectPortName)
-    : BasePlugin(portName, connectPortName, REASON_OCCDATA, /*blocking=*/0, /*numparams=*/0,
+    : BasePlugin(portName, connectPortName, REASON_OCCDATA, /*blocking=*/1, /*numparams=*/0,
                  asynMaxAddr, asynInterfaceMask, asynInterruptMask, asynFlags, asynAutoConnect,
                  asynPriority, asynStackSize)
     , m_nReceived(0)
     , m_nProcessed(0)
 {
+    setCallbacks(true);
 }
 
 void CmdDispatcher::processData(const DasPacketList * const packetList)
@@ -55,4 +58,22 @@ void CmdDispatcher::sendToPlugins(const DasPacket *first, const DasPacket *last)
     doCallbacksGenericPointer(reinterpret_cast<void *>(&cmdList), REASON_OCCDATA, 0);
     cmdList.release();
     cmdList.waitAllReleased();
+}
+
+asynStatus CmdDispatcher::writeGenericPointer(asynUser *pasynUser, void *pointer)
+{
+    if (pasynUser->reason == REASON_OCCDATA) {
+        asynInterface *interface = pasynManager->findInterface(m_pasynuser, asynGenericPointerType, 1);
+        if (!interface) {
+            asynPrint(this->pasynUserSelf, ASYN_TRACE_ERROR,
+                      "BasePlugin::%s ERROR: Can't find %s interface on array port %s\n",
+                      __func__, asynGenericPointerType, m_dispatcherPortName.c_str());
+            return asynError;
+        }
+
+        asynGenericPointer *asynGenericPointerInterface = reinterpret_cast<asynGenericPointer *>(interface->pinterface);
+        void *ptr = reinterpret_cast<void *>(reinterpret_cast<DasPacketList *>(pointer));
+        asynGenericPointerInterface->write(interface->drvPvt, m_pasynuser, ptr);
+    }
+    return asynSuccess;
 }
