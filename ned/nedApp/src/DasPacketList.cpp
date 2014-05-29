@@ -107,7 +107,7 @@ DasPacket *prev = 0;
                 int breakpoint = 1;
             }
             len = packet->getAlignedLength();
-            remain -= len;
+            remain -= epicsMin(len, remain);
             prev = packet;
             packet = (DasPacket *)((uint8_t *)packet + len);
             if (remain < 200) {
