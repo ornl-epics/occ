@@ -58,7 +58,7 @@ DumpPluginConfigure("dump", "$(PORT)", 0)
 dbLoadRecords("../../db/DumpPlugin.template","P=$(PREFIX),R=dump:,PORT=dump,ADDR=0,TIMEOUT=1")
 dbLoadRecords("../../db/BasePlugin.template","P=$(PREFIX),R=dump:,PORT=dump,ADDR=0,TIMEOUT=1")
 
-FemPluginConfigure("fem1", "$(PORT)", "0x603B0817", "10/5.2", 1)
+FemPluginConfigure("fem1", "$(PORT)", "0x603B0817", "10.0/5.0", 1)
 dbLoadRecords("../../db/FemPlugin.template","P=$(PREFIX),R=fem1:,PORT=fem1,ADDR=0,TIMEOUT=1")
 dbLoadRecords("../../db/BasePlugin.template","P=$(PREFIX),R=fem1:,PORT=fem1,ADDR=0,TIMEOUT=1")
 

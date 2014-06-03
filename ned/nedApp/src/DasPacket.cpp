@@ -149,6 +149,23 @@ const DasPacket::NeutronEvent *DasPacket::getNeutronData(uint32_t *count) const
     return reinterpret_cast<const NeutronEvent *>(start);
 }
 
+DasPacket::CommandType DasPacket::getResponseType() const
+{
+    CommandType command = static_cast<CommandType>(0);
+    if (cmdinfo.is_command && cmdinfo.is_response) {
+        if (cmdinfo.command == RSP_ACK || cmdinfo.command == RSP_NACK) {
+            if (cmdinfo.is_passthru) {
+                command = reinterpret_cast<const CommandInfo *>(&payload[1])->command;
+            } else {
+                command = reinterpret_cast<const CommandInfo *>(&payload[0])->command;
+            }
+        } else {
+            command = cmdinfo.command;
+        }
+    }
+    return command;
+}
+
 uint32_t DasPacket::getSourceAddress() const
 {
     if (cmdinfo.is_command && cmdinfo.is_passthru)
@@ -159,10 +176,15 @@ uint32_t DasPacket::getSourceAddress() const
 
 const uint32_t *DasPacket::getPayload() const
 {
-    if (cmdinfo.is_command && cmdinfo.is_passthru)
-        return &payload[1];
-    else
+    if (cmdinfo.is_command && cmdinfo.is_passthru) {
+        if (cmdinfo.command == RSP_ACK || cmdinfo.command == RSP_NACK) {
+            return &payload[2];
+        } else {
+            return &payload[1];
+        }
+    } else {
         return payload;
+    }
 }
 
 uint32_t DasPacket::getPayloadLength() const

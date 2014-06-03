@@ -53,19 +53,6 @@
 class BaseModulePlugin : public BasePlugin {
     public: // structures and defines
         /**
-         * Valid commands to be send to module through OCC.
-         */
-        enum Command {
-            CMD_NONE                = 0,
-            CMD_INITIALIZE          = 1,    //!< Trigger RO module initialization
-            CMD_READ_STATUS         = 2,    //!< Trigger reading status from module
-            CMD_WRITE_CONFIG        = 3,    //!< Write current configuration to module
-            CMD_READ_CONFIG         = 4,    //!< Read actual configuration from module and populate PVs accordingly
-            CMD_START               = 5,    //!< Start acquisition
-            CMD_STOP                = 6,    //!< Stop acquisition
-        };
-
-        /**
          * Valid statuses of the plugin.
          */
         enum State {
@@ -262,7 +249,7 @@ class BaseModulePlugin : public BasePlugin {
         virtual bool rspReadConfig(const DasPacket *packet);
 
         /**
-         * Build WRITE_CONFIG payload and send it to module.
+         * Construct WRITE_CONFIG payload and send it to module.
          *
          * Configuration data is gathered from configuration parameters
          * and their current values. Configuration packet is created with
@@ -273,7 +260,7 @@ class BaseModulePlugin : public BasePlugin {
          * this function gets triggered from parameter update, which is
          * already locked.
          *
-         * This function is asynchronous but does not wait for response.
+         * This function is asynchronous and does not wait for response.
          */
         virtual void reqWriteConfig();
 
@@ -288,6 +275,38 @@ class BaseModulePlugin : public BasePlugin {
          * @retval false Timeout has occurred and response is invalid.
          */
         virtual bool rspWriteConfig(const DasPacket *packet);
+
+        /**
+         * Send START command to module.
+         *
+         * This function is asynchronous and does not wait for response.
+         */
+        virtual void reqStart();
+
+        /**
+         * Default handler for START response.
+         *
+         * @param[in] packet with response to START
+         * @retval true Timeout has not yet occurred
+         * @retval false Timeout has occurred and response is invalid.
+         */
+        virtual bool rspStart(const DasPacket *packet);
+
+        /**
+         * Send STOP command to module.
+         *
+         * This function is asynchronous and does not wait for response.
+         */
+        virtual void reqStop();
+
+        /**
+         * Default handler for STOP response.
+         *
+         * @param[in] packet with response to STOP
+         * @retval true Timeout has not yet occurred
+         * @retval false Timeout has occurred and response is invalid.
+         */
+        virtual bool rspStop(const DasPacket *packet);
 
         /**
          * Create and register single integer status parameter.

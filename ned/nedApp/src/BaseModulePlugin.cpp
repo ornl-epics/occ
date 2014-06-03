@@ -42,6 +42,14 @@ BaseModulePlugin::BaseModulePlugin(const char *portName, const char *dispatcherP
     m_stateMachine.addState(ST_WAITING,             SM_ACTION_ACK(DasPacket::CMD_WRITE_CONFIG),     ST_READY);
     m_stateMachine.addState(ST_WAITING,             SM_ACTION_ERR(DasPacket::CMD_WRITE_CONFIG),     ST_ERROR);
     m_stateMachine.addState(ST_WAITING,             SM_ACTION_TIMEOUT(DasPacket::CMD_WRITE_CONFIG), ST_TIMEOUT);
+    m_stateMachine.addState(ST_READY,               SM_ACTION_CMD(DasPacket::CMD_START),            ST_WAITING);
+    m_stateMachine.addState(ST_WAITING,             SM_ACTION_ACK(DasPacket::CMD_START),            ST_READY);
+    m_stateMachine.addState(ST_WAITING,             SM_ACTION_ERR(DasPacket::CMD_START),            ST_ERROR);
+    m_stateMachine.addState(ST_WAITING,             SM_ACTION_TIMEOUT(DasPacket::CMD_START),        ST_TIMEOUT);
+    m_stateMachine.addState(ST_READY,               SM_ACTION_CMD(DasPacket::CMD_STOP),             ST_WAITING);
+    m_stateMachine.addState(ST_WAITING,             SM_ACTION_ACK(DasPacket::CMD_STOP),             ST_READY);
+    m_stateMachine.addState(ST_WAITING,             SM_ACTION_ERR(DasPacket::CMD_STOP),             ST_ERROR);
+    m_stateMachine.addState(ST_WAITING,             SM_ACTION_TIMEOUT(DasPacket::CMD_STOP),         ST_TIMEOUT);
 
     // Temporary fix to get us from error state
     m_stateMachine.addState(ST_ERROR,               0,                                              ST_NOT_INITIALIZED);
@@ -83,13 +91,19 @@ asynStatus BaseModulePlugin::writeInt32(asynUser *pasynUser, epicsInt32 value)
         case DasPacket::CMD_WRITE_CONFIG:
             reqWriteConfig();
             break;
+        case DasPacket::CMD_START:
+            reqStart();
+            break;
+        case DasPacket::CMD_STOP:
+            reqStop();
+            break;
         case 0:
             break;
         default:
             LOG_WARN("Unrecognized '%d' command", SM_ACTION_CMD(value));
             return asynError;
         }
-        m_stateMachine.transition(value);
+        m_stateMachine.transition(SM_ACTION_CMD(value));
         setIntegerParam(Status, m_stateMachine.getCurrentState());
         callParamCallbacks();
         return asynSuccess;
@@ -152,13 +166,14 @@ void BaseModulePlugin::processData(const DasPacketList * const packetList)
 bool BaseModulePlugin::processResponse(const DasPacket *packet)
 {
     bool ack = false;
+    DasPacket::CommandType command = packet->getResponseType();
 
-    if (!m_stateMachine.checkTransition(SM_ACTION_ACK(packet->cmdinfo.command))) {
-        LOG_WARN("Response '0x%X' not allowed in this state, ignoring", packet->cmdinfo.command);
+    if (!m_stateMachine.checkTransition(SM_ACTION_ACK(command))) {
+        LOG_WARN("Response '0x%X' not allowed in this state, ignoring", command);
         return false;
     }
 
-    switch (packet->cmdinfo.command) {
+    switch (command) {
     case DasPacket::CMD_DISCOVER:
         ack = rspDiscover(packet);
         break;
@@ -171,25 +186,21 @@ bool BaseModulePlugin::processResponse(const DasPacket *packet)
     case DasPacket::CMD_READ_STATUS:
         ack = rspReadStatus(packet);
         break;
-    case DasPacket::RSP_ACK:
-        switch (packet->getPayload()[0]) {
-        case DasPacket::CMD_READ_CONFIG:
-            ack = rspReadConfig(packet);
-            break;
-        case DasPacket::CMD_WRITE_CONFIG:
-            ack = rspWriteConfig(packet);
-            break;
-        default:
-            LOG_WARN("Received unhandled ACK response 0x%02X", packet->cmdinfo.command);
-            return false;
-        }
+    case DasPacket::CMD_WRITE_CONFIG:
+        ack = rspWriteConfig(packet);
+        break;
+    case DasPacket::CMD_START:
+        ack = rspStart(packet);
+        break;
+    case DasPacket::CMD_STOP:
+        ack = rspStop(packet);
         break;
     default:
-        LOG_WARN("Received unhandled response 0x%02X", packet->cmdinfo.command);
+        LOG_WARN("Received unhandled response 0x%02X", command);
         return false;
     }
 
-    int action = (ack ? SM_ACTION_ACK(packet->cmdinfo.command) : SM_ACTION_ERR(packet->cmdinfo.command));
+    int action = (ack ? SM_ACTION_ACK(command) : SM_ACTION_ERR(command));
     m_stateMachine.transition(action);
     setIntegerParam(Status, m_stateMachine.getCurrentState());
     callParamCallbacks();
@@ -358,6 +369,36 @@ bool BaseModulePlugin::rspWriteConfig(const DasPacket *packet)
         return false;
     }
     return true;
+}
+
+void BaseModulePlugin::reqStart()
+{
+    sendToDispatcher(DasPacket::CMD_START);
+    scheduleTimeoutCallback(DasPacket::CMD_START, NO_RESPONSE_TIMEOUT);
+}
+
+bool BaseModulePlugin::rspStart(const DasPacket *packet)
+{
+    if (!cancelTimeoutCallback()) {
+        LOG_WARN("Received CMD_START response after timeout");
+        return false;
+    }
+    return (packet->cmdinfo.command == DasPacket::RSP_ACK);
+}
+
+void BaseModulePlugin::reqStop()
+{
+    sendToDispatcher(DasPacket::CMD_STOP);
+    scheduleTimeoutCallback(DasPacket::CMD_STOP, NO_RESPONSE_TIMEOUT);
+}
+
+bool BaseModulePlugin::rspStop(const DasPacket *packet)
+{
+    if (!cancelTimeoutCallback()) {
+        LOG_WARN("Received CMD_STPO response after timeout");
+        return false;
+    }
+    return (packet->cmdinfo.command == DasPacket::RSP_ACK);
 }
 
 void BaseModulePlugin::createStatusParam(const char *name, uint32_t offset, uint32_t nBits, uint32_t shift)
