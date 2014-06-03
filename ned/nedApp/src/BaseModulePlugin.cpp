@@ -527,17 +527,17 @@ uint32_t BaseModulePlugin::parseHardwareId(const std::string &text)
     return id;
 }
 
-bool BaseModulePlugin::noResponseCleanup(DasPacket::CommandType command)
+float BaseModulePlugin::noResponseCleanup(DasPacket::CommandType command)
 {
-    bool ret = m_stateMachine.transition(SM_ACTION_TIMEOUT(command));
+    m_stateMachine.transition(SM_ACTION_TIMEOUT(command));
     setIntegerParam(Status, m_stateMachine.getCurrentState());
     callParamCallbacks();
-    return ret;
+    return 0;
 }
 
 bool BaseModulePlugin::scheduleTimeoutCallback(DasPacket::CommandType command, double delay)
 {
-    std::function<void(void)> timeoutCb = std::bind(&BaseModulePlugin::noResponseCleanup, this, command);
+    std::function<float(void)> timeoutCb = std::bind(&BaseModulePlugin::noResponseCleanup, this, command);
     m_timeoutTimer = scheduleCallback(timeoutCb, NO_RESPONSE_TIMEOUT);
     return (m_timeoutTimer);
 }

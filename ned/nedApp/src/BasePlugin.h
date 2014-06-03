@@ -165,18 +165,20 @@ class BasePlugin : public asynPortDriver {
         /**
          * Request a custom callback function to be called at some time in the future.
          *
-         * If the plugin is non-blocking and is not running its own thread
-         * to do synchronous work, it can request attention in some future
-         * time. The callback will be called in the timer thread which is
-         * shared among all plugins callbacks, and so it shouldn't take block
-         * for to long. When called, access to the plugin is
-         * locked and other requests to current plugin object are serialized.
+         * Using this function, the plugin can request asynchronous task to be
+         * scheduled at some relative time.
+         * All tasks are run from a background thread and before they're
+         * executed, the plugin thread safety is guaranteed through its lock.
+         *
+         * When the timer expires, it invokes user defined function with no parameters.
+         * User defined function should return delay in seconds when the
+         * next invocation should occur, or 0 to stop the timer.
          *
          * @param[in] callback Function to be called after delay expires.
          * @param[in] delay Delay from now when to invoke the function, in seconds.
          * @return active or inactive timer
          */
-        std::shared_ptr<Timer> scheduleCallback(std::function<void(void)> &callback, double delay);
+        std::shared_ptr<Timer> scheduleCallback(std::function<float(void)> &callback, double delay);
 
         /**
          * Return the name of the asyn parameter.
@@ -208,7 +210,7 @@ class BasePlugin : public asynPortDriver {
         /**
          * Called from epicsTimer when timer expires.
          */
-        void timerExpire(std::shared_ptr<Timer> &timer, std::function<void(void)> callback);
+        float timerExpire(std::shared_ptr<Timer> &timer, std::function<float(void)> callback);
 
     public: // public only for C linkage, don't use outside the class
         /**

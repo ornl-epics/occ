@@ -12,7 +12,7 @@ Timer::~Timer()
     m_timer.destroy();
 }
 
-bool Timer::schedule(std::function<void()> &callback, double delay)
+bool Timer::schedule(std::function<float()> &callback, double delay)
 {
     if (m_timer.getExpireDelay() == DBL_MAX)
         return false;
@@ -24,9 +24,13 @@ bool Timer::schedule(std::function<void()> &callback, double delay)
 
 epicsTimerNotify::expireStatus Timer::expire(const epicsTime & currentTime)
 {
-    m_callback();
-    m_active = false;
-    return noRestart;
+    float delay = m_callback();
+    if (delay > 0) {
+        return expireStatus(restart, delay);
+    } else {
+        m_active = false;
+        return expireStatus(noRestart);
+    }
 }
 
 bool Timer::cancel()

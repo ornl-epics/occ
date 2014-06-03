@@ -385,7 +385,7 @@ class BaseModulePlugin : public BasePlugin {
          * @param[in] command Command sent to module for which response should be received.
          * @return true if the timeout function did the cleanup, that is received was *not* received.
          */
-        virtual bool noResponseCleanup(DasPacket::CommandType command);
+        virtual float noResponseCleanup(DasPacket::CommandType command);
 
         /**
          * Request a custom callback function to be called at some time in the future.

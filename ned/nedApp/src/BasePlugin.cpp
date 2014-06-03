@@ -148,11 +148,11 @@ void BasePlugin::sendToDispatcher(const DasPacket *packet)
     packetsList.release();
 }
 
-std::shared_ptr<Timer> BasePlugin::scheduleCallback(std::function<void(void)> &callback, double delay)
+std::shared_ptr<Timer> BasePlugin::scheduleCallback(std::function<float(void)> &callback, double delay)
 {
     std::shared_ptr<Timer> timer(new Timer(true));
     if (timer) {
-        std::function<void(void)> timerCb = std::bind(&BasePlugin::timerExpire, this, timer, callback);
+        std::function<float(void)> timerCb = std::bind(&BasePlugin::timerExpire, this, timer, callback);
         timer->schedule(timerCb, delay);
     }
     return timer;
@@ -221,11 +221,13 @@ asynStatus BasePlugin::setCallbacks(bool enable)
     return status;
 }
 
-void BasePlugin::timerExpire(std::shared_ptr<Timer> &timer, std::function<void()> callback)
+float BasePlugin::timerExpire(std::shared_ptr<Timer> &timer, std::function<float(void)> callback)
 {
+    float delay = 0.0;
     this->lock();
     if (timer->isActive()) {
-        callback();
+        delay = callback();
     }
     this->unlock();
+    return delay;
 }
