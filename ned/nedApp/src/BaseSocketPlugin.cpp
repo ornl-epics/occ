@@ -5,7 +5,8 @@
 #include <osiSock.h>
 #include <string.h> // strerror
 
-#define NUM_BASESOCKETPLUGIN_PARAMS      ((int)(&LAST_BASESOCKETPLUGIN_PARAM - &FIRST_BASESOCKETPLUGIN_PARAM + 1))
+#define NUM_BASESOCKETPLUGIN_PARAMS     ((int)(&LAST_BASESOCKETPLUGIN_PARAM - &FIRST_BASESOCKETPLUGIN_PARAM + 1))
+#define DEFAULT_CHECKCLIENT_DELAY       2
 
 BaseSocketPlugin::BaseSocketPlugin(const char *portName, const char *dispatcherPortName, int blocking,
                            int numParams, int maxAddr, int interfaceMask, int interruptMask,
@@ -19,13 +20,16 @@ BaseSocketPlugin::BaseSocketPlugin(const char *portName, const char *dispatcherP
     createParam("ListenPort",   asynParamInt32,     &ListenPort);
     createParam("ClientIp",     asynParamOctet,     &ClientIP);
     createParam("TxCount",      asynParamInt32,     &TxCount);
+    createParam("CheckClientDel",asynParamInt32,    &CheckClientDelay);
 
     setStringParam(ClientIP,        "");
     setIntegerParam(TxCount,        0);
-    setIntegerParam(ProcCount,      0);
-    setIntegerParam(RxCount,        0);
+    setIntegerParam(CheckClientDelay,  DEFAULT_CHECKCLIENT_DELAY);
 
     callParamCallbacks();
+
+    std::function<float(void)> watchdogCb = std::bind(&BaseSocketPlugin::checkClient, this);
+    scheduleCallback(watchdogCb, DEFAULT_CHECKCLIENT_DELAY);
 }
 
 BaseSocketPlugin::~BaseSocketPlugin()
@@ -53,11 +57,15 @@ asynStatus BaseSocketPlugin::writeInt32(asynUser *pasynUser, epicsInt32 value)
     asynStatus status;
 
     if (pasynUser->reason == ListenPort) {
-        uint16_t port = value;
+        int prevValue;
         char host[256];
 
-        if (value < 0 || value > 0xFFFF)
+        if (value <= 0 || value > 0xFFFF)
             return asynError;
+
+        status = getIntegerParam(ListenPort, &prevValue);
+        if (status == asynSuccess && prevValue == value)
+            return asynSuccess;
 
         status = setIntegerParam(ListenPort, value);
         if (status != asynSuccess) {
@@ -73,10 +81,18 @@ asynStatus BaseSocketPlugin::writeInt32(asynUser *pasynUser, epicsInt32 value)
 
         callParamCallbacks();
 
-        if (!setupListeningSocket(host, port))
+        if (!setupListeningSocket(host, value))
             return asynError;
 
-        LOG_INFO("Listening on %s:%u", host, port);
+        LOG_INFO("Listening on %s:%d", host, value);
+        return asynSuccess;
+    } else if (pasynUser->reason == CheckClientDelay) {
+        // If we were to add support for canceling the timer through value 0 here,
+        // we'd have to implement canceling old timer and scheduling new one.
+        if (value < 1)
+            value = 1;
+        setIntegerParam(CheckClientDelay, value);
+        callParamCallbacks();
         return asynSuccess;
     }
 
@@ -89,7 +105,12 @@ asynStatus BaseSocketPlugin::writeOctet(asynUser *pasynUser, const char *value, 
 
     if (pasynUser->reason == ListenIP) {
         int port;
+        char prevValue[128];
         std::string host(value, nChars);
+
+        status = getStringParam(ListenIP, sizeof(prevValue), prevValue);
+        if (status == asynSuccess && strncmp(prevValue, value, sizeof(prevValue)) == 0)
+            return asynSuccess;
 
         status = setStringParam(ListenIP, value);
         if (status != asynSuccess) {
@@ -137,35 +158,26 @@ bool BaseSocketPlugin::setupListeningSocket(const std::string &host, uint16_t po
 
     optval = 1;
     if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof optval) != 0) {
-        char sockErrBuf[64];
-        LOG_ERROR("Failed to set socket parameters - %s", sockErrBuf);
+        LOG_ERROR("Failed to set socket parameters - %s", strerror(errno));
         close(sock);
         return false;
     }
 
     if (::bind(sock, (struct sockaddr *)&sockaddr, sizeof(struct sockaddr)) != 0) {
-        char sockErrBuf[64];
-        LOG_ERROR("Failed to bind to socket - %s", sockErrBuf);
+        LOG_ERROR("Failed to bind to socket - %s", strerror(errno));
         close(sock);
         return false;
     }
 
     if (listen(sock, 1) != 0) {
-        char sockErrBuf[64];
-        LOG_ERROR("Failed to listen to socket - %s", sockErrBuf);
+        LOG_ERROR("Failed to listen to socket - %s", strerror(errno));
         close(sock);
         return false;
     }
 
-    this->lock();
-
     if (m_listenSock != -1)
         close(m_listenSock);
     m_listenSock = sock;
-
-    disconnectClient();
-
-    this->unlock();
 
     return true;
 }
@@ -201,6 +213,9 @@ bool BaseSocketPlugin::connectClient()
     sockAddrToDottedIP(&client, clientip, sizeof(clientip));
     setStringParam(ClientIP, clientip);
     callParamCallbacks();
+
+    LOG_INFO("New TCP client from %s", clientip);
+
     return true;
 }
 
@@ -211,4 +226,15 @@ void BaseSocketPlugin::disconnectClient()
     m_clientSock = -1;
     setStringParam(ClientIP, "");
     callParamCallbacks();
+}
+
+float BaseSocketPlugin::checkClient()
+{
+    if (!isClientConnected()) {
+	    connectClient();
+    }
+
+    int delay;
+    getIntegerParam(CheckClientDelay, &delay);
+    return delay;
 }

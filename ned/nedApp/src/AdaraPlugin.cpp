@@ -15,6 +15,7 @@ EPICS_REGISTER_PLUGIN(AdaraPlugin, 3, "port name", string, "dispatcher port", st
 #define ADARA_HEADER_SIZE           (4*sizeof(int))
 #define ADARA_CODE_DAS_DATA         0x00000000
 #define ADARA_CODE_DAS_RTDL         0x00000100
+#define ADARA_CODE_HEARTBEAT        0x00400900
 
 AdaraPlugin::AdaraPlugin(const char *portName, const char *dispatcherPortName, int blocking)
     : BaseSocketPlugin(portName, dispatcherPortName, REASON_OCCDATA, blocking, NUM_ADARAPLUGIN_PARAMS)
@@ -92,4 +93,21 @@ void AdaraPlugin::processData(const DasPacketList * const packetList)
     setIntegerParam(ProcCount,  m_nProcessed);
     setIntegerParam(RxCount,    m_nReceived);
     callParamCallbacks();
+}
+
+float AdaraPlugin::checkClient()
+{
+    if (isClientConnected()) {
+        struct timespec ts = epicsTime::getCurrent();
+        uint32_t outpacket[4];
+
+        outpacket[0] = 0;
+        outpacket[1] = ADARA_CODE_HEARTBEAT;
+        outpacket[2] = ts.tv_sec;
+        outpacket[3] = ts.tv_nsec;
+
+        // If sending fails, send() will automatically close the socket
+        (void)send(outpacket, sizeof(outpacket));
+    }
+    return BaseSocketPlugin::checkClient();
 }

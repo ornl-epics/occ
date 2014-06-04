@@ -52,6 +52,16 @@ class AdaraPlugin : public BaseSocketPlugin {
          * @param[in] packetList List of packets to be processed
          */
         void processData(const DasPacketList * const packetList);
+
+        /**
+         * Overloaded periodic function to send ADARA Heartbeat packet.
+         *
+         * Send Heartbeat packet and call base BaseSocketPlugin::checkClient()
+         * function for timer upkeep.
+         *
+         * @return Number returned from BaseSocketPlugin::checkClient()
+         */
+        float checkClient();
 };
 
 #endif // ADARA_PLUGIN_H

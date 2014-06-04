@@ -19,6 +19,7 @@
  * ListenPort    | asynParamInt32  | 0        | RW   | Port number to listen to
  * ClientIp      | asynParamOctet  | <empty>  | RO   | IP of BASESOCKET client if connected, or empty string
  * TxCount       | asynParamInt32  | 0        | RO   | Number of packets sent to BASESOCKET
+ * CheckClientDel| asynParamInt32  | 2        | RW   | Check client interval in seconds
  */
 
 class BaseSocketPlugin : public BasePlugin {
@@ -113,13 +114,33 @@ class BaseSocketPlugin : public BasePlugin {
          */
         bool send(const uint32_t *data, uint32_t length);
 
+        /**
+         * Periodically called to check client connection status or new client
+         *
+         * Check for new incoming client, connect it and update ClientIp PV.
+         *
+         * Function is run by the epicsTimer in a background thread shared by
+         * timers from all plugins. The timer is initialized in constructor for
+         * the first run, later it's driven solely by the return value of this
+         * function. If the function returns 0, timer is canceled. Otherwise it
+         * delays the next execution for the number of seconds returned.
+         * Base implementation of this function reads the delay from a PV every
+         * time before it returns.
+         * Note: If timer is canceled, it's never restarted.
+         *
+         * @return Return delay in seconds before invoking the function again,
+         *         or 0 to cancel the timer.
+         */
+        virtual float checkClient();
+
     protected:
         #define FIRST_BASESOCKETPLUGIN_PARAM ListenIP
         int ListenIP;
         int ListenPort;
         int ClientIP;
         int TxCount;
-        #define LAST_BASESOCKETPLUGIN_PARAM TxCount
+        int CheckClientDelay;
+        #define LAST_BASESOCKETPLUGIN_PARAM CheckClientDelay
 };
 
 #endif // BASESOCKET_PLUGIN_H
