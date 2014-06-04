@@ -98,13 +98,14 @@ void AdaraPlugin::processData(const DasPacketList * const packetList)
 float AdaraPlugin::checkClient()
 {
     if (isClientConnected()) {
-        struct timespec ts = epicsTime::getCurrent();
         uint32_t outpacket[4];
+        epicsTimeStamp ts;
+        getTimeStamp(&ts);
 
         outpacket[0] = 0;
         outpacket[1] = ADARA_CODE_HEARTBEAT;
-        outpacket[2] = ts.tv_sec;
-        outpacket[3] = ts.tv_nsec;
+        outpacket[2] = ts.secPastEpoch;
+        outpacket[3] = ts.nsec;
 
         // If sending fails, send() will automatically close the socket
         (void)send(outpacket, sizeof(outpacket));
