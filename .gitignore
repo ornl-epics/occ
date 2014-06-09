@@ -4,6 +4,7 @@ occ_rawio
 occ_loopback
 PacketAnalyzer
 test_files
+occ_flashprog
 
 # Backup files
 *~
