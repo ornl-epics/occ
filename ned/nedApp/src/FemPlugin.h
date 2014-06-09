@@ -1,10 +1,10 @@
-#ifndef ROC_PLUGIN_H
-#define ROC_PLUGIN_H
+#ifndef FEM_PLUGIN_H
+#define FEM_PLUGIN_H
 
 #include "BaseModulePlugin.h"
 
 /**
- * Plugin for ROC module.
+ * Plugin for FEM module.
  *
  * General plugin parameters:
  * asyn param    | asyn param type | init val | mode | Description                   |
@@ -15,11 +15,9 @@
  * FwVer         | asynParamInt32  | 0        | RO   | Firmware version
  * FwRev         | asynParamInt32  | 0        | RO   | Firmware revision
  */
-class RocPlugin : public BaseModulePlugin {
+class FemPlugin : public BaseModulePlugin {
     private: // structures and definitions
-        static const unsigned NUM_ROCPLUGIN_DYNPARAMS;      //!< Maximum number of asyn parameters, including the status and configuration parameters
-        static const unsigned NUM_CHANNELS = 8;             //!< Number of channels connected to ROC
-        static const float    NO_RESPONSE_TIMEOUT;          //!< Timeout to wait for response from ROC, in seconds
+        static const unsigned NUM_FEMPLUGIN_DYNPARAMS;  //!< Maximum number of asyn parameters, including the status and configuration parameters
 
     private: // variables
         std::string m_version;              //!< Version string as passed to constructor
@@ -27,7 +25,7 @@ class RocPlugin : public BaseModulePlugin {
     public: // functions
 
         /**
-         * Constructor for RocPlugin
+         * Constructor for FemPlugin
          *
          * Constructor will create and populate PVs with default values.
          *
@@ -35,10 +33,10 @@ class RocPlugin : public BaseModulePlugin {
 	     * @param[in] dispatcherPortName Name of the dispatcher asyn port to connect to.
 	     * @param[in] hardwareId Hardware ID of the ROC module, can be in IP format (xxx.xxx.xxx.xxx) or
          *                       in hex number string in big-endian byte order (0x15FACB2D equals to IP 21.250.203.45)
-         * @param[in] version ROC HW&SW version, ie. V5_50
+         * @param[in] version FEM HW&SW version, ie. V10_50
          * @param[in] blocking Flag whether the processing should be done in the context of caller thread or in background thread.
          */
-        RocPlugin(const char *portName, const char *dispatcherPortName, const char *hardwareId, const char *version, int blocking=0);
+        FemPlugin(const char *portName, const char *dispatcherPortName, const char *hardwareId, const char *version, int blocking=0);
 
     private: // functions
         /**
@@ -58,32 +56,32 @@ class RocPlugin : public BaseModulePlugin {
         bool rspReadVersion(const DasPacket *packet);
 
         /**
-         * Handler for READ_VERSION response from ROC V5/5.x
+         * Handler for READ_VERSION response from FEM V10
          *
          * Populate hardware info parameters, like HwVer, HwRev, FwVer etc.
          * @relates rspReadVersion
          */
-        bool rspReadVersion_V5_5x(const DasPacket *packet);
+        bool rspReadVersion_V10(const DasPacket *packet);
 
         /**
-         * Create and register all status ROC V5 parameters to be exposed to EPICS.
+         * Create and register all status FEM V10 parameters to be exposed to EPICS.
          */
-        void createStatusParams_V5_52();
+        void createStatusParams_V10();
 
         /**
-         * Create and register all config ROC V5 parameters to be exposed to EPICS.
+         * Create and register all config FEM V10 parameters to be exposed to EPICS.
          */
-        void createConfigParams_V5_52();
+        void createConfigParams_V10();
 
     private: // asyn parameters
-        #define FIRST_ROCPLUGIN_PARAM HardwareVer
+        #define FIRST_FEMPLUGIN_PARAM HardwareVer
         int HardwareVer;    //!< Module hardware version
         int HardwareRev;    //!< Module hardware revision
         int HardwareDate;   //!< Module hardware date
         int FirmwareVer;    //!< Module firmware version
         int FirmwareRev;    //!< Module firmware revision
-        #define LAST_ROCPLUGIN_PARAM FirmwareRev
-
+        int FirmwareDate;   //!< Module firmware date
+        #define LAST_FEMPLUGIN_PARAM FirmwareDate
 };
 
 #endif // DSP_PLUGIN_H

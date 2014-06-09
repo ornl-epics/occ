@@ -212,7 +212,11 @@ void OccPortDriver::processOccData()
         // Plugins have been notified, hopefully they're all non-blocking.
         // While waiting, calculate how much data can be consumed from circular buffer.
         for (const DasPacket *packet = packetsList.first(); packet != 0; packet = packetsList.next(packet)) {
+#ifdef DWORD_PADDING_WORKAROUND
+            consumed += packet->getAlignedLength();
+#else
             consumed += packet->length();
+#endif
         }
 
         packetsList.release(); // reset() set it to 1

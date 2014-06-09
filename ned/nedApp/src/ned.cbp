@@ -48,6 +48,8 @@
 		<Unit filename="BaseModulePlugin.h" />
 		<Unit filename="BasePlugin.cpp" />
 		<Unit filename="BasePlugin.h" />
+		<Unit filename="BaseSocketPlugin.cpp" />
+		<Unit filename="BaseSocketPlugin.h" />
 		<Unit filename="CircularBuffer.cpp" />
 		<Unit filename="CircularBuffer.h" />
 		<Unit filename="CmdDispatcher.cpp" />
@@ -64,10 +66,16 @@
 		<Unit filename="DmaCopier.h" />
 		<Unit filename="DspPlugin.cpp" />
 		<Unit filename="DspPlugin.h" />
+		<Unit filename="DumpPlugin.cpp" />
+		<Unit filename="DumpPlugin.h" />
 		<Unit filename="EpicsRegister.h" />
+		<Unit filename="FemPlugin.cpp" />
+		<Unit filename="FemPlugin.h" />
 		<Unit filename="Log.h" />
 		<Unit filename="OccPortDriver.cpp" />
 		<Unit filename="OccPortDriver.h" />
+		<Unit filename="ProxyPlugin.cpp" />
+		<Unit filename="ProxyPlugin.h" />
 		<Unit filename="RocPlugin.cpp" />
 		<Unit filename="RocPlugin.h" />
 		<Unit filename="StateMachine.h" />
@@ -77,7 +85,7 @@
 		<Unit filename="unittest/testCircularBuffer.cpp" />
 		<Extensions>
 			<code_completion />
-			<envvars />
+			<envvars set="default" />
 			<debugger />
 		</Extensions>
 	</Project>

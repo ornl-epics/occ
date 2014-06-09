@@ -51,7 +51,8 @@ struct DasPacket
             CMD_READ_CONFIG             = 0x21, //!< Read module configuration
             CMD_READ_STATUS             = 0x22, //!< Read module status
             CMD_WRITE_CONFIG            = 0x30, //!< Write module configuration
-            RSP_ACK                     = 0x41, //!< Acknowledgement to the command, the command that is being acknowledged is in payload[0]
+            RSP_NACK                    = 0x40, //!< NACK to the command, the command that is being acknowledged is in payload[0] or payload[1]
+            RSP_ACK                     = 0x41, //!< ACK to the command, the command that is being acknowledged is in payload[0] or payload[1]
             CMD_DISCOVER                = 0x80, //!< Discover modules
             CMD_START                   = 0x82, //!< Start acquisition
             CMD_STOP                    = 0x83, //!< Stop acquisition
@@ -63,19 +64,58 @@ struct DasPacket
          * Type of modules
          */
         enum ModuleType {
-            MOD_TYPE_ROC                = 32,   //!< ROC (or LPSD) module
-            MOD_TYPE_AROC               = 33,   //!< AROC
-            MOD_TYPE_HROC               = 34,
-            MOD_TYPE_BLNROC             = 37,
-            MOD_TYPE_CROC               = 41,
-            MOD_TYPE_IROC               = 42,
-            MOD_TYPE_BIDIMROC           = 43,
-            MOD_TYPE_DSP                = 48,
-            MOD_TYPE_SANSROC            = 64,
-            MOD_TYPE_ACPC               = 160,
-            MOD_TYPE_ACPCFEM            = 161,
-            MOD_TYPE_FFC                = 162,
-            MOD_TYPE_FEM                = 170,
+            MOD_TYPE_ROC                = 0x20,   //!< ROC (or LPSD) module
+            MOD_TYPE_AROC               = 0x21,   //!< AROC
+            MOD_TYPE_HROC               = 0x22,
+            MOD_TYPE_BLNROC             = 0x25,
+            MOD_TYPE_CROC               = 0x29,
+            MOD_TYPE_IROC               = 0x2A,
+            MOD_TYPE_BIDIMROC           = 0x2B,
+            MOD_TYPE_DSP                = 0x30,
+            MOD_TYPE_SANSROC            = 0x40,
+            MOD_TYPE_ACPC               = 0xA0,
+            MOD_TYPE_ACPCFEM            = 0xA1,
+            MOD_TYPE_FFC                = 0xA2,
+            MOD_TYPE_FEM                = 0xAA,
+        };
+
+        /**
+         * Command packet info breakdown structure.
+         */
+        struct CommandInfo {
+#ifdef BITFIELD_LSB_FIRST
+            enum CommandType command:8;     //!< 8 bits describing DAS module commands
+            enum ModuleType module_type:8;  //!< 15:8 bits describing module type
+            unsigned lvds_parity:1;         //!< LVDS parity bit
+            unsigned lvds_stop:1;           //!< Only last word in a LVDS packet should have this set to 1
+            unsigned lvds_start:1;          //!< Only first word in a LVDS packet should have this set to 1
+            unsigned lvds_cmd:1;            //!< Command(1)/Data(0) indicator
+            unsigned unused:8;              //!< TODO: unknown
+            unsigned is_chain:1;            //!< TODO: what is it?
+            unsigned is_response:1;         //!< If 1 the packet is response to a command
+            unsigned is_passthru:1;         //!< Not sure what this does, but it seems like it's getting set when DSP is forwarding the packet from some other module
+            unsigned is_command:1;          //!< If 1, packet is command, data otherwise
+#endif
+        };
+
+        /**
+         * Data packet info breakdown structure.
+         */
+        struct DataInfo {
+#ifdef BITFIELD_LSB_FIRST
+            unsigned subpacket_start:1;     //!< The first packet in the train of subpackets
+            unsigned subpacket_end:1;       //!< Last packet in the train
+            unsigned only_neutron_data:1;   //!< Only neutron data, if 0 some metadata is included
+            unsigned rtdl_present:1;        //!< Is RTDL 6-words data included right after the header? Should be always 1 for newer DSPs
+            unsigned unused4:1;             //!< Always zero?
+            unsigned format_code:3;         //!< Format code
+            unsigned subpacket_count:16;    //!< Subpacket counter
+            unsigned unused24_27:4;         //!< Not used, should be all 0
+            unsigned last_subpacket:1;      //!< Is this the last subpacket?
+            unsigned unused29:1;
+            unsigned veto:1;                //!< Vetoed packet - XXX: Add more description
+            unsigned is_command:1;          //!< If 1, packet is command, data otherwise
+#endif
         };
 
         static const uint32_t MinLength = 6*4;  //!< Minumum total length of any DAS packet, at least the header must be present
@@ -90,36 +130,8 @@ struct DasPacket
             // ordering. All it means that fields in a structure need to be reversed.
             // Not supporting it here right now since not able to test.
             uint32_t info;                      //!< Raw access to the info (dcomserver compatibility mode)
-            struct {
-#ifdef BITFIELD_LSB_FIRST
-                enum CommandType command:8;     //!< 8 bits describing DAS module commands
-                enum ModuleType module_type:8;  //!< 15:8 bits describing module type
-                unsigned lvds_parity:1;         //!< LVDS parity bit
-                unsigned lvds_global:1;         //!< When set, send to everyone, otherwise 2 dwords in the payload specify the address
-                unsigned lvds_all_one:2;        //!< Until figure out what they are, always 11
-                unsigned unused:8;              //!< TODO: unknown
-                unsigned is_chain:1;            //!< TODO: what is it?
-                unsigned is_response:1;         //!< If 1 the packet is response to a command
-                unsigned is_passthru:1;         //!< Not sure what this does, but it seems like it's getting set when DSP is forwarding the packet from some other module
-                unsigned is_command:1;          //!< If 1, packet is command, data otherwise
-#endif
-            } cmdinfo;
-            struct {
-#ifdef BITFIELD_LSB_FIRST
-                unsigned subpacket_start:1;     //!< The first packet in the train of subpackets
-                unsigned subpacket_end:1;       //!< Last packet in the train
-                unsigned only_neutron_data:1;   //!< Only neutron data, if 0 some metadata is included
-                unsigned rtdl_present:1;        //!< Is RTDL 6-words data included right after the header? Should be always 1 for newer DSPs
-                unsigned unused4:1;             //!< Always zero?
-                unsigned format_code:3;         //!< Format code
-                unsigned subpacket_count:16;    //!< Subpacket counter
-                unsigned unused24_27:4;         //!< Not used, should be all 0
-                unsigned last_subpacket:1;      //!< Is this the last subpacket?
-                unsigned unused29:1;
-                unsigned veto:1;                //!< Vetoed packet - XXX: Add more description
-                unsigned is_command:1;          //!< If 1, packet is command, data otherwise
-#endif
-            } datainfo;
+            struct CommandInfo cmdinfo;
+            struct DataInfo datainfo;
         };                                      //!< 4-byte union of the info, it may include command specific values or data releated fields
         uint32_t payload_length;                //!< payload length, might include the RTDL at the start
         uint32_t reserved1;
@@ -187,6 +199,20 @@ struct DasPacket
         const NeutronEvent *getNeutronData(uint32_t *count) const;
 
         /**
+         * Return the actual response type.
+         *
+         * Response packet command field does not always contain the response
+         * to the command sent. In case where the packet passes through DSP,
+         * some command responses get translated into RSP_ACK in the packet
+         * header and the actual response type is 2 dword in the payload.
+         * This function hides that complexity away and provides unified
+         * way to get response type.
+         *
+         * @return Parsed command response type, or 0 if not response packet.
+         */
+        enum CommandType getResponseType() const;
+
+        /**
          * Return the actual source hardware address.
          *
          * Response packet source field always contains hardware address
@@ -228,6 +254,15 @@ struct DasPacket
          * @return Returns number of the actual payload.
          */
         uint32_t getPayloadLength() const;
+
+#ifdef DWORD_PADDING_WORKAROUND
+        uint32_t getAlignedLength() const {
+            uint32_t len = length();
+            if (((len + 7) & ~7) != len)
+                len += 4;
+            return len;
+        }
+#endif
 
     private:
 

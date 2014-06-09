@@ -3,6 +3,7 @@
 
 #include <cstring>
 #include <fcntl.h>
+#include <unistd.h>
 
 #define NUM_DUMPPLUGIN_PARAMS ((int)(&LAST_DUMPPLUGIN_PARAM - &FIRST_DUMPPLUGIN_PARAM + 1))
 

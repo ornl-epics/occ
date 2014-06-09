@@ -15,6 +15,7 @@ record(stringin, "$(P)$(R)ClientIp")
     field(DTYP, "asynOctetRead")
     field(INP,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))ClientIp")
     field(VAL,  "None")
+   field(SCAN,  "I/O Intr")
 }
 record(longin, "$(P)$(R)TxCount")
 {
@@ -22,4 +23,12 @@ record(longin, "$(P)$(R)TxCount")
    field(INP,   "@asyn($(PORT),$(ADDR),$(TIMEOUT))TxCount")
    field(VAL,   "0")
    field(SCAN,  "I/O Intr")
+}
+record(longout, "$(P)$(R)CheckClientDel")
+{
+   field(DESC,  "Check client interval")
+   field(EGU,   "seconds")
+   field(DTYP,  "asynInt32")
+   field(OUT,   "@asyn($(PORT),$(ADDR),$(TIMEOUT))CheckClientDel")
+   field(VAL,   "5")
 }

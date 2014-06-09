@@ -1,0 +1,1911 @@
+record(mbbi, "$(P)$(R)Status")
+{
+    field(DESC, "Status of FemPlugin")
+    field(PINI, "YES")
+    field(DTYP, "asynInt32")
+    field(INP,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Status")
+    field(ZRVL, "0")
+    field(ZRST, "Not initialized")
+    field(ONVL, "1")
+    field(ONST, "Error")
+    field(TWVL, "3")
+    field(TWST, "Timeout")
+    field(THVL, "4")
+    field(THST, "Type wait")
+    field(FRVL, "5")
+    field(FRST, "Type OK")
+    field(FVVL, "6")
+    field(FVST, "Version wait")
+    field(SXVL, "7")
+    field(SXST, "Waiting")
+    field(SVVL, "8")
+    field(SVST, "Ready")
+    field(SCAN, "I/O Intr")
+}
+record(mbbo, "$(P)$(R)Command")
+{
+    field(DESC, "Issue FemPlugin command")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Command")
+    field(ZRVL, "0")
+    field(ZRST, "Reset")
+    field(ONVL, "128")
+    field(ONST, "Discover")
+    field(TWVL, "32")
+    field(TWST, "Read version")
+    field(THVL, "34")
+    field(THST, "Read status")
+    field(FRVL, "33")
+    field(FRST, "Read config")
+    field(FVVL, "48")
+    field(FVST, "Write config")
+    field(SXVL, "130")
+    field(SXST, "Start acquisition")
+    field(SVVL, "131")
+    field(SVST, "Stop acquisition")
+}
+record(stringin, "$(P)$(R)HwDate")
+{
+    field(DESC, "Hardware date")
+    field(DTYP, "asynOctetRead")
+    field(INP,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))HwDate")
+    field(VAL,  "Unknown")
+    field(SCAN, "I/O Intr")
+}
+record(longin, "$(P)$(R)HwRev")
+{
+    field(DESC, "Hardware revision")
+    field(DTYP,  "asynInt32")
+    field(INP,   "@asyn($(PORT),$(ADDR),$(TIMEOUT))HwRev")
+    field(VAL,   "0")
+    field(SCAN, "I/O Intr")
+}
+record(longin, "$(P)$(R)HwVer")
+{
+    field(DESC, "Hardware version")
+    field(DTYP,  "asynInt32")
+    field(INP,   "@asyn($(PORT),$(ADDR),$(TIMEOUT))HwVer")
+    field(VAL,   "0")
+    field(SCAN, "I/O Intr")
+}
+record(stringin, "$(P)$(R)FirmwareDate")
+{
+    field(DESC, "Firmware date")
+    field(DTYP, "asynOctetRead")
+    field(INP,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))FwDate")
+    field(VAL,  "Unknown")
+    field(SCAN, "I/O Intr")
+}
+record(longin, "$(P)$(R)FirmwareRev")
+{
+    field(DESC, "Firmware revision")
+    field(DTYP,  "asynInt32")
+    field(INP,   "@asyn($(PORT),$(ADDR),$(TIMEOUT))FwRev")
+    field(VAL,   "0")
+    field(SCAN, "I/O Intr")
+}
+record(longin, "$(P)$(R)FirmwareVer")
+{
+    field(DESC, "Firmware version")
+    field(DTYP,  "asynInt32")
+    field(INP,   "@asyn($(PORT),$(ADDR),$(TIMEOUT))FwVer")
+    field(VAL,   "0")
+    field(SCAN, "I/O Intr")
+}
+record(bo, "$(P)$(R)Ch2FifoFull")
+{
+    field(DESC, "Chan2 FIFO went full")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch2FifoFull")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no")
+    field(ONAM, "yes")
+}
+record(bo, "$(P)$(R)Ch2StartErr")
+{
+    field(DESC, "Chan2 got START during packet")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch2StartErr")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no error")
+    field(ONAM, "error")
+}
+record(bo, "$(P)$(R)Ch2NoStart")
+{
+    field(DESC, "Chan2 got data without START")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch2NoStart")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no error")
+    field(ONAM, "error")
+}
+record(bo, "$(P)$(R)Ch2Timeout")
+{
+    field(DESC, "Chan2 got TIMEOUT")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch2Timeout")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no timeout")
+    field(ONAM, "timeout")
+}
+record(bo, "$(P)$(R)Ch2LenLong")
+{
+    field(DESC, "Chan2 long packet error")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch2LenLong")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no error")
+    field(ONAM, "error")
+}
+record(bo, "$(P)$(R)Ch2LenShort")
+{
+    field(DESC, "Chan2 short packet error")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch2LenShort")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no error")
+    field(ONAM, "error")
+}
+record(bo, "$(P)$(R)Ch2DatCmdEr")
+{
+    field(DESC, "Chan2 DATA/COMMAND type error")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch2DatCmdEr")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no error")
+    field(ONAM, "error")
+}
+record(bo, "$(P)$(R)Ch2ParityEr")
+{
+    field(DESC, "Chan2 parity error")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch2ParityEr")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no error")
+    field(ONAM, "error")
+}
+record(bo, "$(P)$(R)Ch1FifoFull")
+{
+    field(DESC, "Chan1 FIFO went full")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch1FifoFull")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no")
+    field(ONAM, "yes")
+}
+record(bo, "$(P)$(R)Ch1StartErr")
+{
+    field(DESC, "Chan1 got START during packet")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch1StartErr")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no error")
+    field(ONAM, "error")
+}
+record(bo, "$(P)$(R)Ch1NoStart")
+{
+    field(DESC, "Chan1 got data without START")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch1NoStart")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no error")
+    field(ONAM, "error")
+}
+record(bo, "$(P)$(R)Ch1Timeout")
+{
+    field(DESC, "Chan1 got TIMEOUT")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch1Timeout")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no timeout")
+    field(ONAM, "timeout")
+}
+record(bo, "$(P)$(R)Ch1LenLong")
+{
+    field(DESC, "Chan1 long packet error")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch1LenLong")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no error")
+    field(ONAM, "error")
+}
+record(bo, "$(P)$(R)Ch1LenShort")
+{
+    field(DESC, "Chan1 short packet error")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch1LenShort")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no error")
+    field(ONAM, "error")
+}
+record(bo, "$(P)$(R)Ch1DatCmdEr")
+{
+    field(DESC, "Chan1 DATA/COMMAND type error")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch1DatCmdEr")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no error")
+    field(ONAM, "error")
+}
+record(bo, "$(P)$(R)Ch1ParityEr")
+{
+    field(DESC, "Chan1 parity error")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch1ParityEr")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no error")
+    field(ONAM, "error")
+}
+record(bo, "$(P)$(R)Ch4FifoFull")
+{
+    field(DESC, "Chan4 FIFO went full")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch4FifoFull")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no")
+    field(ONAM, "yes")
+}
+record(bo, "$(P)$(R)Ch4StartErr")
+{
+    field(DESC, "Chan4 got START during packet")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch4StartErr")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no error")
+    field(ONAM, "error")
+}
+record(bo, "$(P)$(R)Ch4NoStart")
+{
+    field(DESC, "Chan4 got data without START")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch4NoStart")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no error")
+    field(ONAM, "error")
+}
+record(bo, "$(P)$(R)Ch4Timeout")
+{
+    field(DESC, "Chan4 got TIMEOUT")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch4Timeout")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no timeout")
+    field(ONAM, "timeout")
+}
+record(bo, "$(P)$(R)Ch4LenLong")
+{
+    field(DESC, "Chan4 long packet error")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch4LenLong")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no error")
+    field(ONAM, "error")
+}
+record(bo, "$(P)$(R)Ch4LenShort")
+{
+    field(DESC, "Chan4 short packet error")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch4LenShort")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no error")
+    field(ONAM, "error")
+}
+record(bo, "$(P)$(R)Ch4DatCmdEr")
+{
+    field(DESC, "Chan4 DATA/COMMAND type error")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch4DatCmdEr")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no error")
+    field(ONAM, "error")
+}
+record(bo, "$(P)$(R)Ch4ParityEr")
+{
+    field(DESC, "Chan4 parity error")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch4ParityEr")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no error")
+    field(ONAM, "error")
+}
+record(bo, "$(P)$(R)Ch3FifoFull")
+{
+    field(DESC, "Chan3 FIFO went full")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch3FifoFull")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no")
+    field(ONAM, "yes")
+}
+record(bo, "$(P)$(R)Ch3StartErr")
+{
+    field(DESC, "Chan3 got START during packet")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch3StartErr")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no error")
+    field(ONAM, "error")
+}
+record(bo, "$(P)$(R)Ch3NoStart")
+{
+    field(DESC, "Chan3 got data without START")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch3NoStart")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no error")
+    field(ONAM, "error")
+}
+record(bo, "$(P)$(R)Ch3Timeout")
+{
+    field(DESC, "Chan3 got TIMEOUT")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch3Timeout")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no timeout")
+    field(ONAM, "timeout")
+}
+record(bo, "$(P)$(R)Ch3LenLong")
+{
+    field(DESC, "Chan3 long packet error")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch3LenLong")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no error")
+    field(ONAM, "error")
+}
+record(bo, "$(P)$(R)Ch3LenShort")
+{
+    field(DESC, "Chan3 short packet error")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch3LenShort")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no error")
+    field(ONAM, "error")
+}
+record(bo, "$(P)$(R)Ch3DatCmdEr")
+{
+    field(DESC, "Chan3 DATA/COMMAND type error")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch3DatCmdEr")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no error")
+    field(ONAM, "error")
+}
+record(bo, "$(P)$(R)Ch3ParityEr")
+{
+    field(DESC, "Chan3 parity error")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch3ParityEr")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no error")
+    field(ONAM, "error")
+}
+record(bo, "$(P)$(R)Ch6FifoFull")
+{
+    field(DESC, "Chan6 FIFO went full")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch6FifoFull")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no")
+    field(ONAM, "yes")
+}
+record(bo, "$(P)$(R)Ch6StartErr")
+{
+    field(DESC, "Chan6 got START during packet")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch6StartErr")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no error")
+    field(ONAM, "error")
+}
+record(bo, "$(P)$(R)Ch6NoStart")
+{
+    field(DESC, "Chan6 got data without START")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch6NoStart")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no error")
+    field(ONAM, "error")
+}
+record(bo, "$(P)$(R)Ch6Timeout")
+{
+    field(DESC, "Chan6 got TIMEOUT")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch6Timeout")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no timeout")
+    field(ONAM, "timeout")
+}
+record(bo, "$(P)$(R)Ch6LenLong")
+{
+    field(DESC, "Chan6 long packet error")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch6LenLong")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no error")
+    field(ONAM, "error")
+}
+record(bo, "$(P)$(R)Ch6LenShort")
+{
+    field(DESC, "Chan6 short packet error")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch6LenShort")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no error")
+    field(ONAM, "error")
+}
+record(bo, "$(P)$(R)Ch6DatCmdEr")
+{
+    field(DESC, "Chan6 DATA/COMMAND type error")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch6DatCmdEr")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no error")
+    field(ONAM, "error")
+}
+record(bo, "$(P)$(R)Ch6ParityEr")
+{
+    field(DESC, "Chan6 parity error")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch6ParityEr")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no error")
+    field(ONAM, "error")
+}
+record(bo, "$(P)$(R)Ch5FifoFull")
+{
+    field(DESC, "Chan5 FIFO went full")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch5FifoFull")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no")
+    field(ONAM, "yes")
+}
+record(bo, "$(P)$(R)Ch5StartErr")
+{
+    field(DESC, "Chan5 got START during packet")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch5StartErr")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no error")
+    field(ONAM, "error")
+}
+record(bo, "$(P)$(R)Ch5NoStart")
+{
+    field(DESC, "Chan5 got data without START")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch5NoStart")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no error")
+    field(ONAM, "error")
+}
+record(bo, "$(P)$(R)Ch5Timeout")
+{
+    field(DESC, "Chan5 got TIMEOUT")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch5Timeout")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no timeout")
+    field(ONAM, "timeout")
+}
+record(bo, "$(P)$(R)Ch5LenLong")
+{
+    field(DESC, "Chan5 long packet error")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch5LenLong")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no error")
+    field(ONAM, "error")
+}
+record(bo, "$(P)$(R)Ch5LenShort")
+{
+    field(DESC, "Chan5 short packet error")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch5LenShort")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no error")
+    field(ONAM, "error")
+}
+record(bo, "$(P)$(R)Ch5DatCmdEr")
+{
+    field(DESC, "Chan5 DATA/COMMAND type error")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch5DatCmdEr")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no error")
+    field(ONAM, "error")
+}
+record(bo, "$(P)$(R)Ch5ParityEr")
+{
+    field(DESC, "Chan5 parity error")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch5ParityEr")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no error")
+    field(ONAM, "error")
+}
+record(bo, "$(P)$(R)Ch8FifoFull")
+{
+    field(DESC, "Chan8 FIFO went full")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch8FifoFull")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no")
+    field(ONAM, "yes")
+}
+record(bo, "$(P)$(R)Ch8StartErr")
+{
+    field(DESC, "Chan8 got START during packet")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch8StartErr")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no error")
+    field(ONAM, "error")
+}
+record(bo, "$(P)$(R)Ch8NoStart")
+{
+    field(DESC, "Chan8 got data without START")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch8NoStart")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no error")
+    field(ONAM, "error")
+}
+record(bo, "$(P)$(R)Ch8Timeout")
+{
+    field(DESC, "Chan8 got TIMEOUT")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch8Timeout")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no timeout")
+    field(ONAM, "timeout")
+}
+record(bo, "$(P)$(R)Ch8LenLong")
+{
+    field(DESC, "Chan8 long packet error")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch8LenLong")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no error")
+    field(ONAM, "error")
+}
+record(bo, "$(P)$(R)Ch8LenShort")
+{
+    field(DESC, "Chan8 short packet error")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch8LenShort")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no error")
+    field(ONAM, "error")
+}
+record(bo, "$(P)$(R)Ch8DatCmdEr")
+{
+    field(DESC, "Chan8 DATA/COMMAND type error")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch8DatCmdEr")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no error")
+    field(ONAM, "error")
+}
+record(bo, "$(P)$(R)Ch8ParityEr")
+{
+    field(DESC, "Chan8 parity error")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch8ParityEr")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no error")
+    field(ONAM, "error")
+}
+record(bo, "$(P)$(R)Ch7FifoFull")
+{
+    field(DESC, "Chan7 FIFO went full")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch7FifoFull")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no")
+    field(ONAM, "yes")
+}
+record(bo, "$(P)$(R)Ch7StartErr")
+{
+    field(DESC, "Chan7 got START during packet")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch7StartErr")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no error")
+    field(ONAM, "error")
+}
+record(bo, "$(P)$(R)Ch7NoStart")
+{
+    field(DESC, "Chan7 got data without START")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch7NoStart")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no error")
+    field(ONAM, "error")
+}
+record(bo, "$(P)$(R)Ch7Timeout")
+{
+    field(DESC, "Chan7 got TIMEOUT")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch7Timeout")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no timeout")
+    field(ONAM, "timeout")
+}
+record(bo, "$(P)$(R)Ch7LenLong")
+{
+    field(DESC, "Chan7 long packet error")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch7LenLong")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no error")
+    field(ONAM, "error")
+}
+record(bo, "$(P)$(R)Ch7LenShort")
+{
+    field(DESC, "Chan7 short packet error")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch7LenShort")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no error")
+    field(ONAM, "error")
+}
+record(bo, "$(P)$(R)Ch7DatCmdEr")
+{
+    field(DESC, "Chan7 DATA/COMMAND type error")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch7DatCmdEr")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no error")
+    field(ONAM, "error")
+}
+record(bo, "$(P)$(R)Ch7ParityEr")
+{
+    field(DESC, "Chan7 parity error")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch7ParityEr")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no error")
+    field(ONAM, "error")
+}
+record(bo, "$(P)$(R)Ch10FifoFull")
+{
+    field(DESC, "Chan10 FIFO went full")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch10FifoFull")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no")
+    field(ONAM, "yes")
+}
+record(bo, "$(P)$(R)Ch10StartEre")
+{
+    field(DESC, "Chan10 got START during packe")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch10StartEre")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no error")
+    field(ONAM, "error")
+}
+record(bo, "$(P)$(R)Ch10NoStart")
+{
+    field(DESC, "Chan10 got data without START")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch10NoStart")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no error")
+    field(ONAM, "error")
+}
+record(bo, "$(P)$(R)Ch10Timeout")
+{
+    field(DESC, "Chan10 got TIMEOUT")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch10Timeout")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no timeout")
+    field(ONAM, "timeout")
+}
+record(bo, "$(P)$(R)Ch10LenLong")
+{
+    field(DESC, "Chan10 long packet error")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch10LenLong")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no error")
+    field(ONAM, "error")
+}
+record(bo, "$(P)$(R)Ch10LenShort")
+{
+    field(DESC, "Chan10 short packet error")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch10LenShort")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no error")
+    field(ONAM, "error")
+}
+record(bo, "$(P)$(R)Ch10DatCmdEr")
+{
+    field(DESC, "Chan10 DATA/COMMAND type err")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch10DatCmdEr")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no error")
+    field(ONAM, "error")
+}
+record(bo, "$(P)$(R)Ch10ParityEr")
+{
+    field(DESC, "Chan10 parity error")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch10ParityEr")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no error")
+    field(ONAM, "error")
+}
+record(bo, "$(P)$(R)Ch9FifoFull")
+{
+    field(DESC, "Chan9 FIFO went full")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch9FifoFull")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no")
+    field(ONAM, "yes")
+}
+record(bo, "$(P)$(R)Ch9StartErr")
+{
+    field(DESC, "Chan9 got START during packet")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch9StartErr")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no error")
+    field(ONAM, "error")
+}
+record(bo, "$(P)$(R)Ch9NoStart")
+{
+    field(DESC, "Chan9 got data without START")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch9NoStart")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no error")
+    field(ONAM, "error")
+}
+record(bo, "$(P)$(R)Ch9Timeout")
+{
+    field(DESC, "Chan9 got TIMEOUT")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch9Timeout")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no timeout")
+    field(ONAM, "timeout")
+}
+record(bo, "$(P)$(R)Ch9LenLong")
+{
+    field(DESC, "Chan9 long packet error")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch9LenLong")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no error")
+    field(ONAM, "error")
+}
+record(bo, "$(P)$(R)Ch9LenShort")
+{
+    field(DESC, "Chan9 short packet error")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch9LenShort")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no error")
+    field(ONAM, "error")
+}
+record(bo, "$(P)$(R)Ch9DatCmdEr")
+{
+    field(DESC, "Chan9 DATA/COMMAND type error")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch9DatCmdEr")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no error")
+    field(ONAM, "error")
+}
+record(bo, "$(P)$(R)Ch9ParityEr")
+{
+    field(DESC, "Chan9 parity error")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch9ParityEr")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no error")
+    field(ONAM, "error")
+}
+record(longout, "$(P)$(R)NacksFilterd")
+{
+    field(DESC, "Filtered NACK")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))NacksFilterd")
+    field(SCAN, "I/O Intr")
+}
+record(bo, "$(P)$(R)NackFilterd")
+{
+    field(DESC, "Filtered NACK")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))NackFilterd")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no")
+    field(ONAM, "yes")
+}
+record(bo, "$(P)$(R)EepromError")
+{
+    field(DESC, "EEPROM error")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))EepromError")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no error")
+    field(ONAM, "error")
+}
+record(bo, "$(P)$(R)HwMissing")
+{
+    field(DESC, "Missing hardware")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))HwMissing")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "not missing")
+    field(ONAM, "missing")
+}
+record(bo, "$(P)$(R)Unconfig")
+{
+    field(DESC, "Unconfigured")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Unconfig")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "configured")
+    field(ONAM, "not confiured")
+}
+record(bo, "$(P)$(R)ProgramErr")
+{
+    field(DESC, "Programming error")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))ProgramErr")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no error")
+    field(ONAM, "error")
+}
+record(bo, "$(P)$(R)CmdLenErr")
+{
+    field(DESC, "Command length error")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))CmdLenErr")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no error")
+    field(ONAM, "error")
+}
+record(bo, "$(P)$(R)UnknownCmd")
+{
+    field(DESC, "Unknown command")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))UnknownCmd")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no error")
+    field(ONAM, "error")
+}
+record(bo, "$(P)$(R)CtrlFifoFull")
+{
+    field(DESC, "CTRL FIFO went full")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))CtrlFifoFull")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no")
+    field(ONAM, "yes")
+}
+record(bo, "$(P)$(R)CtrlStartErr")
+{
+    field(DESC, "CTRL got START during packe")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))CtrlStartErr")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no error")
+    field(ONAM, "error")
+}
+record(bo, "$(P)$(R)CtrlNoStart")
+{
+    field(DESC, "CTRL got data without START")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))CtrlNoStart")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no error")
+    field(ONAM, "error")
+}
+record(bo, "$(P)$(R)CtrlTimeout")
+{
+    field(DESC, "CTRL got TIMEOUT")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))CtrlTimeout")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no timeout")
+    field(ONAM, "timeout")
+}
+record(bo, "$(P)$(R)CtrlLenLong")
+{
+    field(DESC, "CTRL long packet error")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))CtrlLenLong")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no error")
+    field(ONAM, "error")
+}
+record(bo, "$(P)$(R)CtrlLenShort")
+{
+    field(DESC, "CTRL short packet error")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))CtrlLenShort")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no error")
+    field(ONAM, "error")
+}
+record(bo, "$(P)$(R)CtrlDatCmdEr")
+{
+    field(DESC, "CTRL DATA/COMMAND type err")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))CtrlDatCmdEr")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no error")
+    field(ONAM, "error")
+}
+record(bo, "$(P)$(R)CtrlParityEr")
+{
+    field(DESC, "CTRL parity error")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))CtrlParityEr")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no error")
+    field(ONAM, "error")
+}
+record(longout, "$(P)$(R)FilterdNacks")
+{
+    field(DESC, "Filtered NACKS")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))FilterdNacks")
+    field(SCAN, "I/O Intr")
+}
+record(bo, "$(P)$(R)Ch8GotCmd")
+{
+    field(DESC, "Chan8 got command packet")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch8GotCmd")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no")
+    field(ONAM, "yes")
+}
+record(bo, "$(P)$(R)Ch8GotData")
+{
+    field(DESC, "Chan8 got data packet")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch8GotData")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no")
+    field(ONAM, "yes")
+}
+record(bo, "$(P)$(R)Ch7GotCmd")
+{
+    field(DESC, "Chan7 got command packet")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch7GotCmd")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no")
+    field(ONAM, "yes")
+}
+record(bo, "$(P)$(R)Ch7GotData")
+{
+    field(DESC, "Chan7 got data packet")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch7GotData")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no")
+    field(ONAM, "yes")
+}
+record(bo, "$(P)$(R)Ch6GotCmd")
+{
+    field(DESC, "Chan6 got command packet")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch6GotCmd")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no")
+    field(ONAM, "yes")
+}
+record(bo, "$(P)$(R)Ch6GotData")
+{
+    field(DESC, "Chan6 got data packet")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch6GotData")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no")
+    field(ONAM, "yes")
+}
+record(bo, "$(P)$(R)Ch5GotCmd")
+{
+    field(DESC, "Chan5 got command packet")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch5GotCmd")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no")
+    field(ONAM, "yes")
+}
+record(bo, "$(P)$(R)Ch5GotData")
+{
+    field(DESC, "Chan5 got data packet")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch5GotData")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no")
+    field(ONAM, "yes")
+}
+record(bo, "$(P)$(R)Ch4GotCmd")
+{
+    field(DESC, "Chan4 got command packet")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch4GotCmd")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no")
+    field(ONAM, "yes")
+}
+record(bo, "$(P)$(R)Ch4GotData")
+{
+    field(DESC, "Chan4 got data packet")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch4GotData")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no")
+    field(ONAM, "yes")
+}
+record(bo, "$(P)$(R)Ch3GotCmd")
+{
+    field(DESC, "Chan3 got command packet")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch3GotCmd")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no")
+    field(ONAM, "yes")
+}
+record(bo, "$(P)$(R)Ch3GotData")
+{
+    field(DESC, "Chan3 got data packet")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch3GotData")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no")
+    field(ONAM, "yes")
+}
+record(bo, "$(P)$(R)Ch2GotCmd")
+{
+    field(DESC, "Chan2 got command packet")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch2GotCmd")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no")
+    field(ONAM, "yes")
+}
+record(bo, "$(P)$(R)Ch2GotData")
+{
+    field(DESC, "Chan2 got data packet")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch2GotData")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no")
+    field(ONAM, "yes")
+}
+record(bo, "$(P)$(R)Ch1GotCmd")
+{
+    field(DESC, "Chan1 got command packet")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch1GotCmd")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no")
+    field(ONAM, "yes")
+}
+record(bo, "$(P)$(R)Ch1GotData")
+{
+    field(DESC, "Chan1 got data packet")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch1GotData")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no")
+    field(ONAM, "yes")
+}
+record(longout, "$(P)$(R)FilterdAcks")
+{
+    field(DESC, "Filtered ACKS")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))FilterdAcks")
+    field(SCAN, "I/O Intr")
+}
+record(bo, "$(P)$(R)AcquireStat")
+{
+    field(DESC, "Acquiring data")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))AcquireStat")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "not acquiring")
+    field(ONAM, "acquiring")
+}
+record(bo, "$(P)$(R)FoundHw")
+{
+    field(DESC, "Found new hardware")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))FoundHw")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no")
+    field(ONAM, "yes")
+}
+record(bo, "$(P)$(R)CtrlGotCmd")
+{
+    field(DESC, "CTRL got command packet")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))CtrlGotCmd")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no")
+    field(ONAM, "yes")
+}
+record(bo, "$(P)$(R)CtrlGotData")
+{
+    field(DESC, "CTRL got data packet")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))CtrlGotData")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no")
+    field(ONAM, "yes")
+}
+record(bo, "$(P)$(R)Ch10GotCmd")
+{
+    field(DESC, "Chan10 got command packet")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch10GotCmd")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no")
+    field(ONAM, "yes")
+}
+record(bo, "$(P)$(R)Ch10GotData")
+{
+    field(DESC, "Chan10 got data packet")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch10GotData")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no")
+    field(ONAM, "yes")
+}
+record(bo, "$(P)$(R)Ch9GotCmd")
+{
+    field(DESC, "Chan9 got command packet")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch9GotCmd")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no")
+    field(ONAM, "yes")
+}
+record(bo, "$(P)$(R)Ch9GotData")
+{
+    field(DESC, "Chan9 got data packet")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch9GotData")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no")
+    field(ONAM, "yes")
+}
+record(bo, "$(P)$(R)Ch8FifCmd")
+{
+    field(DESC, "Chan8 FIFO almost full")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch8FifCmd")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no")
+    field(ONAM, "yes")
+}
+record(bo, "$(P)$(R)Ch8FifoNE")
+{
+    field(DESC, "Chan8 FIFO has data")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch8FifoNE")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "empty")
+    field(ONAM, "has data")
+}
+record(bo, "$(P)$(R)Ch7FifoAF")
+{
+    field(DESC, "Chan7 FIFO almost full")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch7FifoAF")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no")
+    field(ONAM, "yes")
+}
+record(bo, "$(P)$(R)Ch7FifoNE")
+{
+    field(DESC, "Chan7 FIFO has data")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch7FifoNE")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "empty")
+    field(ONAM, "has data")
+}
+record(bo, "$(P)$(R)Ch6FifoAF")
+{
+    field(DESC, "Chan6 FIFO almost full")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch6FifoAF")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no")
+    field(ONAM, "yes")
+}
+record(bo, "$(P)$(R)Ch6FifoNE")
+{
+    field(DESC, "Chan6 FIFO has data")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch6FifoNE")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "empty")
+    field(ONAM, "has data")
+}
+record(bo, "$(P)$(R)Ch5FifoAF")
+{
+    field(DESC, "Chan5 FIFO almost full")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch5FifoAF")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no")
+    field(ONAM, "yes")
+}
+record(bo, "$(P)$(R)Ch5FifoNE")
+{
+    field(DESC, "Chan5 FIFO has data")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch5FifoNE")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "empty")
+    field(ONAM, "has data")
+}
+record(bo, "$(P)$(R)Ch4FifoAF")
+{
+    field(DESC, "Chan4 FIFO almost full")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch4FifoAF")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no")
+    field(ONAM, "yes")
+}
+record(bo, "$(P)$(R)Ch4FifoNE")
+{
+    field(DESC, "Chan4 FIFO has data")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch4FifoNE")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "empty")
+    field(ONAM, "has data")
+}
+record(bo, "$(P)$(R)Ch3FifoAF")
+{
+    field(DESC, "Chan3 FIFO almost full")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch3FifoAF")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no")
+    field(ONAM, "yes")
+}
+record(bo, "$(P)$(R)Ch3FifoNE")
+{
+    field(DESC, "Chan3 FIFO has data")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch3FifoNE")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "empty")
+    field(ONAM, "has data")
+}
+record(bo, "$(P)$(R)Ch2FifoAF")
+{
+    field(DESC, "Chan2 FIFO almost full")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch2FifoAF")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no")
+    field(ONAM, "yes")
+}
+record(bo, "$(P)$(R)Ch2FifoNE")
+{
+    field(DESC, "Chan2 FIFO has data")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch2FifoNE")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "empty")
+    field(ONAM, "has data")
+}
+record(bo, "$(P)$(R)Ch1FifoAF")
+{
+    field(DESC, "Chan1 FIFO almost full")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch1FifoAF")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no")
+    field(ONAM, "yes")
+}
+record(bo, "$(P)$(R)Ch1FifoNE")
+{
+    field(DESC, "Chan1 FIFO not empty")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch1FifoNE")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "empty")
+    field(ONAM, "has data")
+}
+record(mbbo, "$(P)$(R)LvdsDin6")
+{
+    field(DESC, "LVDS_DIN6")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))LvdsDin6")
+    field(SCAN, "I/O Intr")
+    field(ZRVL, "0")
+    field(ZRST, "empty")
+    field(ONVL, "1")
+    field(ONST, "always low")
+    field(TWVL, "2")
+    field(TWST, "always high")
+    field(THVL, "3")
+    field(THST, "low and high")
+}
+record(mbbo, "$(P)$(R)LvdsDin5")
+{
+    field(DESC, "LVDS_DIN5")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))LvdsDin5")
+    field(SCAN, "I/O Intr")
+    field(ZRVL, "0")
+    field(ZRST, "empty")
+    field(ONVL, "1")
+    field(ONST, "always low")
+    field(TWVL, "2")
+    field(TWST, "always high")
+    field(THVL, "3")
+    field(THST, "low and high")
+}
+record(mbbo, "$(P)$(R)LvdsDin4")
+{
+    field(DESC, "LVDS_DIN4")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))LvdsDin4")
+    field(SCAN, "I/O Intr")
+    field(ZRVL, "0")
+    field(ZRST, "empty")
+    field(ONVL, "1")
+    field(ONST, "always low")
+    field(TWVL, "2")
+    field(TWST, "always high")
+    field(THVL, "3")
+    field(THST, "low and high")
+}
+record(mbbo, "$(P)$(R)LvdsDin3")
+{
+    field(DESC, "LVDS_DIN3")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))LvdsDin3")
+    field(SCAN, "I/O Intr")
+    field(ZRVL, "0")
+    field(ZRST, "empty")
+    field(ONVL, "1")
+    field(ONST, "always low")
+    field(TWVL, "2")
+    field(TWST, "always high")
+    field(THVL, "3")
+    field(THST, "low and high")
+}
+record(mbbo, "$(P)$(R)LvdsDin2")
+{
+    field(DESC, "LVDS_DIN2")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))LvdsDin2")
+    field(SCAN, "I/O Intr")
+    field(ZRVL, "0")
+    field(ZRST, "empty")
+    field(ONVL, "1")
+    field(ONST, "always low")
+    field(TWVL, "2")
+    field(TWST, "always high")
+    field(THVL, "3")
+    field(THST, "low and high")
+}
+record(mbbo, "$(P)$(R)LvdsDin1")
+{
+    field(DESC, "LVDS_DIN1")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))LvdsDin1")
+    field(SCAN, "I/O Intr")
+    field(ZRVL, "0")
+    field(ZRST, "empty")
+    field(ONVL, "1")
+    field(ONST, "always low")
+    field(TWVL, "2")
+    field(TWST, "always high")
+    field(THVL, "3")
+    field(THST, "low and high")
+}
+record(mbbo, "$(P)$(R)LvdsDin0")
+{
+    field(DESC, "LVDS_DIN0")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))LvdsDin0")
+    field(SCAN, "I/O Intr")
+    field(ZRVL, "0")
+    field(ZRST, "empty")
+    field(ONVL, "1")
+    field(ONST, "always low")
+    field(TWVL, "2")
+    field(TWST, "always high")
+    field(THVL, "3")
+    field(THST, "low and high")
+}
+record(mbbo, "$(P)$(R)LvdsClk")
+{
+    field(DESC, "LVDS_CLK")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))LvdsClk")
+    field(SCAN, "I/O Intr")
+    field(ZRVL, "0")
+    field(ZRST, "empty")
+    field(ONVL, "1")
+    field(ONST, "always low")
+    field(TWVL, "2")
+    field(TWST, "always high")
+    field(THVL, "3")
+    field(THST, "low and high")
+}
+record(mbbo, "$(P)$(R)LvdsDin14")
+{
+    field(DESC, "LVDS_DIN14")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))LvdsDin14")
+    field(SCAN, "I/O Intr")
+    field(ZRVL, "0")
+    field(ZRST, "empty")
+    field(ONVL, "1")
+    field(ONST, "always low")
+    field(TWVL, "2")
+    field(TWST, "always high")
+    field(THVL, "3")
+    field(THST, "low and high")
+}
+record(mbbo, "$(P)$(R)LvdsDin13")
+{
+    field(DESC, "LVDS_DIN13")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))LvdsDin13")
+    field(SCAN, "I/O Intr")
+    field(ZRVL, "0")
+    field(ZRST, "empty")
+    field(ONVL, "1")
+    field(ONST, "always low")
+    field(TWVL, "2")
+    field(TWST, "always high")
+    field(THVL, "3")
+    field(THST, "low and high")
+}
+record(mbbo, "$(P)$(R)LvdsDin12")
+{
+    field(DESC, "LVDS_DIN12")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))LvdsDin12")
+    field(SCAN, "I/O Intr")
+    field(ZRVL, "0")
+    field(ZRST, "empty")
+    field(ONVL, "1")
+    field(ONST, "always low")
+    field(TWVL, "2")
+    field(TWST, "always high")
+    field(THVL, "3")
+    field(THST, "low and high")
+}
+record(mbbo, "$(P)$(R)LvdsDin11")
+{
+    field(DESC, "LVDS_DIN11")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))LvdsDin11")
+    field(SCAN, "I/O Intr")
+    field(ZRVL, "0")
+    field(ZRST, "empty")
+    field(ONVL, "1")
+    field(ONST, "always low")
+    field(TWVL, "2")
+    field(TWST, "always high")
+    field(THVL, "3")
+    field(THST, "low and high")
+}
+record(mbbo, "$(P)$(R)LvdsDin10")
+{
+    field(DESC, "LVDS_DIN10")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))LvdsDin10")
+    field(SCAN, "I/O Intr")
+    field(ZRVL, "0")
+    field(ZRST, "empty")
+    field(ONVL, "1")
+    field(ONST, "always low")
+    field(TWVL, "2")
+    field(TWST, "always high")
+    field(THVL, "3")
+    field(THST, "low and high")
+}
+record(mbbo, "$(P)$(R)LvdsDin9")
+{
+    field(DESC, "LVDS_DIN9")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))LvdsDin9")
+    field(SCAN, "I/O Intr")
+    field(ZRVL, "0")
+    field(ZRST, "empty")
+    field(ONVL, "1")
+    field(ONST, "always low")
+    field(TWVL, "2")
+    field(TWST, "always high")
+    field(THVL, "3")
+    field(THST, "low and high")
+}
+record(mbbo, "$(P)$(R)LvdsDin8")
+{
+    field(DESC, "LVDS_DIN8")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))LvdsDin8")
+    field(SCAN, "I/O Intr")
+    field(ZRVL, "0")
+    field(ZRST, "empty")
+    field(ONVL, "1")
+    field(ONST, "always low")
+    field(TWVL, "2")
+    field(TWST, "always high")
+    field(THVL, "3")
+    field(THST, "low and high")
+}
+record(mbbo, "$(P)$(R)LvdsDin7")
+{
+    field(DESC, "LVDS_DIN7")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))LvdsDin7")
+    field(SCAN, "I/O Intr")
+    field(ZRVL, "0")
+    field(ZRST, "empty")
+    field(ONVL, "1")
+    field(ONST, "always low")
+    field(TWVL, "2")
+    field(TWST, "always high")
+    field(THVL, "3")
+    field(THST, "low and high")
+}
+record(longout, "$(P)$(R)LvdsPort")
+{
+    field(DESC, "LVDS port")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))LvdsPort")
+    field(SCAN, "I/O Intr")
+}
+record(mbbo, "$(P)$(R)LvdsDin20")
+{
+    field(DESC, "LVDS_DIN20")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))LvdsDin20")
+    field(SCAN, "I/O Intr")
+    field(ZRVL, "0")
+    field(ZRST, "empty")
+    field(ONVL, "1")
+    field(ONST, "always low")
+    field(TWVL, "2")
+    field(TWST, "always high")
+    field(THVL, "3")
+    field(THST, "low and high")
+}
+record(mbbo, "$(P)$(R)LvdsDin19")
+{
+    field(DESC, "LVDS_DIN19")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))LvdsDin19")
+    field(SCAN, "I/O Intr")
+    field(ZRVL, "0")
+    field(ZRST, "empty")
+    field(ONVL, "1")
+    field(ONST, "always low")
+    field(TWVL, "2")
+    field(TWST, "always high")
+    field(THVL, "3")
+    field(THST, "low and high")
+}
+record(mbbo, "$(P)$(R)LvdsDin18")
+{
+    field(DESC, "LVDS_DIN18")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))LvdsDin18")
+    field(SCAN, "I/O Intr")
+    field(ZRVL, "0")
+    field(ZRST, "empty")
+    field(ONVL, "1")
+    field(ONST, "always low")
+    field(TWVL, "2")
+    field(TWST, "always high")
+    field(THVL, "3")
+    field(THST, "low and high")
+}
+record(mbbo, "$(P)$(R)LvdsDin17")
+{
+    field(DESC, "LVDS_DIN17")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))LvdsDin17")
+    field(SCAN, "I/O Intr")
+    field(ZRVL, "0")
+    field(ZRST, "empty")
+    field(ONVL, "1")
+    field(ONST, "always low")
+    field(TWVL, "2")
+    field(TWST, "always high")
+    field(THVL, "3")
+    field(THST, "low and high")
+}
+record(mbbo, "$(P)$(R)LvdsDin16")
+{
+    field(DESC, "LVDS_DIN16")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))LvdsDin16")
+    field(SCAN, "I/O Intr")
+    field(ZRVL, "0")
+    field(ZRST, "empty")
+    field(ONVL, "1")
+    field(ONST, "always low")
+    field(TWVL, "2")
+    field(TWST, "always high")
+    field(THVL, "3")
+    field(THST, "low and high")
+}
+record(mbbo, "$(P)$(R)LvdsDin15")
+{
+    field(DESC, "LVDS_DIN15")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))LvdsDin15")
+    field(SCAN, "I/O Intr")
+    field(ZRVL, "0")
+    field(ZRST, "empty")
+    field(ONVL, "1")
+    field(ONST, "always low")
+    field(TWVL, "2")
+    field(TWST, "always high")
+    field(THVL, "3")
+    field(THST, "low and high")
+}
+record(bo, "$(P)$(R)LvdsMonitor")
+{
+    field(DESC, "LVDS debug monitor")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))LvdsMonitor")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "0")
+    field(ZNAM, "disable")
+    field(ONAM, "enable")
+}
+record(mbbo, "$(P)$(R)TxenCtrl")
+{
+    field(DESC, "TXEN control")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))TxenCtrl")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "0")
+    field(ZRVL, "0")
+    field(ZRST, "TXEN")
+    field(ONVL, "1")
+    field(ONST, "TXEN")
+    field(TWVL, "2")
+    field(TWST, "always 0")
+    field(THVL, "3")
+    field(THST, "always 1")
+}
+record(mbbo, "$(P)$(R)TsyncCtrl")
+{
+    field(DESC, "TSYNC control")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))TsyncCtrl")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "0")
+    field(ZRVL, "0")
+    field(ZRST, "from polariry")
+    field(ONVL, "1")
+    field(ONST, "from TSYNC width")
+    field(TWVL, "2")
+    field(TWST, "always 0")
+    field(THVL, "3")
+    field(THST, "always 1")
+}
+record(mbbo, "$(P)$(R)TclkCtrl")
+{
+    field(DESC, "TCLK control")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))TclkCtrl")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "0")
+    field(ZRVL, "0")
+    field(ZRST, "TCLK")
+    field(ONVL, "1")
+    field(ONST, "TCLK")
+    field(TWVL, "2")
+    field(TWST, "always 0")
+    field(THVL, "3")
+    field(THST, "always 1")
+}
+record(mbbo, "$(P)$(R)ResetCtrl")
+{
+    field(DESC, "Reset control")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))ResetCtrl")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "0")
+    field(ZRVL, "0")
+    field(ZRST, "not used")
+    field(ONVL, "1")
+    field(ONST, "not used")
+    field(TWVL, "2")
+    field(TWST, "from LVDS")
+    field(THVL, "3")
+    field(THST, "from optic")
+}
+record(bo, "$(P)$(R)VerboseDisc")
+{
+    field(DESC, "Verbose discover")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))VerboseDisc")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "0")
+    field(ZNAM, "disable")
+    field(ONAM, "enable")
+}
+record(bo, "$(P)$(R)VerboseRsp")
+{
+    field(DESC, "Verbose command response")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))VerboseRsp")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "0")
+    field(ZNAM, "disable")
+    field(ONAM, "enable")
+}
+record(bo, "$(P)$(R)Ch10Disable")
+{
+    field(DESC, "Chan10 disable")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch10Disable")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "0")
+    field(ZNAM, "enable")
+    field(ONAM, "disable")
+}
+record(bo, "$(P)$(R)Ch10Disable")
+{
+    field(DESC, "Chan10 disable")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch10Disable")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "0")
+    field(ZNAM, "enable")
+    field(ONAM, "disable")
+}
+record(bo, "$(P)$(R)Ch9Disable")
+{
+    field(DESC, "Chan9 disable")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch9Disable")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "0")
+    field(ZNAM, "enable")
+    field(ONAM, "disable")
+}
+record(bo, "$(P)$(R)Ch8Disable")
+{
+    field(DESC, "Chan8 disable")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch8Disable")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "0")
+    field(ZNAM, "enable")
+    field(ONAM, "disable")
+}
+record(bo, "$(P)$(R)Ch7Disable")
+{
+    field(DESC, "Chan7 disable")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch7Disable")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "0")
+    field(ZNAM, "enable")
+    field(ONAM, "disable")
+}
+record(bo, "$(P)$(R)Ch6Disable")
+{
+    field(DESC, "Chan6 disable")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch6Disable")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "0")
+    field(ZNAM, "enable")
+    field(ONAM, "disable")
+}
+record(bo, "$(P)$(R)Ch5Disable")
+{
+    field(DESC, "Chan5 disable")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch5Disable")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "0")
+    field(ZNAM, "enable")
+    field(ONAM, "disable")
+}
+record(bo, "$(P)$(R)Ch4Disable")
+{
+    field(DESC, "Chan4 disable")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch4Disable")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "0")
+    field(ZNAM, "enable")
+    field(ONAM, "disable")
+}
+record(bo, "$(P)$(R)Ch3Disable")
+{
+    field(DESC, "Chan3 disable")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch3Disable")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "0")
+    field(ZNAM, "enable")
+    field(ONAM, "disable")
+}
+record(bo, "$(P)$(R)Ch2Disable")
+{
+    field(DESC, "Chan2 disable")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch2Disable")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "0")
+    field(ZNAM, "enable")
+    field(ONAM, "disable")
+}
+record(bo, "$(P)$(R)Ch1Disable")
+{
+    field(DESC, "Chan1 disable")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch1Disable")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "0")
+    field(ZNAM, "enable")
+    field(ONAM, "disable")
+}
+record(bo, "$(P)$(R)TxenMode")
+{
+    field(DESC, "TXEN mode")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))TxenMode")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "0")
+    field(ZNAM, "external")
+    field(ONAM, "internal")
+}
+record(bo, "$(P)$(R)TsyncMode")
+{
+    field(DESC, "TSYNC mode")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))TsyncMode")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "0")
+    field(ZNAM, "external")
+    field(ONAM, "internal")
+}
+record(bo, "$(P)$(R)TclkMode")
+{
+    field(DESC, "TCLK mode")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))TclkMode")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "0")
+    field(ZNAM, "external")
+    field(ONAM, "internal")
+}
+record(bo, "$(P)$(R)ResetMode")
+{
+    field(DESC, "Reset mode")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))ResetMode")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "1")
+    field(ZNAM, "internal")
+    field(ONAM, "external")
+}

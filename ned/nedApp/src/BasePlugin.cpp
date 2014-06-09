@@ -30,10 +30,10 @@ BasePlugin::BasePlugin(const char *portName, const char *dispatcherPortName, int
                        int priority, int stackSize)
 	: asynPortDriver(portName, maxAddr, NUM_BASEPLUGIN_PARAMS + numParams, interfaceMask | defaultInterfaceMask,
 	                 interruptMask | defaultInterruptMask, asynFlags, autoConnect, priority, stackSize)
-    , m_asynGenericPointerInterrupt(0)
-    , m_messageQueue(MESSAGE_QUEUE_SIZE, sizeof(void*))
     , m_portName(portName)
     , m_dispatcherPortName(dispatcherPortName)
+    , m_asynGenericPointerInterrupt(0)
+    , m_messageQueue(MESSAGE_QUEUE_SIZE, sizeof(void*))
     , m_threadId(0)
     , m_shutdown(false)
 {
@@ -148,13 +148,14 @@ void BasePlugin::sendToDispatcher(const DasPacket *packet)
     packetsList.release();
 }
 
-bool BasePlugin::scheduleCallback(std::function<void(void)> &callback, double delay)
+std::shared_ptr<Timer> BasePlugin::scheduleCallback(std::function<float(void)> &callback, double delay)
 {
-    Timer *timer = new Timer(true); // Timer* will be deleted in timerExpire
-    if (!timer)
-        return false;
-    std::function<void()> timerCb = std::bind(&BasePlugin::timerExpire, this, timer, callback);
-    return timer->schedule(timerCb, delay);
+    std::shared_ptr<Timer> timer(new Timer(true));
+    if (timer) {
+        std::function<float(void)> timerCb = std::bind(&BasePlugin::timerExpire, this, timer, callback);
+        timer->schedule(timerCb, delay);
+    }
+    return timer;
 }
 
 const char *BasePlugin::getParamName(int index)
@@ -220,10 +221,13 @@ asynStatus BasePlugin::setCallbacks(bool enable)
     return status;
 }
 
-void BasePlugin::timerExpire(Timer *timer, std::function<void()> callback)
+float BasePlugin::timerExpire(std::shared_ptr<Timer> &timer, std::function<float(void)> callback)
 {
+    float delay = 0.0;
     this->lock();
-    callback();
+    if (timer->isActive()) {
+        delay = callback();
+    }
     this->unlock();
-    delete timer;
+    return delay;
 }

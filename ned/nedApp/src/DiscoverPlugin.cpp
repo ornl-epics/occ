@@ -20,10 +20,6 @@ DiscoverPlugin::DiscoverPlugin(const char *portName, const char *dispatcherPortN
 
     setCallbacks(true);
 
-    bool parity;
-    parity = BaseModulePlugin::evenParity(0xA);
-    parity = BaseModulePlugin::evenParity(0xB);
-
     callParamCallbacks();
 }
 
@@ -63,7 +59,6 @@ void DiscoverPlugin::processData(const DasPacketList * const packetList)
             // The global LVDS discover packet should address all modules connected
             // through LVDS. For some unidentified reason, ROC boards connected directly
             // to DSP don't respond, whereas ROCs behind FEM do.
-            //reqLvdsDiscover(DasPacket::HWID_BROADCAST);
             // So we do P2P to each module.
             for (uint32_t i=0; i<packet->payload_length/sizeof(uint32_t); i++) {
                 reqLvdsDiscover(packet->payload[i]);

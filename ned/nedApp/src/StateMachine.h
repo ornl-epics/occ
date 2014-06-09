@@ -23,21 +23,39 @@ class StateMachine {
             return m_state;
         }
 
-        State &transition(Action action)
+        bool transition(Action action)
         {
             return transition(m_state, action);
         }
 
-        State &transition(State curState, Action action)
+        bool transition(State state, Action action)
         {
-            auto it = m_transitions.find(curState);
+            auto it = m_transitions.find(state);
             if (it != m_transitions.end()) {
                 auto jt = it->second.find(action);
                 if (jt != it->second.end()) {
                     m_state = jt->second;
+                    return true;
                 }
             }
-            return m_state;
+            return false;
+        }
+
+        bool checkTransition(Action action)
+        {
+            return checkTransition(m_state, action);
+        }
+
+        bool checkTransition(State state, Action action)
+        {
+            auto it = m_transitions.find(state);
+            if (it != m_transitions.end()) {
+                auto jt = it->second.find(action);
+                if (jt != it->second.end()) {
+                    return true;
+                }
+            }
+            return false;
         }
 };
 

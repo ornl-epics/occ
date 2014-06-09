@@ -89,3 +89,11 @@ string OccAdapter::occErrorString(int error)
         error = 0;
     return string(strerror(-error));
 }
+
+uint32_t OccAdapter::getDmaSize()
+{
+    occ_status_t status;
+    if (occ_status(m_occ, &status) == 0)
+        return status.dma_size;
+    return 0;
+}

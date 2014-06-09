@@ -1,6 +1,6 @@
 TOP=../..
 
-OCCLIB_DIR=/home/kvx/work/git/detectors/occlib
+OCCLIB_DIR=$(TOP)/../occlib
 
 include $(TOP)/configure/CONFIG
 #----------------------------------------
@@ -15,6 +15,9 @@ include $(TOP)/configure/CONFIG
 # 
 USR_CXXFLAGS += -DBITFIELD_LSB_FIRST
 USR_CXXFLAGS += -std=c++0x
+# The temporary DWord alignment workaround in FPGA is to set bit 31 in the
+# packet header length.
+USR_CXXFLAGS += -DDWORD_PADDING_WORKAROUND
 CXXFLAGS = -Wall -g -ggdb $(USR_CXXFLAGS)
 
 # Product
@@ -51,13 +54,20 @@ ned_SRCS  += DmaCopier.cpp
 ned_SRCS  += DasPacket.cpp
 ned_SRCS  += DasPacketList.cpp
 ned_SRCS  += BasePlugin.cpp
+ned_SRCS  += BaseSocketPlugin.cpp
+ned_SRCS  += ProxyPlugin.cpp
 ned_SRCS  += AdaraPlugin.cpp
 ned_SRCS  += CmdDispatcher.cpp
 ned_SRCS  += BaseModulePlugin.cpp
 ned_SRCS  += DspPlugin.cpp
 ned_SRCS  += RocPlugin.cpp
+ned_SRCS  += FemPlugin.cpp
 ned_SRCS  += DiscoverPlugin.cpp
 ned_SRCS  += DumpPlugin.cpp
+
+ned_DOXS  += DspPlugin.dox
+ned_DOXS  += RocPlugin.dox
+ned_DOXS  += FemPlugin.dox
 
 #===========================
 
@@ -65,6 +75,11 @@ include $(TOP)/configure/RULES
 #----------------------------------------
 #  ADD RULES AFTER THIS LINE
 
-doc: Doxyfile
-	./extract_module_params.sh DspPlugin.cpp > DspPlugin.dox
-	doxygen
+%.dox: %.cpp
+	./tools/export2doxy.pl -input_file=$^ > $@
+
+doc: Doxyfile $(ned_DOXS)
+	doxygen >/dev/null
+
+clean::
+	rm -f $(ned_DOXS)

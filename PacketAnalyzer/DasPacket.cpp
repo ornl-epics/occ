@@ -61,8 +61,8 @@
 DasPacket::DasPacket(uint32_t datalen)
 {
     uint32_t len = length();
-    if (len == 0)
-        throw std::length_error("Packet size is not right, either not aligned packet or zero size");
+    if (len == 0 || payload_length > (MAX_EVENTS_PER_PACKET*8))
+        throw std::length_error("Packet size is not right, either not aligned packet or out of boundaries");
     if (len > datalen)
         throw std::overflow_error("Packet spans over the provided buffer boundaries");
 }
@@ -70,7 +70,15 @@ DasPacket::DasPacket(uint32_t datalen)
 uint32_t DasPacket::length() const
 {
     uint32_t packet_length = sizeof(DasPacket) + payload_length;
-    if (packet_length != ((packet_length + 7 ) & ~7))
+    if (packet_length != ((packet_length + 3) & ~3))
+        packet_length = 0;
+    return packet_length;
+}
+
+uint32_t DasPacket::alignedLength() const
+{
+    uint32_t packet_length = sizeof(DasPacket) + payload_length;
+    if (packet_length != ((packet_length + 7) & ~7))
         packet_length = 0;
     return packet_length;
 }

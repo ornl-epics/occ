@@ -6,35 +6,60 @@
 
 #define NUM_BASEMODULEPLUGIN_PARAMS ((int)(&LAST_BASEMODULEPLUGIN_PARAM - &FIRST_BASEMODULEPLUGIN_PARAM + 1))
 
+const float BaseModulePlugin::NO_RESPONSE_TIMEOUT = 2.0;
+
 BaseModulePlugin::BaseModulePlugin(const char *portName, const char *dispatcherPortName, const char *hardwareId,
-                                   ConnectionType conn, int blocking, int numParams)
+                                   bool behindDsp, int blocking, int numParams)
     : BasePlugin(portName, dispatcherPortName, REASON_OCCDATA, blocking, NUM_BASEMODULEPLUGIN_PARAMS + numParams,
                  1, asynOctetMask | asynInt32Mask | asynDrvUserMask, asynOctetMask | asynInt32Mask)
     , m_hardwareId(parseHardwareId(hardwareId))
-    , m_stateMachine(STAT_NOT_INITIALIZED)
-    , m_connType(conn)
+    , m_stateMachine(ST_NOT_INITIALIZED)
+    , m_behindDsp(behindDsp)
 {
     if (m_hardwareId == 0) {
         LOG_ERROR("Invalid hardware id '%s'", hardwareId);
         return;
     }
 
-    m_stateMachine.addState(STAT_NOT_INITIALIZED,   DISCOVER_OK,                STAT_TYPE_VERIFIED);
-    m_stateMachine.addState(STAT_NOT_INITIALIZED,   DISCOVER_MISMATCH,          STAT_TYPE_MISMATCH);
-    m_stateMachine.addState(STAT_NOT_INITIALIZED,   VERSION_READ_OK,            STAT_VERSION_VERIFIED);
-    m_stateMachine.addState(STAT_NOT_INITIALIZED,   VERSION_READ_MISMATCH,      STAT_VERSION_MISMATCH);
-    m_stateMachine.addState(STAT_TYPE_VERIFIED,     VERSION_READ_OK,            STAT_READY);
-    m_stateMachine.addState(STAT_TYPE_VERIFIED,     VERSION_READ_MISMATCH,      STAT_VERSION_MISMATCH);
-    m_stateMachine.addState(STAT_TYPE_VERIFIED,     TIMEOUT,                    STAT_TIMEOUT);
-    m_stateMachine.addState(STAT_VERSION_VERIFIED,  DISCOVER_OK,                STAT_READY);
-    m_stateMachine.addState(STAT_VERSION_VERIFIED,  DISCOVER_MISMATCH,          STAT_VERSION_MISMATCH);
-    m_stateMachine.addState(STAT_VERSION_VERIFIED,  TIMEOUT,                    STAT_TIMEOUT);
+    m_stateMachine.addState(ST_NOT_INITIALIZED,     SM_ACTION_CMD(DasPacket::CMD_DISCOVER),         ST_WAITING_TYPE_RSP);
+    m_stateMachine.addState(ST_WAITING_TYPE_RSP,    SM_ACTION_ACK(DasPacket::CMD_DISCOVER),         ST_TYPE_VERIFIED);
+    m_stateMachine.addState(ST_WAITING_TYPE_RSP,    SM_ACTION_ERR(DasPacket::CMD_DISCOVER),         ST_ERROR);
+    m_stateMachine.addState(ST_WAITING_TYPE_RSP,    SM_ACTION_TIMEOUT(DasPacket::CMD_DISCOVER),     ST_TIMEOUT);
+    m_stateMachine.addState(ST_TYPE_VERIFIED,       SM_ACTION_CMD(DasPacket::CMD_READ_VERSION),     ST_WAITING_VER_RSP);
+    m_stateMachine.addState(ST_WAITING_VER_RSP,     SM_ACTION_ACK(DasPacket::CMD_READ_VERSION),     ST_READY);
+    m_stateMachine.addState(ST_WAITING_VER_RSP,     SM_ACTION_ERR(DasPacket::CMD_READ_VERSION),     ST_ERROR);
+    m_stateMachine.addState(ST_WAITING_VER_RSP,     SM_ACTION_TIMEOUT(DasPacket::CMD_READ_VERSION), ST_ERROR);
+
+    m_stateMachine.addState(ST_READY,               SM_ACTION_CMD(DasPacket::CMD_READ_STATUS),      ST_WAITING);
+    m_stateMachine.addState(ST_WAITING,             SM_ACTION_ACK(DasPacket::CMD_READ_STATUS),      ST_READY);
+    m_stateMachine.addState(ST_WAITING,             SM_ACTION_ERR(DasPacket::CMD_READ_STATUS),      ST_ERROR);
+    m_stateMachine.addState(ST_WAITING,             SM_ACTION_TIMEOUT(DasPacket::CMD_READ_STATUS),  ST_TIMEOUT);
+    m_stateMachine.addState(ST_READY,               SM_ACTION_CMD(DasPacket::CMD_READ_CONFIG),      ST_WAITING);
+    m_stateMachine.addState(ST_WAITING,             SM_ACTION_ACK(DasPacket::CMD_READ_CONFIG),      ST_READY);
+    m_stateMachine.addState(ST_WAITING,             SM_ACTION_ERR(DasPacket::CMD_READ_CONFIG),      ST_ERROR);
+    m_stateMachine.addState(ST_WAITING,             SM_ACTION_TIMEOUT(DasPacket::CMD_READ_CONFIG),  ST_TIMEOUT);
+    m_stateMachine.addState(ST_READY,               SM_ACTION_CMD(DasPacket::CMD_WRITE_CONFIG),     ST_WAITING);
+    m_stateMachine.addState(ST_WAITING,             SM_ACTION_ACK(DasPacket::CMD_WRITE_CONFIG),     ST_READY);
+    m_stateMachine.addState(ST_WAITING,             SM_ACTION_ERR(DasPacket::CMD_WRITE_CONFIG),     ST_ERROR);
+    m_stateMachine.addState(ST_WAITING,             SM_ACTION_TIMEOUT(DasPacket::CMD_WRITE_CONFIG), ST_TIMEOUT);
+    m_stateMachine.addState(ST_READY,               SM_ACTION_CMD(DasPacket::CMD_START),            ST_WAITING);
+    m_stateMachine.addState(ST_WAITING,             SM_ACTION_ACK(DasPacket::CMD_START),            ST_READY);
+    m_stateMachine.addState(ST_WAITING,             SM_ACTION_ERR(DasPacket::CMD_START),            ST_ERROR);
+    m_stateMachine.addState(ST_WAITING,             SM_ACTION_TIMEOUT(DasPacket::CMD_START),        ST_TIMEOUT);
+    m_stateMachine.addState(ST_READY,               SM_ACTION_CMD(DasPacket::CMD_STOP),             ST_WAITING);
+    m_stateMachine.addState(ST_WAITING,             SM_ACTION_ACK(DasPacket::CMD_STOP),             ST_READY);
+    m_stateMachine.addState(ST_WAITING,             SM_ACTION_ERR(DasPacket::CMD_STOP),             ST_ERROR);
+    m_stateMachine.addState(ST_WAITING,             SM_ACTION_TIMEOUT(DasPacket::CMD_STOP),         ST_TIMEOUT);
+
+    // Temporary fix to get us from error state
+    m_stateMachine.addState(ST_ERROR,               0,                                              ST_NOT_INITIALIZED);
+    m_stateMachine.addState(ST_TIMEOUT,             0,                                              ST_NOT_INITIALIZED);
 
     createParam("HwId",         asynParamInt32, &HardwareId);
     createParam("Status",       asynParamInt32, &Status);
     createParam("Command",      asynParamInt32, &Command);
     setIntegerParam(HardwareId, m_hardwareId);
-    setIntegerParam(Status, STAT_NOT_INITIALIZED);
+    setIntegerParam(Status, ST_NOT_INITIALIZED);
     callParamCallbacks();
 }
 
@@ -44,32 +69,49 @@ BaseModulePlugin::~BaseModulePlugin()
 
 asynStatus BaseModulePlugin::writeInt32(asynUser *pasynUser, epicsInt32 value)
 {
+    if (!m_stateMachine.checkTransition(SM_ACTION_CMD(value))) {
+        LOG_WARN("Command '%d' not allowed at this time", value);
+        return asynError;
+    }
+
     if (pasynUser->reason == Command) {
         switch (value) {
-        case BaseModulePlugin::CMD_INITIALIZE:
-            sendToDispatcher(DasPacket::CMD_DISCOVER);
-            sendToDispatcher(DasPacket::CMD_READ_VERSION);
-            return asynSuccess;
-        case BaseModulePlugin::CMD_READ_STATUS:
-            sendToDispatcher(DasPacket::CMD_READ_STATUS);
-            return asynSuccess;
-        case BaseModulePlugin::CMD_READ_CONFIG:
-            sendToDispatcher(DasPacket::CMD_READ_CONFIG);
-            return asynSuccess;
-        case BaseModulePlugin::CMD_WRITE_CONFIG:
-            reqConfigWrite();
-            return asynSuccess;
-        case BaseModulePlugin::CMD_NONE:
-            return asynSuccess;
+        case DasPacket::CMD_DISCOVER:
+            reqDiscover();
+            break;
+        case DasPacket::CMD_READ_VERSION:
+            reqReadVersion();
+            break;
+        case DasPacket::CMD_READ_STATUS:
+            reqReadStatus();
+            break;
+        case DasPacket::CMD_READ_CONFIG:
+            reqReadConfig();
+            break;
+        case DasPacket::CMD_WRITE_CONFIG:
+            reqWriteConfig();
+            break;
+        case DasPacket::CMD_START:
+            reqStart();
+            break;
+        case DasPacket::CMD_STOP:
+            reqStop();
+            break;
+        case 0:
+            break;
         default:
-            LOG_ERROR("Unrecognized command '%d'", value);
+            LOG_WARN("Unrecognized '%d' command", SM_ACTION_CMD(value));
             return asynError;
         }
+        m_stateMachine.transition(SM_ACTION_CMD(value));
+        setIntegerParam(Status, m_stateMachine.getCurrentState());
+        callParamCallbacks();
+        return asynSuccess;
     }
     std::map<int, struct ConfigParamDesc>::iterator it = m_configParams.find(pasynUser->reason);
     if (it != m_configParams.end()) {
-        int mask = (0x1 << it->second.width) - 1;
-        if ((value & mask) != value) {
+        uint32_t mask = (0x1ULL << it->second.width) - 1;
+        if (static_cast<int>(value & mask) != value) {
             LOG_ERROR("Parameter %s value %d out of bounds", getParamName(it->first), value);
             return asynError;
         } else {
@@ -84,7 +126,7 @@ asynStatus BaseModulePlugin::writeInt32(asynUser *pasynUser, epicsInt32 value)
 void BaseModulePlugin::sendToDispatcher(DasPacket::CommandType command, uint32_t *payload, uint32_t length)
 {
     DasPacket *packet;
-    if (m_connType == CONN_TYPE_LVDS)
+    if (m_behindDsp)
         packet = createLvdsPacket(m_hardwareId, command, payload, length);
     else
         packet = createOpticalPacket(m_hardwareId, command, payload, length);
@@ -93,36 +135,6 @@ void BaseModulePlugin::sendToDispatcher(DasPacket::CommandType command, uint32_t
         BasePlugin::sendToDispatcher(packet);
         delete packet;
     }
-}
-
-void BaseModulePlugin::reqConfigWrite()
-{
-    if (m_configPayloadLength == 0)
-        recalculateConfigParams();
-
-    uint32_t data[m_configPayloadLength];
-    for (uint32_t i=0; i<m_configPayloadLength; i++)
-        data[i] = 0;
-
-    for (std::map<int, struct ConfigParamDesc>::iterator it=m_configParams.begin(); it != m_configParams.end(); it++) {
-        int offset = m_configSectionOffsets[it->second.section] + it->second.offset;
-        int mask = (0x1 << it->second.width) - 1;
-        int value = 0;
-
-        if (getIntegerParam(it->first, &value) != asynSuccess) {
-            // This should not happen. It's certainly error when creating and parameters.
-            LOG_ERROR("Failed to get parameter %s value", getParamName(it->first));
-            return;
-        }
-        if ((value & mask) != value) {
-            // This should not happen. It's certainly error when setting new value for parameter
-            LOG_WARN("Parameter %s value out of range", getParamName(it->first));
-        }
-
-        data[offset] |= ((value & mask) << it->second.shift);
-    }
-
-    sendToDispatcher(DasPacket::CMD_WRITE_CONFIG, data, m_configPayloadLength);
 }
 
 void BaseModulePlugin::processData(const DasPacketList * const packetList)
@@ -153,57 +165,128 @@ void BaseModulePlugin::processData(const DasPacketList * const packetList)
 
 bool BaseModulePlugin::processResponse(const DasPacket *packet)
 {
-    int status;
-    getIntegerParam(Status,     &status);
+    bool ack = false;
+    DasPacket::CommandType command = packet->getResponseType();
 
-    // Parse only responses valid in pre-initialization state
-    switch (packet->cmdinfo.command) {
+    if (!m_stateMachine.checkTransition(SM_ACTION_ACK(command))) {
+        LOG_WARN("Response '0x%X' not allowed in this state, ignoring", command);
+        return false;
+    }
+
+    switch (command) {
     case DasPacket::CMD_DISCOVER:
-        if (rspDiscover(packet))
-            status = m_stateMachine.transition(DISCOVER_OK);
-        else
-            status = m_stateMachine.transition(DISCOVER_MISMATCH);
-        setIntegerParam(Status, status);
-        callParamCallbacks();
-        return true;
-    case DasPacket::CMD_READ_VERSION:
-        if (rspReadVersion(packet))
-            status = m_stateMachine.transition(VERSION_READ_OK);
-        else
-            status = m_stateMachine.transition(VERSION_READ_MISMATCH);
-        setIntegerParam(Status, status);
-        callParamCallbacks();
-        return true;
-    default:
+        ack = rspDiscover(packet);
         break;
-    }
-
-    if (status != STAT_READY) {
-        LOG_WARN("Module type and versions not yet verified, ignoring packet");
-        return false;
-    }
-
-    switch (packet->cmdinfo.command) {
+    case DasPacket::CMD_READ_VERSION:
+        ack = rspReadVersion(packet);
+        break;
     case DasPacket::CMD_READ_CONFIG:
-        return rspReadConfig(packet);
+        ack = rspReadConfig(packet);
+        break;
     case DasPacket::CMD_READ_STATUS:
-        return rspReadStatus(packet);
-    case DasPacket::RSP_ACK:
-        switch (packet->getPayload()[0]) {
-        case DasPacket::CMD_WRITE_CONFIG:
-            // TODO:
-        default:
-            break;
-        }
-        return true;
+        ack = rspReadStatus(packet);
+        break;
+    case DasPacket::CMD_WRITE_CONFIG:
+        ack = rspWriteConfig(packet);
+        break;
+    case DasPacket::CMD_START:
+        ack = rspStart(packet);
+        break;
+    case DasPacket::CMD_STOP:
+        ack = rspStop(packet);
+        break;
     default:
-        LOG_WARN("Received unhandled response 0x%02X", packet->cmdinfo.command);
+        LOG_WARN("Received unhandled response 0x%02X", command);
         return false;
     }
+
+    int action = (ack ? SM_ACTION_ACK(command) : SM_ACTION_ERR(command));
+    m_stateMachine.transition(action);
+    setIntegerParam(Status, m_stateMachine.getCurrentState());
+    callParamCallbacks();
+    return true;
+}
+
+void BaseModulePlugin::reqDiscover()
+{
+    sendToDispatcher(DasPacket::CMD_DISCOVER);
+    scheduleTimeoutCallback(DasPacket::CMD_DISCOVER, NO_RESPONSE_TIMEOUT);
+}
+
+bool BaseModulePlugin::rspDiscover(const DasPacket *packet)
+{
+    if (!cancelTimeoutCallback()) {
+        LOG_WARN("Received DISCOVER response after timeout");
+        return false;
+    }
+    return true;
+}
+
+void BaseModulePlugin::reqReadVersion()
+{
+    sendToDispatcher(DasPacket::CMD_READ_VERSION);
+    scheduleTimeoutCallback(DasPacket::CMD_READ_VERSION, NO_RESPONSE_TIMEOUT);
+}
+
+bool BaseModulePlugin::rspReadVersion(const DasPacket *packet)
+{
+    if (!cancelTimeoutCallback()) {
+        LOG_WARN("Received READ_VERSION response after timeout");
+        return false;
+    }
+    return true;
+}
+
+void BaseModulePlugin::reqReadStatus()
+{
+    sendToDispatcher(DasPacket::CMD_READ_STATUS);
+    scheduleTimeoutCallback(DasPacket::CMD_READ_STATUS, NO_RESPONSE_TIMEOUT);
+}
+
+bool BaseModulePlugin::rspReadStatus(const DasPacket *packet)
+{
+    if (!cancelTimeoutCallback()) {
+        LOG_WARN("Received READ_STATUS response after timeout");
+        return false;
+    }
+
+    if (packet->getPayloadLength() != m_statusPayloadLength) {
+        LOG_ERROR("Received wrong READ_STATUS response based on length; received %u, expected %u", packet->getPayloadLength(), m_statusPayloadLength);
+        return false;
+    }
+
+    const uint32_t *payload = packet->getPayload();
+    for (std::map<int, StatusParamDesc>::iterator it=m_statusParams.begin(); it != m_statusParams.end(); it++) {
+        int offset = it->second.offset;
+        int shift = it->second.shift;
+        if (m_behindDsp) {
+            shift += (offset % 2 == 0 ? 0 : 16);
+            offset /= 2;
+        }
+        int value = payload[offset] >> shift;
+        if ((shift + it->second.width) > 32) {
+            value |= payload[offset + 1] << (32 - shift);
+        }
+        value &= (0x1ULL << it->second.width) - 1;
+        setIntegerParam(it->first, value);
+    }
+    callParamCallbacks();
+    return true;
+}
+
+void BaseModulePlugin::reqReadConfig()
+{
+    sendToDispatcher(DasPacket::CMD_READ_CONFIG);
+    scheduleTimeoutCallback(DasPacket::CMD_READ_CONFIG, NO_RESPONSE_TIMEOUT);
 }
 
 bool BaseModulePlugin::rspReadConfig(const DasPacket *packet)
 {
+    if (!cancelTimeoutCallback()) {
+        LOG_WARN("Received READ_CONFIG response after timeout");
+        return false;
+    }
+
     if (m_configPayloadLength == 0)
         recalculateConfigParams();
 
@@ -215,58 +298,132 @@ bool BaseModulePlugin::rspReadConfig(const DasPacket *packet)
     const uint32_t *payload = packet->getPayload();
     for (std::map<int, ConfigParamDesc>::iterator it=m_configParams.begin(); it != m_configParams.end(); it++) {
         int offset = m_configSectionOffsets[it->second.section] + it->second.offset;
-        int mask = (0x1 << it->second.width) - 1;
-        int value = (payload[offset] >> it->second.shift) & mask;
+        int shift = it->second.shift;
+        if (m_behindDsp) {
+            shift += (offset % 2 == 0 ? 0 : 16);
+            offset /= 2;
+        }
+        int value = payload[offset] >> shift;
+        if ((shift + it->second.width) > 32) {
+            value |= payload[offset + 1] << (32 - shift);
+        }
+        value &= (0x1ULL << it->second.width) - 1;
         setIntegerParam(it->first, value);
     }
     callParamCallbacks();
     return true;
 }
 
-bool BaseModulePlugin::rspReadStatus(const DasPacket *packet)
+void BaseModulePlugin::reqWriteConfig()
 {
-    if (packet->getPayloadLength() != m_statusPayloadLength) {
-        LOG_ERROR("Received wrong READ_STATUS response based on length; received %u, expected %u", packet->getPayloadLength(), m_statusPayloadLength);
-        return false;
+    if (m_configPayloadLength == 0)
+        recalculateConfigParams();
+
+    uint32_t length = ((m_configPayloadLength + 3) & ~3) / 4;
+    uint32_t data[length];
+    for (uint32_t i=0; i<length; i++)
+        data[i] = 0;
+
+    for (std::map<int, struct ConfigParamDesc>::iterator it=m_configParams.begin(); it != m_configParams.end(); it++) {
+        uint32_t offset = m_configSectionOffsets[it->second.section] + it->second.offset;
+        uint32_t mask = (0x1ULL << it->second.width) - 1;
+        int shift = it->second.shift;
+        int value = 0;
+
+        if (getIntegerParam(it->first, &value) != asynSuccess) {
+            // This should not happen. It's certainly error when creating and parameters.
+            LOG_ERROR("Failed to get parameter %s value", getParamName(it->first));
+            return;
+        }
+        if (static_cast<int>(value & mask) != value) {
+            // This should not happen. It's certainly error when setting new value for parameter
+            LOG_WARN("Parameter %s value out of range", getParamName(it->first));
+        }
+        value &= mask;
+
+        if (m_behindDsp) {
+            shift += (offset % 2 == 0 ? 0 : 16);
+            offset /= 2;
+        }
+
+        if (offset >= length) {
+            // Unlikely, but rather sure than sorry
+            LOG_ERROR("Parameter %s offset out of range", getParamName(it->first));
+            continue;
+        }
+
+        data[offset] |= value << shift;
+        if ((it->second.width + shift) > 32) {
+            data[offset+1] |= value >> (it->second.width -(32 - shift + 1));
+        }
     }
 
-    const uint32_t *payload = packet->getPayload();
-    for (std::map<int, StatusParamDesc>::iterator it=m_statusParams.begin(); it != m_statusParams.end(); it++) {
-        int value = (payload[it->second.offset] >> it->second.shift) & ((0x1 << it->second.width) - 1);
-        setIntegerParam(it->first, value);
+    sendToDispatcher(DasPacket::CMD_WRITE_CONFIG, data, length);
+    scheduleTimeoutCallback(DasPacket::CMD_WRITE_CONFIG, NO_RESPONSE_TIMEOUT);
+}
+
+bool BaseModulePlugin::rspWriteConfig(const DasPacket *packet)
+{
+    if (!cancelTimeoutCallback()) {
+        LOG_WARN("Received READ_STATUS response after timeout");
+        return false;
     }
-    callParamCallbacks();
     return true;
+}
+
+void BaseModulePlugin::reqStart()
+{
+    sendToDispatcher(DasPacket::CMD_START);
+    scheduleTimeoutCallback(DasPacket::CMD_START, NO_RESPONSE_TIMEOUT);
+}
+
+bool BaseModulePlugin::rspStart(const DasPacket *packet)
+{
+    if (!cancelTimeoutCallback()) {
+        LOG_WARN("Received CMD_START response after timeout");
+        return false;
+    }
+    return (packet->cmdinfo.command == DasPacket::RSP_ACK);
+}
+
+void BaseModulePlugin::reqStop()
+{
+    sendToDispatcher(DasPacket::CMD_STOP);
+    scheduleTimeoutCallback(DasPacket::CMD_STOP, NO_RESPONSE_TIMEOUT);
+}
+
+bool BaseModulePlugin::rspStop(const DasPacket *packet)
+{
+    if (!cancelTimeoutCallback()) {
+        LOG_WARN("Received CMD_STPO response after timeout");
+        return false;
+    }
+    return (packet->cmdinfo.command == DasPacket::RSP_ACK);
 }
 
 void BaseModulePlugin::createStatusParam(const char *name, uint32_t offset, uint32_t nBits, uint32_t shift)
 {
-    if ((shift + nBits) > 32) {
-        LOG_ERROR("Module status parameter '%s' cannot shift over 32 bits, %d bits shifted for %d requested", name, nBits, shift);
-        return;
-    }
-
     int index;
     if (createParam(name, asynParamInt32, &index) != asynSuccess) {
         LOG_ERROR("Module status parameter '%s' cannot be created (already exist?)", name);
         return;
     }
+
     StatusParamDesc desc;
     desc.offset = offset;
     desc.shift = shift;
     desc.width = nBits;
     m_statusParams[index] = desc;
 
-    m_statusPayloadLength = std::max(m_statusPayloadLength, (offset+1)*4);
+    uint32_t length = offset +1;
+    if (m_behindDsp && nBits > 16)
+        length++;
+    uint32_t wordsize = (m_behindDsp ? 2 : 4);
+    m_statusPayloadLength = std::max(m_statusPayloadLength, length*wordsize);
 }
 
-void BaseModulePlugin::createConfigParam(const char *name, char section, uint32_t offset, uint32_t nBits, uint32_t shift, int value) {
-
-    if ((shift + nBits) > 32) {
-        LOG_ERROR("Module config parameters cannot shift over 32 bits, %d bits shifted for %d requested", nBits, shift);
-        return;
-    }
-
+void BaseModulePlugin::createConfigParam(const char *name, char section, uint32_t offset, uint32_t nBits, uint32_t shift, int value)
+{
     int index;
     if (createParam(name, asynParamInt32, &index) != asynSuccess) {
         LOG_ERROR("Module config parameter '%s' cannot be created (already exist?)", name);
@@ -282,7 +439,10 @@ void BaseModulePlugin::createConfigParam(const char *name, char section, uint32_
     desc.initVal = value;
     m_configParams[index] = desc;
 
-    m_configSectionSizes[section] = std::max(m_configSectionSizes[section], offset+1);
+    uint32_t length = offset + 1;
+    if (m_behindDsp && nBits > 16)
+        length++;
+    m_configSectionSizes[section] = std::max(m_configSectionSizes[section], length);
 }
 
 DasPacket *BaseModulePlugin::createOpticalPacket(uint32_t destination, DasPacket::CommandType command, uint32_t *payload, uint32_t length)
@@ -299,24 +459,42 @@ DasPacket *BaseModulePlugin::createOpticalPacket(uint32_t destination, DasPacket
 
 DasPacket *BaseModulePlugin::createLvdsPacket(uint32_t destination, DasPacket::CommandType command, uint32_t *payload, uint32_t length)
 {
-    DasPacket *packet = DasPacket::create((2+length)*sizeof(uint32_t), reinterpret_cast<uint8_t *>(payload));
+    DasPacket *packet = DasPacket::create((2+2*length)*sizeof(uint32_t));
     if (packet) {
+        uint32_t offset = 0;
         packet->source = DasPacket::HWID_SELF;
         packet->destination = 0;
+        packet->cmdinfo.command = command;
         packet->cmdinfo.is_command = true;
         packet->cmdinfo.is_passthru = true;
-        packet->cmdinfo.lvds_all_one = 0x3;
-        packet->cmdinfo.lvds_global = (destination == DasPacket::HWID_BROADCAST);
-        packet->cmdinfo.lvds_parity = evenParity(command);
-        packet->cmdinfo.command = command;
+        packet->cmdinfo.lvds_cmd = true;
+        packet->cmdinfo.lvds_start = true;
+        packet->cmdinfo.lvds_parity = evenParity(packet->info & 0xFFFFFF);
         if (destination != DasPacket::HWID_BROADCAST) {
-            packet->payload[0] = destination & 0xFFFF;
-            packet->payload[0] |= (evenParity(packet->payload[0]) << 16);
-            packet->payload[1] = (destination >> 16 ) & 0xFFFF;
-            packet->payload[1] |= (evenParity(packet->payload[1]) << 16); // last bit changes parity
-            packet->payload[1] |= (0x1 << 17);
+            packet->payload[offset] = destination & 0xFFFF;
+            packet->payload[offset] |= (evenParity(packet->payload[offset]) << 16);
+            offset++;
+            packet->payload[offset] = (destination >> 16 ) & 0xFFFF;
+            packet->payload[offset] |= (evenParity(packet->payload[offset]) << 16);
+            offset++;
         } else {
-            packet->payload_length = 0;
+            packet->payload_length -= 2*sizeof(uint32_t);
+        }
+        for (uint32_t i=0; i<length; i++) {
+            packet->payload[offset] = payload[i] & 0xFFFF;
+            packet->payload[offset] |= evenParity(packet->payload[offset]) << 16;
+            offset++;
+            packet->payload[offset] = (payload[i] >> 16) & 0xFFFF;
+            packet->payload[offset] |= evenParity(packet->payload[offset]) << 16;
+            offset++;
+        }
+        if (offset > 0) {
+            offset--;
+            packet->payload[offset] |= (0x1 << 17); // Last word bit...
+            packet->payload[offset] ^= (0x1 << 16); // ... also flips parity
+        } else {
+            packet->cmdinfo.lvds_stop = true;
+            packet->cmdinfo.lvds_parity ^= 0x1;
         }
     }
     return packet;
@@ -336,7 +514,7 @@ uint32_t BaseModulePlugin::parseHardwareId(const std::string &text)
 {
     uint32_t id = 0;
 
-    if (text.substr(2) == "0x") {
+    if (text.substr(0, 2) == "0x") {
         char *endptr;
         id = strtoul(text.c_str(), &endptr, 16);
         if (*endptr != 0)
@@ -349,12 +527,37 @@ uint32_t BaseModulePlugin::parseHardwareId(const std::string &text)
     return id;
 }
 
+float BaseModulePlugin::noResponseCleanup(DasPacket::CommandType command)
+{
+    m_stateMachine.transition(SM_ACTION_TIMEOUT(command));
+    setIntegerParam(Status, m_stateMachine.getCurrentState());
+    callParamCallbacks();
+    return 0;
+}
+
+bool BaseModulePlugin::scheduleTimeoutCallback(DasPacket::CommandType command, double delay)
+{
+    std::function<float(void)> timeoutCb = std::bind(&BaseModulePlugin::noResponseCleanup, this, command);
+    m_timeoutTimer = scheduleCallback(timeoutCb, NO_RESPONSE_TIMEOUT);
+    return (m_timeoutTimer);
+}
+
+bool BaseModulePlugin::cancelTimeoutCallback()
+{
+    bool canceled = false;
+    if (m_timeoutTimer) {
+        canceled = m_timeoutTimer->cancel();
+        m_timeoutTimer.reset();
+    }
+    return canceled;
+}
+
 void BaseModulePlugin::recalculateConfigParams()
 {
     // Section sizes have already been calculated in createConfigParams()
 
     // Calculate section offsets
-    m_configSectionOffsets['0'] = 0x0;
+    m_configSectionOffsets['1'] = 0x0;
     for (char i='1'; i<='9'; i++) {
         m_configSectionOffsets[i] = m_configSectionOffsets[i-1] + m_configSectionSizes[i-1];
         LOG_WARN("Section '%c' size=%u offset=%u", i, m_configSectionSizes[i], m_configSectionOffsets[i]);
@@ -367,5 +570,7 @@ void BaseModulePlugin::recalculateConfigParams()
     }
 
     // Calculate total required payload size in bytes
-    m_configPayloadLength = 4 * (m_configSectionOffsets['F'] + m_configSectionSizes['F']);
+    m_configPayloadLength = m_configSectionOffsets['F'] + m_configSectionSizes['F'];
+    int wordsize = (m_behindDsp ? 2 : 4);
+    m_configPayloadLength *= wordsize;
 }
