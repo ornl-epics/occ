@@ -15,7 +15,8 @@ fail_count=0
 
 # used to format output from occ_loopback for printing
 wrapper = textwrap.TextWrapper(initial_indent=prefix, width=70,
-                               break_long_words=False, replace_whitespace=False,                               subsequent_indent=prefix)
+                               break_long_words=False, replace_whitespace=False,
+                               subsequent_indent=prefix)
 
 # use splitlines so that I can indent each line of output with the prefix
 def wrapped_print(in_string):
