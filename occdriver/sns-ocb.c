@@ -1015,13 +1015,17 @@ static ssize_t snsocb_read(struct file *file, char __user *buf,
 {
 	struct ocb *ocb = file->private_data;
 	struct ocb_status info;
+        ssize_t errval=0;
+
+        spin_lock_irq(&ocb->lock); 
 
 	switch (*pos) {
 	case OCB_CMD_GET_STATUS:
-		if (count != sizeof(struct ocb_status))
-			return -EINVAL;
+		if (count != sizeof(struct ocb_status)) {
+			errval = -EINVAL;
+                        goto handle_read_error;
+                }
 
-		spin_lock_irq(&ocb->lock);
 		info.ocb_ver = OCB_VER;
 		info.board_type = ocb->board->type;
 		info.firmware_ver = ocb->firmware_version;
@@ -1032,19 +1036,32 @@ static ssize_t snsocb_read(struct file *file, char __user *buf,
 		info.bars[2] = ocb->board->bars[2];
 		if (!ocb->reset_in_progress)
 			ocb->reset_occurred = false;
-		spin_unlock_irq(&ocb->lock);
 
-		if (copy_to_user(buf, &info, sizeof(info)))
-			return -EFAULT;
+		spin_unlock_irq(&ocb->lock);
+		if (copy_to_user(buf, &info, sizeof(info))) {
+			errval = -EFAULT;
+                        goto handle_read_error;
+                }
+		spin_lock_irq(&ocb->lock);
+
 		break;
 	case OCB_CMD_RX:
+                spin_unlock_irq(&ocb->lock);
 		count = snsocb_rx(file, buf, count);
+                spin_lock_irq(&ocb->lock);
 		break;
 	default:
-		return -EINVAL;
+		errval = -EINVAL;
+                goto handle_read_error;
 	}
 
-	return count;
+handle_read_error:
+	spin_unlock_irq(&ocb->lock);
+
+        if (errval != 0)
+            return errval;
+        else
+	    return count;
 }
 
 static ssize_t snsocb_write(struct file *file, const char __user *buf,
@@ -1052,25 +1069,34 @@ static ssize_t snsocb_write(struct file *file, const char __user *buf,
 {
 	struct ocb *ocb = file->private_data;
 	u32 val, prod;
+        ssize_t errval=0;
 
+        spin_lock_irq(&ocb->lock);
+        
 	switch (*pos) {
 	case OCB_CMD_ADVANCE_DQ:
-		if (count != sizeof(u32))
-			return -EINVAL;
+		if (count != sizeof(u32)) {
+			errval = -EINVAL;
+                        goto handle_write_error;
+                }
 
-		if (copy_from_user(&val, buf, sizeof(u32)))
-			return -EFAULT;
-
+                spin_unlock_irq(&ocb->lock);
+		if (copy_from_user(&val, buf, sizeof(u32))) {
+			errval = -EFAULT;
+                        goto handle_write_error;
+                }
+                spin_lock_irq(&ocb->lock);
 		/* We only deal with packets that are multiples of 4 bytes */
 		val = ALIGN(val, 4);
 
-		if (!val || val >= OCB_DQ_SIZE)
-			return -EOVERFLOW;
+		if (!val || val >= OCB_DQ_SIZE) {
+			errval = -EOVERFLOW;
+                        goto handle_write_error;
+                }
 
 		/* Validate that the new consumer index is within the range
 		 * of valid data.
 		 */
-		spin_lock_irq(&ocb->lock);
 		val += ocb->dq_cons;
 		prod = ocb->dq_prod;
 		if (ocb->dq_prod < ocb->dq_cons)
@@ -1083,22 +1109,29 @@ static ssize_t snsocb_write(struct file *file, const char __user *buf,
 			}
 		} else
 			val = ~0;
-		spin_unlock_irq(&ocb->lock);
 
-		if (val == ~0)
-			return -EOVERFLOW;
+		if (val == ~0) {
+			errval = -EOVERFLOW;
+                        goto handle_write_error;
+                }
 		break;
 	case OCB_CMD_RESET:
-		if (count != sizeof(u32))
-			return -EINVAL;
+		if (count != sizeof(u32)) {
+			errval = -EINVAL;
+                        goto handle_write_error;
+                }
 
-		if (copy_from_user(&val, buf, sizeof(u32)))
-			return -EFAULT;
+                spin_unlock_irq(&ocb->lock);
+		if (copy_from_user(&val, buf, sizeof(u32))) {
+			errval = -EFAULT;
+                        goto handle_write_error;
+                }
+                spin_lock_irq(&ocb->lock);
+		if (val > OCB_SELECT_OPTICAL) {
+			errval = -EINVAL;
+                        goto handle_write_error;
+                }
 
-		if (val > OCB_SELECT_OPTICAL)
-			return -EINVAL;
-
-		spin_lock_irq(&ocb->lock);
 		ocb->use_optical = !!val;
 		if (ocb->use_optical) {
 			ocb->conf |= OCB_CONF_SELECT_OPTICAL;
@@ -1107,36 +1140,47 @@ static ssize_t snsocb_write(struct file *file, const char __user *buf,
 			ocb->conf &= ~OCB_CONF_SELECT_OPTICAL;
 			ocb->conf &= ~OCB_CONF_OPTICAL_ENABLE;
 		}
-		spin_unlock_irq(&ocb->lock);
-
+                spin_unlock_irq(&ocb->lock);
 		snsocb_reset(ocb);
+                spin_lock_irq(&ocb->lock);
 		break;
 	case OCB_CMD_TX:
+                spin_unlock_irq(&ocb->lock);
 		count = snsocb_tx(file, ocb, buf, count);
+                spin_lock_irq(&ocb->lock);
 		break;
 	case OCB_CMD_RX_ENABLE:
-		if (count != sizeof(u32))
-			return -EINVAL;
+		if (count != sizeof(u32)) {
+			errval = -EINVAL;
+                        goto handle_write_error;
+                }
 
-		if (copy_from_user(&val, buf, sizeof(u32)))
-			return -EFAULT;
+		if (copy_from_user(&val, buf, sizeof(u32))) {
+			errval = -EFAULT;
+                        goto handle_write_error;
+                }
 
-		spin_lock_irq(&ocb->lock);
 		if (val)
 			ocb->conf |= OCB_CONF_RX_ENABLE;
 		else
 			ocb->conf &= ~OCB_CONF_RX_ENABLE;
 		val = ocb->conf;
-		spin_unlock_irq(&ocb->lock);
 		iowrite32(val, ocb->ioaddr + REG_CONFIG);
 		val = ioread32(ocb->ioaddr + REG_CONFIG);
 
 		break;
 	default:
-		return -EINVAL;
+		errval = -EINVAL;
+                goto handle_write_error;
 	}
 
-	return count;
+handle_write_error:
+        spin_unlock_irq(&ocb->lock);
+
+        if (errval != 0)
+            return errval;
+        else
+	    return count;
 }
 
 static int snsocb_open(struct inode *inode, struct file *file)
