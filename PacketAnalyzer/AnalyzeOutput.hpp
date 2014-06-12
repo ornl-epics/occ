@@ -15,6 +15,7 @@ class AnalyzeOutput : public AnalyzeOCC
 
         void showMetrics();
         void dumpPacket(const LabPacket * const packet, uint32_t errorOffset);
+        void dumpOccRegs();
     private:
         std::string m_dumpFile;
         std::ofstream m_dumpStream;

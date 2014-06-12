@@ -4,6 +4,9 @@
 #include <iomanip>
 #include <ncurses.h>
 #include <sstream>
+#include <map>
+#include <occlib_hw.h>
+#include <stdexcept>
 
 using namespace std;
 
@@ -191,3 +194,50 @@ char AnalyzeOutput::speedTag(double speed) {
     else if (speed > 1e3) return 'K';
     else return ' ';
 }
+
+void AnalyzeOutput::dumpOccRegs()
+{
+    ostringstream ss;
+
+    map<uint32_t, string> m;
+    uint32_t val;
+
+    m.insert(map<uint32_t,string>::value_type(0, "VERSION"));
+    m.insert(map<uint32_t,string>::value_type(0x4, "CONFIG"));
+    m.insert(map<uint32_t,string>::value_type(0x8, "STATUS_0"));
+    m.insert(map<uint32_t,string>::value_type(0x14, "MODULE_ID"));
+    m.insert(map<uint32_t,string>::value_type(0x70, "DQ_ADDR0"));
+    m.insert(map<uint32_t,string>::value_type(0x74, "DQ_ADDR1"));
+    m.insert(map<uint32_t,string>::value_type(0x80, "DQ_CONS_IDX"));
+    m.insert(map<uint32_t,string>::value_type(0x84, "DQ_PROD_IDX"));
+    m.insert(map<uint32_t,string>::value_type(0x88, "DQ_LENGTH"));
+    m.insert(map<uint32_t,string>::value_type(0x90, "TXBUF_CONS_IDX"));
+    m.insert(map<uint32_t,string>::value_type(0x94, "TXBUF_PROD_IDX"));
+    m.insert(map<uint32_t,string>::value_type(0x98, "TXBUF_LENGTH"));
+    m.insert(map<uint32_t,string>::value_type(0xC0, "INTERRUPT_STATUS"));
+    m.insert(map<uint32_t,string>::value_type(0xC4, "INTERRUPT_ENABLE"));
+    m.insert(map<uint32_t,string>::value_type(0x100, "DATE_CODE"));
+    m.insert(map<uint32_t,string>::value_type(0x300, "PCI_COMMAND_REG"));
+    m.insert(map<uint32_t,string>::value_type(0x304, "PCI_DEVICE_CNTL"));
+    m.insert(map<uint32_t,string>::value_type(0x308, "PCI_DEVICE_CNTL2"));
+    m.insert(map<uint32_t,string>::value_type(0x30C, "PCI_DEVICE_CNTL3"));
+    m.insert(map<uint32_t,string>::value_type(0x310, "SYSMON_TEMP"));
+    m.insert(map<uint32_t,string>::value_type(0x314, "SYSMON_VCCINT"));
+    m.insert(map<uint32_t,string>::value_type(0x318, "SYSMON_VCCAUX"));
+    m.insert(map<uint32_t,string>::value_type(0x380, "HW_PKTSIM_1"));
+    m.insert(map<uint32_t,string>::value_type(0x384, "HW_PKTSIM_2"));
+
+    map<uint32_t,string>::iterator it = m.begin();
+
+    while (it != m.end())
+    {
+        if (occ_io_read(m_occ, 0, it->first, &val, 1) != 1)
+            throw runtime_error("Failed to read OCC register");
+
+        ss << setfill(' ') << setw(20) << it->second << " 0x" << SS_HEX(val) << endl;
+        it++;
+    }
+
+    m_dumpStream << ss.str();
+}
+

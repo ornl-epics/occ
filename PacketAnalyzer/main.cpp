@@ -7,12 +7,16 @@
 using namespace std;
 
 bool shutdown;
+AnalyzeOutput *ao;
 
 static void sighandler(int signal) {
     switch (signal) {
     case SIGTERM:
     case SIGINT:
         shutdown = true;
+        break;
+    case SIGUSR1:
+        ao->dumpOccRegs();
         break;
     default:
         break;
@@ -49,6 +53,7 @@ int main(int argc, char **argv)
     sigemptyset(&sigact.sa_mask);
     sigaction(SIGTERM, &sigact, NULL);
     sigaction(SIGINT, &sigact, NULL);
+    sigaction(SIGUSR1, &sigact, NULL);
 
     for (int i = 1; i < argc; i++) {
         string key(argv[i]);
@@ -88,6 +93,7 @@ int main(int argc, char **argv)
     try {
         shutdown = false;
         AnalyzeOutput analyzer(devfile, dumpfile, dmadump);
+        ao = &analyzer;
         if (pcie_generator_rate != 0)
             analyzer.enablePcieGenerator(pcie_generator_rate);
         analyzer.process(no_analyze);
