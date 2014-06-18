@@ -5,13 +5,19 @@ occ_loopback
 PacketAnalyzer
 test_files
 occ_flashprog
+tags
+cscope.files
+PacketAnalyzerDebug
 
 # Backup files
 *~
+*\#
 
 # Temporary files
 *.new
 *.diff
+*.tmp
+*.swp
 
 # Object files
 *.slo
@@ -40,4 +46,4 @@ occ_flashprog
 *.i.*86
 *.x86_64
 *.hex
-
+*.bin
