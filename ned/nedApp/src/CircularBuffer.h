@@ -62,6 +62,11 @@ class CircularBuffer : public BaseCircularBuffer {
         bool empty();
 
         /**
+         * Return true when circular buffer is full.
+         */
+        bool full();
+
+        /**
          * Wakeup consumer in case of an outside error.
          */
         void wakeUpConsumer(int error);
