@@ -168,6 +168,16 @@ bool CircularBuffer::empty()
     return isEmpty;
 }
 
+bool CircularBuffer::full() {
+    bool isFull = false;
+
+    m_lock.lock();
+    isFull = (((m_size + m_consumer - m_producer - m_unit) % m_size) == 0);
+    m_lock.unlock();
+
+    return isFull;
+}
+
 void CircularBuffer::wakeUpConsumer(int error)
 {
     m_error = error;
