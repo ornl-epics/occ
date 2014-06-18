@@ -18,6 +18,7 @@ DB += DspPlugin.template
 DB += RocPlugin.template
 DB += FemPlugin.template
 DB += DumpPlugin.template
+DB += StatPlugin.template
 
 #----------------------------------------------------
 # If <anyname>.db template is not named <anyname>*.template add
