@@ -1,0 +1,100 @@
+record(stringin, "$(P)$(R)Timestamp")
+{
+    field(DTYP, "asynOctetRead")
+    field(INP,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Timestamp")
+    field(SCAN, "I/O Intr")
+}
+record(bi, "$(P)$(R)BadPulse")
+{
+    field(DESC, "Bad pulse indicator")
+    field(DTYP, "asynInt32")
+    field(INP,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))BadPulse")
+    field(ZNAM, "No")
+    field(ONAM, "Yes")
+    field(SCAN, "I/O Intr")
+}
+record(longin, "$(P)$(R)PulseFlavor")
+{
+    field(DESC, "Pulse flavor")
+    field(DTYP, "asynInt32")
+    field(INP,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))PulseFlavor")
+    field(SCAN, "I/O Intr")
+}
+record(longin, "$(P)$(R)PulseCharge")
+{
+    field(DESC, "Pulse charge")
+    field(DTYP, "asynInt32")
+    field(INP,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))PulseCharge")
+    field(EGU,  "C")
+    field(SCAN, "I/O Intr")
+}
+record(bi, "$(P)$(R)BadVetoFrame")
+{
+    field(DESC, "Bad veto frame indicator")
+    field(DTYP, "asynInt32")
+    field(INP,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))BadVetoFrame")
+    field(ZNAM, "No")
+    field(ONAM, "Yes")
+    field(SCAN, "I/O Intr")
+}
+record(bi, "$(P)$(R)BadCycleFrame")
+{
+    field(DESC, "Bad cycle frame indicator")
+    field(DTYP, "asynInt32")
+    field(INP,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))BadCycleFrame")
+    field(ZNAM, "No")
+    field(ONAM, "Yes")
+    field(SCAN, "I/O Intr")
+}
+record(longin, "$(P)$(R)Tstat")
+{
+    field(DESC, "TSTAT")
+    field(DTYP, "asynInt32")
+    field(INP,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Tstat")
+    field(SCAN, "I/O Intr")
+}
+record(longin, "$(P)$(R)Veto")
+{
+    field(DESC, "Last cycle veto")
+    field(DTYP, "asynInt32")
+    field(INP,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Veto")
+    field(SCAN, "I/O Intr")
+}
+record(longin, "$(P)$(R)Cycle")
+{
+    field(DESC, "Cycle number")
+    field(DTYP, "asynInt32")
+    field(INP,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Cycle")
+    field(SCAN, "I/O Intr")
+}
+record(longin, "$(P)$(R)IntraPulseTime")
+{
+    field(DESC, "Number of ns between reference pulses")
+    field(DTYP, "asynInt32")
+    field(INP,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))IntraPulseTime")
+    field(EGU,  "ns")
+    field(SCAN, "I/O Intr")
+}
+record(bi, "$(P)$(R)TofFullOffset")
+{
+    field(DESC, "TOF full offset enabled")
+    field(DTYP, "asynInt32")
+    field(INP,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))TofFullOffset")
+    field(ZNAM, "Disabled")
+    field(ONAM, "Enabled")
+    field(SCAN, "I/O Intr")
+}
+record(longin, "$(P)$(R)FrameOffset")
+{
+    field(DESC, "RTDL frame offset")
+    field(DTYP, "asynInt32")
+    field(INP,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))FrameOffset")
+    field(SCAN, "I/O Intr")
+}
+record(longin, "$(P)$(R)TofFixedOffset")
+{
+    field(DESC, "TOF fixed offset")
+    field(DTYP, "asynInt32")
+    field(INP,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))TofFixedOffset")
+    field(SCAN, "I/O Intr")
+}

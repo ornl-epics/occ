@@ -19,6 +19,7 @@ DB += RocPlugin.template
 DB += FemPlugin.template
 DB += DumpPlugin.template
 DB += StatPlugin.template
+DB += RtdlPlugin.template
 
 #----------------------------------------------------
 # If <anyname>.db template is not named <anyname>*.template add

@@ -24,12 +24,43 @@ struct DasPacket
          * Structure representing RTDL header in data packets, when rtdl_present bit is set.
          */
         struct RtdlHeader {
-            uint32_t timestamp_low;
-            uint32_t timestamp_high;
-            uint32_t charge;
-            uint32_t general_info;
+            uint32_t timestamp_sec;
+            uint32_t timestamp_nsec;
+            union {
+                uint32_t charge;
+#ifdef BITFIELD_LSB_FIRST
+                struct {
+                    unsigned pulse_charge:24;   //!< Pulse charge
+                    unsigned pulse_flavor:6;    //!< Pulse flavor
+                    unsigned bad_pulse:1;       //!< Bad pulse flavor frame
+                    unsigned unused31:1;        //!< not used
+                };
+#endif
+            };
+            union {
+                uint32_t general_info;
+#ifdef BITFIELD_LSB_FIRST
+                struct {
+                    unsigned cycle:10;          //!< Cycle number
+                    unsigned veto:12;           //!< Last cycle veto
+                    unsigned tstat:8;           //!< TSTAT
+                    unsigned bad_cycle_frame:1; //!< Bad cycle frame
+                    unsigned bad_veto_frame:1;  //!< Bad last cycle veto frame
+                };
+#endif
+            };
             uint32_t tsync_width;
-            uint32_t tsync_delay;
+            union {
+                uint32_t tsync_delay;
+#ifdef BITFIELD_LSB_FIRST
+                struct {
+                    unsigned tof_fixed_offset:24; //!< TOF fixed offset
+                    unsigned frame_offset:4;    //!< RTDL frame offset
+                    unsigned unused28:3;        //!< "000"
+                    unsigned tof_full_offset:1; //!< TOF full offset enabled
+                };
+#endif
+            };
         };
 
         /**

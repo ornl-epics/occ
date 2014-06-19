@@ -65,6 +65,7 @@ ned_SRCS  += FemPlugin.cpp
 ned_SRCS  += DiscoverPlugin.cpp
 ned_SRCS  += DumpPlugin.cpp
 ned_SRCS  += StatPlugin.cpp
+ned_SRCS  += RtdlPlugin.cpp
 
 ned_DOXS  += DspPlugin.dox
 ned_DOXS  += RocPlugin.dox

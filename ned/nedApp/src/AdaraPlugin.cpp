@@ -66,8 +66,8 @@ void AdaraPlugin::processData(const DasPacketList * const packetList)
 
                 outpacket[0] = 24 + sizeof(DasPacket::NeutronEvent)*neutronsCount;
                 outpacket[1] = ADARA_CODE_DAS_DATA;
-                outpacket[2] = rtdl->timestamp_high;
-                outpacket[3] = rtdl->timestamp_low;
+                outpacket[2] = rtdl->timestamp_sec;
+                outpacket[3] = rtdl->timestamp_nsec;
                 outpacket[4] = packet->source;
                 // Based on ADARA System Architecture 3.4.1 I think it should be like this
                 outpacket[5] = (packet->datainfo.subpacket_end << 31) +

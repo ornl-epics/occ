@@ -78,6 +78,8 @@
 		<Unit filename="ProxyPlugin.h" />
 		<Unit filename="RocPlugin.cpp" />
 		<Unit filename="RocPlugin.h" />
+		<Unit filename="RtdlPlugin.cpp" />
+		<Unit filename="RtdlPlugin.h" />
 		<Unit filename="StatPlugin.cpp" />
 		<Unit filename="StatPlugin.h" />
 		<Unit filename="StateMachine.h" />
