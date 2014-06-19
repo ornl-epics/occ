@@ -107,6 +107,11 @@ bool DasPacket::isData() const
     return (!cmdinfo.is_command);
 }
 
+bool DasPacket::isBadPacket() const
+{
+    return (cmdinfo.command == BAD_PACKET);
+}
+
 bool DasPacket::isNeutronData() const
 {
     // info == 0x0C

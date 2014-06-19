@@ -20,6 +20,8 @@ StatPlugin::StatPlugin(const char *portName, const char *dispatcherPortName, int
     , m_metaBytes(0)
     , m_rtdlCount(0)
     , m_rtdlBytes(0)
+    , m_badCount(0)
+    , m_badBytes(0)
     , m_lastReceivedCount(0)
     , m_lastReceivedBytes(0)
     , m_lastCmdCount(0)
@@ -30,6 +32,8 @@ StatPlugin::StatPlugin(const char *portName, const char *dispatcherPortName, int
     , m_lastMetaBytes(0)
     , m_lastRtdlCount(0)
     , m_lastRtdlBytes(0)
+    , m_lastBadCount(0)
+    , m_lastBadBytes(0)
 {
     createParam("RxCountRate",   asynParamInt32, &RxCountRate);
     createParam("RxByteRate",    asynParamInt32, &RxByteRate);
@@ -45,6 +49,9 @@ StatPlugin::StatPlugin(const char *portName, const char *dispatcherPortName, int
     createParam("RtdlCount",     asynParamInt32, &RtdlCount);
     createParam("RtdlCountRate", asynParamInt32, &RtdlCountRate);
     createParam("RtdlByteRate",  asynParamInt32, &RtdlByteRate);
+    createParam("BadCount",      asynParamInt32, &BadCount);
+    createParam("BadCountRate",  asynParamInt32, &BadCountRate);
+    createParam("BadByteRate",   asynParamInt32, &BadByteRate);
 
     setIntegerParam(ProcCount,      0);
     setIntegerParam(RxCount,        0);
@@ -62,6 +69,9 @@ StatPlugin::StatPlugin(const char *portName, const char *dispatcherPortName, int
     setIntegerParam(RtdlCount,      0);
     setIntegerParam(RtdlCountRate,  0);
     setIntegerParam(RtdlByteRate,   0);
+    setIntegerParam(BadCount,       0);
+    setIntegerParam(BadCountRate,   0);
+    setIntegerParam(BadByteRate,    0);
 
     callParamCallbacks();
 
@@ -90,6 +100,9 @@ void StatPlugin::processData(const DasPacketList * const packetList)
         } else if (packet->isRtdl()) {
             m_rtdlCount++;
             m_rtdlBytes += packet->length();
+        } else if (packet->isBadPacket()) {
+            m_badCount++;
+            m_badBytes += packet->length();
         }
     }
 
@@ -99,14 +112,15 @@ void StatPlugin::processData(const DasPacketList * const packetList)
     setIntegerParam(DataCount,  m_dataCount % INT_MAX);
     setIntegerParam(MetaCount,  m_metaCount % INT_MAX);
     setIntegerParam(RtdlCount,  m_rtdlCount % INT_MAX);
+    setIntegerParam(BadCount,   m_badCount % INT_MAX);
 
     callParamCallbacks();
 }
 
 float StatPlugin::calculateRate()
 {
-    double receivedCountRate, cmdCountRate, dataCountRate, metaCountRate, rtdlCountRate;
-    double receivedByteRate, cmdByteRate, dataByteRate, metaByteRate, rtdlByteRate;
+    double receivedCountRate, cmdCountRate, dataCountRate, metaCountRate, rtdlCountRate, badCountRate;
+    double receivedByteRate, cmdByteRate, dataByteRate, metaByteRate, rtdlByteRate, badByteRate;
 
     epicsTimeStamp now;
     epicsTimeGetCurrent(&now);
@@ -121,22 +135,26 @@ float StatPlugin::calculateRate()
         dataCountRate     = (m_dataCount     - m_lastDataCount)     / runtime;
         metaCountRate     = (m_metaCount     - m_lastMetaCount)     / runtime;
         rtdlCountRate     = (m_rtdlCount     - m_lastRtdlCount)     / runtime;
+        badCountRate      = (m_badCount      - m_lastBadCount)      / runtime;
         receivedByteRate  = (m_receivedBytes - m_lastReceivedBytes) / runtime;
         cmdByteRate       = (m_cmdBytes      - m_lastCmdBytes)      / runtime;
         dataByteRate      = (m_dataBytes     - m_lastDataBytes)     / runtime;
         metaByteRate      = (m_metaBytes     - m_lastMetaBytes)     / runtime;
         rtdlByteRate      = (m_rtdlBytes     - m_lastRtdlBytes)     / runtime;
+        badByteRate       = (m_badBytes      - m_lastBadBytes)      / runtime;
 
         setIntegerParam(RxCountRate,    receivedCountRate);
         setIntegerParam(CmdCountRate,   cmdCountRate);
         setIntegerParam(DataCountRate,  dataCountRate);
         setIntegerParam(MetaCountRate,  metaCountRate);
         setIntegerParam(RtdlCountRate,  rtdlCountRate);
+        setIntegerParam(BadCountRate,   badCountRate);
         setIntegerParam(RxByteRate,     receivedByteRate);
         setIntegerParam(CmdByteRate,    cmdByteRate);
         setIntegerParam(DataByteRate,   dataByteRate);
         setIntegerParam(MetaByteRate,   metaByteRate);
         setIntegerParam(RtdlByteRate,   rtdlByteRate);
+        setIntegerParam(BadByteRate,    badByteRate);
 
         callParamCallbacks();
 
@@ -145,11 +163,13 @@ float StatPlugin::calculateRate()
         m_lastDataCount     = m_dataCount;
         m_lastMetaCount     = m_metaCount;
         m_lastRtdlCount     = m_rtdlCount;
+        m_lastBadCount      = m_badCount;
         m_lastReceivedBytes = m_receivedBytes;
         m_lastCmdBytes      = m_cmdBytes;
         m_lastDataBytes     = m_dataBytes;
         m_lastMetaBytes     = m_metaBytes;
         m_lastRtdlBytes     = m_rtdlBytes;
+        m_lastBadBytes      = m_badBytes;
     }
 
     return CALC_RATE_INTERVAL;

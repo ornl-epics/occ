@@ -25,6 +25,9 @@
  * RtdlCount     | asynParamInt32  | 0        | RO   | RTDL packet count
  * RtdlCountRate | asynParamInt32  | 0        | RO   | RTDL packet count rate
  * RtdlByteRate  | asynParamInt32  | 0        | RO   | RTDL byte rate
+ * BadCount      | asynParamInt32  | 0        | RO   | Bad packet count
+ * BadCountRate  | asynParamInt32  | 0        | RO   | Bad packet count rate
+ * BadByteRate   | asynParamInt32  | 0        | RO   | Bad byte rate
  */
 class StatPlugin : public BasePlugin {
     public: // functions
@@ -63,6 +66,8 @@ class StatPlugin : public BasePlugin {
         uint64_t m_metaBytes;
         uint64_t m_rtdlCount;
         uint64_t m_rtdlBytes;
+        uint64_t m_badCount;
+        uint64_t m_badBytes;
         uint64_t m_lastReceivedCount;
         uint64_t m_lastReceivedBytes;
         uint64_t m_lastCmdCount;
@@ -73,6 +78,8 @@ class StatPlugin : public BasePlugin {
         uint64_t m_lastMetaBytes;
         uint64_t m_lastRtdlCount;
         uint64_t m_lastRtdlBytes;
+        uint64_t m_lastBadCount;
+        uint64_t m_lastBadBytes;
         epicsTimeStamp m_lastTime;
 
     private: // asyn parameters
@@ -85,13 +92,16 @@ class StatPlugin : public BasePlugin {
         int DataCount;          //!< Number of data packets
         int DataCountRate;      //!< Data count rate in packets/second
         int DataByteRate;       //!< Data byte rate in bytes/second
-        int MetaCount;      //!< Number of data packets
-        int MetaCountRate;  //!< Data count rate in packets/second
-        int MetaByteRate;   //!< Data byte rate in bytes/second
+        int MetaCount;          //!< Number of data packets
+        int MetaCountRate;      //!< Data count rate in packets/second
+        int MetaByteRate;       //!< Data byte rate in bytes/second
         int RtdlCount;          //!< Number of RTDL packets
         int RtdlCountRate;      //!< RTDL count rate in packets/second
         int RtdlByteRate;       //!< RTDL byte rate in bytes/second
-        #define LAST_STATPLUGIN_PARAM RtdlByteRate
+        int BadCount;           //!< Number of bad packets
+        int BadCountRate;       //!< Bad packet count rate in packets/second
+        int BadByteRate;        //!< Bad packet byte rate in bytes/second
+        #define LAST_STATPLUGIN_PARAM BadByteRate
 };
 
 #endif // STAT_PLUGIN_H

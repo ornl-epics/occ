@@ -84,6 +84,7 @@ struct DasPacket
             CMD_WRITE_CONFIG            = 0x30, //!< Write module configuration
             RSP_NACK                    = 0x40, //!< NACK to the command, the command that is being acknowledged is in payload[0] or payload[1]
             RSP_ACK                     = 0x41, //!< ACK to the command, the command that is being acknowledged is in payload[0] or payload[1]
+            BAD_PACKET                  = 0x42, //!< Bad packet
             CMD_DISCOVER                = 0x80, //!< Discover modules
             CMD_START                   = 0x82, //!< Start acquisition
             CMD_STOP                    = 0x83, //!< Stop acquisition
@@ -201,6 +202,8 @@ struct DasPacket
          * Is this a data packet?
          */
         bool isData() const;
+
+        bool isBadPacket() const;
 
         /**
          * Is this pure Neutron Event data packet?
