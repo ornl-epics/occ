@@ -13,7 +13,7 @@
 #include "DspPlugin.h"
 
 static const int asynMaxAddr       = 1;
-static const int asynInterfaceMask = asynInt32Mask | asynOctetMask | asynGenericPointerMask | asynDrvUserMask; // don't remove DrvUserMask or you'll break callback's reasons
+static const int asynInterfaceMask = asynInt32Mask | asynOctetMask | asynGenericPointerMask | asynDrvUserMask | asynFloat64Mask; // don't remove DrvUserMask or you'll break callback's reasons
 static const int asynInterruptMask = asynInt32Mask | asynOctetMask | asynGenericPointerMask;
 static const int asynFlags         = 0;
 static const int asynAutoConnect   = 1;
@@ -39,7 +39,6 @@ OccPortDriver::OccPortDriver(const char *portName, int deviceId, uint32_t localB
     , m_occBufferReadThreadId(0)
 {
     int status;
-    occ_status_t occstatus;
 
     // Register params with asyn
     createParam("Status",           asynParamInt32,     &Status);
@@ -49,6 +48,18 @@ OccPortDriver::OccPortDriver(const char *portName, int deviceId, uint32_t localB
     createParam("OpticsPresent",    asynParamInt32,     &OpticsPresent);
     createParam("OpticsEnabled",    asynParamInt32,     &OpticsEnabled);
     createParam("Command",          asynParamInt32,     &Command);
+    createParam("FpgaTemp",         asynParamFloat64,   &FpgaTemp);
+    createParam("FpgaCoreVolt",     asynParamFloat64,   &FpgaCoreVolt);
+    createParam("FpgaAuxVolt",      asynParamFloat64,   &FpgaAuxVolt);
+    createParam("ErrCrc",           asynParamInt32,     &ErrCrc);
+    createParam("ErrLength",        asynParamInt32,     &ErrLength);
+    createParam("ErrFrame",         asynParamInt32,     &ErrFrame);
+    createParam("SfpTemp",          asynParamFloat64,   &SfpTemp);
+    createParam("SfpRxPower",       asynParamFloat64,   &SfpRxPower);
+    createParam("SfpTxPower",       asynParamFloat64,   &SfpTxPower);
+    createParam("SfpVccPower",      asynParamFloat64,   &SfpVccPower);
+    createParam("SfpTxBiasCur",     asynParamFloat64,   &SfpTxBiasCur);
+    createParam("OccRefreshPeriod", asynParamFloat64,   &OccRefreshPeriod);
 
     setIntegerParam(Status, STAT_OK);
 
@@ -62,19 +73,11 @@ OccPortDriver::OccPortDriver(const char *portName, int deviceId, uint32_t localB
         return;
     }
 
-    // Query OCC board status and populate PVs
-    status = occ_status(m_occ, &occstatus);
-    if (status != 0) {
-        asynPrint(this->pasynUserSelf, ASYN_TRACE_ERROR, "Unable to query OCC device status - %s(%d)\n", strerror(-status), status);
-        setIntegerParam(BoardStatus, -ENODATA);
-    }
-    status =  setIntegerParam(BoardType,     (int)occstatus.board);
-    status |= setIntegerParam(BoardFwVer,    (int)occstatus.firmware_ver);
-    status |= setIntegerParam(OpticsEnabled, (int)occstatus.rx_enabled);
-    status |= setIntegerParam(OpticsPresent, (int)occstatus.optical_signal);
-    if (status) {
-        asynPrint(this->pasynUserSelf, ASYN_TRACE_ERROR, "Unable to set device parameters\n");
-    }
+    // Get OCC status
+    m_lastStatusUpdateTime.secPastEpoch = 0;
+    m_lastStatusUpdateTime.nsec = 0;
+    setDoubleParam(OccRefreshPeriod, 1.0);
+    refreshOccStatus();
 
     // Start DMA copy thread or use DMA buffer directly
     if (localBufferSize > 0)
@@ -110,6 +113,54 @@ OccPortDriver::~OccPortDriver()
     }
 }
 
+
+bool OccPortDriver::refreshOccStatus()
+{
+    epicsTimeStamp now;
+    epicsTimeGetCurrent(&now);
+    double refreshPeriod;
+
+    getDoubleParam(OccRefreshPeriod, &refreshPeriod);
+    if (epicsTimeDiffInSeconds(&now, &m_lastStatusUpdateTime) > refreshPeriod) {
+        int ret;
+        occ_status_t occstatus;
+        ret = occ_status(m_occ, &occstatus);
+
+        if (ret != 0) {
+            setIntegerParam(BoardStatus, -ret);
+            LOG_ERROR("Failed to query OCC status: %s(%d)", strerror(-ret), ret);
+            return false;
+        }
+
+        setIntegerParam(BoardType,      occstatus.board);
+        setIntegerParam(BoardFwVer,     occstatus.firmware_ver);
+        setIntegerParam(OpticsPresent,  occstatus.optical_signal);
+        setIntegerParam(OpticsEnabled,  occstatus.rx_enabled);
+        setDoubleParam(FpgaTemp,        occstatus.fpga_temp);
+        setDoubleParam(FpgaCoreVolt,    occstatus.fpga_core_volt);
+        setDoubleParam(FpgaAuxVolt,     occstatus.fpga_aux_volt);
+        setIntegerParam(ErrCrc,         occstatus.err_crc);
+        setIntegerParam(ErrLength,      occstatus.err_length);
+        setIntegerParam(ErrFrame,       occstatus.err_frame);
+        setDoubleParam(SfpTemp,         occstatus.sfp_temp);
+        setDoubleParam(SfpRxPower,      occstatus.sfp_rx_power);
+        setDoubleParam(SfpTxPower,      occstatus.sfp_tx_power);
+        setDoubleParam(SfpVccPower,     occstatus.sfp_vcc_power);
+        setDoubleParam(SfpTxBiasCur,    occstatus.sfp_tx_bias_cur);
+        callParamCallbacks();
+
+        epicsTimeGetCurrent(&m_lastStatusUpdateTime);
+    }
+    return true;
+}
+
+asynStatus OccPortDriver::readFloat64(asynUser *pasynUser, epicsFloat64 *value)
+{
+    if (!refreshOccStatus())
+        setIntegerParam(Status, STAT_OCC_ERROR);
+    return asynPortDriver::readFloat64(pasynUser, value);
+}
+
 /**
  * Handler for reading asynInt32 values.
  *
@@ -118,6 +169,8 @@ OccPortDriver::~OccPortDriver()
  */
 asynStatus OccPortDriver::readInt32(asynUser *pasynUser, epicsInt32 *value)
 {
+    if (!refreshOccStatus())
+        setIntegerParam(Status, STAT_OCC_ERROR);
     return asynPortDriver::readInt32(pasynUser, value);
 }
 
@@ -139,22 +192,6 @@ asynStatus OccPortDriver::writeInt32(asynUser *pasynUser, epicsInt32 value)
             LOG_ERROR("Unrecognized command '%d'", value);
             return asynError;
         }
-    } else if (pasynUser->reason == OpticsPresent) {
-        asynStatus status;
-        occ_status_t occstatus;
-        ret = occ_status(m_occ, &occstatus);
-        if (ret == 0) {
-            setIntegerParam(OpticsEnabled, (int)occstatus.rx_enabled);
-            setIntegerParam(OpticsPresent, (int)occstatus.optical_signal);
-            status = asynSuccess;
-        } else {
-            setIntegerParam(BoardStatus, -ret);
-            setIntegerParam(Status, STAT_OCC_ERROR);
-            LOG_ERROR("Unable to query OCC device status - %s(%d)\n", strerror(-ret), ret);
-            status = asynError;
-        }
-        callParamCallbacks();
-        return status;
     }
     return asynPortDriver::writeInt32(pasynUser, value);
 }

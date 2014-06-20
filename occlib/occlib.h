@@ -45,7 +45,7 @@ typedef enum {
 /**
  * Structure describing OCC board and driver information.
  */
- typedef struct {
+typedef struct {
     occ_board_type board;           //!< Board type used by this handle.
     occ_interface_type interface;   //!< Interface type used by this handle.
     uint32_t firmware_ver;          //!< Version of the FPGA firmware.
@@ -53,7 +53,18 @@ typedef enum {
     //bool stalled;                 //!< True if DMA memory for incoming data is full and device is in stalled mode.
     bool optical_signal;            //!< True when optical signal is present.
     bool rx_enabled;                //!< True when receiving of data is enabled.
- } occ_status_t;
+    float fpga_temp;
+    float fpga_core_volt;
+    float fpga_aux_volt;
+    float sfp_temp;
+    float sfp_rx_power;
+    float sfp_tx_power;
+    float sfp_vcc_power;
+    float sfp_tx_bias_cur;
+    uint32_t err_crc;
+    uint32_t err_length;
+    uint32_t err_frame;
+} occ_status_t;
 
 /**
  * Open a connection to OCC driver and return a handle for it.

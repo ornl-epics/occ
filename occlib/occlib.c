@@ -1,4 +1,5 @@
 #include "occlib_hw.h"
+#include "i2c.h"
 #include <sns-ocb.h>
 
 #include <errno.h>
@@ -13,6 +14,19 @@
 
 #define OCC_HANDLE_MAGIC        0x0cc0cc
 #define ROLLOVER_BUFFER_SIZE    (1800*8)      // Size of temporary buffer when DMA buffer rollover occurs
+
+#define OCC_PCIE_REG_ERR_CRC            0x180
+#define OCC_PCIE_REG_ERR_LENGTH         0x184
+#define OCC_PCIE_REG_ERR_FRAME          0x188
+#define OCC_PCIE_REG_FPGA_TEMP          0x310
+#define OCC_PCIE_REG_FPGA_CORE_VOLT     0x314
+#define OCC_PCIE_REG_FPGA_AUX_VOLT      0x318
+#define OCC_PCIE_I2C_ADDR               0xA2
+#define OCC_PCIE_I2C_SFP_TEMP           96
+#define OCC_PCIE_I2C_SFP_VCC_POWER      98
+#define OCC_PCIE_I2C_SFP_TX_BIAS_CUR    100
+#define OCC_PCIE_I2C_SFP_TX_POWER       102
+#define OCC_PCIE_I2C_SFP_RX_POWER       104
 
 #define xstr(s) str(s)
 #define str(s) #s
@@ -174,12 +188,15 @@ int occ_enable_rx(struct occ_handle *handle, bool enable) {
 
 int occ_status(struct occ_handle *handle, occ_status_t *status) {
     struct ocb_status info;
+    int ret;
 
     if (handle == NULL || handle->magic != OCC_HANDLE_MAGIC || status == NULL)
         return -EINVAL;
 
     if (pread(handle->fd, &info, sizeof(info), OCB_CMD_GET_STATUS) < 0)
         return -errno;
+
+    memset(status, 0, sizeof(occ_status_t));
 
     status->dma_size = handle->dma_buf_len;
     status->board = (info.board_type == BOARD_SNS_PCIE ? OCC_BOARD_PCIE : OCC_BOARD_PCIX);
@@ -188,7 +205,82 @@ int occ_status(struct occ_handle *handle, occ_status_t *status) {
     status->optical_signal = (info.status & OCB_OPTICAL_PRESENT);
     status->rx_enabled = (info.status & OCB_RX_ENABLED);
 
-    return 0;
+    ret = 0;
+    while (status->board == BOARD_SNS_PCIE) {
+        uint32_t valInt;
+        word valWord;
+
+        // Get FPGA temperature
+        ret = occ_io_read(handle, 0, OCC_PCIE_REG_FPGA_TEMP, &valInt, 1);
+        if (ret != 1)
+            break;
+        status->fpga_temp = ( (503.975/4096.0) * ((float)valInt / 16.0) ) - 273.15;
+
+        // Get FPGA core voltage
+        ret = occ_io_read(handle, 0, OCC_PCIE_REG_FPGA_CORE_VOLT, &valInt, 1);
+        if (ret != 1)
+            break;
+        status->fpga_core_volt = ( (3.0/4096.0) * ((float)valInt/16) );
+
+        // Get FPGA aux voltage
+        ret = occ_io_read(handle, 0, OCC_PCIE_REG_FPGA_AUX_VOLT, &valInt, 1);
+        if (ret != 1)
+            break;
+        status->fpga_aux_volt = ( (3.0/4096.0) * ((float)valInt/16) );
+
+        // Get CRC error counter
+        ret = occ_io_read(handle, 0, OCC_PCIE_REG_ERR_CRC, &valInt, 1);
+        if (ret != 1)
+            break;
+        status->err_crc = valInt;
+
+        // Get length error counter
+        ret = occ_io_read(handle, 0, OCC_PCIE_REG_ERR_LENGTH, &valInt, 1);
+        if (ret != 1)
+            break;
+        status->err_crc = valInt;
+
+        // Get frame error counter
+        ret = occ_io_read(handle, 0, OCC_PCIE_REG_ERR_FRAME, &valInt, 1);
+        if (ret != 1)
+            break;
+        status->err_crc = valInt;
+
+        if (status->optical_signal) {
+            // Set global error, will override at end if all goes well
+            ret = -EIO;
+
+            // Get SFP temperature
+            if (Read_I2C_Bus(handle, OCC_PCIE_I2C_ADDR, OCC_PCIE_I2C_SFP_TEMP, &valWord) != 1)
+                break;
+            status->sfp_temp = (float)valWord / 256.0;
+
+            // Get SFP RX In Power
+            if (Read_I2C_Bus(handle, OCC_PCIE_I2C_ADDR, OCC_PCIE_I2C_SFP_RX_POWER, &valWord) != 1)
+                break;
+            status->sfp_rx_power = 0.1 * valWord;
+
+            // Get SFP TX Power
+            if (Read_I2C_Bus(handle, OCC_PCIE_I2C_ADDR, OCC_PCIE_I2C_SFP_TX_POWER, &valWord) != 1)
+                break;
+            status->sfp_tx_power = 0.1 * valWord;
+
+            // Get SFP Vcc Power
+            if (Read_I2C_Bus(handle, OCC_PCIE_I2C_ADDR, OCC_PCIE_I2C_SFP_VCC_POWER, &valWord) != 1)
+                break;
+            status->sfp_vcc_power = 0.0001 * valWord;
+
+            // Get SFP Tx Bias Current
+            if (Read_I2C_Bus(handle, OCC_PCIE_I2C_ADDR, OCC_PCIE_I2C_SFP_TX_BIAS_CUR, &valWord) != 1)
+                break;
+            status->sfp_tx_bias_cur = 2.0 * valWord;
+        }
+
+        ret = 0;
+        break;
+    } while (0);
+
+    return ret;
 }
 
 int occ_reset(struct occ_handle *handle) {
