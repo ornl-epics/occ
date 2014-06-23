@@ -17,6 +17,32 @@ const unsigned DspPlugin::NUM_DSPPLUGIN_CONFIGPARAMS    = 272;
 const unsigned DspPlugin::NUM_DSPPLUGIN_STATUSPARAMS    = 100;
 const double DspPlugin::DSP_RESPONSE_TIMEOUT            = 1.0;
 
+/**
+ * DSP 6.x version response format
+ */
+struct RspReadVersion {
+#ifdef BITFIELD_LSB_FIRST
+    struct {
+        unsigned day:8;
+        unsigned month:8;
+        unsigned year:8;
+        unsigned revision:4;
+        unsigned version:4;
+    } hardware;
+    struct {
+        unsigned day:8;
+        unsigned month:8;
+        unsigned year:8;
+        unsigned revision:4;
+        unsigned version:4;
+    } firmware;
+    uint32_t eeprom_code1;
+    uint32_t eeprom_code2;
+#else
+#error Missing DspVersionRegister declaration
+#endif
+};
+
 DspPlugin::DspPlugin(const char *portName, const char *dispatcherPortName, const char *hardwareId, int blocking)
     : BaseModulePlugin(portName, dispatcherPortName, hardwareId, false,
                        blocking, NUM_DSPPLUGIN_PARAMS + NUM_DSPPLUGIN_CONFIGPARAMS + NUM_DSPPLUGIN_CONFIGPARAMS)
@@ -41,6 +67,24 @@ DspPlugin::DspPlugin(const char *portName, const char *dispatcherPortName, const
     setCallbacks(true);
 }
 
+bool DspPlugin::parseVersionRsp(const DasPacket *packet, BaseModulePlugin::Version &version)
+{
+    if (packet->getPayloadLength() != sizeof(RspReadVersion)) {
+        return false;
+    }
+
+    const RspReadVersion *response = reinterpret_cast<const RspReadVersion*>(packet->payload);
+    version.hw_version  = response->hardware.version;
+    version.hw_revision = response->hardware.revision;
+    version.fw_version  = response->firmware.version;
+    version.fw_revision = response->firmware.revision;
+    version.fw_year     = 2000 + HEX_BYTE_TO_DEC(response->firmware.year);
+    version.fw_month    = HEX_BYTE_TO_DEC(response->firmware.month);
+    version.fw_day      = HEX_BYTE_TO_DEC(response->firmware.day);
+
+    return true;
+}
+
 bool DspPlugin::rspDiscover(const DasPacket *packet)
 {
     return (BaseModulePlugin::rspDiscover(packet) &&
@@ -50,36 +94,14 @@ bool DspPlugin::rspDiscover(const DasPacket *packet)
 bool DspPlugin::rspReadVersion(const DasPacket *packet)
 {
     char date[20];
-    struct RspVersion {
-#ifdef BITFIELD_LSB_FIRST
-        struct {
-            unsigned day:8;
-            unsigned month:8;
-            unsigned year:8;
-            unsigned revision:4;
-            unsigned version:4;
-        } hardware;
-        struct {
-            unsigned day:8;
-            unsigned month:8;
-            unsigned year:8;
-            unsigned revision:4;
-            unsigned version:4;
-        } firmware;
-        uint32_t eeprom_code1;
-        uint32_t eeprom_code2;
-#else
-#error Missing DspVersionRegister declaration
-#endif
-    };
 
     if (!BaseModulePlugin::rspReadVersion(packet))
         return false;
 
-    const RspVersion *payload = reinterpret_cast<const RspVersion*>(packet->payload);
+    const RspReadVersion *payload = reinterpret_cast<const RspReadVersion*>(packet->payload);
 
-    if (packet->getPayloadLength() != sizeof(RspVersion)) {
-        LOG_ERROR("Received unexpected READ_VERSION response for this DSP type; received %u, expected %lu", packet->payload_length, sizeof(RspVersion));
+    if (packet->getPayloadLength() != sizeof(RspReadVersion)) {
+        LOG_ERROR("Received unexpected READ_VERSION response for this DSP type; received %u, expected %lu", packet->payload_length, sizeof(RspReadVersion));
         return false;
     }
 

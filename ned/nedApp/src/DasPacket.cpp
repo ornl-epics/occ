@@ -179,6 +179,14 @@ uint32_t DasPacket::getSourceAddress() const
         return source;
 }
 
+uint32_t DasPacket::getRouterAddress() const
+{
+    if (cmdinfo.is_command && cmdinfo.is_passthru)
+        return source;
+    else
+        return 0;
+}
+
 const uint32_t *DasPacket::getPayload() const
 {
     if (cmdinfo.is_command && cmdinfo.is_passthru) {

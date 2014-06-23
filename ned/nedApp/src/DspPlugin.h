@@ -37,6 +37,13 @@ class DspPlugin : public BaseModulePlugin {
          */
         DspPlugin(const char *portName, const char *dispatcherPortName, const char *hardwareId, int blocking);
 
+        /**
+         * Try to parse the ROC version response packet an populate the structure.
+         *
+         * @return true if succesful, false if version response packet could not be parsed.
+         */
+        static bool parseVersionRsp(const DasPacket *packet, BaseModulePlugin::Version &version);
+
     private:
         /**
          * Verify the DISCOVER response is from DSP.

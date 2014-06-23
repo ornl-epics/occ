@@ -262,6 +262,11 @@ struct DasPacket
         uint32_t getSourceAddress() const;
 
         /**
+         * Return router hardware address or 0 if response is coming from router.
+         */
+        uint32_t getRouterAddress() const;
+
+        /**
          * Return address to the actual packet payload.
          *
          * The response packets behind the DSP contain their address in the

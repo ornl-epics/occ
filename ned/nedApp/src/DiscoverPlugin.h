@@ -2,6 +2,7 @@
 #define DISCOVER_PLUGIN_H
 
 #include "BasePlugin.h"
+#include "BaseModulePlugin.h"
 
 #include <map>
 
@@ -27,6 +28,7 @@ class DiscoverPlugin : public BasePlugin {
         struct ModuleDesc {
             DasPacket::ModuleType type;
             uint32_t parent;
+            BaseModulePlugin::Version version;
 
             ModuleDesc()
                 : type(static_cast<DasPacket::ModuleType>(0))
@@ -72,6 +74,16 @@ class DiscoverPlugin : public BasePlugin {
          * Send a DISCOVER command to a particular module through LVDS on DSP.
          */
         void reqLvdsDiscover(uint32_t hardwareId);
+
+        /**
+         * Send a READ_VERSION command to a particular DSP.
+         */
+        void reqVersion(uint32_t hardwareId);
+
+        /**
+         * Send a READ_VERSION command to a particular module through LVDS.
+         */
+        void reqLvdsVersion(uint32_t hardwareId);
 
         /**
          * Convert hardware id to IP address.

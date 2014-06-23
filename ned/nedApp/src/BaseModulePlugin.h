@@ -86,6 +86,26 @@ class BaseModulePlugin : public BasePlugin {
             int initVal;            //!< Initial value after object is created or configuration reset is being requested
         };
 
+        struct Version {
+            uint8_t hw_version;
+            uint8_t hw_revision;
+            uint8_t fw_version;
+            uint8_t fw_revision;
+            uint16_t fw_year;
+            uint8_t fw_month;
+            uint8_t fw_day;
+
+            Version()
+                : hw_version(0)
+                , hw_revision(0)
+                , fw_version(0)
+                , fw_revision(0)
+                , fw_year(0)
+                , fw_month(0)
+                , fw_day(0)
+            {}
+        };
+
         static const float NO_RESPONSE_TIMEOUT;         //!< Number of seconds to wait for module response
 
     protected: // variables
