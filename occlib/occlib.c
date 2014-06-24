@@ -199,6 +199,7 @@ int occ_status(struct occ_handle *handle, occ_status_t *status) {
     memset(status, 0, sizeof(occ_status_t));
 
     status->dma_size = handle->dma_buf_len;
+    status->dma_used = info.dq_used;
     status->board = (info.board_type == BOARD_SNS_PCIE ? OCC_BOARD_PCIE : OCC_BOARD_PCIX);
     status->interface = (handle->use_optic ? OCC_INTERFACE_OPTICAL : OCC_INTERFACE_LVDS);
     status->firmware_ver = info.firmware_ver;

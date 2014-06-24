@@ -61,6 +61,7 @@ class epicsShareFunc OccPortDriver : public asynPortDriver {
          */
         enum {
             CMD_OPTICS_ENABLE   = 1,    //!< Enable optical link
+            CMD_OPTICS_DISABLE  = 2,    //!< Disable optical link
         };
 
 	public:
@@ -158,7 +159,9 @@ class epicsShareFunc OccPortDriver : public asynPortDriver {
         int SfpVccPower;
         int SfpTxBiasCur;
         int OccRefreshPeriod;
-        #define LAST_OCCPORTDRIVER_PARAM OccRefreshPeriod
+        int DmaBufUtil;
+        int CopyBufUtil;
+        #define LAST_OCCPORTDRIVER_PARAM CopyBufUtil
 };
 
 #endif // OCCPORTDRIVER_H

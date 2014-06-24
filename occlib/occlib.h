@@ -50,6 +50,7 @@ typedef struct {
     occ_interface_type interface;   //!< Interface type used by this handle.
     uint32_t firmware_ver;          //!< Version of the FPGA firmware.
     uint32_t dma_size;              //!< Size of the DMA memory in bytes.
+    uint32_t dma_used;              //!< DMA memory used space in bytes.
     //bool stalled;                 //!< True if DMA memory for incoming data is full and device is in stalled mode.
     bool optical_signal;            //!< True when optical signal is present.
     bool rx_enabled;                //!< True when receiving of data is enabled.

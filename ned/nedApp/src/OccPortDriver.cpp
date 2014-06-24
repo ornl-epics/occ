@@ -60,6 +60,8 @@ OccPortDriver::OccPortDriver(const char *portName, int deviceId, uint32_t localB
     createParam("SfpVccPower",      asynParamFloat64,   &SfpVccPower);
     createParam("SfpTxBiasCur",     asynParamFloat64,   &SfpTxBiasCur);
     createParam("OccRefreshPeriod", asynParamFloat64,   &OccRefreshPeriod);
+    createParam("DmaBufUtil",       asynParamInt32,     &DmaBufUtil);
+    createParam("CopyBufUtil",      asynParamInt32,     &CopyBufUtil);
 
     setIntegerParam(Status, STAT_OK);
 
@@ -73,12 +75,6 @@ OccPortDriver::OccPortDriver(const char *portName, int deviceId, uint32_t localB
         return;
     }
 
-    // Get OCC status
-    m_lastStatusUpdateTime.secPastEpoch = 0;
-    m_lastStatusUpdateTime.nsec = 0;
-    setDoubleParam(OccRefreshPeriod, 1.0);
-    refreshOccStatus();
-
     // Start DMA copy thread or use DMA buffer directly
     if (localBufferSize > 0)
         m_circularBuffer = new DmaCopier(m_occ, localBufferSize);
@@ -88,6 +84,12 @@ OccPortDriver::OccPortDriver(const char *portName, int deviceId, uint32_t localB
         asynPrint(this->pasynUserSelf, ASYN_TRACE_ERROR, "Unable to create circular buffer handler\n");
         return;
     }
+
+    // Get OCC status
+    m_lastStatusUpdateTime.secPastEpoch = 0;
+    m_lastStatusUpdateTime.nsec = 0;
+    setDoubleParam(OccRefreshPeriod, 1.0);
+    refreshOccStatus();
 
     m_occBufferReadThreadId = epicsThreadCreate(portName,
                                                 epicsThreadPriorityHigh,
@@ -147,6 +149,10 @@ bool OccPortDriver::refreshOccStatus()
         setDoubleParam(SfpTxPower,      occstatus.sfp_tx_power);
         setDoubleParam(SfpVccPower,     occstatus.sfp_vcc_power);
         setDoubleParam(SfpTxBiasCur,    occstatus.sfp_tx_bias_cur);
+
+        setIntegerParam(DmaBufUtil,     occstatus.dma_used / occstatus.dma_size);
+        setIntegerParam(CopyBufUtil,    m_circularBuffer->utilization());
+
         callParamCallbacks();
 
         epicsTimeGetCurrent(&m_lastStatusUpdateTime);
@@ -180,12 +186,13 @@ asynStatus OccPortDriver::writeInt32(asynUser *pasynUser, epicsInt32 value)
     if (pasynUser->reason == Command) {
         switch (value) {
         case CMD_OPTICS_ENABLE:
-            ret = occ_enable_rx(m_occ, value != 0);
+        case CMD_OPTICS_DISABLE:
+            ret = occ_enable_rx(m_occ, value == CMD_OPTICS_ENABLE);
             if (ret != 0) {
-                LOG_ERROR("Unable to enable optical link - %s(%d)", strerror(-ret), ret);
+                LOG_ERROR("Unable to %s optical link - %s(%d)", (value == CMD_OPTICS_ENABLE ? "enable" : "disable"), strerror(-ret), ret);
                 return asynError;
             }
-            setIntegerParam(OpticsEnabled, value == 0 ? 0 : 1);
+            setIntegerParam(OpticsEnabled, value == CMD_OPTICS_ENABLE ? 1 : 0);
             callParamCallbacks();
             return asynSuccess;
         default:

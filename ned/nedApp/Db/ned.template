@@ -22,6 +22,7 @@ record(mbbo, "$(P)$(R)Command")
     field(TWVL, "2")
     field(ZRST, "None")
     field(ONST, "Optics enable")
+    field(TWST, "Optics disable")
 }
 record(mbbi, "$(P)$(R)BoardStatus")
 {
@@ -154,7 +155,7 @@ record(longin, "$(P)$(R)ErrCrc")
 }
 record(longin, "$(P)$(R)ErrLength")
 {
-    field(DESC, "FPGA detected frame length errors counter")
+    field(DESC, "FPGA detected length errors counter")
     field(DTYP, "asynInt32")
     field(INP,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))ErrLength")
     field(SCAN, "1 second")
@@ -165,4 +166,20 @@ record(longin, "$(P)$(R)ErrFrame")
     field(DTYP, "asynInt32")
     field(INP,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))ErrFrame")
     field(SCAN, "1 second")
+}
+record(longin, "$(P)$(R)DmaBufUtil")
+{
+    field(DESC, "DMA buffer utilization")
+    field(DTYP, "asynInt32")
+    field(INP,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))DmaBufUtil")
+    field(SCAN, "1 second")
+    field(EGU,  "%")
+}
+record(longin, "$(P)$(R)CopyBufUtil")
+{
+    field(DESC, "Local buffer utilization")
+    field(DTYP, "asynInt32")
+    field(INP,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))CopyBufUtil")
+    field(SCAN, "1 second")
+    field(EGU,  "%")
 }

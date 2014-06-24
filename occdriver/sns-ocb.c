@@ -1026,6 +1026,7 @@ static ssize_t snsocb_read(struct file *file, char __user *buf,
 		info.board_type = ocb->board->type;
 		info.firmware_ver = ocb->firmware_version;
 		info.status = __snsocb_status(ocb);
+		info.dq_used = (OCB_DQ_SIZE + ocb->dq_prod - ocb->dq_cons) % OCB_DQ_SIZE;
 		info.dq_size = OCB_DQ_SIZE;
 		info.bars[0] = ocb->board->bars[0];
 		info.bars[1] = ocb->board->bars[1];

@@ -71,6 +71,11 @@ class CircularBuffer : public BaseCircularBuffer {
          */
         void wakeUpConsumer(int error);
 
+        /**
+         * Return current buffer utilization in percents.
+         */
+        uint32_t utilization();
+
     protected:
         static uint32_t _align(uint32_t value, uint8_t base);
         static uint32_t _alignDown(uint32_t value, uint8_t base);
