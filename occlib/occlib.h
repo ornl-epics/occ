@@ -150,6 +150,25 @@ int occ_reset(struct occ_handle *handle);
 int occ_enable_rx(struct occ_handle *handle, bool enable);
 
 /**
+ * Enable outputing error packets
+ *
+ * OCC FPGA detects communication errors. It recognizes three groups of 
+ * errors:
+ * - CRC errors are detected when the data integrity for a packet fails
+ * - Frame length errors are the ones when the packet length doesn't match actual data
+ * - Frame errors are other out-of-sync data errors
+ * FPGA provides counter for each group separately. But it can also
+ * transform corrupted packet into error packet which application can
+ * detect. Error packets can be enabled with this function.
+ *
+ * \param[in] handle Valid OCC API handle.
+ * \param[in] enable Enable or disable error packets.
+ * \retval 0 on success
+ * \retval -x Return negative errno value.
+ */
+int occ_enable_error_packets(struct occ_handle *handle, bool enable);
+
+/**
  * Retrieve the OCC board and driver status.
  *
  * \param[in] handle Valid OCC API handle.

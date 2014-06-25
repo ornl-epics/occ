@@ -20,10 +20,17 @@ record(mbbo, "$(P)$(R)Command")
     field(ZRVL, "0")
     field(ONVL, "1")
     field(TWVL, "2")
+    field(THVL, "3")
+    field(FRVL, "4")
     field(ZRST, "None")
     field(ONST, "Optics enable")
     field(TWST, "Optics disable")
+    field(THST, "Error packets enable")
+    field(FRST, "Error packets disable")
+    field(PINI, "YES")
+    field(VAL,  "1")
 }
+
 record(mbbi, "$(P)$(R)BoardStatus")
 {
     field(DESC, "OCC board status")
@@ -81,6 +88,16 @@ record(bi, "$(P)$(R)OpticsEnabled")
     field(ZNAM, "No")
     field(ONAM, "Yes")
     field(SCAN, "1 second")
+}
+record(bi, "$(P)$(R)ErrPktsEnabled")
+{
+    field(DESC, "Turn link errors into error packets")
+    field(DTYP, "asynInt32")
+    field(INP,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))ErrPktsEnabled")
+    field(ZNAM, "No")
+    field(ONAM, "Yes")
+    field(PINI, "YES")
+    field(VAL,  "0")
 }
 record(ai, "$(P)$(R)FpgaTemp")
 {

@@ -47,6 +47,7 @@ OccPortDriver::OccPortDriver(const char *portName, int deviceId, uint32_t localB
     createParam("BoardFwVer",       asynParamInt32,     &BoardFwVer);
     createParam("OpticsPresent",    asynParamInt32,     &OpticsPresent);
     createParam("OpticsEnabled",    asynParamInt32,     &OpticsEnabled);
+    createParam("ErrPktsEnabled",   asynParamInt32,     &ErrPktsEnabled);
     createParam("Command",          asynParamInt32,     &Command);
     createParam("FpgaTemp",         asynParamFloat64,   &FpgaTemp);
     createParam("FpgaCoreVolt",     asynParamFloat64,   &FpgaCoreVolt);
@@ -193,6 +194,16 @@ asynStatus OccPortDriver::writeInt32(asynUser *pasynUser, epicsInt32 value)
                 return asynError;
             }
             setIntegerParam(OpticsEnabled, value == CMD_OPTICS_ENABLE ? 1 : 0);
+            callParamCallbacks();
+            return asynSuccess;
+        case CMD_ERROR_PACKETS_ENABLE:
+        case CMD_ERROR_PACKETS_DISABLE:
+            ret = occ_enable_error_packets(m_occ, value == CMD_ERROR_PACKETS_ENABLE);
+            if (ret != 0) {
+                LOG_ERROR("Unable to %s error packets - %s(%d)", (value == CMD_ERROR_PACKETS_ENABLE ? "enable" : "disable"), strerror(-ret), ret);
+                return asynError;
+            }
+            setIntegerParam(ErrPktsEnabled, value == CMD_OPTICS_ENABLE ? 1 : 0);
             callParamCallbacks();
             return asynSuccess;
         default:

@@ -57,6 +57,7 @@ typedef uint32_t u32;
 #define 	OCB_SELECT_LVDS		0
 #define 	OCB_SELECT_OPTICAL	1
 #define OCB_CMD_RX_ENABLE		12
+#define OCB_CMD_ERR_PKTS_ENABLE	13
 
 /* Not a full 8k as we have to avoid prod_idx == cons_idx (empty) */
 // TODO: PCIe queue size is 32*1024, it can't just yet roll-over properly at lower sizes

@@ -186,6 +186,18 @@ int occ_enable_rx(struct occ_handle *handle, bool enable) {
     return 0;
 }
 
+int occ_enable_error_packets(struct occ_handle *handle, bool enable) {
+    uint32_t val = (enable ? 1 : 0);
+
+    if (handle == NULL || handle->magic != OCC_HANDLE_MAGIC)
+        return -EINVAL;
+
+    if (pwrite(handle->fd, &val, sizeof(val), OCB_CMD_ERR_PKTS_ENABLE) < 0)
+        return -errno;
+
+    return 0;
+}
+
 int occ_status(struct occ_handle *handle, occ_status_t *status) {
     struct ocb_status info;
     int ret;

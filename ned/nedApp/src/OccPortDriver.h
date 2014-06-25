@@ -60,8 +60,10 @@ class epicsShareFunc OccPortDriver : public asynPortDriver {
          * Recognized command values through Command parameter.
          */
         enum {
-            CMD_OPTICS_ENABLE   = 1,    //!< Enable optical link
-            CMD_OPTICS_DISABLE  = 2,    //!< Disable optical link
+            CMD_OPTICS_ENABLE           = 1,    //!< Enable optical link
+            CMD_OPTICS_DISABLE          = 2,    //!< Disable optical link
+            CMD_ERROR_PACKETS_ENABLE    = 3,    //!< Report link errors as verbose error packets
+            CMD_ERROR_PACKETS_DISABLE   = 4,    //!< Don't report link errors as error packets
         };
 
 	public:
@@ -147,6 +149,7 @@ class epicsShareFunc OccPortDriver : public asynPortDriver {
         int BoardFwVer;
         int OpticsPresent;
         int OpticsEnabled;
+        int ErrPktsEnabled;
         int FpgaTemp;
         int FpgaCoreVolt;
         int FpgaAuxVolt;
