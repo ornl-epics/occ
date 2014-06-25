@@ -130,7 +130,7 @@ bool DasPacket::isRtdl() const
         return (cmdinfo.command == DasPacket::CommandType::CMD_RTDL);
     } else {
         // Data version of the RTDL command (0x85)
-        return (info == 0xFC);
+        return (info == 0x200000FF);
     }
 }
 

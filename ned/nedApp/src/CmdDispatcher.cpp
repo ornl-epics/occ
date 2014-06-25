@@ -29,7 +29,7 @@ void CmdDispatcher::processData(const DasPacketList * const packetList)
     for (const DasPacket *packet = packetList->first(); packet != 0; packet = packetList->next(packet)) {
         m_nReceived++;
 
-        if (packet->isCommand()) {
+        if (packet->isCommand() && packet->cmdinfo.command != DasPacket::CMD_RTDL && packet->cmdinfo.command != DasPacket::CMD_TSYNC) {
             if (first == 0)
                 first = packet;
             last = packet;
