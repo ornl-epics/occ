@@ -16,8 +16,11 @@ const DasPacket *DasPacketList::first() const
     const DasPacket *pkt = 0;
 
     m_lock.lock();
-    if (m_refcount != 0)
+    if (m_refcount != 0 && m_length > DasPacket::MinLength) {
         pkt = _verifyPacket((DasPacket *)m_address);
+        if (pkt && pkt->length() > m_length)
+            pkt = 0;
+    }
     m_lock.unlock();
 
     return pkt;
@@ -38,7 +41,11 @@ const DasPacket *DasPacketList::next(const DasPacket *current) const
                 packetLen += 4;
 #endif
             const DasPacket *tmp = reinterpret_cast<const DasPacket *>(currAddr + packetLen);
-            pkt = _verifyPacket(tmp);
+            if ((reinterpret_cast<const uint8_t *>(tmp) + DasPacket::MinLength) < (m_address + m_length)) {
+                pkt = _verifyPacket(tmp);
+                if (pkt && (reinterpret_cast<const uint8_t *>(pkt) + pkt->length()) > (m_address + m_length))
+                    pkt = 0;
+            }
         }
     }
     m_lock.unlock();
