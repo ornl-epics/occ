@@ -31,7 +31,19 @@ struct occ_handle;
  * BoardType     | asynParamInt32  | 0        | RO   | OCC board type                (1=SNS PCI-X,2=SNS PCIe,15=simulator)
  * BoardFwVer    | asynParamInt32  | 0        | RO   | OCC board firmware version
  * OpticsPresent | asynParamInt32  | 0        | RO   | Is optical cable present      (0=not present,1=present)
- * OpticsEnabled | asynParamInt32  | 0        | RW   | Is optical link enabled       (0=not enabled,1=enabled)
+ * OpticsEnabled | asynParamInt32  | 0        | RO   | Is optical link enabled       (0=not enabled,1=enabled)
+ * ErrCrc        | asynParamInt32  | 0        | RO   | Number of CRC errors detected by OCC
+ * ErrLength     | asynParamInt32  | 0        | RO   | Number of length errors detected by OCC
+ * ErrFrame      | asynParamInt32  | 0        | RO   | Number of frame errors detected by OCC
+ * FpgaTemp      | asynParamFloat64| 0.0      | RO   | FPGA temperature in Celsius
+ * FpgaCoreVolt  | asynParamFloat64| 0.0      | RO   | FPGA core voltage in Volts
+ * FpgaAuxVolt   | asynParamFloat64| 0.0      | RO   | FPGA aux voltage in Volts
+ * SfpTemp       | asynParamFloat64| 0.0      | RO   | SFP temperature in Celsius
+ * SfpRxPower    | asynParamFloat64| 0.0      | RO   | SFP RX power in uW
+ * SfpTxPower    | asynParamFloat64| 0.0      | RO   | SFP TX power in uW
+ * SfpVccPower   | asynParamFloat64| 0.0      | RO   | SFP VCC power in Volts
+ * SfpTxBiasCur  | asynParamFloat64| 0.0      | RO   | SFP TX bias current in uA
+ * OccRefreshPeriod | asynParamFloat64| 1.0   | RW   | OCC status refresh period in s
  */
 class epicsShareFunc OccPortDriver : public asynPortDriver {
     private:
@@ -48,7 +60,10 @@ class epicsShareFunc OccPortDriver : public asynPortDriver {
          * Recognized command values through Command parameter.
          */
         enum {
-            CMD_OPTICS_ENABLE   = 1,    //!< Enable optical link
+            CMD_OPTICS_ENABLE           = 1,    //!< Enable optical link
+            CMD_OPTICS_DISABLE          = 2,    //!< Disable optical link
+            CMD_ERROR_PACKETS_ENABLE    = 3,    //!< Report link errors as verbose error packets
+            CMD_ERROR_PACKETS_DISABLE   = 4,    //!< Don't report link errors as error packets
         };
 
 	public:
@@ -76,6 +91,8 @@ class epicsShareFunc OccPortDriver : public asynPortDriver {
         BaseCircularBuffer *m_circularBuffer;
         epicsThreadId m_occBufferReadThreadId;
 
+        epicsTimeStamp m_lastStatusUpdateTime;
+
         /**
          * Send list of packets to the plugins.
          *
@@ -85,9 +102,19 @@ class epicsShareFunc OccPortDriver : public asynPortDriver {
         void sendToPlugins(int messageType, const DasPacketList *packetList);
 
         /**
+         * Refresh OCC status and populate m_cachedOccStatus if information expired.
+         */
+        bool refreshOccStatus();
+
+        /**
          * Overloaded method.
          */
 		asynStatus readInt32(asynUser *pasynUser, epicsInt32 *value);
+
+        /**
+         * Overloaded method.
+         */
+		asynStatus readFloat64(asynUser *pasynUser, epicsFloat64 *value);
 
         /**
          * Overloaded method.
@@ -122,7 +149,22 @@ class epicsShareFunc OccPortDriver : public asynPortDriver {
         int BoardFwVer;
         int OpticsPresent;
         int OpticsEnabled;
-        #define LAST_OCCPORTDRIVER_PARAM OpticsEnabled
+        int ErrPktsEnabled;
+        int FpgaTemp;
+        int FpgaCoreVolt;
+        int FpgaAuxVolt;
+        int ErrCrc;
+        int ErrLength;
+        int ErrFrame;
+        int SfpTemp;
+        int SfpRxPower;
+        int SfpTxPower;
+        int SfpVccPower;
+        int SfpTxBiasCur;
+        int OccRefreshPeriod;
+        int DmaBufUtil;
+        int CopyBufUtil;
+        #define LAST_OCCPORTDRIVER_PARAM CopyBufUtil
 };
 
 #endif // OCCPORTDRIVER_H

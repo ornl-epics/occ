@@ -107,6 +107,11 @@ bool DasPacket::isData() const
     return (!cmdinfo.is_command);
 }
 
+bool DasPacket::isBadPacket() const
+{
+    return (cmdinfo.command == BAD_PACKET);
+}
+
 bool DasPacket::isNeutronData() const
 {
     // info == 0x0C
@@ -125,7 +130,7 @@ bool DasPacket::isRtdl() const
         return (cmdinfo.command == DasPacket::CommandType::CMD_RTDL);
     } else {
         // Data version of the RTDL command (0x85)
-        return (info == 0xFC);
+        return (info == 0x200000FF);
     }
 }
 
@@ -172,6 +177,14 @@ uint32_t DasPacket::getSourceAddress() const
         return payload[0];
     else
         return source;
+}
+
+uint32_t DasPacket::getRouterAddress() const
+{
+    if (cmdinfo.is_command && cmdinfo.is_passthru)
+        return source;
+    else
+        return 0;
 }
 
 const uint32_t *DasPacket::getPayload() const

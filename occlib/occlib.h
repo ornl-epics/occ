@@ -45,15 +45,27 @@ typedef enum {
 /**
  * Structure describing OCC board and driver information.
  */
- typedef struct {
+typedef struct {
     occ_board_type board;           //!< Board type used by this handle.
     occ_interface_type interface;   //!< Interface type used by this handle.
     uint32_t firmware_ver;          //!< Version of the FPGA firmware.
     uint32_t dma_size;              //!< Size of the DMA memory in bytes.
+    uint32_t dma_used;              //!< DMA memory used space in bytes.
     //bool stalled;                 //!< True if DMA memory for incoming data is full and device is in stalled mode.
     bool optical_signal;            //!< True when optical signal is present.
     bool rx_enabled;                //!< True when receiving of data is enabled.
- } occ_status_t;
+    float fpga_temp;
+    float fpga_core_volt;
+    float fpga_aux_volt;
+    float sfp_temp;
+    float sfp_rx_power;
+    float sfp_tx_power;
+    float sfp_vcc_power;
+    float sfp_tx_bias_cur;
+    uint32_t err_crc;
+    uint32_t err_length;
+    uint32_t err_frame;
+} occ_status_t;
 
 /**
  * Open a connection to OCC driver and return a handle for it.
@@ -136,6 +148,25 @@ int occ_reset(struct occ_handle *handle);
  * \retval -x Return negative errno value.
  */
 int occ_enable_rx(struct occ_handle *handle, bool enable);
+
+/**
+ * Enable outputing error packets
+ *
+ * OCC FPGA detects communication errors. It recognizes three groups of 
+ * errors:
+ * - CRC errors are detected when the data integrity for a packet fails
+ * - Frame length errors are the ones when the packet length doesn't match actual data
+ * - Frame errors are other out-of-sync data errors
+ * FPGA provides counter for each group separately. But it can also
+ * transform corrupted packet into error packet which application can
+ * detect. Error packets can be enabled with this function.
+ *
+ * \param[in] handle Valid OCC API handle.
+ * \param[in] enable Enable or disable error packets.
+ * \retval 0 on success
+ * \retval -x Return negative errno value.
+ */
+int occ_enable_error_packets(struct occ_handle *handle, bool enable);
 
 /**
  * Retrieve the OCC board and driver status.

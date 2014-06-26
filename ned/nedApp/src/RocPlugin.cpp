@@ -9,6 +9,30 @@ EPICS_REGISTER_PLUGIN(RocPlugin, 5, "Port name", string, "Dispatcher port name",
 const unsigned RocPlugin::NUM_ROCPLUGIN_DYNPARAMS       = 500;  //!< Since supporting multiple versions with different number of PVs, this is just a maximum value
 const float    RocPlugin::NO_RESPONSE_TIMEOUT           = 1.0;
 
+/**
+ * ROC V5 version response format
+ */
+struct RspReadVersionV5 {
+#ifdef BITFIELD_LSB_FIRST
+    unsigned hw_revision:8;     // Board revision number
+    unsigned hw_version:8;      // Board version number
+    unsigned fw_revision:8;     // Firmware revision number
+    unsigned fw_version:8;      // Firmware version number
+    unsigned year:16;           // Year
+    unsigned day:8;             // Day
+    unsigned month:8;           // Month
+#else
+#error Missing RspReadVersionV5 declaration
+#endif // BITFIELD_LSB_FIRST
+};
+
+/**
+ * ROC V5 fw 5.4 adds vendor field.
+ */
+struct RspReadVersionV5_54 : public RspReadVersionV5 {
+    uint32_t vendor_id;
+};
+
 RocPlugin::RocPlugin(const char *portName, const char *dispatcherPortName, const char *hardwareId, const char *version, int blocking)
     : BaseModulePlugin(portName, dispatcherPortName, hardwareId, true,
                        blocking, NUM_ROCPLUGIN_PARAMS + NUM_ROCPLUGIN_DYNPARAMS)
@@ -59,28 +83,34 @@ bool RocPlugin::rspReadVersion(const DasPacket *packet)
     return false;
 }
 
+bool RocPlugin::parseVersionRsp(const DasPacket *packet, BaseModulePlugin::Version &version)
+{
+    const RspReadVersionV5 *response;
+    if (packet->getPayloadLength() == sizeof(RspReadVersionV5)) {
+        response = reinterpret_cast<const RspReadVersionV5*>(packet->getPayload());
+    } else if (packet->getPayloadLength() == sizeof(RspReadVersionV5_54)) {
+        response = reinterpret_cast<const RspReadVersionV5_54*>(packet->getPayload());
+    } else {
+        return false;
+    }
+    version.hw_version  = response->hw_version;
+    version.hw_revision = response->hw_revision;
+    version.fw_version  = response->fw_version;
+    version.fw_revision = response->fw_revision;
+    version.fw_year     = HEX_BYTE_TO_DEC(response->year >> 8) * 100 + HEX_BYTE_TO_DEC(response->year);
+    version.fw_month    = HEX_BYTE_TO_DEC(response->month);
+    version.fw_day      = HEX_BYTE_TO_DEC(response->day);
+
+    return true;
+}
+
 bool RocPlugin::rspReadVersion_V5_5x(const DasPacket *packet)
 {
     char date[20];
 
-    struct RspReadVersionV5 {
-#ifdef BITFIELD_LSB_FIRST
-        unsigned hw_revision:8;     // Board revision number
-        unsigned hw_version:8;      // Board version number
-        unsigned fw_revision:8;     // Firmware revision number
-        unsigned fw_version:8;      // Firmware version number
-        unsigned year:16;           // Year
-        unsigned day:8;             // Day
-        unsigned month:8;           // Month
-#else
-#error Missing RspReadVersionV5 declaration
-#endif // BITFIELD_LSB_FIRST
-    };
-
     const RspReadVersionV5 *response = reinterpret_cast<const RspReadVersionV5*>(packet->getPayload());
-
     if (packet->getPayloadLength() != sizeof(RspReadVersionV5)) {
-        LOG_ERROR("Received unexpected READ_VERSION response for this ROC type, received %u, expected %lu", packet->payload_length, sizeof(RspReadVersionV5));
+        LOG_ERROR("Received unexpected READ_VERSION response for this ROC type, received %uB, expected %luB", packet->getPayloadLength(), sizeof(RspReadVersionV5));
         return false;
     }
 

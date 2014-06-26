@@ -50,6 +50,11 @@ class DmaCircularBuffer : public BaseCircularBuffer {
          */
         bool empty();
 
+        /**
+         * Return current buffer utilization.
+         */
+        uint32_t utilization();
+
     private:
         struct occ_handle *m_occ;       //!< Pre-initialized OCC handle
 };

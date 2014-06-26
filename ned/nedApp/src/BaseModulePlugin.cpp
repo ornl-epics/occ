@@ -291,7 +291,7 @@ bool BaseModulePlugin::rspReadConfig(const DasPacket *packet)
         recalculateConfigParams();
 
     if (packet->getPayloadLength() != m_configPayloadLength) {
-        LOG_ERROR("Received wrong READ_CONFIG response based on length; received %u, expected %u", packet->getPayloadLength(), m_configPayloadLength);
+        LOG_ERROR("Received wrong READ_CONFIG response based on length; received %uB, expected %uB", packet->getPayloadLength(), m_configPayloadLength);
         return false;
     }
 
@@ -368,7 +368,7 @@ bool BaseModulePlugin::rspWriteConfig(const DasPacket *packet)
         LOG_WARN("Received READ_STATUS response after timeout");
         return false;
     }
-    return true;
+    return (packet->cmdinfo.command == DasPacket::RSP_ACK);
 }
 
 void BaseModulePlugin::reqStart()

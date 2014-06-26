@@ -40,6 +40,13 @@ class RocPlugin : public BaseModulePlugin {
          */
         RocPlugin(const char *portName, const char *dispatcherPortName, const char *hardwareId, const char *version, int blocking=0);
 
+        /**
+         * Try to parse the ROC version response packet an populate the structure.
+         *
+         * @return true if succesful, false if version response packet could not be parsed.
+         */
+        static bool parseVersionRsp(const DasPacket *packet, BaseModulePlugin::Version &version);
+
     private: // functions
         /**
          * Verify the DISCOVER response is from ROC.

@@ -47,6 +47,11 @@ class BaseCircularBuffer {
          * Return true when no data is available in circular buffer.
          */
         virtual bool empty() = 0;
+
+        /**
+         * Return current buffer utilization in percents.
+         */
+        virtual uint32_t utilization() = 0;
 };
 
 #endif // BASE_CIRCULAR_BUFFER_H

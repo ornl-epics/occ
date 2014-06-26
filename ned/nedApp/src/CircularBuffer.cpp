@@ -193,3 +193,9 @@ uint32_t CircularBuffer::_align(uint32_t value, uint8_t base)
 {
     return (value + base - 1) & ~(base - 1);
 }
+
+uint32_t CircularBuffer::utilization()
+{
+    uint32_t used = (m_size + m_producer - m_consumer) % m_size;
+    return used / m_size;
+}

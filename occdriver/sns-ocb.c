@@ -70,30 +70,35 @@ do {									\
 /* Old versions of the firmware had more configuration options, but
  * these are all that are used in the version we support for this driver.
  */
-#define REG_CONFIG		0x0004
-#define		OCB_CONF_TX_ENABLE		0x00000001
-#define		OCB_CONF_RX_ENABLE		0x00000002
+#define REG_CONFIG						0x0004
+#define		OCB_CONF_TX_ENABLE			0x00000001
+#define		OCB_CONF_RX_ENABLE			0x00000002
 #define		OCB_CONF_SELECT_OPTICAL		0x00000008
 #define		OCB_CONF_OPTICAL_ENABLE		0x00000010
-#define		OCB_CONF_RESET			0x80000000
-#define REG_STATUS		0x0008
-#define		OCB_STATUS_TX_DONE		0x00000001
-#define		OCB_STATUS_RX_LVDS		0x00000002
+#define		OCB_CONF_ERROR_PKTS_ENABLE	0x00040000 // Turn detected errors into error packets
+#define		OCB_CONF_ERRORS_RESET		0x04000000 // Clear detected error counters
+#define		OCB_CONF_RESET				0x80000000
+#define REG_STATUS						0x0008
+#define		OCB_STATUS_TX_DONE			0x00000001
+#define		OCB_STATUS_RX_LVDS			0x00000002
 #define		OCB_STATUS_BUFFER_FULL		0x00000004
 #define		OCB_STATUS_OPTICAL_PRESENT	0x00000008
 #define		OCB_STATUS_OPTICAL_NOSIGNAL	0x00000010
-#define		OCB_STATUS_TX_IDLE		0x00000040
+#define		OCB_STATUS_TX_IDLE			0x00000040
 #define		OCB_STATUS_RX_OPTICAL		0x00000100
-#define REG_MODULE_MASK		0x0010
-#define REG_MODULE_ID		0x0014
-#define REG_IRQ_STATUS		0x00c0
-#define		OCB_IRQ_RX_STALL	0x00000002
-#define		OCB_IRQ_RX_DONE		0x00000010
-#define		OCB_IRQ_ENABLE		0x80000000
-#define REG_IRQ_ENABLE		0x00c4
-#define REG_FIRMWARE_DATE	0x0100
-#define REG_COMM_ERR		0x0240
-#define REG_LOST_PACKETS	0x0244		/* 16 bit register */
+#define REG_MODULE_MASK					0x0010
+#define REG_MODULE_ID					0x0014
+#define REG_IRQ_STATUS					0x00c0
+#define		OCB_IRQ_RX_STALL			0x00000002
+#define		OCB_IRQ_RX_DONE				0x00000010
+#define		OCB_IRQ_ENABLE				0x80000000
+#define REG_IRQ_ENABLE					0x00c4
+#define REG_FIRMWARE_DATE				0x0100
+#define REG_ERROR_CRC_COUNTER			0x0180 // CRC errors counter (PCIe only)
+#define REG_ERROR_LENGTH_COUNTER		0x0184 // Frame length errors counter (PCIe only)
+#define REG_ERROR_FRAME_COUNTER			0x0188 // Frame errors counter (PCIe only)
+#define REG_COMM_ERR					0x0240
+#define REG_LOST_PACKETS				0x0244		/* 16 bit register */
 
 /* Inbound message queue (RX, split RX from older firmware, GE card) */
 #define REG_IMQ_ADDR		0x0058
@@ -105,7 +110,7 @@ do {									\
 
 /* Command queue (split RX from older firmware, GE card) */
 #define REG_CQ_MAX_OFFSET	0x003c
-#define REG_CQ_ADDR		0x0040
+#define REG_CQ_ADDR			0x0040
 #define REG_CQ_ADDRHI		0x0044
 #define REG_CQ_PROD_ADDR	0x0048
 #define REG_CQ_PROD_ADDRHI	0x004c
@@ -114,7 +119,7 @@ do {									\
 
 /* Data queue */
 #define REG_DQ_MAX_OFFSET	0x0088
-#define REG_DQ_ADDR		0x0070
+#define REG_DQ_ADDR			0x0070
 #define REG_DQ_ADDRHI		0x0074
 #define REG_DQ_PROD_ADDR	0x0078
 #define REG_DQ_PROD_ADDRHI	0x007c
@@ -177,6 +182,7 @@ struct ocb_board_desc {
     u32 tx_fifo_len;
     u32 unified_que;
     u32 bars[3];
+	u32 reset_errcnt;	// Does board have support for resetting error counters?
 };
 
 struct ocb {
@@ -259,28 +265,32 @@ static struct ocb_board_desc boards[] = {
 		.firmware = 0x31121106,
 		.tx_fifo_len = 8192,
 		.unified_que = 1,
-		.bars = { 1048576, 1048576 }
+		.bars = { 1048576, 1048576 },
+		.reset_errcnt = 0,
 	},
 	{
 		.type = BOARD_SNS_PCIX,
 		.firmware = 0x31130603,
 		.tx_fifo_len = 8192,
 		.unified_que = 1,
-		.bars = { 1048576, 1048576 }
+		.bars = { 1048576, 1048576 },
+		.reset_errcnt = 0,
 	},
 	{
 		.type = BOARD_SNS_PCIX,
 		.firmware = 0x22100817,
 		.tx_fifo_len = 8192,
 		.unified_que = 0,
-		.bars = { 1048576, 1048576 }
+		.bars = { 1048576, 1048576 },
+		.reset_errcnt = 0,
 	},
 	{
 		.type = BOARD_SNS_PCIE,
 		.firmware = 0x000a0001,
 		.tx_fifo_len = 32768,
 		.unified_que = 1,
-		.bars = { 4096, 32768, 16777216 }
+		.bars = { 4096, 32768, 16777216 },
+		.reset_errcnt = 1,
 	},
 /*
 	{
@@ -804,7 +814,10 @@ static void snsocb_reset(struct ocb *ocb)
 		tasklet_kill(&ocb->rxtask);
 	}
 
-	iowrite32(OCB_CONF_RESET, ioaddr + REG_CONFIG);
+	if (ocb->board->reset_errcnt)
+		iowrite32(OCB_CONF_RESET | OCB_CONF_ERRORS_RESET, ioaddr + REG_CONFIG);
+	else
+		iowrite32(OCB_CONF_RESET, ioaddr + REG_CONFIG);
 
 	/* Post our writes; RESET will self-clear on the next PCI cycle. */
 	ioread32(ioaddr + REG_CONFIG);
@@ -1030,6 +1043,7 @@ static ssize_t snsocb_read(struct file *file, char __user *buf,
 		info.board_type = ocb->board->type;
 		info.firmware_ver = ocb->firmware_version;
 		info.status = __snsocb_status(ocb);
+		info.dq_used = (OCB_DQ_SIZE + ocb->dq_prod - ocb->dq_cons) % OCB_DQ_SIZE;
 		info.dq_size = OCB_DQ_SIZE;
 		info.bars[0] = ocb->board->bars[0];
 		info.bars[1] = ocb->board->bars[1];
@@ -1166,7 +1180,25 @@ static ssize_t snsocb_write(struct file *file, const char __user *buf,
 			ocb->conf &= ~OCB_CONF_RX_ENABLE;
 		val = ocb->conf;
 		iowrite32(val, ocb->ioaddr + REG_CONFIG);
-		val = ioread32(ocb->ioaddr + REG_CONFIG);
+		ioread32(ocb->ioaddr + REG_CONFIG); // post write
+
+		break;
+    case OCB_CMD_ERR_PKTS_ENABLE:
+		if (count != sizeof(u32))
+			return -EINVAL;
+
+		if (copy_from_user(&val, buf, sizeof(u32)))
+			return -EFAULT;
+
+		spin_lock_irq(&ocb->lock);
+		if (val)
+			ocb->conf |= OCB_CONF_ERROR_PKTS_ENABLE;
+		else
+			ocb->conf &= ~OCB_CONF_ERROR_PKTS_ENABLE;
+		val = ocb->conf;
+		spin_unlock_irq(&ocb->lock);
+		iowrite32(val, ocb->ioaddr + REG_CONFIG);
+		ioread32(ocb->ioaddr + REG_CONFIG); // post write
 
 		break;
 	default:

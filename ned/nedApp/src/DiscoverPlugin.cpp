@@ -1,6 +1,8 @@
 #include "BaseModulePlugin.h"
 #include "DiscoverPlugin.h"
+#include "DspPlugin.h"
 #include "Log.h"
+#include "RocPlugin.h"
 
 #include <string.h>
 
@@ -46,29 +48,48 @@ void DiscoverPlugin::processData(const DasPacketList * const packetList)
         nReceived++;
 
         // Silently skip packets we're not interested in
-        if (!packet->isResponse() || packet->cmdinfo.command != DasPacket::CMD_DISCOVER)
+        if (!packet->isResponse())
             continue;
 
-        if (packet->cmdinfo.module_type == DasPacket::MOD_TYPE_DSP) {
-            // DSP responds with a list of modules it knows about in the payload.
-            // It appears that only DSPs will respond to a broadcast address and from
-            // their responses all their submodules can be observed. Since we're
-            // also interested in module types, we'll do a p2p discover to every module.
-            m_discovered[packet->source].type = packet->cmdinfo.module_type;
+        if (packet->cmdinfo.command == DasPacket::CMD_DISCOVER) {
+            if (packet->cmdinfo.module_type == DasPacket::MOD_TYPE_DSP) {
+                // DSP responds with a list of modules it knows about in the payload.
+                // It appears that only DSPs will respond to a broadcast address and from
+                // their responses all their submodules can be observed. Since we're
+                // also interested in module types, we'll do a p2p discover to every module.
+                m_discovered[packet->source].type = packet->cmdinfo.module_type;
 
-            // The global LVDS discover packet should address all modules connected
-            // through LVDS. For some unidentified reason, ROC boards connected directly
-            // to DSP don't respond, whereas ROCs behind FEM do.
-            // So we do P2P to each module.
-            for (uint32_t i=0; i<packet->payload_length/sizeof(uint32_t); i++) {
-                reqLvdsDiscover(packet->payload[i]);
+                // The global LVDS discover packet should address all modules connected
+                // through LVDS. For some unidentified reason, ROC boards connected directly
+                // to DSP don't respond, whereas ROCs behind FEM do.
+                // So we do P2P to each module.
+                for (uint32_t i=0; i<packet->payload_length/sizeof(uint32_t); i++) {
+                    reqLvdsDiscover(packet->payload[i]);
+                }
+
+                reqVersion(packet->getSourceAddress());
+            } else if (packet->cmdinfo.is_passthru) {
+                // Source hardware id belongs to the DSP, the actual module id is in payload
+                m_discovered[packet->getSourceAddress()].type = packet->cmdinfo.module_type;
+                m_discovered[packet->getSourceAddress()].parent = packet->getRouterAddress();
+                reqLvdsVersion(packet->getSourceAddress());
+            } else {
+                m_discovered[packet->getSourceAddress()].type = packet->cmdinfo.module_type;
             }
-        } else if (packet->cmdinfo.is_passthru) {
-            // Source hardware id belongs to the DSP, the actual module id is in payload
-            m_discovered[packet->payload[0]].type = packet->cmdinfo.module_type;
-            m_discovered[packet->payload[0]].parent = packet->source;
-        } else {
-            m_discovered[packet->source].type = packet->cmdinfo.module_type;
+        } else if (packet->cmdinfo.command == DasPacket::CMD_READ_VERSION) {
+            uint32_t source = packet->getSourceAddress();
+            if (m_discovered.find(source) != m_discovered.end()) {
+                switch (m_discovered[source].type) {
+                case DasPacket::MOD_TYPE_DSP:
+                    DspPlugin::parseVersionRsp(packet, m_discovered[source].version);
+                    break;
+                case DasPacket::MOD_TYPE_ROC:
+                    RocPlugin::parseVersionRsp(packet, m_discovered[source].version);
+                    break;
+                default:
+                    break;
+                }
+            }
         }
 
         int val;
@@ -92,6 +113,7 @@ void DiscoverPlugin::report(FILE *fp, int details)
         char moduleId[16];
         char parentId[16];
         const char *type;
+        BaseModulePlugin::Version version = it->second.version;
 
         switch (it->second.type) {
             case DasPacket::MOD_TYPE_ACPC:      type = "ACPC";      break;
@@ -112,10 +134,17 @@ void DiscoverPlugin::report(FILE *fp, int details)
 
         resolveIP(it->first, moduleId);
         resolveIP(it->second.parent, parentId);
-        if (it->second.parent != 0)
-            fprintf(fp, "\t%-8s: %15s (DSP=%s)\n", type, moduleId, parentId);
-        else
-            fprintf(fp, "\t%-8s: %15s\n", type, moduleId);
+        if (it->second.parent != 0) {
+            fprintf(fp, "\t%-8s: %-15s ver %d.%d/%d.%d date %.04d/%.02d/%.02d (DSP=%s)\n",
+                    type, moduleId, version.hw_version, version.hw_revision,
+                    version.fw_version, version.fw_revision, version.fw_year,
+                    version.fw_month, version.fw_day, parentId);
+        } else {
+            fprintf(fp, "\t%-8s: %-15s ver %d.%d/%d.%d date %.04d/%.02d/%.02d\n",
+                    type, moduleId, version.hw_version, version.hw_revision,
+                    version.fw_version, version.fw_revision, version.fw_year,
+                    version.fw_month, version.fw_day);
+        }
     }
     return BasePlugin::report(fp, details);
 }
@@ -140,7 +169,28 @@ void DiscoverPlugin::reqLvdsDiscover(uint32_t hardwareId)
     }
     sendToDispatcher(packet);
     delete packet;
+}
 
+void DiscoverPlugin::reqVersion(uint32_t hardwareId)
+{
+    DasPacket *packet = BaseModulePlugin::createOpticalPacket(hardwareId, DasPacket::CMD_READ_VERSION);
+    if (!packet) {
+        LOG_ERROR("Failed to allocate READ_VERSION packet");
+        return;
+    }
+    sendToDispatcher(packet);
+    delete packet;
+}
+
+void DiscoverPlugin::reqLvdsVersion(uint32_t hardwareId)
+{
+    DasPacket *packet = BaseModulePlugin::createLvdsPacket(hardwareId, DasPacket::CMD_READ_VERSION);
+    if (!packet) {
+        LOG_ERROR("Failed to allocate READ_VERSION LVDS packet");
+        return;
+    }
+    sendToDispatcher(packet);
+    delete packet;
 }
 
 void DiscoverPlugin::resolveIP(uint32_t hardwareId, char *ip)

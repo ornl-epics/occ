@@ -57,6 +57,7 @@ typedef uint32_t u32;
 #define 	OCB_SELECT_LVDS		0
 #define 	OCB_SELECT_OPTICAL	1
 #define OCB_CMD_RX_ENABLE		12
+#define OCB_CMD_ERR_PKTS_ENABLE	13
 
 /* Not a full 8k as we have to avoid prod_idx == cons_idx (empty) */
 // TODO: PCIe queue size is 32*1024, it can't just yet roll-over properly at lower sizes
@@ -83,6 +84,7 @@ struct ocb_status {
     u32 firmware_ver;		// Code is 0xVVYYMMDD -- version, year, month, day (BCD)
     u32 status;
     u32 dq_size;			// Size of RX DMA data cyclic-queue in bytes
+    u32 dq_used;			// Used space
     u32 bars[3];			// Sizes of BAR regions used for mmap
 };
 
