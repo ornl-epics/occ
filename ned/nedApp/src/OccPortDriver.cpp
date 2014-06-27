@@ -151,7 +151,7 @@ bool OccPortDriver::refreshOccStatus()
         setDoubleParam(SfpVccPower,     occstatus.sfp_vcc_power);
         setDoubleParam(SfpTxBiasCur,    occstatus.sfp_tx_bias_cur);
 
-        setIntegerParam(DmaBufUtil,     occstatus.dma_used / occstatus.dma_size);
+        setIntegerParam(DmaBufUtil,     100 * occstatus.dma_used / occstatus.dma_size);
         setIntegerParam(CopyBufUtil,    m_circularBuffer->utilization());
 
         callParamCallbacks();
