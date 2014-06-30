@@ -1014,10 +1014,10 @@ static unsigned int snsocb_poll(struct file *file,
 	spin_lock_irqsave(&ocb->lock, flags);
 	if (ocb->dq_prod != ocb->dq_cons)
 		mask |= POLLIN | POLLRDNORM;
- 	if (ocb->reset_occurred)
+ 	if (ocb->reset_occurred || ocb->reset_in_progress)
 		mask |= POLLERR;
-	if (ocb->reset_in_progress || ocb->stalled)
-		mask |= POLLERR;
+	if (ocb->stalled)
+		mask |= POLLHUP;
 	spin_unlock_irqrestore(&ocb->lock, flags);
 
 	return mask;

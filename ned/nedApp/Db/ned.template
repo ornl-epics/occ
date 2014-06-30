@@ -31,23 +31,27 @@ record(mbbo, "$(P)$(R)Command")
     field(VAL,  "1")
 }
 
-record(mbbi, "$(P)$(R)BoardStatus")
+record(mbbi, "$(P)$(R)LastErr")
 {
-    field(DESC, "OCC board status")
+    field(DESC, "Last error returned from OCC library")
     field(PINI, "YES")
     field(DTYP, "asynInt32")
-    field(INP,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))BoardStatus")
-    # Those match to return code of occ_open()
+    field(INP,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))LastErr")
+    # Those match to return code of occ_*() functions
     field(ZRVL, "0")
     field(ONVL, "1")  # EPERM
     field(TWVL, "2")  # ENOENT
     field(THVL, "42") # ENOMSG
     field(FRVL, "61") # ENODATA
-    field(ZRST, "Ready")
+    field(FVVL, "75") # EOVERFLOW
+    field(SXVL, "104") # ECONNRESET
+    field(ZRST, "No error")
     field(ONST, "Permission denied")
     field(TWST, "No device")
     field(THST, "Version mismatch")
     field(FRST, "Interface error")
+    field(FVST, "Buffer full")
+    field(SXST, "Device reset")
     field(SCAN, "I/O Intr")
 }
 record(mbbi, "$(P)$(R)BoardType")
@@ -88,6 +92,22 @@ record(bi, "$(P)$(R)OpticsEnabled")
     field(ZNAM, "No")
     field(ONAM, "Yes")
     field(SCAN, "1 second")
+}
+record(mbbi, "$(P)$(R)RxStalled")
+{
+    field(DESC, "Incoming data stalled")
+    field(DTYP, "asynInt32")
+    field(INP,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))RxStalled")
+    field(ZRVL, "0")
+    field(ONVL, "1")
+    field(TWVL, "2")
+    field(THVL, "3")
+    field(ZRST, "Not stalled")
+    field(ONST, "OCC stalled")
+    field(TWST, "Copy thread stalled")
+    field(THST, "OCC and copy stalled")
+    field(SCAN, "1 second")
+    field(VAL,  "0")
 }
 record(bi, "$(P)$(R)ErrPktsEnabled")
 {

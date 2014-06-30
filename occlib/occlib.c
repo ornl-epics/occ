@@ -213,6 +213,7 @@ int occ_status(struct occ_handle *handle, occ_status_t *status) {
     status->dma_size = handle->dma_buf_len;
     status->dma_used = info.dq_used;
     status->board = (info.board_type == BOARD_SNS_PCIE ? OCC_BOARD_PCIE : OCC_BOARD_PCIX);
+    status->stalled = (info.status & OCB_RX_STALLED);
     status->interface = (handle->use_optic ? OCC_INTERFACE_OPTICAL : OCC_INTERFACE_LVDS);
     status->firmware_ver = info.firmware_ver;
     status->optical_signal = (info.status & OCB_OPTICAL_PRESENT);
@@ -356,16 +357,16 @@ int occ_data_wait(struct occ_handle *handle, void **address, size_t *count, uint
                 return -ETIME;
             else if (pollfd.revents & POLLERR)
                 return -ECONNRESET;
+            else if ( !(pollfd.revents & POLLIN) && (pollfd.revents & POLLHUP) )
+                return -EOVERFLOW;
+            else if ( !(pollfd.revents & POLLIN) )
+                return -ETIME;
         }
 
         ret = pread(handle->fd, info, sizeof(info), OCB_CMD_RX);
         if (ret < 0)
             return -errno;
 
-        /* XXX need to deal with OCB_RX_STALLED, and perhaps status
-         * changes such as the optical module losing signal or being
-         * removed.
-         */
         if (!(info[1] & OCB_RX_MSG)) {
             if (info[1] & OCB_RESET_OCCURRED)
                 return -ECONNRESET;

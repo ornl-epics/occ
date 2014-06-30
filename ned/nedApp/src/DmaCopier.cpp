@@ -23,10 +23,15 @@ DmaCopier::~DmaCopier()
 
 void DmaCopier::run()
 {
-    while (!m_shutdown) {
+    while (true) {
         void *data;
         size_t len;
         int status;
+
+        if (m_shutdown) {
+            wakeUpConsumer(-ESHUTDOWN);
+            break;
+        }
 
         if (full()) {
             // There's no space in circular buffer, give consumers some extra
@@ -47,8 +52,10 @@ void DmaCopier::run()
         }
 
         len = CircularBuffer::push(data, len);
-        if (len == 0)
+        if (len == 0) {
+            wakeUpConsumer(-ENOSPC);
             break;
+        }
 
         status = occ_data_ack(m_occ, len);
         if (status != 0) {
@@ -56,5 +63,4 @@ void DmaCopier::run()
             break;
         }
     }
-    wakeUpConsumer(-ESHUTDOWN);
 }

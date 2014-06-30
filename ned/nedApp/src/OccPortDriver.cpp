@@ -42,11 +42,12 @@ OccPortDriver::OccPortDriver(const char *portName, int deviceId, uint32_t localB
 
     // Register params with asyn
     createParam("Status",           asynParamInt32,     &Status);
-    createParam("BoardStatus",      asynParamInt32,     &BoardStatus);
+    createParam("LastErr",          asynParamInt32,     &LastErr);
     createParam("BoardType",        asynParamInt32,     &BoardType);
     createParam("BoardFwVer",       asynParamInt32,     &BoardFwVer);
     createParam("OpticsPresent",    asynParamInt32,     &OpticsPresent);
     createParam("OpticsEnabled",    asynParamInt32,     &OpticsEnabled);
+    createParam("RxStalled",        asynParamInt32,     &RxStalled);
     createParam("ErrPktsEnabled",   asynParamInt32,     &ErrPktsEnabled);
     createParam("Command",          asynParamInt32,     &Command);
     createParam("FpgaTemp",         asynParamFloat64,   &FpgaTemp);
@@ -60,7 +61,7 @@ OccPortDriver::OccPortDriver(const char *portName, int deviceId, uint32_t localB
     createParam("SfpTxPower",       asynParamFloat64,   &SfpTxPower);
     createParam("SfpVccPower",      asynParamFloat64,   &SfpVccPower);
     createParam("SfpTxBiasCur",     asynParamFloat64,   &SfpTxBiasCur);
-    createParam("OccRefreshPeriod", asynParamFloat64,   &OccRefreshPeriod);
+    createParam("StatusInterval",   asynParamFloat64,   &StatusInterval);
     createParam("DmaBufUtil",       asynParamInt32,     &DmaBufUtil);
     createParam("CopyBufUtil",      asynParamInt32,     &CopyBufUtil);
 
@@ -68,7 +69,7 @@ OccPortDriver::OccPortDriver(const char *portName, int deviceId, uint32_t localB
 
     // Initialize OCC board
     status = occ_open(portName, OCC_INTERFACE_OPTICAL, &m_occ);
-    setIntegerParam(BoardStatus, -status);
+    setIntegerParam(LastErr, -status);
     if (status != 0) {
         setIntegerParam(Status, STAT_OCC_ERROR);
         asynPrint(this->pasynUserSelf, ASYN_TRACE_ERROR, "Unable to open OCC device - %s(%d)\n", strerror(-status), status);
@@ -89,7 +90,7 @@ OccPortDriver::OccPortDriver(const char *portName, int deviceId, uint32_t localB
     // Get OCC status
     m_lastStatusUpdateTime.secPastEpoch = 0;
     m_lastStatusUpdateTime.nsec = 0;
-    setDoubleParam(OccRefreshPeriod, 1.0);
+    setDoubleParam(StatusInterval, 1.0);
     refreshOccStatus();
 
     m_occBufferReadThreadId = epicsThreadCreate(portName,
@@ -123,14 +124,15 @@ bool OccPortDriver::refreshOccStatus()
     epicsTimeGetCurrent(&now);
     double refreshPeriod;
 
-    getDoubleParam(OccRefreshPeriod, &refreshPeriod);
+    getDoubleParam(StatusInterval, &refreshPeriod);
+    double diff = epicsTimeDiffInSeconds(&now, &m_lastStatusUpdateTime);
     if (epicsTimeDiffInSeconds(&now, &m_lastStatusUpdateTime) > refreshPeriod) {
-        int ret;
+        int ret, val;
         occ_status_t occstatus;
         ret = occ_status(m_occ, &occstatus);
 
         if (ret != 0) {
-            setIntegerParam(BoardStatus, -ret);
+            setIntegerParam(LastErr, -ret);
             LOG_ERROR("Failed to query OCC status: %s(%d)", strerror(-ret), ret);
             return false;
         }
@@ -153,6 +155,9 @@ bool OccPortDriver::refreshOccStatus()
 
         setIntegerParam(DmaBufUtil,     100 * occstatus.dma_used / occstatus.dma_size);
         setIntegerParam(CopyBufUtil,    m_circularBuffer->utilization());
+
+        getIntegerParam(RxStalled,      &val);
+        setIntegerParam(RxStalled,      (occstatus.stalled ? val | 1 : val & ~1));
 
         callParamCallbacks();
 
@@ -222,10 +227,10 @@ asynStatus OccPortDriver::writeGenericPointer(asynUser *pasynUser, void *pointer
 
         int ret = occ_send(m_occ, reinterpret_cast<const void *>(packet), packet->length());
         if (ret != 0) {
-            setIntegerParam(BoardStatus, -ret);
+            setIntegerParam(LastErr, -ret);
             setIntegerParam(Status, STAT_OCC_ERROR);
             callParamCallbacks();
-            asynPrint(pasynUser, ASYN_TRACE_ERROR, "Unable to send data to OCC - %s(%d)\n", strerror(-ret), ret);
+            LOG_ERROR("Unable to send data to OCC - %s(%d)\n", strerror(-ret), ret);
             return asynError;
         }
 
@@ -244,17 +249,22 @@ void OccPortDriver::processOccData()
     while (true) {
         int ret = m_circularBuffer->wait(&data, &length);
         if (ret != 0) {
-            setIntegerParam(BoardStatus, ret);
+            setIntegerParam(LastErr, -ret);
             setIntegerParam(Status, ret == -EOVERFLOW ? STAT_BUFFER_FULL : STAT_OCC_ERROR);
+            if (ret == -EOVERFLOW) {
+                int val;
+                getIntegerParam(RxStalled, &val);
+                setIntegerParam(RxStalled, val | 2);
+            }
             callParamCallbacks();
-            asynPrint(pasynUserSelf, ASYN_TRACE_ERROR, "Unable to receive data from OCC, stopped - %s(%d)\n", strerror(-ret), ret);
+            LOG_ERROR("Unable to receive data from OCC, stopped - %s(%d)\n", strerror(-ret), ret);
             break;
         }
 
         if (!packetsList.reset(reinterpret_cast<uint8_t*>(data), length)) {
             // This should not happen. If it does it's certainly a code error that needs to be fixed.
             if (!resetErrorRatelimit) {
-                asynPrint(pasynUserSelf, ASYN_TRACE_FLOW, "PluginDriver:%s ERROR failed to reset DasPacketList\n", __func__);
+                LOG_ERROR("PluginDriver:%s ERROR failed to reset DasPacketList\n", __func__);
                 resetErrorRatelimit = true;
             }
             continue;
