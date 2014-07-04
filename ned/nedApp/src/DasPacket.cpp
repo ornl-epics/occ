@@ -141,7 +141,7 @@ const DasPacket::RtdlHeader *DasPacket::getRtdlHeader() const
     return 0;
 };
 
-const DasPacket::NeutronEvent *DasPacket::getNeutronData(uint32_t *count) const
+const DasPacket::Event *DasPacket::getEventData(uint32_t *count) const
 {
     const uint8_t *start = 0;
     *count = 0;
@@ -151,7 +151,7 @@ const DasPacket::NeutronEvent *DasPacket::getNeutronData(uint32_t *count) const
             start += sizeof(RtdlHeader);
         *count = (payload_length - (start - reinterpret_cast<const uint8_t*>(payload))) / 8;
     }
-    return reinterpret_cast<const NeutronEvent *>(start);
+    return reinterpret_cast<const Event *>(start);
 }
 
 DasPacket::CommandType DasPacket::getResponseType() const

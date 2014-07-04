@@ -64,10 +64,10 @@ void AdaraPlugin::processData(const DasPacketList * const packetList)
         } else if (packet->isData()) {
             const DasPacket::RtdlHeader *rtdl = packet->getRtdlHeader();
             if (rtdl != 0) {
-                uint32_t neutronsCount;
-                const DasPacket::NeutronEvent *neutrons = packet->getNeutronData(&neutronsCount);
+                uint32_t eventsCount;
+                const DasPacket::Event *events = packet->getEventData(&eventsCount);
 
-                outpacket[0] = 24 + sizeof(DasPacket::NeutronEvent)*neutronsCount;
+                outpacket[0] = 24 + sizeof(DasPacket::Event)*eventsCount;
                 outpacket[1] = ADARA_CODE_DAS_DATA;
                 outpacket[2] = rtdl->timestamp_sec;
                 outpacket[3] = rtdl->timestamp_nsec;
@@ -82,9 +82,9 @@ void AdaraPlugin::processData(const DasPacketList * const packetList)
                 outpacket[7] = rtdl->general_info;
                 outpacket[8] = rtdl->tsync_width;
                 outpacket[9] = rtdl->tsync_delay;
-                memcpy(&outpacket[10], neutrons, 8*neutronsCount); // help compiler optimize for 64bit copies
+                memcpy(&outpacket[10], events, 8*eventsCount); // help compiler optimize for 64bit copies
 
-                if (send(outpacket, sizeof(int)*10 + sizeof(DasPacket::NeutronEvent)*neutronsCount)) {
+                if (send(outpacket, sizeof(int)*10 + sizeof(DasPacket::Event)*eventsCount)) {
                     m_nTransmitted++;
                     epicsTimeGetCurrent(&m_lastSentTimestamp);
                 }
@@ -105,7 +105,7 @@ float AdaraPlugin::checkClient()
     int heartbeatInt;
     epicsTimeStamp now;
 
-    getIntegerParam(CheckClientDel, &heartbeatInt);
+    getIntegerParam(CheckClientDelay, &heartbeatInt);
     epicsTimeGetCurrent(&now);
 
     if (isClientConnected() && epicsTimeDiffInSeconds(&now, &m_lastSentTimestamp) > heartbeatInt) {
