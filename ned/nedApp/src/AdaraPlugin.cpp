@@ -23,6 +23,7 @@ AdaraPlugin::AdaraPlugin(const char *portName, const char *dispatcherPortName, i
     , m_nProcessed(0)
     , m_nReceived(0)
 {
+    m_lastSentTimestamp = { 0, 0 };
 }
 
 AdaraPlugin::~AdaraPlugin()
@@ -54,8 +55,10 @@ void AdaraPlugin::processData(const DasPacketList * const packetList)
             // Copy what we have, 32 words at most, leave the rest as 0.
             memcpy(&outpacket[2], packet->payload, sizeof(uint32_t)*min(packet->payload_length, static_cast<uint32_t>(32)));
 
-            if (send(outpacket, len))
+            if (send(outpacket, len)) {
                 m_nTransmitted++;
+                epicsTimeGetCurrent(&m_lastSentTimestamp);
+            }
             m_nProcessed++;
 
         } else if (packet->isData()) {
@@ -81,8 +84,10 @@ void AdaraPlugin::processData(const DasPacketList * const packetList)
                 outpacket[9] = rtdl->tsync_delay;
                 memcpy(&outpacket[10], neutrons, 8*neutronsCount); // help compiler optimize for 64bit copies
 
-                if (send(outpacket, sizeof(int)*10 + sizeof(DasPacket::NeutronEvent)*neutronsCount))
+                if (send(outpacket, sizeof(int)*10 + sizeof(DasPacket::NeutronEvent)*neutronsCount)) {
                     m_nTransmitted++;
+                    epicsTimeGetCurrent(&m_lastSentTimestamp);
+                }
                 m_nProcessed++;
             }
         }
@@ -97,7 +102,13 @@ void AdaraPlugin::processData(const DasPacketList * const packetList)
 
 float AdaraPlugin::checkClient()
 {
-    if (isClientConnected()) {
+    int heartbeatInt;
+    epicsTimeStamp now;
+
+    getIntegerParam(CheckClientDel, &heartbeatInt);
+    epicsTimeGetCurrent(&now);
+
+    if (isClientConnected() && epicsTimeDiffInSeconds(&now, &m_lastSentTimestamp) > heartbeatInt) {
         uint32_t outpacket[4];
         epicsTimeStamp ts;
         getTimeStamp(&ts);

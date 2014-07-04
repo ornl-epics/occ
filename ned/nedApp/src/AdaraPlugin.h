@@ -30,6 +30,7 @@ class AdaraPlugin : public BaseSocketPlugin {
         uint64_t m_nTransmitted;    //!< Number of packets sent to BASESOCKET
         uint64_t m_nProcessed;      //!< Number of processed packets
         uint64_t m_nReceived;       //!< Number of packets received from dispatcher
+        epicsTimeStamp m_lastSentTimestamp; //!< Timestamp of last packet sent to Adara
 
     public:
         /**
