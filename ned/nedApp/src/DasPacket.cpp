@@ -136,6 +136,8 @@ bool DasPacket::isRtdl() const
 
 const DasPacket::RtdlHeader *DasPacket::getRtdlHeader() const
 {
+    if (cmdinfo.is_command && cmdinfo.command == DasPacket::CommandType::CMD_RTDL)
+        return (RtdlHeader *)payload;
     if (!datainfo.is_command && datainfo.rtdl_present && payload_length >= sizeof(RtdlHeader))
         return (RtdlHeader *)payload;
     return 0;

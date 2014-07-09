@@ -133,6 +133,24 @@ class BaseSocketPlugin : public BasePlugin {
          */
         virtual float checkClient();
 
+        /**
+         * Signal that a new client is connected.
+         *
+         * When this function is called, client connection is already established
+         * and ready to use. There's periodic check for new client which is driven
+         * by the CheckClientDel parameter.
+         */
+        virtual void clientConnected() {};
+
+        /**
+         * Signal that current client has disconnected.
+         *
+         * Called when client disconnect has been detected. There's no active
+         * mechanism to check whether the client is still alive. Detect mechanism
+         * is based on the error returned by writing to socket.
+         */
+        virtual void clientDisconnected() {};
+
     protected:
         #define FIRST_BASESOCKETPLUGIN_PARAM ListenIP
         int ListenIP;
