@@ -198,7 +198,7 @@ int occ_enable_error_packets(struct occ_handle *handle, bool enable) {
     return 0;
 }
 
-int occ_status(struct occ_handle *handle, occ_status_t *status) {
+int occ_status(struct occ_handle *handle, occ_status_t *status, bool fast_status) {
     struct ocb_status info;
     int ret;
 
@@ -208,13 +208,16 @@ int occ_status(struct occ_handle *handle, occ_status_t *status) {
     if (pread(handle->fd, &info, sizeof(info), OCB_CMD_GET_STATUS) < 0)
         return -errno;
 
-    memset(status, 0, sizeof(occ_status_t));
+    if (fast_status == false) {
+        status->dma_size = handle->dma_buf_len;
+        status->dma_used = info.dq_used;
+        status->board = (info.board_type == BOARD_SNS_PCIE ? OCC_BOARD_PCIE : 
+                OCC_BOARD_PCIX);
+        status->interface = (handle->use_optic ? OCC_INTERFACE_OPTICAL : 
+                OCC_INTERFACE_LVDS);
+        status->firmware_ver = info.firmware_ver;
+    }
 
-    status->dma_size = handle->dma_buf_len;
-    status->dma_used = info.dq_used;
-    status->board = (info.board_type == BOARD_SNS_PCIE ? OCC_BOARD_PCIE : OCC_BOARD_PCIX);
-    status->interface = (handle->use_optic ? OCC_INTERFACE_OPTICAL : OCC_INTERFACE_LVDS);
-    status->firmware_ver = info.firmware_ver;
     status->optical_signal = (info.status & OCB_OPTICAL_PRESENT);
     status->rx_enabled = (info.status & OCB_RX_ENABLED);
 
@@ -223,23 +226,25 @@ int occ_status(struct occ_handle *handle, occ_status_t *status) {
         uint32_t valInt;
         word valWord;
 
-        // Get FPGA temperature
-        ret = occ_io_read(handle, 0, OCC_PCIE_REG_FPGA_TEMP, &valInt, 1);
-        if (ret != 1)
-            break;
-        status->fpga_temp = ( (503.975/4096.0) * ((float)valInt / 16.0) ) - 273.15;
+        if (fast_status == false) {
+            // Get FPGA temperature
+            ret = occ_io_read(handle, 0, OCC_PCIE_REG_FPGA_TEMP, &valInt, 1);
+            if (ret != 1)
+                break;
+            status->fpga_temp = ( (503.975/4096.0) * ((float)valInt / 16.0) ) - 273.15;
 
-        // Get FPGA core voltage
-        ret = occ_io_read(handle, 0, OCC_PCIE_REG_FPGA_CORE_VOLT, &valInt, 1);
-        if (ret != 1)
-            break;
-        status->fpga_core_volt = ( (3.0/4096.0) * ((float)valInt/16) );
+            // Get FPGA core voltage
+            ret = occ_io_read(handle, 0, OCC_PCIE_REG_FPGA_CORE_VOLT, &valInt, 1);
+            if (ret != 1)
+                break;
+            status->fpga_core_volt = ( (3.0/4096.0) * ((float)valInt/16) );
 
-        // Get FPGA aux voltage
-        ret = occ_io_read(handle, 0, OCC_PCIE_REG_FPGA_AUX_VOLT, &valInt, 1);
-        if (ret != 1)
-            break;
-        status->fpga_aux_volt = ( (3.0/4096.0) * ((float)valInt/16) );
+            // Get FPGA aux voltage
+            ret = occ_io_read(handle, 0, OCC_PCIE_REG_FPGA_AUX_VOLT, &valInt, 1);
+            if (ret != 1)
+                break;
+            status->fpga_aux_volt = ( (3.0/4096.0) * ((float)valInt/16) );
+        }
 
         // Get CRC error counter
         ret = occ_io_read(handle, 0, OCC_PCIE_REG_ERR_CRC, &valInt, 1);
@@ -259,7 +264,7 @@ int occ_status(struct occ_handle *handle, occ_status_t *status) {
             break;
         status->err_crc = valInt;
 
-        if (status->optical_signal) {
+        if ((status->optical_signal) && (fast_status == false)) {
             // Set global error, will override at end if all goes well
             ret = -EIO;
 

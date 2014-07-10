@@ -173,9 +173,10 @@ int occ_enable_error_packets(struct occ_handle *handle, bool enable);
  *
  * \param[in] handle Valid OCC API handle.
  * \param[out] status Pointer to a structure where status information is put.
+ * \param[in] fast_status If true, limit update to frequently used status vars.  
  * \return 0 on success, negative errno on error.
  */
-int occ_status(struct occ_handle *handle, occ_status_t *status);
+int occ_status(struct occ_handle *handle, occ_status_t *status, bool fast_status);
 
 /**
  * Send arbitrary data to OCC link.
