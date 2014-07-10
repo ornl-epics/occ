@@ -79,7 +79,7 @@ int occ_enable_rx(struct occ_handle *handle, bool enable) {
     return 0;
 }
 
-int occ_status(struct occ_handle *handle, occ_status_t *status) {
+int occ_status(struct occ_handle *handle, occ_status_t *status, bool fast_status) {
 
     if (handle == NULL || handle->magic != OCC_HANDLE_MAGIC || status == NULL)
         return -EINVAL;
