@@ -1,3 +1,4 @@
+make clean
 make
 rmmod sns_ocb
 insmod sns-ocb.ko
