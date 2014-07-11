@@ -20,12 +20,12 @@
  * It is appropriate because the typical programming file for the initial
  * use case is 11MB, so we desire to erase and program a "section".  The
  * underlying flash interface as defined in the header is made more generic,
- * accepting block indexes and word addresses, instead of mythical "sections".
+ * accepting word addresses to flash, instead of mythical "sections".
  *
  * Note: To simplify callers, most functions are designed to return void, and
  * throw exceptions to indicate critical errors.
  *
- * Functional interface documentation provided in occ_flashprog.h, using Doxygen 
+ * Functional interface documentation provided in occ_flashprog.h, using Doxygen
  * syntax.  Static entities are documented herein.
  *
  * Greg Guyotte <guyottegs@ornl.gov>
@@ -200,7 +200,7 @@ static void nsleep(uint32_t ns) {
  */
 static void usage(const char *progname) {
     printf("Usage: %s -d <device file> -s <section> \n\
-                       {-r <f> | -w <f> | -v <f> |-e}\n", progname);
+                       {-r <f> | -w <f> | -v <f> | -p <f> |-e}\n", progname);
     printf("\n");
     printf("Section and device-file are required.\n");
     printf("Choose only one of the read|write|verify|erase operations.\n");
