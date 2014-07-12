@@ -287,9 +287,9 @@ int occ_status(struct occ_handle *handle, occ_status_t *status, bool fast_status
                 break;
             status->sfp_tx_bias_cur = 2.0 * valWord;
 
-            ret = 0;
         }
 
+        ret = 0;
         break;
     } while (0);
 
