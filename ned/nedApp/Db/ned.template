@@ -220,3 +220,17 @@ record(longin, "$(P)$(R)CopyBufUtil")
     field(SCAN, "1 second")
     field(EGU,  "%")
 }
+record(ao, "$(P)$(R)StatusInt")
+{
+    field(DESC, "Basic status update interval")
+    field(DTYP, "asynFloat64")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))StatusInt")
+    field(EGU,  "seconds")
+}
+record(ao, "$(P)$(R)ExtStatusInt")
+{
+    field(DESC, "Extended status update interval")
+    field(DTYP, "asynFloat64")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))ExtStatusInt")
+    field(EGU,  "seconds")
+}

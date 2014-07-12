@@ -24,11 +24,19 @@ static const int asynStackSize     = 0;
 
 EPICS_REGISTER(ned, OccPortDriver, 3, "Port name", string, "Device id", int, "Local buffer size", int);
 
+const float OccPortDriver::DEFAULT_BASIC_STATUS_INTERVAL = 1.0;     //!< How often to update frequent OCC status parameters
+const float OccPortDriver::DEFAULT_EXTENDED_STATUS_INTERVAL = 60.0; //!< How ofter to update less frequently changing OCC status parameters
+
 extern "C" {
     static void processOccDataC(void *drvPvt)
     {
         OccPortDriver *driver = reinterpret_cast<OccPortDriver *>(drvPvt);
-        driver->processOccData();
+        driver->processOccDataThread();
+    }
+    static void refreshOccStatusC(void *drvPvt)
+    {
+        OccPortDriver *driver = reinterpret_cast<OccPortDriver *>(drvPvt);
+        driver->refreshOccStatusThread();
     }
 }
 
@@ -61,11 +69,14 @@ OccPortDriver::OccPortDriver(const char *portName, int deviceId, uint32_t localB
     createParam("SfpTxPower",       asynParamFloat64,   &SfpTxPower);
     createParam("SfpVccPower",      asynParamFloat64,   &SfpVccPower);
     createParam("SfpTxBiasCur",     asynParamFloat64,   &SfpTxBiasCur);
-    createParam("StatusInterval",   asynParamFloat64,   &StatusInterval);
+    createParam("StatusInt",        asynParamFloat64,   &StatusInt);
+    createParam("ExtStatusInt",     asynParamFloat64,   &ExtStatusInt);
     createParam("DmaBufUtil",       asynParamInt32,     &DmaBufUtil);
     createParam("CopyBufUtil",      asynParamInt32,     &CopyBufUtil);
 
     setIntegerParam(Status, STAT_OK);
+    setDoubleParam(StatusInt, DEFAULT_BASIC_STATUS_INTERVAL);
+    setDoubleParam(ExtStatusInt, DEFAULT_EXTENDED_STATUS_INTERVAL);
 
     // Initialize OCC board
     status = occ_open(portName, OCC_INTERFACE_OPTICAL, &m_occ);
@@ -87,19 +98,19 @@ OccPortDriver::OccPortDriver(const char *portName, int deviceId, uint32_t localB
         return;
     }
 
-    // Get OCC status
-    m_lastStatusUpdateTime.secPastEpoch = 0;
-    m_lastStatusUpdateTime.nsec = 0;
-    setDoubleParam(StatusInterval, 1.0);
-    refreshOccStatus();
+    callParamCallbacks();
+
+    m_occStatusRefreshThreadId = epicsThreadCreate("OCC status",
+                                                   epicsThreadPriorityLow,
+                                                   epicsThreadGetStackSize(epicsThreadStackSmall),
+                                                   (EPICSTHREADFUNC)refreshOccStatusC,
+                                                   this);
 
     m_occBufferReadThreadId = epicsThreadCreate(portName,
                                                 epicsThreadPriorityHigh,
                                                 epicsThreadGetStackSize(epicsThreadStackMedium),
                                                 (EPICSTHREADFUNC)processOccDataC,
                                                 this);
-
-    callParamCallbacks();
 }
 
 OccPortDriver::~OccPortDriver()
@@ -117,73 +128,83 @@ OccPortDriver::~OccPortDriver()
     }
 }
 
-
-bool OccPortDriver::refreshOccStatus()
+void OccPortDriver::refreshOccStatusThread()
 {
-    epicsTimeStamp now;
-    epicsTimeGetCurrent(&now);
-    double refreshPeriod;
+    int ret;
+    epicsTimeStamp lastExtStatusUpdate = { 0, 0 };
+    occ_status_t occstatus; // Keep at function scope so that it caches values between runs
 
-    getDoubleParam(StatusInterval, &refreshPeriod);
-    double diff = epicsTimeDiffInSeconds(&now, &m_lastStatusUpdateTime);
-    if (epicsTimeDiffInSeconds(&now, &m_lastStatusUpdateTime) > refreshPeriod) {
-        int ret, val;
-        occ_status_t occstatus;
-        ret = occ_status(m_occ, &occstatus);
+    while (true) {
+        double refreshPeriod;
+        bool basic_status = true;
+        epicsTimeStamp now;
+
+        epicsTimeGetCurrent(&now);
+
+        this->lock();
+
+        if (getDoubleParam(ExtStatusInt, &refreshPeriod) != asynSuccess)
+            refreshPeriod = DEFAULT_EXTENDED_STATUS_INTERVAL;
+        if (refreshPeriod < 1.0)
+            refreshPeriod = 1.0;
+        refreshPeriod -= 0.1; // compensate for the time difference between now and lastExtStatusUpdate are populated, 0.1 should be enough
+        if (epicsTimeDiffInSeconds(&now, &lastExtStatusUpdate) >= refreshPeriod) {
+            basic_status = false;
+            epicsTimeGetCurrent(&lastExtStatusUpdate);
+        }
+
+        if (getDoubleParam(StatusInt, &refreshPeriod) != asynSuccess)
+            refreshPeriod = DEFAULT_BASIC_STATUS_INTERVAL;
+        else if (refreshPeriod < 0.1) // prevent querying to often
+            refreshPeriod = 0.1;
+
+        this->unlock();
+
+        // This one can take long time to execute, don't lock the driver while it's executing
+        ret = occ_status(m_occ, &occstatus, basic_status);
+
+        this->lock();
 
         if (ret != 0) {
             setIntegerParam(LastErr, -ret);
             LOG_ERROR("Failed to query OCC status: %s(%d)", strerror(-ret), ret);
-            return false;
+        } else {
+            int val;
+            uint32_t dmaBufUtil = 0;
+
+            if (occstatus.dma_size > 0) {
+                dmaBufUtil = 100 * occstatus.dma_used / occstatus.dma_size;
+            }
+
+            setIntegerParam(BoardType,      occstatus.board);
+            setIntegerParam(BoardFwVer,     occstatus.firmware_ver);
+            setIntegerParam(OpticsPresent,  occstatus.optical_signal);
+            setIntegerParam(OpticsEnabled,  occstatus.rx_enabled);
+            setDoubleParam(FpgaTemp,        occstatus.fpga_temp);
+            setDoubleParam(FpgaCoreVolt,    occstatus.fpga_core_volt);
+            setDoubleParam(FpgaAuxVolt,     occstatus.fpga_aux_volt);
+            setIntegerParam(ErrCrc,         occstatus.err_crc);
+            setIntegerParam(ErrLength,      occstatus.err_length);
+            setIntegerParam(ErrFrame,       occstatus.err_frame);
+            setDoubleParam(SfpTemp,         occstatus.sfp_temp);
+            setDoubleParam(SfpRxPower,      occstatus.sfp_rx_power);
+            setDoubleParam(SfpTxPower,      occstatus.sfp_tx_power);
+            setDoubleParam(SfpVccPower,     occstatus.sfp_vcc_power);
+            setDoubleParam(SfpTxBiasCur,    occstatus.sfp_tx_bias_cur);
+
+            setIntegerParam(DmaBufUtil,     dmaBufUtil);
+            setIntegerParam(CopyBufUtil,    m_circularBuffer->utilization());
+
+            getIntegerParam(RxStalled,      &val);
+            setIntegerParam(RxStalled,      (occstatus.stalled ? val | 1 : val & ~1));
+
+            callParamCallbacks();
         }
 
-        setIntegerParam(BoardType,      occstatus.board);
-        setIntegerParam(BoardFwVer,     occstatus.firmware_ver);
-        setIntegerParam(OpticsPresent,  occstatus.optical_signal);
-        setIntegerParam(OpticsEnabled,  occstatus.rx_enabled);
-        setDoubleParam(FpgaTemp,        occstatus.fpga_temp);
-        setDoubleParam(FpgaCoreVolt,    occstatus.fpga_core_volt);
-        setDoubleParam(FpgaAuxVolt,     occstatus.fpga_aux_volt);
-        setIntegerParam(ErrCrc,         occstatus.err_crc);
-        setIntegerParam(ErrLength,      occstatus.err_length);
-        setIntegerParam(ErrFrame,       occstatus.err_frame);
-        setDoubleParam(SfpTemp,         occstatus.sfp_temp);
-        setDoubleParam(SfpRxPower,      occstatus.sfp_rx_power);
-        setDoubleParam(SfpTxPower,      occstatus.sfp_tx_power);
-        setDoubleParam(SfpVccPower,     occstatus.sfp_vcc_power);
-        setDoubleParam(SfpTxBiasCur,    occstatus.sfp_tx_bias_cur);
+        this->unlock();
 
-        setIntegerParam(DmaBufUtil,     100 * occstatus.dma_used / occstatus.dma_size);
-        setIntegerParam(CopyBufUtil,    m_circularBuffer->utilization());
-
-        getIntegerParam(RxStalled,      &val);
-        setIntegerParam(RxStalled,      (occstatus.stalled ? val | 1 : val & ~1));
-
-        callParamCallbacks();
-
-        epicsTimeGetCurrent(&m_lastStatusUpdateTime);
+        epicsThreadSleep(refreshPeriod);
     }
-    return true;
-}
-
-asynStatus OccPortDriver::readFloat64(asynUser *pasynUser, epicsFloat64 *value)
-{
-    if (!refreshOccStatus())
-        setIntegerParam(Status, STAT_OCC_ERROR);
-    return asynPortDriver::readFloat64(pasynUser, value);
-}
-
-/**
- * Handler for reading asynInt32 values.
- *
- * Some of the values need to be pulled directly from registers. Doing so will also update
- * whatever other PVs we got info for.
- */
-asynStatus OccPortDriver::readInt32(asynUser *pasynUser, epicsInt32 *value)
-{
-    if (!refreshOccStatus())
-        setIntegerParam(Status, STAT_OCC_ERROR);
-    return asynPortDriver::readInt32(pasynUser, value);
 }
 
 asynStatus OccPortDriver::writeInt32(asynUser *pasynUser, epicsInt32 value)
@@ -238,7 +259,7 @@ asynStatus OccPortDriver::writeGenericPointer(asynUser *pasynUser, void *pointer
     return asynSuccess;
 }
 
-void OccPortDriver::processOccData()
+void OccPortDriver::processOccDataThread()
 {
     void *data;
     uint32_t length;
@@ -249,6 +270,7 @@ void OccPortDriver::processOccData()
     while (true) {
         int ret = m_circularBuffer->wait(&data, &length);
         if (ret != 0) {
+            this->lock();
             setIntegerParam(LastErr, -ret);
             setIntegerParam(Status, ret == -EOVERFLOW ? STAT_BUFFER_FULL : STAT_OCC_ERROR);
             if (ret == -EOVERFLOW) {
@@ -257,6 +279,7 @@ void OccPortDriver::processOccData()
                 setIntegerParam(RxStalled, val | 2);
             }
             callParamCallbacks();
+            this->unlock();
             LOG_ERROR("Unable to receive data from OCC, stopped - %s(%d)\n", strerror(-ret), ret);
             break;
         }
