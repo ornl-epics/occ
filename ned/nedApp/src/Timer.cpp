@@ -12,7 +12,7 @@ Timer::~Timer()
     m_timer.destroy();
 }
 
-bool Timer::schedule(std::function<float()> &callback, double delay)
+bool Timer::schedule(std::function<float()> &callback, float delay)
 {
     if (m_timer.getExpireDelay() == DBL_MAX)
         return false;

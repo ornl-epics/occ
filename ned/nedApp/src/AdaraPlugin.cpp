@@ -1,11 +1,6 @@
 #include "AdaraPlugin.h"
 
-#include <poll.h>
-#include <osiSock.h>
-#include <string.h> // memcpy
-
-#include <iostream>
-using namespace std;
+#include <algorithm>
 
 EPICS_REGISTER_PLUGIN(AdaraPlugin, 5, "port name", string, "dispatcher port", string, "blocking callbacks", int, "Neutron source id", int, "Meta source id", int);
 
@@ -58,7 +53,7 @@ void AdaraPlugin::processData(const DasPacketList * const packetList)
                 // The RTDL packet contents is just what ADARA expects.
                 // Prefix that with the length and type of packet.
                 if (send(outpacket, sizeof(uint32_t)*2) &&
-                    send(packet->payload, sizeof(uint32_t)*min(packet->getPayloadLength(), 32U))) {
+                    send(packet->payload, sizeof(uint32_t)*std::min(packet->getPayloadLength(), 32U))) {
                     m_nTransmitted++;
                     epicsTimeGetCurrent(&m_lastSentTimestamp);
                     m_lastRtdlTimestamp = timestamp;
