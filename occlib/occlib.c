@@ -232,13 +232,13 @@ int occ_status(struct occ_handle *handle, occ_status_t *status, bool fast_status
         ret = occ_io_read(handle, 0, OCC_PCIE_REG_ERR_LENGTH, &valInt, 1);
         if (ret != 1)
             break;
-        status->err_crc = valInt;
+        status->err_length = valInt;
 
         // Get frame error counter
         ret = occ_io_read(handle, 0, OCC_PCIE_REG_ERR_FRAME, &valInt, 1);
         if (ret != 1)
             break;
-        status->err_crc = valInt;
+        status->err_frame = valInt;
 
         if (fast_status == false) {
             // Get FPGA temperature
