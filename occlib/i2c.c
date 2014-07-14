@@ -19,6 +19,8 @@ static void Bit_Outport32(uint32_t offset, uint32_t bit_pattern, uint32_t value)
 static struct occ_handle *device_handle;
 static uint8_t pcie_bar; 
 
+#define SLEEP_VALUE 250
+
 /*******************************************************************************/
 // void Outport32(uint32_t offset, uint32_t data);
 //
@@ -97,18 +99,18 @@ static void start_signal(byte device)
 
    // enable data output enable
    Bit_Outport32(I2CR, I2CR_OE, I2CR_OE_HIGH);     // OE high
-   usleep(1000);
+   usleep(SLEEP_VALUE);
 
    // Set the clock pin high
    Bit_Outport32(I2CR, I2CR_SCL, I2CR_SCL);
 
    // Set the data line low
    Bit_Outport32(I2CR, I2CR_SDA, I2CR_SDA_LOW);   // SDA low
-   usleep(1000);
+   usleep(SLEEP_VALUE);
 
    // Set the clock line low
    Bit_Outport32(I2CR, I2CR_SCL, I2CR_SCL_LOW);   // SCL low
-   usleep(1000);
+   usleep(SLEEP_VALUE);
 
    // set the mask to one
    bit_mask = 0x40;
@@ -120,23 +122,23 @@ static void start_signal(byte device)
          {
          // Set the data line high
          Bit_Outport32(I2CR, I2CR_SDA, I2CR_SDA_HIGH);  // SDA high
-         usleep(1000);
+         usleep(SLEEP_VALUE);
          }
 
       else
          {
          // set the data line low
          Bit_Outport32(I2CR, I2CR_SDA, I2CR_SDA_LOW);   // SDA low
-         usleep(1000);
+         usleep(SLEEP_VALUE);
          }
 
       // clock the data
       Bit_Outport32(I2CR, I2CR_SCL, I2CR_SCL_HIGH);     // SCL high
-      usleep(1000);
+      usleep(SLEEP_VALUE);
 
       // Set the clock line low
       Bit_Outport32(I2CR, I2CR_SCL, I2CR_SCL_LOW);   // SCL low
-      usleep(1000);
+      usleep(SLEEP_VALUE);
 
       // shift the bit mask
       bit_mask >>= 1;
@@ -155,19 +157,19 @@ static void stop_signal(void)
 
    // enable data output enable
    Bit_Outport32(I2CR, I2CR_OE, I2CR_OE_HIGH);     // OE high
-   usleep(1000);
+   usleep(SLEEP_VALUE);
 
    // take the data line low
    Bit_Outport32(I2CR, I2CR_SDA, I2CR_SDA_LOW);
-   usleep(1000);
+   usleep(SLEEP_VALUE);
 
    // clock the data
    Bit_Outport32(I2CR, I2CR_SCL, I2CR_SCL_HIGH);     // SCL high
-   usleep(1000);
+   usleep(SLEEP_VALUE);
 
    // take the data line high
    Bit_Outport32(I2CR, I2CR_SDA, I2CR_SDA_HIGH);  // SDA high
-   usleep(1000);
+   usleep(SLEEP_VALUE);
 }
 
 /*********************************************************************************/
@@ -182,19 +184,19 @@ static void read_signal(void)
 {
    // take the data line high
    Bit_Outport32(I2CR, I2CR_SDA, I2CR_SDA_HIGH);  // SDA high
-   usleep(1000);
+   usleep(SLEEP_VALUE);
 
    // clock the data
    Bit_Outport32(I2CR, I2CR_SCL, I2CR_SCL_HIGH);     // SCL high
-   usleep(1000);
+   usleep(SLEEP_VALUE);
 
    // disable the SDA output enable ---JEB
    Bit_Outport32(I2CR, I2CR_OE, I2CR_OE_LOW);     // disable Output enable
-   usleep(1000);
+   usleep(SLEEP_VALUE);
 
    // Set the clock line low
    Bit_Outport32(I2CR, I2CR_SCL, I2CR_SCL_LOW);   // SCL low
-   usleep(1000);
+   usleep(SLEEP_VALUE);
 }
 
 /*********************************************************************************/
@@ -209,15 +211,15 @@ static void write_signal(void)
 {
    // set the data line low
    Bit_Outport32(I2CR, I2CR_SDA, I2CR_SDA_LOW);   // SDA low
-   usleep(1000);
+   usleep(SLEEP_VALUE);
 
    // clock the data
    Bit_Outport32(I2CR, I2CR_SCL, I2CR_SCL_HIGH);     // SCL high
-   usleep(1000);
+   usleep(SLEEP_VALUE);
 
    // Set the clock line low
    Bit_Outport32(I2CR, I2CR_SCL, I2CR_SCL_LOW);   // SCL low
-   usleep(1000);
+   usleep(SLEEP_VALUE);
 }
 
 /*********************************************************************************/
@@ -232,23 +234,23 @@ static void write_acknowledge(void)
 {
    // enable data output enable
    Bit_Outport32(I2CR, I2CR_OE, I2CR_OE_HIGH);    // OE high
-   usleep(1000);
+   usleep(SLEEP_VALUE);
 
    // set the data line low
    Bit_Outport32(I2CR, I2CR_SDA, I2CR_SDA_LOW);   // SDA low
-   usleep(1000);
+   usleep(SLEEP_VALUE);
 
    // clock the data
    Bit_Outport32(I2CR, I2CR_SCL, I2CR_SCL_HIGH);     // SCL high
-   usleep(1000);
+   usleep(SLEEP_VALUE);
 
    // Set the clock line low
    Bit_Outport32(I2CR, I2CR_SCL, I2CR_SCL_LOW);   // SCL low
-   usleep(1000);
+   usleep(SLEEP_VALUE);
 
    // Set the data line high
    Bit_Outport32(I2CR, I2CR_SDA, I2CR_SDA_HIGH);  // SDA high
-   usleep(1000);
+   usleep(SLEEP_VALUE);
 }
 
 /*********************************************************************************/
@@ -266,21 +268,21 @@ static int read_acknowledge(void)
 
    // Set the data line high
    Bit_Outport32(I2CR, I2CR_SDA, I2CR_SDA_HIGH);  // SDA high
-   usleep(1000);
+   usleep(SLEEP_VALUE);
 
    // disable data output enable
    Bit_Outport32(I2CR, I2CR_OE, I2CR_OE_LOW);     // OE low
-   usleep(1000);
+   usleep(SLEEP_VALUE);
 
    I2C_input = (byte) (Inport32(I2CR) & I2CR_SDA_PIN);
 
    // clock the data
    Bit_Outport32(I2CR, I2CR_SCL, I2CR_SCL_HIGH);     // SCL high
-   usleep(1000);
+   usleep(SLEEP_VALUE);
 
    // Set the clock line low
    Bit_Outport32(I2CR, I2CR_SCL, I2CR_SCL_LOW);   // SCL low
-   usleep(1000);
+   usleep(SLEEP_VALUE);
 
    // if acknowldege is not zero then error
    if (I2C_input != 0)
@@ -310,7 +312,7 @@ static void write_byte_bus(byte write_byte_data)
 
    // enable data output enable
    Bit_Outport32(I2CR, I2CR_OE, I2CR_OE_HIGH);     // OE high
-   usleep(1000);
+   usleep(SLEEP_VALUE);
 
 
    // set the mask to one
@@ -326,7 +328,7 @@ static void write_byte_bus(byte write_byte_data)
 
          // Set the data line high
          Bit_Outport32(I2CR, I2CR_SDA, I2CR_SDA_HIGH);  // SDA high
-         usleep(1000);
+         usleep(SLEEP_VALUE);
          }
 
       // set the data line low
@@ -335,7 +337,7 @@ static void write_byte_bus(byte write_byte_data)
 	 //printf("writing '0': bitmask = %x write_byte_data = %x \n", bit_mask, write_byte_data); 
          // set the data line low
          Bit_Outport32(I2CR, I2CR_SDA, I2CR_SDA_LOW);   // SDA low
-         usleep(1000);
+         usleep(SLEEP_VALUE);
          }
 
       // shift the bit mask
@@ -343,11 +345,11 @@ static void write_byte_bus(byte write_byte_data)
 
       // clock the data
       Bit_Outport32(I2CR, I2CR_SCL, I2CR_SCL_HIGH);     // SCL high
-      usleep(1000);
+      usleep(SLEEP_VALUE);
 
       // Set the clock line low
       Bit_Outport32(I2CR, I2CR_SCL, I2CR_SCL_LOW);   // SCL low
-      usleep(1000);
+      usleep(SLEEP_VALUE);
       }
 }
 
@@ -367,11 +369,11 @@ static int read_byte_bus(void)
 
    // Set the data line high
    Bit_Outport32(I2CR, I2CR_SDA, I2CR_SDA_HIGH);  // SDA high
-   usleep(1000);
+   usleep(SLEEP_VALUE);
 
       // disable the SDA output enable
    Bit_Outport32(I2CR, I2CR_OE, I2CR_OE_LOW);     // OE LOW
-   usleep(1000);
+   usleep(SLEEP_VALUE);
 
    // reset the data byte and bit mask
    data_from_bus = 0;
@@ -382,7 +384,7 @@ static int read_byte_bus(void)
       {
       // clock the data
       Bit_Outport32(I2CR, I2CR_SCL, I2CR_SCL_HIGH);     // SCL high
-      usleep(1000);
+      usleep(SLEEP_VALUE);
 
       // if not zero then add the bit
       I2C_input = (byte)((Inport32(I2CR) & I2CR_SDA_PIN));
@@ -395,7 +397,7 @@ static int read_byte_bus(void)
 
       // Set the clock line low
       Bit_Outport32(I2CR, I2CR_SCL, I2CR_SCL_LOW);   // SCL low
-      usleep(1000);
+      usleep(SLEEP_VALUE);
       }
 
    // return the byte read
@@ -429,7 +431,7 @@ unsigned int Read_I2C_Bus(struct occ_handle *occ, byte address, byte offset, wor
 
    // Set I2C bus to initial state
    Outport32(I2CR, I2CR_DEFAULT);     // all high
-   usleep(1000);
+   usleep(SLEEP_VALUE);
 
    // write the start and prepare for a read
    start_signal(address/2);
