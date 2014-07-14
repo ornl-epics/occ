@@ -13,9 +13,9 @@ struct DasPacket
 {
     public:
         /**
-         * Structure representing single Neutron Event
+         * Structure representing single Event
          */
-        struct NeutronEvent {
+        struct Event {
             uint32_t tof;
             uint32_t pixelid;
         };
@@ -226,11 +226,11 @@ struct DasPacket
         const RtdlHeader *getRtdlHeader() const;
 
         /**
-         * Return starting address of the Neutron Data regardless of RtdlHeader included or not.
+         * Return starting address of the Event Data regardless of RtdlHeader included or not.
          *
-         * @param[out] count Number of NeutronEvents in the returned memory.
+         * @param[out] count Number of Events in the returned memory.
          */
-        const NeutronEvent *getNeutronData(uint32_t *count) const;
+        const Event *getEventData(uint32_t *count) const;
 
         /**
          * Return the actual response type.

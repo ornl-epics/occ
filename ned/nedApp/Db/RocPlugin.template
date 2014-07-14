@@ -746,6 +746,444 @@ record(longout, "$(P)$(R)Ch2BAdcOffs")
     field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch2BAdcOffs")
     field(SCAN, "I/O Intr")
 }
+record(bo, "$(P)$(R)Ch2AdcMax")
+{
+    field(DESC, "Chan2 got ADC max")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch2AdcMax")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no")
+    field(ONAM, "yes")
+}
+record(bo, "$(P)$(R)Ch2AdcMin")
+{
+    field(DESC, "Chan2 got ADC min")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch2AdcMin")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no")
+    field(ONAM, "yes")
+}
+record(bo, "$(P)$(R)Ch2MDEv")
+{
+    field(DESC, "Chan2 got multi-discp event")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch2MDEv")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no")
+    field(ONAM, "yes")
+}
+record(bo, "$(P)$(R)Ch2Ev")
+{
+    field(DESC, "Chan2 got event")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch2Ev")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no")
+    field(ONAM, "yes")
+}
+record(bo, "$(P)$(R)Ch2FifFul")
+{
+    field(DESC, "Chan2 FIFO full detectec")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch2FifFul")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no")
+    field(ONAM, "yes")
+}
+record(bo, "$(P)$(R)Ch2FifAmFF")
+{
+    field(DESC, "Chan2 FIFO almost full detec")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch2FifAmFF")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no")
+    field(ONAM, "yes")
+}
+record(bo, "$(P)$(R)Ch2FifAmFul")
+{
+    field(DESC, "Chan2 FIFO almost full")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch2FifAmFul")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no")
+    field(ONAM, "yes")
+}
+record(bo, "$(P)$(R)Ch2NotEmpty")
+{
+    field(DESC, "Chan2 FIFO has data")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch2NotEmpty")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no")
+    field(ONAM, "yes")
+}
+record(bo, "$(P)$(R)Ch2BAdjEn")
+{
+    field(DESC, "Chan2 B Auto-Adjust Active")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch2BAdjEn")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "not active")
+    field(ONAM, "active")
+}
+record(bo, "$(P)$(R)Ch2BAdjTrig")
+{
+    field(DESC, "Chan2 B Auto-Adjust Got sampl")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch2BAdjTrig")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no sample")
+    field(ONAM, "got sample")
+}
+record(bo, "$(P)$(R)Ch2BAdjSamL")
+{
+    field(DESC, "Chan2 B Auto-Adjust Sample li")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch2BAdjSamL")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "not active")
+    field(ONAM, "active")
+}
+record(bo, "$(P)$(R)Ch2BSlopLim")
+{
+    field(DESC, "Chan2 B Auto-Adjust Slope lim")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch2BSlopLim")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "not active")
+    field(ONAM, "active")
+}
+record(bo, "$(P)$(R)Ch2BOffLim")
+{
+    field(DESC, "Chan2 B Auto-Adjust Offset li")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch2BOffLim")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "not active")
+    field(ONAM, "active")
+}
+record(bo, "$(P)$(R)Ch2BSlopLi1")
+{
+    field(DESC, "Chan2 B Auto-Adjust Slope? li")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch2BSlopLi1")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "not active")
+    field(ONAM, "active")
+}
+record(bo, "$(P)$(R)Ch2BOverflw")
+{
+    field(DESC, "Chan2 B Auto-Adjust overflow")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch2BOverflw")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no")
+    field(ONAM, "yes")
+}
+record(bo, "$(P)$(R)Ch3AAdjEn")
+{
+    field(DESC, "Chan3 A Auto-Adjust Active")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch3AAdjEn")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "not active")
+    field(ONAM, "active")
+}
+record(bo, "$(P)$(R)Ch3AAdjTrig")
+{
+    field(DESC, "Chan3 A Auto-Adjust Got sampl")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch3AAdjTrig")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no sample")
+    field(ONAM, "got sample")
+}
+record(bo, "$(P)$(R)Ch3AAdjSamL")
+{
+    field(DESC, "Chan3 A Auto-Adjust Sample li")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch3AAdjSamL")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "not active")
+    field(ONAM, "active")
+}
+record(bo, "$(P)$(R)Ch3ASlopLim")
+{
+    field(DESC, "Chan3 A Auto-Adjust Slope lim")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch3ASlopLim")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "not active")
+    field(ONAM, "active")
+}
+record(bo, "$(P)$(R)Ch3AOffLim")
+{
+    field(DESC, "Chan3 A Auto-Adjust Offset li")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch3AOffLim")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "not active")
+    field(ONAM, "active")
+}
+record(bo, "$(P)$(R)Ch3ASlopLi1")
+{
+    field(DESC, "Chan3 A Auto-Adjust Slope? li")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch3ASlopLi1")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "not active")
+    field(ONAM, "active")
+}
+record(bo, "$(P)$(R)Ch3AOverflw")
+{
+    field(DESC, "Chan3 A Auto-Adjust overflow")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch3AOverflw")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no")
+    field(ONAM, "yes")
+}
+record(longout, "$(P)$(R)Ch3ASlope")
+{
+    field(DESC, "Chan3 A input offset value")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch3ASlope")
+    field(SCAN, "I/O Intr")
+}
+record(longout, "$(P)$(R)Ch3AAdcOffs")
+{
+    field(DESC, "Chan3 A ADC Offset value")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch3AAdcOffs")
+    field(SCAN, "I/O Intr")
+}
+record(longout, "$(P)$(R)Ch3BAdcOffs")
+{
+    field(DESC, "Chan3 B ADC Offset value")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch3BAdcOffs")
+    field(SCAN, "I/O Intr")
+}
+record(bo, "$(P)$(R)Ch3BAdjEn")
+{
+    field(DESC, "Chan3 B Auto-Adjust Active")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch3BAdjEn")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "not active")
+    field(ONAM, "active")
+}
+record(bo, "$(P)$(R)Ch3BAdjTrig")
+{
+    field(DESC, "Chan3 B Auto-Adjust Got sampl")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch3BAdjTrig")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no sample")
+    field(ONAM, "got sample")
+}
+record(bo, "$(P)$(R)Ch3BAdjSamL")
+{
+    field(DESC, "Chan3 B Auto-Adjust Sample li")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch3BAdjSamL")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "not active")
+    field(ONAM, "active")
+}
+record(bo, "$(P)$(R)Ch3BSlopLim")
+{
+    field(DESC, "Chan3 B Auto-Adjust Slope lim")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch3BSlopLim")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "not active")
+    field(ONAM, "active")
+}
+record(bo, "$(P)$(R)Ch3BOffLim")
+{
+    field(DESC, "Chan3 B Auto-Adjust Offset li")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch3BOffLim")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "not active")
+    field(ONAM, "active")
+}
+record(bo, "$(P)$(R)Ch3BSlopLi1")
+{
+    field(DESC, "Chan3 B Auto-Adjust Slope? li")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch3BSlopLi1")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "not active")
+    field(ONAM, "active")
+}
+record(bo, "$(P)$(R)Ch3BOverflw")
+{
+    field(DESC, "Chan3 B Auto-Adjust overflow")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch3BOverflw")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no")
+    field(ONAM, "yes")
+}
+record(longout, "$(P)$(R)Ch3BSlope")
+{
+    field(DESC, "Chan3 B input offset value")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch3BSlope")
+    field(SCAN, "I/O Intr")
+}
+record(longout, "$(P)$(R)Ch4ASlope")
+{
+    field(DESC, "Chan4 A input offset value")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch4ASlope")
+    field(SCAN, "I/O Intr")
+}
+record(bo, "$(P)$(R)Ch3AdcMax")
+{
+    field(DESC, "Chan3 got ADC max")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch3AdcMax")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no")
+    field(ONAM, "yes")
+}
+record(bo, "$(P)$(R)Ch3AdcMin")
+{
+    field(DESC, "Chan3 got ADC min")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch3AdcMin")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no")
+    field(ONAM, "yes")
+}
+record(bo, "$(P)$(R)Ch3MDEv")
+{
+    field(DESC, "Chan3 got multi-discp event")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch3MDEv")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no")
+    field(ONAM, "yes")
+}
+record(bo, "$(P)$(R)Ch3Ev")
+{
+    field(DESC, "Chan3 got event")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch3Ev")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no")
+    field(ONAM, "yes")
+}
+record(bo, "$(P)$(R)Ch3FifFul")
+{
+    field(DESC, "Chan3 FIFO full detectec")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch3FifFul")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no")
+    field(ONAM, "yes")
+}
+record(bo, "$(P)$(R)Ch3FifAmFF")
+{
+    field(DESC, "Chan3 FIFO almost full detec")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch3FifAmFF")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no")
+    field(ONAM, "yes")
+}
+record(bo, "$(P)$(R)Ch3FifAmFul")
+{
+    field(DESC, "Chan3 FIFO almost full")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch3FifAmFul")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no")
+    field(ONAM, "yes")
+}
+record(bo, "$(P)$(R)Ch3NotEmpty")
+{
+    field(DESC, "Chan3 FIFO has data")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch3NotEmpty")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no")
+    field(ONAM, "yes")
+}
+record(longout, "$(P)$(R)Ch4AAdcOffs")
+{
+    field(DESC, "Chan4 A ADC Offset value")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch4AAdcOffs")
+    field(SCAN, "I/O Intr")
+}
+record(bo, "$(P)$(R)Ch4AAdjEn")
+{
+    field(DESC, "Chan4 A Auto-Adjust Active")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch4AAdjEn")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "not active")
+    field(ONAM, "active")
+}
+record(bo, "$(P)$(R)Ch4AAdjTrig")
+{
+    field(DESC, "Chan4 A Auto-Adjust Got sampl")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch4AAdjTrig")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no sample")
+    field(ONAM, "got sample")
+}
+record(bo, "$(P)$(R)Ch4AAdjSamL")
+{
+    field(DESC, "Chan4 A Auto-Adjust Sample li")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch4AAdjSamL")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "not active")
+    field(ONAM, "active")
+}
+record(bo, "$(P)$(R)Ch4ASlopLim")
+{
+    field(DESC, "Chan4 A Auto-Adjust Slope lim")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch4ASlopLim")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "not active")
+    field(ONAM, "active")
+}
+record(bo, "$(P)$(R)Ch4AOffLim")
+{
+    field(DESC, "Chan4 A Auto-Adjust Offset li")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch4AOffLim")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "not active")
+    field(ONAM, "active")
+}
+record(bo, "$(P)$(R)Ch4ASlopLi1")
+{
+    field(DESC, "Chan4 A Auto-Adjust Slope? li")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch4ASlopLi1")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "not active")
+    field(ONAM, "active")
+}
+record(bo, "$(P)$(R)Ch4AOverflw")
+{
+    field(DESC, "Chan4 A Auto-Adjust overflow")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch4AOverflw")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no")
+    field(ONAM, "yes")
+}
 record(longout, "$(P)$(R)Ch4BSlope")
 {
     field(DESC, "Chan4 B input offset value")
@@ -1416,6 +1854,388 @@ record(longout, "$(P)$(R)Ch7ASlope")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch7ASlope")
     field(SCAN, "I/O Intr")
+}
+record(longout, "$(P)$(R)Ch7AAdcOffs")
+{
+    field(DESC, "Chan7 A ADC Offset value")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch7AAdcOffs")
+    field(SCAN, "I/O Intr")
+}
+record(longout, "$(P)$(R)Ch7BAdcOffs")
+{
+    field(DESC, "Chan7 B ADC Offset value")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch7BAdcOffs")
+    field(SCAN, "I/O Intr")
+}
+record(bo, "$(P)$(R)Ch7BAdjEn")
+{
+    field(DESC, "Chan7 B Auto-Adjust Active")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch7BAdjEn")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "not active")
+    field(ONAM, "active")
+}
+record(bo, "$(P)$(R)Ch7BAdjTrig")
+{
+    field(DESC, "Chan7 B Auto-Adjust Got sampl")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch7BAdjTrig")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no sample")
+    field(ONAM, "got sample")
+}
+record(bo, "$(P)$(R)Ch7BAdjSamL")
+{
+    field(DESC, "Chan7 B Auto-Adjust Sample li")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch7BAdjSamL")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "not active")
+    field(ONAM, "active")
+}
+record(bo, "$(P)$(R)Ch7BSlopLim")
+{
+    field(DESC, "Chan7 B Auto-Adjust Slope lim")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch7BSlopLim")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "not active")
+    field(ONAM, "active")
+}
+record(bo, "$(P)$(R)Ch7BOffLim")
+{
+    field(DESC, "Chan7 B Auto-Adjust Offset li")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch7BOffLim")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "not active")
+    field(ONAM, "active")
+}
+record(bo, "$(P)$(R)Ch7BSlopLi1")
+{
+    field(DESC, "Chan7 B Auto-Adjust Slope? li")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch7BSlopLi1")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "not active")
+    field(ONAM, "active")
+}
+record(bo, "$(P)$(R)Ch7BOverflw")
+{
+    field(DESC, "Chan7 B Auto-Adjust overflow")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch7BOverflw")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no")
+    field(ONAM, "yes")
+}
+record(longout, "$(P)$(R)Ch7BSlope")
+{
+    field(DESC, "Chan7 B input offset value")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch7BSlope")
+    field(SCAN, "I/O Intr")
+}
+record(longout, "$(P)$(R)Ch8ASlope")
+{
+    field(DESC, "Chan8 A input offset value")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch8ASlope")
+    field(SCAN, "I/O Intr")
+}
+record(bo, "$(P)$(R)Ch7AdcMax")
+{
+    field(DESC, "Chan7 got ADC max")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch7AdcMax")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no")
+    field(ONAM, "yes")
+}
+record(bo, "$(P)$(R)Ch7AdcMin")
+{
+    field(DESC, "Chan7 got ADC min")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch7AdcMin")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no")
+    field(ONAM, "yes")
+}
+record(bo, "$(P)$(R)Ch7MDEv")
+{
+    field(DESC, "Chan7 got multi-discp event")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch7MDEv")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no")
+    field(ONAM, "yes")
+}
+record(bo, "$(P)$(R)Ch7Ev")
+{
+    field(DESC, "Chan7 got event")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch7Ev")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no")
+    field(ONAM, "yes")
+}
+record(bo, "$(P)$(R)Ch7FifFul")
+{
+    field(DESC, "Chan7 FIFO full detectec")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch7FifFul")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no")
+    field(ONAM, "yes")
+}
+record(bo, "$(P)$(R)Ch7FifAmFF")
+{
+    field(DESC, "Chan7 FIFO almost full detec")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch7FifAmFF")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no")
+    field(ONAM, "yes")
+}
+record(bo, "$(P)$(R)Ch7FifAmFul")
+{
+    field(DESC, "Chan7 FIFO almost full")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch7FifAmFul")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no")
+    field(ONAM, "yes")
+}
+record(bo, "$(P)$(R)Ch7NotEmpty")
+{
+    field(DESC, "Chan7 FIFO has data")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch7NotEmpty")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no")
+    field(ONAM, "yes")
+}
+record(longout, "$(P)$(R)Ch8AAdcOffs")
+{
+    field(DESC, "Chan8 A ADC Offset value")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch8AAdcOffs")
+    field(SCAN, "I/O Intr")
+}
+record(bo, "$(P)$(R)Ch8AAdjEn")
+{
+    field(DESC, "Chan8 A Auto-Adjust Active")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch8AAdjEn")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "not active")
+    field(ONAM, "active")
+}
+record(bo, "$(P)$(R)Ch8AAdjTrig")
+{
+    field(DESC, "Chan8 A Auto-Adjust Got sampl")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch8AAdjTrig")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no sample")
+    field(ONAM, "got sample")
+}
+record(bo, "$(P)$(R)Ch8AAdjSamL")
+{
+    field(DESC, "Chan8 A Auto-Adjust Sample li")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch8AAdjSamL")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "not active")
+    field(ONAM, "active")
+}
+record(bo, "$(P)$(R)Ch8ASlopLim")
+{
+    field(DESC, "Chan8 A Auto-Adjust Slope lim")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch8ASlopLim")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "not active")
+    field(ONAM, "active")
+}
+record(bo, "$(P)$(R)Ch8AOffLim")
+{
+    field(DESC, "Chan8 A Auto-Adjust Offset li")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch8AOffLim")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "not active")
+    field(ONAM, "active")
+}
+record(bo, "$(P)$(R)Ch8ASlopLi1")
+{
+    field(DESC, "Chan8 A Auto-Adjust Slope? li")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch8ASlopLi1")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "not active")
+    field(ONAM, "active")
+}
+record(bo, "$(P)$(R)Ch8AOverflw")
+{
+    field(DESC, "Chan8 A Auto-Adjust overflow")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch8AOverflw")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no")
+    field(ONAM, "yes")
+}
+record(longout, "$(P)$(R)Ch8BSlope")
+{
+    field(DESC, "Chan8 B input offset value")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch8BSlope")
+    field(SCAN, "I/O Intr")
+}
+record(longout, "$(P)$(R)Ch8BAdcOffs")
+{
+    field(DESC, "Chan8 B ADC Offset value")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch8BAdcOffs")
+    field(SCAN, "I/O Intr")
+}
+record(bo, "$(P)$(R)Ch8AdcMax")
+{
+    field(DESC, "Chan8 got ADC max")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch8AdcMax")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no")
+    field(ONAM, "yes")
+}
+record(bo, "$(P)$(R)Ch8AdcMin")
+{
+    field(DESC, "Chan8 got ADC min")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch8AdcMin")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no")
+    field(ONAM, "yes")
+}
+record(bo, "$(P)$(R)Ch8MDEv")
+{
+    field(DESC, "Chan8 got multi-discp event")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch8MDEv")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no")
+    field(ONAM, "yes")
+}
+record(bo, "$(P)$(R)Ch8Ev")
+{
+    field(DESC, "Chan8 got event")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch8Ev")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no")
+    field(ONAM, "yes")
+}
+record(bo, "$(P)$(R)Ch8FifFul")
+{
+    field(DESC, "Chan8 FIFO full detectec")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch8FifFul")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no")
+    field(ONAM, "yes")
+}
+record(bo, "$(P)$(R)Ch8FifAmFF")
+{
+    field(DESC, "Chan8 FIFO almost full detec")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch8FifAmFF")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no")
+    field(ONAM, "yes")
+}
+record(bo, "$(P)$(R)Ch8FifAmFul")
+{
+    field(DESC, "Chan8 FIFO almost full")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch8FifAmFul")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no")
+    field(ONAM, "yes")
+}
+record(bo, "$(P)$(R)Ch8NotEmpty")
+{
+    field(DESC, "Chan8 FIFO has data")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch8NotEmpty")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no")
+    field(ONAM, "yes")
+}
+record(bo, "$(P)$(R)Ch8BAdjEn")
+{
+    field(DESC, "Chan8 B Auto-Adjust Active")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch8BAdjEn")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "not active")
+    field(ONAM, "active")
+}
+record(bo, "$(P)$(R)Ch8BAdjTrig")
+{
+    field(DESC, "Chan8 B Auto-Adjust Got sampl")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch8BAdjTrig")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no sample")
+    field(ONAM, "got sample")
+}
+record(bo, "$(P)$(R)Ch8BAdjSamL")
+{
+    field(DESC, "Chan8 B Auto-Adjust Sample li")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch8BAdjSamL")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "not active")
+    field(ONAM, "active")
+}
+record(bo, "$(P)$(R)Ch8BSlopLim")
+{
+    field(DESC, "Chan8 B Auto-Adjust Slope lim")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch8BSlopLim")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "not active")
+    field(ONAM, "active")
+}
+record(bo, "$(P)$(R)Ch8BOffLim")
+{
+    field(DESC, "Chan8 B Auto-Adjust Offset li")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch8BOffLim")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "not active")
+    field(ONAM, "active")
+}
+record(bo, "$(P)$(R)Ch8BSlopLi1")
+{
+    field(DESC, "Chan8 B Auto-Adjust Slope? li")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch8BSlopLi1")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "not active")
+    field(ONAM, "active")
+}
+record(bo, "$(P)$(R)Ch8BOverflw")
+{
+    field(DESC, "Chan8 B Auto-Adjust overflow")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Ch8BOverflw")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "no")
+    field(ONAM, "yes")
 }
 record(longout, "$(P)$(R)Ch1PosIdx")
 {

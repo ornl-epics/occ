@@ -136,12 +136,14 @@ bool DasPacket::isRtdl() const
 
 const DasPacket::RtdlHeader *DasPacket::getRtdlHeader() const
 {
+    if (cmdinfo.is_command && cmdinfo.command == DasPacket::CommandType::CMD_RTDL)
+        return (RtdlHeader *)payload;
     if (!datainfo.is_command && datainfo.rtdl_present && payload_length >= sizeof(RtdlHeader))
         return (RtdlHeader *)payload;
     return 0;
 };
 
-const DasPacket::NeutronEvent *DasPacket::getNeutronData(uint32_t *count) const
+const DasPacket::Event *DasPacket::getEventData(uint32_t *count) const
 {
     const uint8_t *start = 0;
     *count = 0;
@@ -151,7 +153,7 @@ const DasPacket::NeutronEvent *DasPacket::getNeutronData(uint32_t *count) const
             start += sizeof(RtdlHeader);
         *count = (payload_length - (start - reinterpret_cast<const uint8_t*>(payload))) / 8;
     }
-    return reinterpret_cast<const NeutronEvent *>(start);
+    return reinterpret_cast<const Event *>(start);
 }
 
 DasPacket::CommandType DasPacket::getResponseType() const

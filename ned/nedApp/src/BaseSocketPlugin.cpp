@@ -214,6 +214,8 @@ bool BaseSocketPlugin::connectClient()
     setStringParam(ClientIP, clientip);
     callParamCallbacks();
 
+    clientConnected();
+
     LOG_INFO("New TCP client from %s", clientip);
 
     return true;
@@ -226,6 +228,8 @@ void BaseSocketPlugin::disconnectClient()
     m_clientSock = -1;
     setStringParam(ClientIP, "");
     callParamCallbacks();
+
+    clientDisconnected();
 }
 
 float BaseSocketPlugin::checkClient()
