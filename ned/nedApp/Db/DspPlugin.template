@@ -3972,6 +3972,126 @@ record(longout, "$(P)$(R)NumGoodPkts")
     field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))NumGoodPkts")
     field(SCAN, "I/O Intr")
 }
+record(longout, "$(P)$(R)NumCmds")
+{
+    field(DESC, "Filtered command count")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))NumCmds")
+    field(SCAN, "I/O Intr")
+}
+record(longout, "$(P)$(R)NumAcks")
+{
+    field(DESC, "Filtered ACKSs count")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))NumAcks")
+    field(SCAN, "I/O Intr")
+}
+record(longout, "$(P)$(R)NumNacks")
+{
+    field(DESC, "Filtered NACKs count")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))NumNacks")
+    field(SCAN, "I/O Intr")
+}
+record(longout, "$(P)$(R)NumHwIds")
+{
+    field(DESC, "Detected Hardware IDs count")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))NumHwIds")
+    field(SCAN, "I/O Intr")
+}
+record(bo, "$(P)$(R)NewHwId")
+{
+    field(DESC, "New Hardware ID detected")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))NewHwId")
+    field(SCAN, "I/O Intr")
+}
+record(bo, "$(P)$(R)MissHwId")
+{
+    field(DESC, "Missing Hardware ID")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))MissHwId")
+    field(SCAN, "I/O Intr")
+}
+record(bo, "$(P)$(R)CmdFifoHasDat")
+{
+    field(DESC, "Sorter cmd FIFO has data")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))CmdFifoHasDat")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "empty")
+    field(ONAM, "has data")
+}
+record(bo, "$(P)$(R)CmdFifoAlFull")
+{
+    field(DESC, "Sorter cmd FIFO almost full")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))CmdFifoAlFull")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "not full")
+    field(ONAM, "almost full")
+}
+record(bo, "$(P)$(R)ReadFifHasDat")
+{
+    field(DESC, "Channel Link cmd FIFO has dat")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))ReadFifHasDat")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "empty")
+    field(ONAM, "has data")
+}
+record(bo, "$(P)$(R)ReadFifAlFull")
+{
+    field(DESC, "Channel Link cmd FIFO al. ful")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))ReadFifAlFull")
+    field(SCAN, "I/O Intr")
+    field(ZNAM, "not full")
+    field(ONAM, "almost full")
+}
+record(longout, "$(P)$(R)CrbarCtrlA")
+{
+    field(DESC, "Crossbar Switch A pass ctrl")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))CrbarCtrlA")
+    field(SCAN, "I/O Intr")
+}
+record(longout, "$(P)$(R)CrbarCtrlB")
+{
+    field(DESC, "Crossbar Switch B pass ctrl")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))CrbarCtrlB")
+    field(SCAN, "I/O Intr")
+}
+record(longout, "$(P)$(R)ClkThreshMin")
+{
+    field(DESC, "Min N*40MHz between TSYNC/ref")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))ClkThreshMin")
+    field(SCAN, "I/O Intr")
+}
+record(longout, "$(P)$(R)ClkThreshMax")
+{
+    field(DESC, "Max N*40MHz between TSYNC/ref")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))ClkThreshMax")
+    field(SCAN, "I/O Intr")
+}
+record(longout, "$(P)$(R)EepromStatus")
+{
+    field(DESC, "LVDS status")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))EepromStatus")
+    field(SCAN, "I/O Intr")
+}
+record(longout, "$(P)$(R)LvdsStatus")
+{
+    field(DESC, "EEPROM Status")
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))LvdsStatus")
+    field(SCAN, "I/O Intr")
+}
 record(longout, "$(P)$(R)MetadataInfo0")
 {
     field(DESC, "Metadata channel info")

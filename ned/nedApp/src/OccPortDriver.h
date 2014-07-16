@@ -44,7 +44,8 @@ struct occ_handle;
  * SfpTxPower    | asynParamFloat64| 0.0      | RO   | SFP TX power in uW
  * SfpVccPower   | asynParamFloat64| 0.0      | RO   | SFP VCC power in Volts
  * SfpTxBiasCur  | asynParamFloat64| 0.0      | RO   | SFP TX bias current in uA
- * StatusInterval| asynParamFloat64| 1.0      | RW   | OCC status refresh interval in s
+ * StatusInt     | asynParamFloat64| 1.0      | RW   | OCC status refresh interval in s
+ * ExtStatusInt  | asynParamFloat64| 60.0     | RW   | OCC extended status refresh interval in s
  * DmaBufUtil    | asynParamInt32  | 0        | RO   | DMA memory utilization [0-100]
  * CopyBufUtil   | asynParamInt32  | 0        | RO   | Virtual buffer utilization [0-100]
  */
@@ -93,8 +94,9 @@ class epicsShareFunc OccPortDriver : public asynPortDriver {
         struct occ_handle *m_occ;
         BaseCircularBuffer *m_circularBuffer;
         epicsThreadId m_occBufferReadThreadId;
-
-        epicsTimeStamp m_lastStatusUpdateTime;
+        epicsThreadId m_occStatusRefreshThreadId;
+        static const float DEFAULT_BASIC_STATUS_INTERVAL;
+        static const float DEFAULT_EXTENDED_STATUS_INTERVAL;
 
         /**
          * Send list of packets to the plugins.
@@ -103,21 +105,6 @@ class epicsShareFunc OccPortDriver : public asynPortDriver {
          * @param packetList List of packets received from OCC.
          */
         void sendToPlugins(int messageType, const DasPacketList *packetList);
-
-        /**
-         * Refresh OCC status and populate m_cachedOccStatus if information expired.
-         */
-        bool refreshOccStatus();
-
-        /**
-         * Overloaded method.
-         */
-		asynStatus readInt32(asynUser *pasynUser, epicsInt32 *value);
-
-        /**
-         * Overloaded method.
-         */
-		asynStatus readFloat64(asynUser *pasynUser, epicsFloat64 *value);
 
         /**
          * Overloaded method.
@@ -141,7 +128,23 @@ class epicsShareFunc OccPortDriver : public asynPortDriver {
          * Runs from the worker thread through C static linkage, this function
          * must be public.
          */
-        void processOccData();
+        void processOccDataThread();
+
+        /**
+         * Thread refreshing OCC status periodically.
+         *
+         * Querying for OCC status can block for some time and could interfere with
+         * other driver functionality. For this reason it must be in its own thread.
+         *
+         * The thread is driven by StatusInt and ExtStatusInt parameters. When StatusInt
+         * expires, it queries for OCC status and updates all the parameters. If the
+         * ExtStatusInt also expired, it will also query for parameters which take longer
+         * to update but are not required to refresh frequently.
+         *
+         * Runs from the worker thread through C static linkage, this function
+         * must be public.
+         */
+        void refreshOccStatusThread();
 
     private:
         #define FIRST_OCCPORTDRIVER_PARAM Status
@@ -165,7 +168,8 @@ class epicsShareFunc OccPortDriver : public asynPortDriver {
         int SfpTxPower;
         int SfpVccPower;
         int SfpTxBiasCur;
-        int StatusInterval;
+        int StatusInt;
+        int ExtStatusInt;
         int DmaBufUtil;
         int CopyBufUtil;
         #define LAST_OCCPORTDRIVER_PARAM CopyBufUtil

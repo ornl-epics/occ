@@ -30,12 +30,15 @@ class Timer : private epicsTimerNotify {
         /**
          * Schedule a new task in the future.
          *
-         * Callback function should return delay in seconds when the
-         * next invocation should occur, or 0 to stop the timer.
+         * This function schedules a single-shot user defined function to be called in the future,
+         * while giving function the ability to schedule further invocations.
          *
-         * @param return true if scheduled successfully, false is previous task has not yet expired.
+         * @param callback Function to be called when timer expires, function should return delay
+         *                 in seconds when to run timer next time, or 0 to stop the timer.
+         * @param delay Delay in seconds when timer should expire.
+         * @return true if scheduled successfully, false is previous task has not yet expired.
          */
-        bool schedule(std::function<float()> &callback, double delay);
+        bool schedule(std::function<float()> &callback, float delay);
 
         /**
          * Cancel the timer.
@@ -56,7 +59,7 @@ class Timer : private epicsTimerNotify {
          *
          * @return true if task has been scheduled and it hasn't yet been processed or canceled
          */
-         bool isActive();
+        bool isActive();
 
     private:
         epicsTimerQueueActive &m_queue;

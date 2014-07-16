@@ -31,7 +31,7 @@ sub trunc {
 open (INFILE, $input_file);
 foreach $line ( <INFILE> ) {
     chomp($line);
-    if ($line =~ m/createStatusParam *\( *"([a-zA-Z0-9_]+)" *, *([0-9xX]+) *, *([0-9]+) *, *([0-9]+).*\/\/ *(.*)$/) {
+    if ($line =~ m/createStatusParam *\( *"([a-zA-Z0-9_]+)" *, *([0-9a-fA-FxX]+) *, *([0-9]+) *, *([0-9]+).*\/\/ *(.*)$/) {
         my ($name,$offset,$width,$shift,$comment) = ($1,$2,$3,$4,$5);
         $comment =~ /^\s*([^\(]*)\(?(.*)\)?$/;
         my ($desc, $valstr) = ($1, $2);
@@ -90,7 +90,7 @@ foreach $line ( <INFILE> ) {
             print ("\}\n");
         }
     }
-    if ($line =~ m/createConfigParam *\( *"([a-zA-Z0-9_]+)" *, *'([0-9A-F])' *, *([0-9A-FxX]+) *, *([0-9]+) *, *([0-9]+) *, *([0-9]+).*\/\/ *(.*)$/) {
+    if ($line =~ m/createConfigParam *\( *"([a-zA-Z0-9_]+)" *, *'([0-9A-F])' *, *([0-9a-fA-FxX]+) *, *([0-9]+) *, *([0-9]+) *, *([0-9]+).*\/\/ *(.*)$/) {
         my ($name,$section,$offset,$width,$shift,$val,$comment) = ($1,$2,$3,$4,$5,$6,$7);
         $comment =~ /^\s*([^\(]*)\(?(.*)\)?$/;
         my ($desc, $valstr) = ($1, $2);

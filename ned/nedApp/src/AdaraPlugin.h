@@ -30,6 +30,26 @@ class AdaraPlugin : public BaseSocketPlugin {
         uint64_t m_nTransmitted;    //!< Number of packets sent to BASESOCKET
         uint64_t m_nProcessed;      //!< Number of processed packets
         uint64_t m_nReceived;       //!< Number of packets received from dispatcher
+        epicsTimeStamp m_lastSentTimestamp; //!< Timestamp of last packet sent to Adara
+        epicsTimeStamp m_lastRtdlTimestamp; //!< Timestamp of last RTDL packet sent to Adara
+
+        /**
+         * Structure describing output packets sequence for a given source.
+         */
+        struct SourceSequence {
+            uint32_t sourceId;          //!< Source id for output packets
+            DasPacket::RtdlHeader rtdl; //!< RTDL header of the current pulse
+            uint32_t pulseSeq;          //!< Packet sequence number within one pulse
+            uint32_t totalSeq;          //!< Overall packet sequence number
+            SourceSequence(uint32_t sourceId_)
+                : sourceId(sourceId_)
+                , pulseSeq(0)
+                , totalSeq(0)
+            {
+            }
+        };
+        SourceSequence m_neutronSeq;    //!< Sequence for Neutron events stream
+        SourceSequence m_metadataSeq;   //!< Sequence for Metadata events stream
 
     public:
         /**
@@ -39,7 +59,7 @@ class AdaraPlugin : public BaseSocketPlugin {
 	     * @param[in] dispatcherPortName Name of the dispatcher asyn port to connect to.
 	     * @param[in] blocking Should processing of callbacks block execution of caller thread or not.
          */
-        AdaraPlugin(const char *portName, const char *dispatcherPortName, int blocking);
+        AdaraPlugin(const char *portName, const char *dispatcherPortName, int blocking, int neutronSource, int metaSource);
 
         /**
          * Destructor
@@ -62,6 +82,11 @@ class AdaraPlugin : public BaseSocketPlugin {
          * @return Number returned from BaseSocketPlugin::checkClient()
          */
         float checkClient();
+
+        /**
+         * Overloaded signal function invoked after new client has been connected.
+         */
+        void clientConnected();
 };
 
 #endif // ADARA_PLUGIN_H
