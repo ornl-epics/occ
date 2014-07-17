@@ -6,6 +6,7 @@
 #include <stdint.h>
 #include <string.h>
 
+#include <cstdio>
 #include <iostream>
 
 #define OCC_MAX_PACKET_SIZE 1800
@@ -25,7 +26,7 @@ static void usage(const char *progname) {
     cout << endl;
     cout << "Options:" << endl;
     cout << "  -d, --device-file FILE   Full path to OCC board device file" << endl;
-    cout << "  -o, --output-file FILE   Where to store incoming data" << endl;
+    cout << "  -o, --output-file FILE   Filename to store incoming data or - for stdout" << endl;
     cout << endl;
 }
 
@@ -42,7 +43,7 @@ static void sighandler(int signal) {
 
 /**
  * Receive data from OCC board and dump it to a file.
- * 
+ *
  * Function stops when the shutdown global flag gets
  * set.
  */
@@ -119,10 +120,14 @@ int main(int argc, char **argv) {
         return 3;
     }
 
-    outfd = open(outfile, O_WRONLY | O_CREAT, S_IRUSR);
-    if (outfd == -1) {
-        cerr << "ERROR: cannot open output file" << endl;
-        return 3;
+    if (string(outfile) == "-") {
+        outfd = fileno(stdout);
+    } else {
+        outfd = open(outfile, O_WRONLY | O_CREAT, S_IRUSR);
+        if (outfd == -1) {
+            cerr << "ERROR: cannot open output file" << endl;
+            return 3;
+        }
     }
 
     if (occ_open(devfile, OCC_INTERFACE_OPTICAL, &occ) != 0) {

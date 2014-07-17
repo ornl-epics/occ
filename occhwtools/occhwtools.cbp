@@ -6,8 +6,17 @@
 		<Option pch_mode="2" />
 		<Option compiler="gcc" />
 		<Build>
-			<Target title="Debug">
-				<Option output="bin/Debug/occhwtools" prefix_auto="1" extension_auto="1" />
+			<Target title="loopback">
+				<Option output="bin/Debug/occ_hwtools" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Debug/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-g" />
+				</Compiler>
+			</Target>
+			<Target title="rawio">
+				<Option output="bin/Debug/occ_rawio" prefix_auto="1" extension_auto="1" />
 				<Option object_output="obj/Debug/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
@@ -19,32 +28,48 @@
 					<Add library="occ" />
 					<Add library="pthread" />
 					<Add library="rt" />
-					<Add directory="../occlib" />
 				</Linker>
 			</Target>
-			<Target title="Release">
-				<Option output="bin/Release/occhwtools" prefix_auto="1" extension_auto="1" />
-				<Option object_output="obj/Release/" />
+			<Target title="dump">
+				<Option output="bin/Debug/occ_dump" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Debug/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
 				<Compiler>
-					<Add option="-O2" />
-					<Add directory="../occlib" />
+					<Add option="-g" />
 				</Compiler>
-				<Linker>
-					<Add option="-s" />
-					<Add library="occ" />
-					<Add library="pthread" />
-					<Add library="rt" />
-					<Add directory="../occlib" />
-				</Linker>
+			</Target>
+			<Target title="analyze">
+				<Option output="occhwtools" prefix_auto="1" extension_auto="1" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Option use_console_runner="0" />
+				<Option parameters="-i data/h104/verify_nexus/pp1.dump -o /dev/null" />
+				<Compiler>
+					<Add option="-pedantic" />
+					<Add option="-std=c++0x" />
+				</Compiler>
 			</Target>
 		</Build>
 		<Compiler>
 			<Add option="-Wall" />
+			<Add option="-g" />
 			<Add option="-fexceptions" />
+			<Add directory="../occlib" />
 		</Compiler>
-		<Unit filename="occ_loopback.cpp" />
+		<Linker>
+			<Add library="occ" />
+			<Add directory="../occlib" />
+		</Linker>
+		<Unit filename="occ_dump.cpp">
+			<Option target="dump" />
+		</Unit>
+		<Unit filename="occ_loopback.cpp">
+			<Option target="loopback" />
+		</Unit>
+		<Unit filename="occ_rawio.cpp">
+			<Option target="rawio" />
+		</Unit>
 		<Extensions>
 			<code_completion />
 			<envvars />

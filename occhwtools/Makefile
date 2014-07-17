@@ -1,4 +1,4 @@
-CPPFLAGS=-Wall -I../occlib/
+CPPFLAGS=-Wall -I../occlib/ -std=c++0x
 LDFLAGS=-L../occlib -locc -lpthread -lrt
 SRCS=occ_loopback.cpp occ_rawio.cpp occ_dump.cpp
 HDRS=
