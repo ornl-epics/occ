@@ -93,10 +93,10 @@ int main(int argc, char **argv) {
 
     while ((ret = fread(&header, sizeof(header), 1, infd)) > 0) {
         // Only valid for DATA type
-        uint32_t source = payload[0];
-        bool eop = (payload[1] >> 31);
-        uint16_t subpacket_cnt = (payload[1] >> 16) & 0x7FF;
-        uint16_t total_cnt = payload[1] & 0xFFFF;
+        uint32_t source;
+        bool eop;
+        uint16_t subpacket_cnt;
+        uint16_t total_cnt;
 
         if (header.length > sizeof(payload)) {
             fprintf(stderr, "ERROR: packet exceeds internal buffer (%u > %u)\n", header.length, BUFFER_SIZE);
@@ -107,6 +107,11 @@ int main(int argc, char **argv) {
         ret = fread(payload, header.length, 1, infd);
         if (ret == -1 && (uint32_t)ret != 1)
             break;
+
+        source = payload[0];
+        eop = (payload[1] >> 31);
+        subpacket_cnt = (payload[1] >> 16) & 0x7FF;
+        total_cnt = payload[1] & 0xFFFF;
 
         fprintf(outfd, "%u;%u.%09u;%u;", ++packet_id, header.time_sec, header.time_nsec, header.length);
         if (header.type == 0x00000000)      fprintf(outfd, "DATA;%u;%u;%u;%u\n", source, total_cnt, subpacket_cnt, eop);

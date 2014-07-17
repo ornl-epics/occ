@@ -1,5 +1,5 @@
 CPPFLAGS=-Wall -I../occlib/ -std=c++0x
-LDFLAGS=-L../occlib -locc
+LDFLAGS=
 SRCS=sms2csv.cpp occ2csv.cpp
 HDRS=
 BINS=$(SRCS:.cpp=)
