@@ -3,6 +3,10 @@
 
 #include "BaseSocketPlugin.h"
 
+#include <vector>
+
+#define ADARA_MAX_NUM_DSPS  10  //!< Maximum number of DSPs supported by a single AdaraPlugin instance
+
 /**
  * Plugin that forwards Neutron Event data to ADARA SMS over TCP/IP.
  *
@@ -24,12 +28,16 @@
  * AdaraPlugin provides following asyn parameters:
  * asyn param    | asyn param type | init val | mode | Description
  * ------------- | --------------- | -------- | ---- | -----------
+ * BadPulseDrops | asynParamInt32  | 0        | RO   | Num dropped packets associated to already completed pulse
+ * BadDspDrops   | asynParamInt32  | 0        | RO   | Num dropped packets from unexpected DSP
  */
 class AdaraPlugin : public BaseSocketPlugin {
     private:
         uint64_t m_nTransmitted;    //!< Number of packets sent to BASESOCKET
         uint64_t m_nProcessed;      //!< Number of processed packets
         uint64_t m_nReceived;       //!< Number of packets received from dispatcher
+        uint64_t m_nUnexpectedDspDrops;     //!< Number of packets dropped because originating from unexpected DSP
+        uint64_t m_nPacketsPrevPulse;       //!< Number of dropped packets associated to already complete pulse
         epicsTimeStamp m_lastSentTimestamp; //!< Timestamp of last packet sent to Adara
         epicsTimeStamp m_lastRtdlTimestamp; //!< Timestamp of last RTDL packet sent to Adara
 
@@ -46,10 +54,32 @@ class AdaraPlugin : public BaseSocketPlugin {
                 , pulseSeq(0)
                 , totalSeq(0)
             {
+                rtdl.timestamp_sec  = 0;
+                rtdl.timestamp_nsec = 0;
             }
         };
-        SourceSequence m_neutronSeq;    //!< Sequence for Neutron events stream
-        SourceSequence m_metadataSeq;   //!< Sequence for Metadata events stream
+
+        /**
+         * Structure for mapping DSP ids into SMS expected source ids
+         *
+         * We split neutron and metadata from a given DSP into two streams and
+         * tag each of them with source ID which is unique within one SMS
+         * connection.
+         *
+         * The expected number of DSPs is low, usually 1. std::vector is more
+         * efficient than std::map.
+         */
+        struct DspSource {
+            uint32_t dspId;
+            SourceSequence neutronSeq;
+            SourceSequence metadataSeq;
+            DspSource(uint32_t dspId_, uint32_t nSrcId, uint32_t mSrcId)
+                : dspId(dspId_)
+                , neutronSeq(nSrcId)
+                , metadataSeq(mSrcId)
+            {}
+        };
+        std::vector<DspSource> m_dspSources;
 
     public:
         /**
@@ -58,8 +88,9 @@ class AdaraPlugin : public BaseSocketPlugin {
 	     * @param[in] portName asyn port name.
 	     * @param[in] dispatcherPortName Name of the dispatcher asyn port to connect to.
 	     * @param[in] blocking Should processing of callbacks block execution of caller thread or not.
+	     * @param[in] numDsps Number of DSPs that will be sending data
          */
-        AdaraPlugin(const char *portName, const char *dispatcherPortName, int blocking, int neutronSource, int metaSource);
+        AdaraPlugin(const char *portName, const char *dispatcherPortName, int blocking, int numDsps);
 
         /**
          * Destructor
@@ -87,6 +118,21 @@ class AdaraPlugin : public BaseSocketPlugin {
          * Overloaded signal function invoked after new client has been connected.
          */
         void clientConnected();
+
+    private:
+        /**
+         * Find the SourceSequence structure for a given DSP id and data type.
+         *
+         * The map is only partially populated at construct time. If DSP is not
+         * found in the table and there's room, it will be added to the map.
+         */
+        SourceSequence* findSourceSequence(uint32_t dspId, bool isNeutron);
+
+    protected:
+        #define FIRST_ADARAPLUGIN_PARAM BadPulseDrops
+        int BadPulseDrops;
+        int BadDspDrops;
+        #define LAST_ADARAPLUGIN_PARAM BadDspDrops
 };
 
 #endif // ADARA_PLUGIN_H

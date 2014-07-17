@@ -33,7 +33,8 @@ CmdDispatcherConfigure("cmd", "$(PORT)")
 dbLoadRecords("../../db/BasePlugin.template","P=$(PREFIX),R=cmd:,PORT=cmd,ADDR=0,TIMEOUT=1")
 
 #CmdPluginConfigure("Test", "$(PORT)")
-AdaraPluginConfigure("Adara1", "$(PORT)", 1, 0, 4)
+AdaraPluginConfigure("Adara1", "$(PORT)", 1, 2)
+dbLoadRecords("../../db/AdaraPlugin.template","P=$(PREFIX),R=adara1:,PORT=Adara1,ADDR=0,TIMEOUT=1")
 dbLoadRecords("../../db/BaseSocketPlugin.template","P=$(PREFIX),R=adara1:,PORT=Adara1,ADDR=0,TIMEOUT=1")
 dbLoadRecords("../../db/BasePlugin.template","P=$(PREFIX),R=adara1:,PORT=Adara1,ADDR=0,TIMEOUT=1")
 
