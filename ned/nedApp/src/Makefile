@@ -61,6 +61,8 @@ ned_SRCS  += CmdDispatcher.cpp
 ned_SRCS  += BaseModulePlugin.cpp
 ned_SRCS  += DspPlugin.cpp
 ned_SRCS  += RocPlugin.cpp
+ned_SRCS  += RocPlugin_v51.cpp
+ned_SRCS  += RocPlugin_v52.cpp
 ned_SRCS  += FemPlugin.cpp
 ned_SRCS  += DiscoverPlugin.cpp
 ned_SRCS  += DumpPlugin.cpp
@@ -69,6 +71,8 @@ ned_SRCS  += RtdlPlugin.cpp
 
 ned_DOXS  += DspPlugin.dox
 ned_DOXS  += RocPlugin.dox
+ned_DOXS  += RocPlugin_v51.dox
+ned_DOXS  += RocPlugin_v52.dox
 ned_DOXS  += FemPlugin.dox
 
 #===========================

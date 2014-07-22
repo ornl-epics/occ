@@ -8,7 +8,7 @@
 #include <functional>
 #include <string>
 
-#define NUM_DSPPLUGIN_PARAMS    ((int)(&LAST_DSPPLUGIN_PARAM - &FIRST_DSPPLUGIN_PARAM + 1))
+#define NUM_DSPPLUGIN_PARAMS    0 // ((int)(&LAST_DSPPLUGIN_PARAM - &FIRST_DSPPLUGIN_PARAM + 1))
 #define HEX_BYTE_TO_DEC(a)      ((((a)&0xFF)/16)*10 + ((a)&0xFF)%16)
 
 EPICS_REGISTER_PLUGIN(DspPlugin, 4, "Port name", string, "Dispatcher port name", string, "Hardware ID", string, "Blocking", int);
@@ -47,20 +47,11 @@ DspPlugin::DspPlugin(const char *portName, const char *dispatcherPortName, const
     : BaseModulePlugin(portName, dispatcherPortName, hardwareId, false,
                        blocking, NUM_DSPPLUGIN_PARAMS + NUM_DSPPLUGIN_CONFIGPARAMS + NUM_DSPPLUGIN_CONFIGPARAMS)
 {
-
-    createParam("HwDate",       asynParamOctet, &HardwareDate);
-    createParam("HwVer",        asynParamInt32, &HardwareVer);
-    createParam("HwRev",        asynParamInt32, &HardwareRev);
-    createParam("FwDate",       asynParamOctet, &FirmwareDate);
-    createParam("FwVer",        asynParamInt32, &FirmwareVer);
-    createParam("FwRev",        asynParamInt32, &FirmwareRev);
-
     createConfigParams();
     createStatusParams();
 
     if (m_configParams.size() != NUM_DSPPLUGIN_CONFIGPARAMS) {
         LOG_ERROR("Number of config params mismatch, expected %d but got %lu", NUM_DSPPLUGIN_CONFIGPARAMS, m_configParams.size());
-        return;
     }
 
     callParamCallbacks();
@@ -76,9 +67,12 @@ bool DspPlugin::parseVersionRsp(const DasPacket *packet, BaseModulePlugin::Versi
     const RspReadVersion *response = reinterpret_cast<const RspReadVersion*>(packet->payload);
     version.hw_version  = response->hardware.version;
     version.hw_revision = response->hardware.revision;
+    version.hw_year     = HEX_BYTE_TO_DEC(response->hardware.year) + 2000;
+    version.hw_month    = HEX_BYTE_TO_DEC(response->hardware.month);
+    version.hw_day      = HEX_BYTE_TO_DEC(response->hardware.day);
     version.fw_version  = response->firmware.version;
     version.fw_revision = response->firmware.revision;
-    version.fw_year     = 2000 + HEX_BYTE_TO_DEC(response->firmware.year);
+    version.fw_year     = HEX_BYTE_TO_DEC(response->firmware.year) + 2000;
     version.fw_month    = HEX_BYTE_TO_DEC(response->firmware.month);
     version.fw_day      = HEX_BYTE_TO_DEC(response->firmware.day);
 
@@ -98,30 +92,32 @@ bool DspPlugin::rspReadVersion(const DasPacket *packet)
     if (!BaseModulePlugin::rspReadVersion(packet))
         return false;
 
-    const RspReadVersion *payload = reinterpret_cast<const RspReadVersion*>(packet->payload);
-
-    if (packet->getPayloadLength() != sizeof(RspReadVersion)) {
-        LOG_ERROR("Received unexpected READ_VERSION response for this DSP type; received %u, expected %lu", packet->payload_length, sizeof(RspReadVersion));
+    BaseModulePlugin::Version version;
+    if (!parseVersionRsp(packet, version)) {
+        LOG_WARN("Bad READ_VERSION response");
         return false;
     }
 
-    setIntegerParam(HardwareVer, payload->hardware.version);
-    setIntegerParam(HardwareRev, payload->hardware.revision);
-    snprintf(date, sizeof(date), "20%d/%d/%d", HEX_BYTE_TO_DEC(payload->hardware.year),
-                                               HEX_BYTE_TO_DEC(payload->hardware.month),
-                                               HEX_BYTE_TO_DEC(payload->hardware.day));
+    setIntegerParam(HardwareVer, version.hw_version);
+    setIntegerParam(HardwareRev, version.hw_revision);
+    snprintf(date, sizeof(date), "%04d/%02d/%02d", version.hw_year, version.hw_month, version.hw_day);
     setStringParam(HardwareDate, date);
-
-    setIntegerParam(FirmwareVer, payload->firmware.version);
-    setIntegerParam(FirmwareRev, payload->firmware.revision);
-    snprintf(date, sizeof(date), "20%d/%d/%d", HEX_BYTE_TO_DEC(payload->firmware.year),
-                                               HEX_BYTE_TO_DEC(payload->firmware.month),
-                                               HEX_BYTE_TO_DEC(payload->firmware.day));
-
+    setIntegerParam(FirmwareVer, version.fw_version);
+    setIntegerParam(FirmwareRev, version.fw_revision);
+    snprintf(date, sizeof(date), "%04d/%02d/%02d", version.fw_year, version.fw_month, version.fw_day);
     setStringParam(FirmwareDate, date);
 
     callParamCallbacks();
-    return true;
+
+    /*
+    if (version.hw_version == 5 && version.fw_version == 6) {
+        if (m_version == "v63" && version.fw_revision == 3)
+            return true;
+    }
+
+    LOG_WARN("Unsupported DSP version");
+    */
+    return false;
 }
 
 void DspPlugin::createConfigParams() {

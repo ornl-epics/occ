@@ -12,8 +12,9 @@ include $(TOP)/configure/CONFIG
 # databases, templates, substitutions like this
 DB += ned.template
 DB += BasePlugin.template
-DB += DiscoverPlugin.template
 DB += BaseSocketPlugin.template
+DB += BaseModulePlugin.template
+DB += DiscoverPlugin.template
 DB += DspPlugin.template
 DB += RocPlugin.template
 DB += FemPlugin.template

@@ -70,17 +70,6 @@ class DspPlugin : public BaseModulePlugin {
          * Create and register all status parameters to be exposed to EPICS.
          */
         void createStatusParams();
-
-    private: // asyn parameters
-        #define FIRST_DSPPLUGIN_PARAM Command
-        int HardwareVer;    //!< Module hardware version
-        int HardwareRev;    //!< Module hardware revision
-        int HardwareDate;   //!< Module hardware date
-        int FirmwareVer;    //!< Module firmware version
-        int FirmwareRev;    //!< Module firmware revision
-        int FirmwareDate;   //!< Module firmware date
-        #define LAST_DSPPLUGIN_PARAM FirmwareDate
-
 };
 
 #endif // DSP_PLUGIN_H

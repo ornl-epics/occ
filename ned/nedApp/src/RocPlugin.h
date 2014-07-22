@@ -65,32 +65,24 @@ class RocPlugin : public BaseModulePlugin {
         bool rspReadVersion(const DasPacket *packet);
 
         /**
-         * Handler for READ_VERSION response from ROC V5/5.x
-         *
-         * Populate hardware info parameters, like HwVer, HwRev, FwVer etc.
-         * @relates rspReadVersion
+         * Create and register all status ROC v5.2 parameters to be exposed to EPICS.
          */
-        bool rspReadVersion_V5_5x(const DasPacket *packet);
+        void createStatusParams_v51();
 
         /**
-         * Create and register all status ROC V5 parameters to be exposed to EPICS.
+         * Create and register all config ROC v5.2 parameters to be exposed to EPICS.
          */
-        void createStatusParams_V5_52();
+        void createConfigParams_v51();
 
         /**
-         * Create and register all config ROC V5 parameters to be exposed to EPICS.
+         * Create and register all status ROC v5.2 parameters to be exposed to EPICS.
          */
-        void createConfigParams_V5_52();
+        void createStatusParams_v52();
 
-    private: // asyn parameters
-        #define FIRST_ROCPLUGIN_PARAM HardwareVer
-        int HardwareVer;    //!< Module hardware version
-        int HardwareRev;    //!< Module hardware revision
-        int HardwareDate;   //!< Module hardware date
-        int FirmwareVer;    //!< Module firmware version
-        int FirmwareRev;    //!< Module firmware revision
-        #define LAST_ROCPLUGIN_PARAM FirmwareRev
-
+        /**
+         * Create and register all config ROC v5.2 parameters to be exposed to EPICS.
+         */
+        void createConfigParams_v52();
 };
 
 #endif // DSP_PLUGIN_H

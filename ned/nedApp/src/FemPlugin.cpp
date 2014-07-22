@@ -1,7 +1,7 @@
 #include "FemPlugin.h"
 #include "Log.h"
 
-#define NUM_FEMPLUGIN_PARAMS    ((int)(&LAST_FEMPLUGIN_PARAM - &FIRST_FEMPLUGIN_PARAM + 1))
+#define NUM_FEMPLUGIN_PARAMS    0 //((int)(&LAST_FEMPLUGIN_PARAM - &FIRST_FEMPLUGIN_PARAM + 1))
 #define HEX_BYTE_TO_DEC(a)      ((((a)&0xFF)/16)*10 + ((a)&0xFF)%16)
 
 EPICS_REGISTER_PLUGIN(FemPlugin, 5, "Port name", string, "Dispatcher port name", string, "Hardware ID", string, "Hw & SW version", string, "Blocking", int);
@@ -13,13 +13,6 @@ FemPlugin::FemPlugin(const char *portName, const char *dispatcherPortName, const
                        blocking, NUM_FEMPLUGIN_PARAMS + NUM_FEMPLUGIN_DYNPARAMS)
     , m_version(version)
 {
-    createParam("HwDate",       asynParamOctet, &HardwareDate);
-    createParam("HwVer",        asynParamInt32, &HardwareVer);
-    createParam("HwRev",        asynParamInt32, &HardwareRev);
-    createParam("FwDate",       asynParamOctet, &FirmwareDate);
-    createParam("FwVer",        asynParamInt32, &FirmwareVer);
-    createParam("FwRev",        asynParamInt32, &FirmwareRev);
-
     if (m_version == "10.0/5.0") {
         createStatusParams_V10();
         createConfigParams_V10();
