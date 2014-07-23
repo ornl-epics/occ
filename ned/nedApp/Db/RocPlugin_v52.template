@@ -3945,7 +3945,7 @@ record(longout, "$(P)$(R)FakeTrigDel")
 }
 record(longout, "$(P)$(R)MinAdcVal")
 {
-    field(DESC, "Fake trigger periods")
+    field(DESC, "Minimum ADC")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))MinAdcVal")
     field(SCAN, "I/O Intr")
@@ -3953,7 +3953,7 @@ record(longout, "$(P)$(R)MinAdcVal")
 }
 record(longout, "$(P)$(R)MaxAdcVal")
 {
-    field(DESC, "Fake trigger periods")
+    field(DESC, "Maximum ADC")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))MaxAdcVal")
     field(SCAN, "I/O Intr")
