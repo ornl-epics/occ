@@ -29,11 +29,14 @@ occ_DIR = $(OCCLIB_DIR)
 
 DBD += $(PROD_NAME).dbd
 $(PROD_NAME)_DBD += nedSupport.dbd
+$(PROD_NAME)_DBD += asSupport.dbd
 DBD += nedSupport.dbd
 
 PROD_LIBS += ned
 PROD_LIBS += asyn
 PROD_LIBS += occ
+PROD_LIBS += autosave
+PROD_LIBS += stream
 PROD_LIBS += $(EPICS_BASE_IOC_LIBS)
 
 PROD_SRCS  += ned_registerRecordDeviceDriver.cpp
@@ -46,34 +49,34 @@ SHARED_LIBRARIES = NO
 # Headers used by unit-tests
 INC += CircularBuffer.h
 
-ned_SRCS  += Timer.cpp
-ned_SRCS  += OccPortDriver.cpp
-ned_SRCS  += DmaCircularBuffer.cpp
-ned_SRCS  += CircularBuffer.cpp
-ned_SRCS  += DmaCopier.cpp
-ned_SRCS  += DasPacket.cpp
-ned_SRCS  += DasPacketList.cpp
-ned_SRCS  += BasePlugin.cpp
-ned_SRCS  += BaseSocketPlugin.cpp
-ned_SRCS  += ProxyPlugin.cpp
-ned_SRCS  += AdaraPlugin.cpp
-ned_SRCS  += CmdDispatcher.cpp
-ned_SRCS  += BaseModulePlugin.cpp
-ned_SRCS  += DspPlugin.cpp
-ned_SRCS  += RocPlugin.cpp
-ned_SRCS  += RocPlugin_v51.cpp
-ned_SRCS  += RocPlugin_v52.cpp
-ned_SRCS  += FemPlugin.cpp
-ned_SRCS  += DiscoverPlugin.cpp
-ned_SRCS  += DumpPlugin.cpp
-ned_SRCS  += StatPlugin.cpp
-ned_SRCS  += RtdlPlugin.cpp
+$(PROD_NAME)_SRCS  += Timer.cpp
+$(PROD_NAME)_SRCS  += OccPortDriver.cpp
+$(PROD_NAME)_SRCS  += DmaCircularBuffer.cpp
+$(PROD_NAME)_SRCS  += CircularBuffer.cpp
+$(PROD_NAME)_SRCS  += DmaCopier.cpp
+$(PROD_NAME)_SRCS  += DasPacket.cpp
+$(PROD_NAME)_SRCS  += DasPacketList.cpp
+$(PROD_NAME)_SRCS  += BasePlugin.cpp
+$(PROD_NAME)_SRCS  += BaseSocketPlugin.cpp
+$(PROD_NAME)_SRCS  += ProxyPlugin.cpp
+$(PROD_NAME)_SRCS  += AdaraPlugin.cpp
+$(PROD_NAME)_SRCS  += CmdDispatcher.cpp
+$(PROD_NAME)_SRCS  += BaseModulePlugin.cpp
+$(PROD_NAME)_SRCS  += DspPlugin.cpp
+$(PROD_NAME)_SRCS  += RocPlugin.cpp
+$(PROD_NAME)_SRCS  += RocPlugin_v51.cpp
+$(PROD_NAME)_SRCS  += RocPlugin_v52.cpp
+$(PROD_NAME)_SRCS  += FemPlugin.cpp
+$(PROD_NAME)_SRCS  += DiscoverPlugin.cpp
+$(PROD_NAME)_SRCS  += DumpPlugin.cpp
+$(PROD_NAME)_SRCS  += StatPlugin.cpp
+$(PROD_NAME)_SRCS  += RtdlPlugin.cpp
 
-ned_DOXS  += DspPlugin.dox
-ned_DOXS  += RocPlugin.dox
-ned_DOXS  += RocPlugin_v51.dox
-ned_DOXS  += RocPlugin_v52.dox
-ned_DOXS  += FemPlugin.dox
+$(PROD_NAME)_DOXS  += DspPlugin.dox
+$(PROD_NAME)_DOXS  += RocPlugin.dox
+$(PROD_NAME)_DOXS  += RocPlugin_v51.dox
+$(PROD_NAME)_DOXS  += RocPlugin_v52.dox
+$(PROD_NAME)_DOXS  += FemPlugin.dox
 
 #===========================
 
@@ -84,8 +87,8 @@ include $(TOP)/configure/RULES
 %.dox: %.cpp
 	./tools/export2doxy.pl -input_file=$^ > $@
 
-doc: Doxyfile $(ned_DOXS)
+doc: Doxyfile $($(PROD_NAME)_DOXS)
 	doxygen >/dev/null
 
 clean::
-	rm -f $(ned_DOXS)
+	rm -f $($(PROD_NAME)_DOXS)

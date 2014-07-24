@@ -9,9 +9,9 @@
 const float BaseModulePlugin::NO_RESPONSE_TIMEOUT = 2.0;
 
 BaseModulePlugin::BaseModulePlugin(const char *portName, const char *dispatcherPortName, const char *hardwareId,
-                                   bool behindDsp, int blocking, int numParams)
-    : BasePlugin(portName, dispatcherPortName, REASON_OCCDATA, blocking, NUM_BASEMODULEPLUGIN_PARAMS + numParams,
-                 1, asynOctetMask | asynInt32Mask | asynDrvUserMask, asynOctetMask | asynInt32Mask)
+                                   bool behindDsp, int blocking, int numParams, int interfaceMask, int interruptMask)
+    : BasePlugin(portName, dispatcherPortName, REASON_OCCDATA, blocking, NUM_BASEMODULEPLUGIN_PARAMS + numParams, 1,
+                 interfaceMask | defaultInterfaceMask, interruptMask | defaultInterruptMask)
     , m_hardwareId(parseHardwareId(hardwareId))
     , m_stateMachine(ST_NOT_INITIALIZED)
     , m_behindDsp(behindDsp)

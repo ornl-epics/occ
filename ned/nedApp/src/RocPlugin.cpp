@@ -1,7 +1,6 @@
 #include "RocPlugin.h"
 #include "Log.h"
 
-#define NUM_ROCPLUGIN_PARAMS    0 // ((int)(&LAST_ROCPLUGIN_PARAM - &FIRST_ROCPLUGIN_PARAM + 1))
 #define HEX_BYTE_TO_DEC(a)      ((((a)&0xFF)/16)*10 + ((a)&0xFF)%16)
 
 EPICS_REGISTER_PLUGIN(RocPlugin, 5, "Port name", string, "Dispatcher port name", string, "Hardware ID", string, "Hw & SW version", string, "Blocking", int);
@@ -34,8 +33,8 @@ struct RspReadVersion_v54 : public RspReadVersion_v5x {
 };
 
 RocPlugin::RocPlugin(const char *portName, const char *dispatcherPortName, const char *hardwareId, const char *version, int blocking)
-    : BaseModulePlugin(portName, dispatcherPortName, hardwareId, true,
-                       blocking, NUM_ROCPLUGIN_PARAMS + NUM_ROCPLUGIN_DYNPARAMS)
+    : BaseModulePlugin(portName, dispatcherPortName, hardwareId, true, blocking,
+                       NUM_ROCPLUGIN_DYNPARAMS, defaultInterfaceMask, defaultInterruptMask)
     , m_version(version)
 {
     if (m_version == "v51") {
@@ -52,6 +51,55 @@ RocPlugin::RocPlugin(const char *portName, const char *dispatcherPortName, const
 
     callParamCallbacks();
     setCallbacks(true);
+}
+
+bool RocPlugin::processResponse(const DasPacket *packet)
+{
+    DasPacket::CommandType command = packet->getResponseType();
+
+    switch (command) {
+    case DasPacket::CMD_HV_SEND:
+        rspHvCmd(packet);
+        return asynSuccess;
+    default:
+        return BaseModulePlugin::processResponse(packet);
+    }
+}
+
+asynStatus RocPlugin::writeOctet(asynUser *pasynUser, const char *value, size_t nChars, size_t *nActual)
+{
+    // Only serving StreamDevice - puts reason as -1
+    if (pasynUser->reason == -1) {
+        reqHvCmd(value, nChars);
+        m_lastHvRsp.clear();
+        *nActual = nChars;
+        return asynSuccess;
+    }
+
+    return BaseModulePlugin::writeOctet(pasynUser, value, nChars, nActual);
+}
+
+asynStatus RocPlugin::readOctet(asynUser *pasynUser, char *value, size_t nChars, size_t *nActual, int *eomReason)
+{
+    // Only serving StreamDevice - puts reason as -1
+    if (pasynUser->reason == -1) {
+        // StreamDevice may not request entire response at once.
+        // Thus we only copy what was requested and leave the rest for later.
+        // Easiest way to do char FIFO is with std::list
+
+        *nActual = m_lastHvRsp.size();
+        if (*nActual > nChars)
+            *nActual = nChars;
+        for (size_t i = 0; i < *nActual; i++) {
+            value[i] = m_lastHvRsp.front();
+            m_lastHvRsp.pop_front();
+        }
+        if (eomReason && m_lastHvRsp.size() == 0)
+            *eomReason = ASYN_EOM_END;
+
+        return asynSuccess;
+    }
+    return BaseModulePlugin::readOctet(pasynUser, value, nChars, nActual, eomReason);
 }
 
 bool RocPlugin::rspDiscover(const DasPacket *packet)
@@ -116,6 +164,37 @@ bool RocPlugin::parseVersionRsp(const DasPacket *packet, BaseModulePlugin::Versi
     version.fw_year     = HEX_BYTE_TO_DEC(response->year >> 8) * 100 + HEX_BYTE_TO_DEC(response->year);
     version.fw_month    = HEX_BYTE_TO_DEC(response->month);
     version.fw_day      = HEX_BYTE_TO_DEC(response->day);
+
+    return true;
+}
+
+void RocPlugin::reqHvCmd(const char *data, uint32_t length)
+{
+    uint32_t buffer[32];
+    uint32_t bufferLen = length / 2;
+    if (length % 2 != 0)
+        bufferLen++;
+
+    for (uint32_t i = 0; i < length; i++) {
+        if ((i % 2) == 0)
+            buffer[bufferLen - 1 - i/2] = 0;
+        buffer[bufferLen - 1 - i/2] |= data[i] << (16 - 16*(i%2));
+    }
+    sendToDispatcher(DasPacket::CMD_HV_SEND, buffer, bufferLen);
+}
+
+bool RocPlugin::rspHvCmd(const DasPacket *packet)
+{
+    const uint32_t *payload = packet->getPayload();
+
+    for (uint32_t i = 0; i < packet->getPayloadLength(); i++) {
+        for (int j = 0; j < 32; j+=8) {
+            char byte = (payload[i] << j) & 0xFF;
+            if (byte == 0x0)
+                break;
+            m_lastHvRsp.push_back(byte);
+        }
+    }
 
     return true;
 }

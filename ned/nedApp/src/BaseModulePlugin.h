@@ -86,9 +86,6 @@ class BaseModulePlugin : public BasePlugin {
             int initVal;            //!< Initial value after object is created or configuration reset is being requested
         };
 
-        /**
-         * Structure representing every module version information
-         */
         struct Version {
             uint8_t hw_version;
             uint8_t hw_revision;
@@ -116,6 +113,10 @@ class BaseModulePlugin : public BasePlugin {
         };
 
         static const float NO_RESPONSE_TIMEOUT;         //!< Number of seconds to wait for module response
+
+    public: // variables
+        static const int defaultInterfaceMask = BasePlugin::defaultInterfaceMask;
+        static const int defaultInterruptMask = BasePlugin::defaultInterruptMask;
 
     protected: // variables
         uint32_t m_hardwareId;                          //!< Hardware ID which this plugin is connected to
@@ -146,7 +147,10 @@ class BaseModulePlugin : public BasePlugin {
          * @param[in] blocking Flag whether the processing should be done in the context of caller thread or in background thread.
          * @param[in] numParams The number of parameters that the derived class supports.
          */
-        BaseModulePlugin(const char *portName, const char *dispatcherPortName, const char *hardwareId, bool behindDsp, int blocking=0, int numParams=0);
+        BaseModulePlugin(const char *portName, const char *dispatcherPortName, const char *hardwareId,
+                         bool behindDsp, int blocking=0, int numParams=0,
+                         int interfaceMask=BaseModulePlugin::defaultInterfaceMask,
+                         int interruptMask=BaseModulePlugin::defaultInterruptMask);
 
         /**
          * Destructor

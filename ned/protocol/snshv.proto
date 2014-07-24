@@ -1,0 +1,11 @@
+Terminator = CR;
+
+read_voltage {
+    out "?LV";
+    in "%05d";
+}
+
+write_voltage {
+    out "?LV00017";
+    in "%d";
+}

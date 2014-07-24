@@ -16,6 +16,10 @@
  * FwRev         | asynParamInt32  | 0        | RO   | Firmware revision
  */
 class RocPlugin : public BaseModulePlugin {
+    public: // variables
+        static const int defaultInterfaceMask = BaseModulePlugin::defaultInterfaceMask | asynOctetMask;
+        static const int defaultInterruptMask = BaseModulePlugin::defaultInterruptMask | asynOctetMask;
+
     private: // structures and definitions
         static const unsigned NUM_ROCPLUGIN_DYNPARAMS;      //!< Maximum number of asyn parameters, including the status and configuration parameters
         static const unsigned NUM_CHANNELS = 8;             //!< Number of channels connected to ROC
@@ -23,6 +27,7 @@ class RocPlugin : public BaseModulePlugin {
 
     private: // variables
         std::string m_version;              //!< Version string as passed to constructor
+        std::list<char> m_lastHvRsp;        //!< Last received RS232 response
 
     public: // functions
 
@@ -39,6 +44,21 @@ class RocPlugin : public BaseModulePlugin {
          * @param[in] blocking Flag whether the processing should be done in the context of caller thread or in background thread.
          */
         RocPlugin(const char *portName, const char *dispatcherPortName, const char *hardwareId, const char *version, int blocking=0);
+
+        /**
+         * Process RS232 packets only, let base implementation do the rest.
+         */
+        bool processResponse(const DasPacket *packet);
+
+        /**
+         * Send string/byte data to PVs
+         */
+        asynStatus readOctet(asynUser *pasynUser, char *value, size_t nChars, size_t *nActual, int *eomReason);
+
+        /**
+         * Receive string/byte data to PVs
+         */
+        asynStatus writeOctet(asynUser *pasynUser, const char *value, size_t nChars, size_t *nActual);
 
         /**
          * Try to parse the ROC version response packet an populate the structure.
@@ -63,6 +83,16 @@ class RocPlugin : public BaseModulePlugin {
          * @return true if packet was parsed and module version verified.
          */
         bool rspReadVersion(const DasPacket *packet);
+
+        /**
+         * Send command to HighVoltage module through RS232
+         */
+        void reqHvCmd(const char *data, uint32_t length);
+
+        /**
+         * Handler for RS232 response.
+         */
+        bool rspHvCmd(const DasPacket *packet);
 
         /**
          * Create and register all status ROC v5.2 parameters to be exposed to EPICS.

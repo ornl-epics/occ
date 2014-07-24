@@ -1,8 +1,11 @@
 #!../../bin/linux-x86_64/ned
 
-< ../../iocBoot/iocned/envPaths
+< envPaths
 
-epicsEnvSet IOCNAME bl99-iocned
+epicsEnvSet("IOCNAME", "bl99-iocned")
+
+# StreamDevice
+epicsEnvSet("STREAM_PROTOCOL_PATH", "../../protocol/")
 
 ## Register all support components
 dbLoadDatabase("../../dbd/ned.dbd",0,0)
@@ -12,7 +15,7 @@ ned_registerRecordDeviceDriver(pdbbase)
 epicsEnvSet SAVE_DIR /home/controls/var/$(IOCNAME)
 system("install -m 777 -d $(SAVE_DIR)")
 save_restoreSet_Debug(0)
-save_restoreSet_status_prefix("BL7:IOCNAME:")
+save_restoreSet_status_prefix("BL99:IOCNAME:")
 set_requestfile_path("$(SAVE_DIR)")
 set_savefile_path("$(SAVE_DIR)")
 save_restoreSet_NumSeqFiles(3)
@@ -23,7 +26,7 @@ set_pass1_restoreFile("$(IOCNAME).sav")
 
 ## Load record instances
 epicsEnvSet("PREFIX", "SNS:")
-epicsEnvSet("PORT",   "/dev/snsocb1")
+epicsEnvSet("PORT",   "/dev/snsocb0")
 #asynSetTraceIOMask("$(PORT)",0,255)
 dbLoadRecords("../../db/ned.template","P=$(PREFIX),R=ocb1:,PORT=$(PORT),ADDR=0,TIMEOUT=1")
 nedConfigure("$(PORT)", 0, 4000000)
@@ -51,7 +54,8 @@ DiscoverPluginConfigure("Disc", "$(PORT)")
 dbLoadRecords("../../db/DiscoverPlugin.template","P=$(PREFIX),R=disc:,PORT=Disc,ADDR=0,TIMEOUT=1")
 dbLoadRecords("../../db/BasePlugin.template","P=$(PREFIX),R=disc:,PORT=Disc,ADDR=0,TIMEOUT=1")
 
-RocPluginConfigure("roc1", "$(PORT)", "20.39.180.123", "v52", 0)
+RocPluginConfigure("roc1", "$(PORT)", "20.39.216.73", "v52", 0)
+dbLoadRecords("../../db/RocHv.template","P=$(PREFIX),R=roc1:,PORT=roc1,ADDR=0,TIMEOUT=1")
 dbLoadRecords("../../db/RocPlugin_v52.template","P=$(PREFIX),R=roc1:,PORT=roc1,ADDR=0,TIMEOUT=1")
 dbLoadRecords("../../db/BaseModulePlugin.template","P=$(PREFIX),R=roc1:,PORT=roc1,ADDR=0,TIMEOUT=1")
 
