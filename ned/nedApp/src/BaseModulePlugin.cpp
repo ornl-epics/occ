@@ -78,12 +78,12 @@ BaseModulePlugin::~BaseModulePlugin()
 
 asynStatus BaseModulePlugin::writeInt32(asynUser *pasynUser, epicsInt32 value)
 {
-    if (!m_stateMachine.checkTransition(SM_ACTION_CMD(value))) {
-        LOG_WARN("Command '%d' not allowed at this time", value);
-        return asynError;
-    }
-
     if (pasynUser->reason == Command) {
+        if (!m_stateMachine.checkTransition(SM_ACTION_CMD(value))) {
+            LOG_WARN("Command '%d' not allowed at this time", value);
+            return asynError;
+        }
+
         switch (value) {
         case DasPacket::CMD_DISCOVER:
             reqDiscover();
