@@ -204,8 +204,13 @@ const uint32_t *DasPacket::getPayload() const
 
 uint32_t DasPacket::getPayloadLength() const
 {
-    if (cmdinfo.is_command && cmdinfo.is_passthru)
-        return payload_length - 4;
-    else
+    if (cmdinfo.is_command && cmdinfo.is_passthru) {
+        if (cmdinfo.command == RSP_ACK || cmdinfo.command == RSP_NACK) {
+            return payload_length - 8;
+        } else {
+            return payload_length - 4;
+        }
+    } else {
         return payload_length;
+    }
 }
