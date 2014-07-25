@@ -1,0 +1,275 @@
+#
+# This is for the full implementation of the embedded HV interface.  This
+# includes using the hardware unit conversions and slew rate limits.  
+#
+
+record(ai, "$(P)$(R)HVRampRate") {
+   field(DTYP, "stream")
+   field(DESC, "Readback ramp rate")
+   field(INP, "@ROCHV.proto getNum(RR) $(PORT) $(ADDR)")
+   field(HOPR, "255")
+   field(LOPR, "0")
+   field(PINI, "YES")
+   field(EGU, "ms/step")
+} 
+
+#
+# I suspect that the ramp rate is only effective if you use the requested HV
+# control, rather than the raw DAC control. milliseconds/step.
+#
+record(ao, "$(P)$(R)HVRampRateSet") {
+   field(DTYP, "stream")
+   field(DESC, "Set ramp rate")
+   field(OUT, "@ROCHV.proto setNum(RR) $(PORT) $(ADDR)")
+   field(EGU, "ms/step")
+   field(HOPR, "255")
+   field(DRVH, "255")
+   field(LOPR, "0")
+   field(DRVL, "0")
+   field(FLNK, "$(P)$(R)HVRampRate")
+}
+
+#
+# This is the raw DAC control, ie, what an ao record would usually send rval to.
+# In this case it may not be used at all, or only for a crash off.  Therefore
+# this ao record does not convert.
+#
+record(ao, "$(P)$(R)HVDACSet") {
+   field(DTYP, "stream")
+   field(DESC, "Set DAC")
+   field(OUT, "@ROCHV.proto setNum(&) $(PORT) $(ADDR)")
+   field(EGU, "Counts")
+   field(HOPR, "4096")
+   field(DRVH, "4096")
+   field(LOPR, "0")
+   field(DRVL, "0")
+}
+  
+#
+# This is the raw voltage ADC reading. Normally an ai record would read this
+# and convert to engineering units, but in this case there is another readout
+# for the converted value, so no conversion is done here. do we need to scan
+# it at all?
+#
+record(ai, "$(P)$(R)HVReadADC") {
+   field(DTYP, "stream")
+   field(DESC, "Read raw voltage")
+   field(SCAN, "1 second")
+   field(INP, "@ROCHV.proto getNum(RV) $(PORT) $(ADDR)")
+   field(LOPR, 0)
+   field(HOPR, 4096)
+   field(EGU, "Counts")
+} 
+
+#
+# Requested output in volts
+#
+record(ao, "$(P)$(R)HVVoltSet") {
+   field(DTYP, "stream")
+   field(DESC, "Requested voltage setpoint")
+   field(OUT, "@ROCHV.proto setNum(#) $(PORT) $(ADDR)")
+   field(DRVL, "0")
+   field(LOPR, "0")
+   field(DRVH, "2200")
+   field(HOPR, "2200")
+   field(EGU, "V")
+}
+  
+#
+# Voltage Readback in volts. 
+#
+record(ai, "$(P)$(R)HVVolts") {
+   field(DTYP, "stream")
+   field(DESC, "Readback in volts")
+   field(inp, "@ROCHV.proto getNum(LV) $(PORT) $(ADDR)")
+   field(LOPR, "-100")
+   field(HOPR, "2300")
+   field(EGU, "V")
+   field(SCAN, "1 second")
+}
+
+
+#
+# Converted current readback is in one document but not in legacy code.
+# Also there are conversion parameters in the document, but not the code.
+#
+#record(ai, "$(P)$(R)HVCurrent") {
+#   field(DTYP, "stream")
+#   field(DESC, "converted current Readback")
+#   field(inp, "@ROCHV.proto getNum(LC) $(PORT) $(ADDR))
+#   field(EGU, "ma")
+#   field(SCAN, "1 second")
+#}
+
+#
+# Raw Current readback
+#
+record(ai, "$(P)$(R)HVRawCurrent") {
+   field(DTYP, "stream")
+   field(DESC, "raw current Readback")
+   field(inp, "@ROCHV.proto getNum(RC) $(PORT) $(ADDR)")
+   field(EGU, "counts")
+   field(SCAN, "1 second")
+}
+
+#
+# Max Voltage readback. Presumeably just reflects setpoint 
+#
+record(ai, "$(P)$(R)HVMaxV") {
+   field(DTYP, "stream")
+   field(DESC, "maximum voltage Readback")
+   field(inp, "@ROCHV.proto getNum(MV) $(PORT) $(ADDR)")
+   field(PINI, "YES")
+   field(EGU, "V")
+}
+
+#
+# set max voltage.  Presumeably this is in volts, not raw DAC counts...
+#
+record(ao, "$(P)$(R)HVMaxVSet") {
+   field(DTYP, "stream")
+   field(DESC, "Requested voltage limit")
+   field(OUT, "@ROCHV.proto setNum(M) $(PORT) $(ADDR)")
+   field(DRVL, "0")
+   field(LOPR, "0")
+   field(DRVH, "2200")
+   field(HOPR, "2200")
+   field(EGU, "V")
+   field(FLNK, "$(P)$(R)HVMaxV"
+}
+
+#
+# Voltage set (DAC) conversion parameters readback
+#
+record(waveform, "$(P)$(R)HVVSetConv") {
+   field(DTYP, "stream")
+   field(INP, "@ROCHV.proto getCAL(CD) $(PORT) $(ADDR)")
+   field(FTVL, "ULONG")
+   field(PINI, "YES")
+   field(NELM, "3")
+}
+#
+# Voltage set (DAC) conversion parameters set
+#
+record(waveform, "$(P)$(R)HVVSetConvSet") {
+   field(DTYP, "stream")
+   field(INP, "@ROCHV.proto setCAL(SD) $(PORT) $(ADDR)")
+   field(FTVL, "ULONG")
+   field(NELM, "3")
+   field(FLNK, "$(P)$(R)HVVSetConv")
+}
+#
+# Voltage readback (ADC) conversion parameters readback
+#
+record(waveform, "$(P)$(R)HVVConv") {
+   field(DTYP, "stream")
+   field(INP, "@ROCHV.proto getCAL(CV) $(PORT) $(ADDR)")
+   field(FTVL, "ULONG")
+   field(PINI, "YES")
+   field(NELM, "3")
+}
+#
+# Voltage readback (ADC) conversion parameters set
+#
+record(waveform, "$(P)$(R)HVVConvSet") {
+   field(DTYP, "stream")
+   field(INP, "@ROCHV.proto setCAL(SV) $(PORT) $(ADDR)")
+   field(FTVL, "ULONG")
+   field(NELM, "3")
+   field(FLNK, "$(P)$(R)HVVConv")
+}
+
+#
+# here we have a nice switch but the question is how to init it
+#
+record(bo, "$(P)$(R)HVEnable") {
+   field(DESC, "enable/disable switch for GUI")
+   field(DTYP, "Soft Channel")
+   field(OUT, "$(P)$(R)HVEnableHW")
+   field(ONAM, "ON")
+   field(ZNAM, "OFF")
+}
+
+#
+# ONAM and ZNAM look silly because they contain the actual commands to send
+# And how do you know what to set it to at the startup?
+#
+record(bo, "$(P)$(R)HVEnableHW") {
+   field(DESC, "hardware enable/disable")
+   field(DTYP, "stream")
+   field(OUT, "@ROCHV.proto sendBoCmd() $(PORT) $(ADDR)")
+   field(ONAM, "8")
+   field(ZNAM, "*")
+}
+
+   field(
+#
+# Do the following controls by just sending "PROC"
+#
+record(bo, "$(P)$(R)HVDisableB") {
+   field(DTYP, "stream")
+   field(OUT, "@ROCHV.proto sendCmd(*) $(PORT) $(ADDR)")
+   field(DOL, "1")
+   field(ONAM, "Disable")
+   field(ZNAM, "Disable")
+}
+record(bo, "$(P)$(R)HVEnableB") {
+   field(DTYP, "stream")
+   field(OUT, "@ROCHV.proto sendCmd(8) $(PORT) $(ADDR)")
+   field(DOL, "1")
+   field(ONAM, "Enable")
+   field(ZNAM, "Enable")
+}
+record(bo, "$(P)$(R)HVClearErr") {
+   field(DESC, "Clear error code")
+   field(DTYP, "stream")
+   field(OUT, "@ROCHV.proto sendCmd(X) $(PORT) $(ADDR)")
+   field(DOL, "1")
+   field(ONAM, "Clear")
+   field(ZNAM, "Clear")
+}
+record(bo, "$(P)$(R)HVResetDAC") {
+   field(DESC, "Yes reset the DAC")
+   field(DTYP, "stream")
+   field(OUT, "@ROCHV.proto sendCmd(X) $(PORT) $(ADDR)")
+   field(DOL, "1")
+   field(ONAM, "Reset")
+   field(ZNAM, "Reset")
+}
+
+#
+# Get error code.  
+#
+record(waveform, "$(P)$(R)HVErrorInp") {
+   field(DESC, "Input error byte"
+   field(DTYP, "stream")
+   field(OUT, "@ROCHV.proto recError() $(PORT) $(ADDR)")
+   field(FTVL, "UCHAR")
+   field(NELM, "2")
+   field(SCAN, "I/O Intr")
+   field(FLNK, "$(P)$(R)HVErrorBits")
+}
+
+#
+# convert to bits. Point byte widget to VAL or RVAL
+#
+record(mbbiDirect, "$(P)$(R)HVErrorBits") {
+   field(DESC, "Provide Error Bits")
+   field(DTYP, "Raw Soft Channel")
+   field(INP, "$(P)$(R)HVErrorInp NPP MS")
+   field(FLNK, "$(P)$(R)HVClearErr")
+}
+
+#
+# This is for debugging
+#
+record(asyn,"$(P)$(R)HVAsynRec")
+{
+    field(DTYP,"asynRecordDevice")
+    field(PORT,"$(PORT)")
+    field(ADDR,"$(ADDR)")
+    field(OMAX,"30")
+    field(IMAX,"30")
+}
+
+

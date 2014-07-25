@@ -1,0 +1,128 @@
+##################################################
+#
+# Protocol File
+#
+# Protocol file for ROC HV
+# SNS, July 2014
+#
+##################################################
+
+
+##################################################
+# General Settings
+##################################################
+
+Terminator = CR;
+ReplyTimeout = 1000;
+locktimeout = 5000;
+readtimeout  = 1000;
+extrainput   = Ignore;
+
+#
+# exception handlers.  We request error code.  This will process the
+# record that reads the code, which will then clear it.
+#
+@mismatch { out "?EE"; in "?EE\?"; )
+@readtimeout { out "?EE"; in "?EE\?"; )
+@writetimeout { out "?EE"; in "?EE\?"; )
+@replytimeout { out "?EE"; in "?EE\?"; )
+
+#
+# Read ramp rate (RR), read raw voltage (RV), read raw current (RC), 
+# read calibrated voltage (LV), read calibrated current (LC).  ai records
+#
+# Code seems to have read max hv (MV)
+#
+getNum {
+   out "?\$1"
+   in "?\$1%05d";
+}
+
+#
+# Set voltage (#), set DAC (&), set ramp rate (SR) with ao records
+# 
+# code seems to have write max hv (M)
+#
+setNum {
+   out "*\$1%05d";
+   in "*\$1%s";
+}
+
+#
+#	Calibration values: output = request *(X/Y) + Z
+#
+# Read voltage (CV), current (CC), DAC (CD) calibration numerator(X) into
+# an ai record. This one must be caused to process somehow
+#
+getCALX {
+   out "?\$1";
+   in "?\$1%05d%*05d%*05d";
+}
+
+# Similarly to read calibration denominator. this record interrupt IO scanned.
+getCALY {
+   in "?\$1%*05d%05d%*05d";
+}
+  
+# Similarly to read calibration offset. this record interrupt IO scanned.
+getCALZ {
+   in "?\$1%*05d%*05d%05d";
+}
+
+# Read all three into an waveform record of ints
+getCAL {
+   out "?\$1";
+   "separator = ""; in "?\$1%05d";
+}
+
+#
+# set calibration values
+#
+
+# send all three from a waveform record of ints
+setCAL {
+   "separator = ""; out "*\$1%05d";
+   in "*\$1%s";
+}
+# send all three from a calcout record where they are in A, B and C
+setCALC {
+   out "*\$1%(A)05d%(B)05d%(C)05d";
+   in "*\$1%s";
+}
+   
+#
+# use this to send a variety of commands.  Enable HV (8), disable HV (*),
+# Clear error code (X), send DAC Reset (Y)
+# Use with bo records
+#
+sendCmd {
+   out "*\$1";
+   in "*\$1";
+}
+
+#
+# Use with a bo to send ONAM or ZNAM... eg, 8 or *
+#
+sendBoCmd {
+   out "*%s";
+   in "*%s";
+}
+
+#
+# Read Error Code.  This returns a byte. bit 0 is never set, so it won't ever
+# be the terminator.  The ? flag says will return 0 if its a null character
+# It may not be a printable character but it should come in.
+#
+
+# Call this one from an error handler.  It returns nothing, just takes input.
+getError {
+   out "?EE";
+   in "?EE\?";
+}
+
+# use this one with interrupt I/O
+recError {
+   in "?EE%?1c";
+}
+
+
