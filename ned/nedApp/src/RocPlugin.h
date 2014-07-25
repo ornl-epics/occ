@@ -27,7 +27,7 @@ class RocPlugin : public BaseModulePlugin {
 
     private: // variables
         std::string m_version;              //!< Version string as passed to constructor
-        std::list<char> m_lastHvRsp;        //!< Last received RS232 response
+        std::list<char> m_hvRecvBuffer;     //!< Data received from HV module but not yet processed
 
     public: // functions
 
@@ -85,12 +85,27 @@ class RocPlugin : public BaseModulePlugin {
         bool rspReadVersion(const DasPacket *packet);
 
         /**
-         * Send command to HighVoltage module through RS232
+         * Pass user command to HighVoltage module through RS232.
+         *
+         * HV command string is packed into OCC packet and sent to the
+         * HV module. HV module does not have its own hardware id,
+         * instead the ROC board is used as a router.
+         *
+         * @param[in] data String representing HV command, must include '\r'
+         * @param[in] length Length of the string
          */
         void reqHvCmd(const char *data, uint32_t length);
 
         /**
-         * Handler for RS232 response.
+         * Receive and join responses from HV module.
+         *
+         * ROC will send one OCC packet for each character from HV module
+         * response. This function concatenates characters back together
+         * and keep them in internal buffer until the user doesn't read
+         * them.
+         *
+         * @param[in] packet with HV module response
+         * @return true if packet was processed
          */
         bool rspHvCmd(const DasPacket *packet);
 

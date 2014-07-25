@@ -57,8 +57,13 @@ bool RocPlugin::processResponse(const DasPacket *packet)
 {
     DasPacket::CommandType command = packet->getResponseType();
 
+    // Once HV command is initiated with CMD_HV_SEND, ROC board first ACKs the CMD_HV_SEND.
+    // Train of CMD_HV_RECV packets follow, one character from response per packet.
+    // Number ov CMD_HV_RECV packets is dynamic, depending on the response length.
     switch (command) {
     case DasPacket::CMD_HV_SEND:
+        return asynSuccess;
+    case DasPacket::CMD_HV_RECV:
         rspHvCmd(packet);
         return asynSuccess;
     default:
@@ -70,8 +75,8 @@ asynStatus RocPlugin::writeOctet(asynUser *pasynUser, const char *value, size_t 
 {
     // Only serving StreamDevice - puts reason as -1
     if (pasynUser->reason == -1) {
+        // StreamDevice is sending entire string => no need to buffer the request.
         reqHvCmd(value, nChars);
-        m_lastHvRsp.clear();
         *nActual = nChars;
         return asynSuccess;
     }
@@ -87,15 +92,21 @@ asynStatus RocPlugin::readOctet(asynUser *pasynUser, char *value, size_t nChars,
         // Thus we only copy what was requested and leave the rest for later.
         // Easiest way to do char FIFO is with std::list
 
-        *nActual = m_lastHvRsp.size();
-        if (*nActual > nChars)
-            *nActual = nChars;
-        for (size_t i = 0; i < *nActual; i++) {
-            value[i] = m_lastHvRsp.front();
-            m_lastHvRsp.pop_front();
+        bool endOfMessage = false;
+        int len = std::min(m_hvRecvBuffer.size(), nChars);
+
+        *nActual = 0;
+        for (int i = 0; i < len; i++) {
+            value[i] = m_hvRecvBuffer.front();
+            m_hvRecvBuffer.pop_front();
+            (*nActual)++;
+            if (value[i] == '\r') {
+                endOfMessage = true;
+                break;
+            }
         }
-        if (eomReason && m_lastHvRsp.size() == 0)
-            *eomReason = ASYN_EOM_END;
+        if (eomReason && endOfMessage)
+            *eomReason = ASYN_EOM_EOS;
 
         return asynSuccess;
     }
@@ -170,15 +181,14 @@ bool RocPlugin::parseVersionRsp(const DasPacket *packet, BaseModulePlugin::Versi
 
 void RocPlugin::reqHvCmd(const char *data, uint32_t length)
 {
-    uint32_t buffer[32];
+    uint32_t buffer[32] = { 0 }; // Initialize all to 0
     uint32_t bufferLen = length / 2;
     if (length % 2 != 0)
         bufferLen++;
 
+    // Every character in protocol needs to be prefixed with a zero byte when sent over OCC
     for (uint32_t i = 0; i < length; i++) {
-        if ((i % 2) == 0)
-            buffer[bufferLen - 1 - i/2] = 0;
-        buffer[bufferLen - 1 - i/2] |= data[i] << (16 - 16*(i%2));
+        buffer[i/2] |= data[i] << (16*(i%2));
     }
     sendToDispatcher(DasPacket::CMD_HV_SEND, buffer, bufferLen);
 }
@@ -187,13 +197,10 @@ bool RocPlugin::rspHvCmd(const DasPacket *packet)
 {
     const uint32_t *payload = packet->getPayload();
 
-    for (uint32_t i = 0; i < packet->getPayloadLength(); i++) {
-        for (int j = 0; j < 32; j+=8) {
-            char byte = (payload[i] << j) & 0xFF;
-            if (byte == 0x0)
-                break;
-            m_lastHvRsp.push_back(byte);
-        }
+    // According to dcomserver, one character per OCC packet is expected.
+    // But accept more if present.
+    for (uint32_t i = 0; i < (packet->getPayloadLength()/4); i++) {
+        m_hvRecvBuffer.push_back(payload[i] & 0xFF);
     }
 
     return true;

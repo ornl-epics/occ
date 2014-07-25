@@ -1,11 +1,13 @@
 Terminator = CR;
+ReplyTimeout = 5;
+ReadTimeout  = 5;
 
 read_voltage {
     out "?LV";
-    in "%05d";
+    in "?LV%05d";
 }
 
 write_voltage {
-    out "?LV00017";
-    in "%d";
+    out "*#%05d";
+    in "*#%05d";
 }
