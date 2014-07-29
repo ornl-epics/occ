@@ -88,27 +88,23 @@ asynStatus RocPlugin::readOctet(asynUser *pasynUser, char *value, size_t nChars,
 {
     // Only serving StreamDevice - puts reason as -1
     if (pasynUser->reason == -1) {
-        // StreamDevice may not request entire response at once.
-        // Thus we only copy what was requested and leave the rest for later.
-        // Easiest way to do char FIFO is with std::list
+        asynStatus status = asynSuccess;
 
-        bool endOfMessage = false;
-        int len = std::min(m_hvRecvBuffer.size(), nChars);
+        // Temporarily unlock the device or processResponse() will not run
+        this->unlock();
 
-        *nActual = 0;
-        for (int i = 0; i < len; i++) {
-            value[i] = m_hvRecvBuffer.front();
-            m_hvRecvBuffer.pop_front();
-            (*nActual)++;
-            if (value[i] == '\r') {
-                endOfMessage = true;
-                break;
-            }
+        *nActual = getHvResponse(value, nChars, pasynUser->timeout);
+
+        if (*nActual == 0) {
+            status = asynTimeout;
+        } else if (eomReason) {
+            if (value[*nActual - 1] == '\r') *eomReason |= ASYN_EOM_EOS;
+            else if (*nActual == nChars)     *eomReason |= ASYN_EOM_CNT;
         }
-        if (eomReason && endOfMessage)
-            *eomReason = ASYN_EOM_EOS;
 
-        return asynSuccess;
+        this->lock();
+
+        return status;
     }
     return BaseModulePlugin::readOctet(pasynUser, value, nChars, nActual, eomReason);
 }
@@ -199,11 +195,43 @@ bool RocPlugin::rspHvCmd(const DasPacket *packet)
 
     // According to dcomserver, one character per OCC packet is expected.
     // But accept more if present.
+    m_hvRecvMutex.lock();
     for (uint32_t i = 0; i < (packet->getPayloadLength()/4); i++) {
         m_hvRecvBuffer.push_back(payload[i] & 0xFF);
     }
+    m_hvRecvMutex.unlock();
 
     return true;
+}
+
+size_t RocPlugin::getHvResponse(char *response, size_t size, double timeout)
+{
+    size_t len = 0;
+    epicsTimeStamp expire, now;
+    epicsTimeGetCurrent(&expire);
+    epicsTimeAddSeconds(&expire, timeout);
+
+    do {
+        m_hvRecvMutex.lock();
+        for (size_t i = 0; i < std::min(size, m_hvRecvBuffer.size()); i++) {
+            char byte = m_hvRecvBuffer.front();
+            m_hvRecvBuffer.pop_front();
+            *(response++) = byte;
+            len++;
+            if (byte == '\r') {
+                if (i < size)
+                    *response = '\0';
+                break;
+            }
+        }
+        m_hvRecvMutex.unlock();
+
+        if (len > 0)
+            break;
+
+        epicsTimeGetCurrent(&now);
+    } while (epicsTimeLessThan(&now, &expire) != 0);
+    return len;
 }
 
 // createStatusParams_v* and createConfigParams_v* functions are implemented in custom files for two
