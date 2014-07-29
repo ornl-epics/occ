@@ -21,5 +21,7 @@
 
 EPICS_BASE=/home/controls/epics/R3.14.12.2/base
 SUPPORT=/home/controls/epics/R3.14.12.2/support
-ASYN=$(SUPPORT)/asyn
-AUTOSAVE=$(SUPPORT)/autosave
+
+ASYN=           $(SUPPORT)/asyn
+AUTOSAVE=       $(SUPPORT)/autosave
+STREAMDEVICE=   $(SUPPORT)/StreamDevice

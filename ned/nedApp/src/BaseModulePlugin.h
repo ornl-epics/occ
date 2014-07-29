@@ -89,6 +89,9 @@ class BaseModulePlugin : public BasePlugin {
         struct Version {
             uint8_t hw_version;
             uint8_t hw_revision;
+            uint16_t hw_year;
+            uint8_t hw_month;
+            uint8_t hw_day;
             uint8_t fw_version;
             uint8_t fw_revision;
             uint16_t fw_year;
@@ -98,6 +101,9 @@ class BaseModulePlugin : public BasePlugin {
             Version()
                 : hw_version(0)
                 , hw_revision(0)
+                , hw_year(0)
+                , hw_month(0)
+                , hw_day(0)
                 , fw_version(0)
                 , fw_revision(0)
                 , fw_year(0)
@@ -107,6 +113,10 @@ class BaseModulePlugin : public BasePlugin {
         };
 
         static const float NO_RESPONSE_TIMEOUT;         //!< Number of seconds to wait for module response
+
+    public: // variables
+        static const int defaultInterfaceMask = BasePlugin::defaultInterfaceMask;
+        static const int defaultInterruptMask = BasePlugin::defaultInterruptMask;
 
     protected: // variables
         uint32_t m_hardwareId;                          //!< Hardware ID which this plugin is connected to
@@ -137,7 +147,10 @@ class BaseModulePlugin : public BasePlugin {
          * @param[in] blocking Flag whether the processing should be done in the context of caller thread or in background thread.
          * @param[in] numParams The number of parameters that the derived class supports.
          */
-        BaseModulePlugin(const char *portName, const char *dispatcherPortName, const char *hardwareId, bool behindDsp, int blocking=0, int numParams=0);
+        BaseModulePlugin(const char *portName, const char *dispatcherPortName, const char *hardwareId,
+                         bool behindDsp, int blocking=0, int numParams=0,
+                         int interfaceMask=BaseModulePlugin::defaultInterfaceMask,
+                         int interruptMask=BaseModulePlugin::defaultInterruptMask);
 
         /**
          * Destructor
@@ -394,6 +407,11 @@ class BaseModulePlugin : public BasePlugin {
         static uint32_t parseHardwareId(const std::string &text);
 
         /**
+         * Converter integer hardware ID into IP address.
+         */
+        void formatHardwareId(uint32_t hardwareId, std::string &ip);
+
+        /**
          * A no-response cleanup function.
          *
          * The timeout callback gets called always, even when the response
@@ -442,6 +460,12 @@ class BaseModulePlugin : public BasePlugin {
         #define FIRST_BASEMODULEPLUGIN_PARAM Command
         int Command;        //!< Command to plugin, like initialize the module, read configuration, verify module version etc.
         int Status;         //!< Status of the DSP plugin
+        int HardwareVer;    //!< Module hardware version
+        int HardwareRev;    //!< Module hardware revision
+        int HardwareDate;   //!< Module hardware date
+        int FirmwareVer;    //!< Module firmware version
+        int FirmwareRev;    //!< Module firmware revision
+        int FirmwareDate;   //!< Module firmware date
     private:
         int HardwareId;     //!< Hardare ID that this object is controlling
         #define LAST_BASEMODULEPLUGIN_PARAM HardwareId

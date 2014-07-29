@@ -1,0 +1,24 @@
+record(longin, "$(P)$(R)BadPulseDrops")
+{
+   field(DESC,  "Prev pulse dropped packets")
+   field(DTYP,  "asynInt32")
+   field(INP,   "@asyn($(PORT),$(ADDR),$(TIMEOUT))BadPulseDrops")
+   field(SCAN,  "I/O Intr")
+   field(VAL,   "0")
+   field(HIGH,  "1")
+   field(LOW,   "0")
+   field(HSV,   "MAJOR")
+   field(LSV,   "NO_ALARM")
+}
+record(longin, "$(P)$(R)BadDspDrops")
+{
+   field(DESC,  "Unexpected DSP drop packets")
+   field(DTYP,  "asynInt32")
+   field(INP,   "@asyn($(PORT),$(ADDR),$(TIMEOUT))BadDspDrops")
+   field(SCAN,  "I/O Intr")
+   field(VAL,   "0")
+   field(HIGH,  "1")
+   field(LOW,   "0")
+   field(HSV,   "MAJOR")
+   field(LSV,   "NO_ALARM")
+}

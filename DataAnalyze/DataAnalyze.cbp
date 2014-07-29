@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="DataAnalyze" />
+		<Option pch_mode="2" />
+		<Option default_target="pp2sms" />
+		<Option compiler="gcc" />
+		<Build>
+			<Target title="occ2csv">
+				<Option output="occ2csv" prefix_auto="1" extension_auto="1" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-g" />
+				</Compiler>
+			</Target>
+			<Target title="sms2csv">
+				<Option output="sms2csv" prefix_auto="1" extension_auto="1" />
+				<Option type="0" />
+				<Option compiler="gcc" />
+				<Option parameters="-i /home/kvx/work/git/detectors/occhwtools/data/h104/adaratest_pp2_to_sms.bin -o /dev/null" />
+				<Compiler>
+					<Add option="-pg" />
+					<Add option="-g" />
+				</Compiler>
+				<Linker>
+					<Add option="-pg" />
+				</Linker>
+			</Target>
+		</Build>
+		<Compiler>
+			<Add option="-pedantic" />
+			<Add option="-std=c++0x" />
+			<Add option="-Wall" />
+			<Add option="-g" />
+			<Add option="-fexceptions" />
+			<Add directory="../occlib" />
+		</Compiler>
+		<Linker>
+			<Add library="occ" />
+			<Add directory="../occlib" />
+		</Linker>
+		<Unit filename="occ2csv.cpp">
+			<Option target="occ2csv" />
+		</Unit>
+		<Unit filename="sms2csv.cpp">
+			<Option target="sms2csv" />
+		</Unit>
+		<Extensions>
+			<code_completion />
+			<envvars />
+			<debugger />
+			<DoxyBlocks>
+				<comment_style block="0" line="0" />
+				<doxyfile_project />
+				<doxyfile_build />
+				<doxyfile_warnings />
+				<doxyfile_output />
+				<doxyfile_dot />
+				<general />
+			</DoxyBlocks>
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>

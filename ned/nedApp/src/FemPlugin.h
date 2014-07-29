@@ -72,16 +72,6 @@ class FemPlugin : public BaseModulePlugin {
          * Create and register all config FEM V10 parameters to be exposed to EPICS.
          */
         void createConfigParams_V10();
-
-    private: // asyn parameters
-        #define FIRST_FEMPLUGIN_PARAM HardwareVer
-        int HardwareVer;    //!< Module hardware version
-        int HardwareRev;    //!< Module hardware revision
-        int HardwareDate;   //!< Module hardware date
-        int FirmwareVer;    //!< Module firmware version
-        int FirmwareRev;    //!< Module firmware revision
-        int FirmwareDate;   //!< Module firmware date
-        #define LAST_FEMPLUGIN_PARAM FirmwareDate
 };
 
 #endif // DSP_PLUGIN_H

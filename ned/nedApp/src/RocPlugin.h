@@ -3,6 +3,8 @@
 
 #include "BaseModulePlugin.h"
 
+#include <list>
+
 /**
  * Plugin for ROC module.
  *
@@ -16,13 +18,19 @@
  * FwRev         | asynParamInt32  | 0        | RO   | Firmware revision
  */
 class RocPlugin : public BaseModulePlugin {
+    public: // variables
+        static const int defaultInterfaceMask = BaseModulePlugin::defaultInterfaceMask | asynOctetMask;
+        static const int defaultInterruptMask = BaseModulePlugin::defaultInterruptMask | asynOctetMask;
+
     private: // structures and definitions
         static const unsigned NUM_ROCPLUGIN_DYNPARAMS;      //!< Maximum number of asyn parameters, including the status and configuration parameters
         static const unsigned NUM_CHANNELS = 8;             //!< Number of channels connected to ROC
         static const float    NO_RESPONSE_TIMEOUT;          //!< Timeout to wait for response from ROC, in seconds
 
     private: // variables
-        std::string m_version;              //!< Version string as passed to constructor
+        std::string m_version;                              //!< Version string as passed to constructor
+        std::list<char> m_hvRecvBuffer;                     //!< FIFO queue for data received from HV module but not yet processed
+        epicsMutex m_hvRecvMutex;                           //!< Mutex protecting the FIFO
 
     public: // functions
 
@@ -39,6 +47,21 @@ class RocPlugin : public BaseModulePlugin {
          * @param[in] blocking Flag whether the processing should be done in the context of caller thread or in background thread.
          */
         RocPlugin(const char *portName, const char *dispatcherPortName, const char *hardwareId, const char *version, int blocking=0);
+
+        /**
+         * Process RS232 packets only, let base implementation do the rest.
+         */
+        bool processResponse(const DasPacket *packet);
+
+        /**
+         * Send string/byte data to PVs
+         */
+        asynStatus readOctet(asynUser *pasynUser, char *value, size_t nChars, size_t *nActual, int *eomReason);
+
+        /**
+         * Receive string/byte data to PVs
+         */
+        asynStatus writeOctet(asynUser *pasynUser, const char *value, size_t nChars, size_t *nActual);
 
         /**
          * Try to parse the ROC version response packet an populate the structure.
@@ -65,32 +88,64 @@ class RocPlugin : public BaseModulePlugin {
         bool rspReadVersion(const DasPacket *packet);
 
         /**
-         * Handler for READ_VERSION response from ROC V5/5.x
+         * Pass user command to HighVoltage module through RS232.
          *
-         * Populate hardware info parameters, like HwVer, HwRev, FwVer etc.
-         * @relates rspReadVersion
+         * HV command string is packed into OCC packet and sent to the
+         * HV module. HV module does not have its own hardware id,
+         * instead the ROC board is used as a router.
+         *
+         * @param[in] data String representing HV command, must include '\r'
+         * @param[in] length Length of the string
          */
-        bool rspReadVersion_V5_5x(const DasPacket *packet);
+        void reqHvCmd(const char *data, uint32_t length);
 
         /**
-         * Create and register all status ROC V5 parameters to be exposed to EPICS.
+         * Receive and join responses from HV module.
+         *
+         * ROC will send one OCC packet for each character from HV module
+         * response. This function concatenates characters back together
+         * and keep them in internal buffer until the user reads them.
+         *
+         * @param[in] packet with HV module response
+         * @return true if packet was processed
          */
-        void createStatusParams_V5_52();
+        bool rspHvCmd(const DasPacket *packet);
 
         /**
-         * Create and register all config ROC V5 parameters to be exposed to EPICS.
+         * Read HV response from internal buffer.
+         *
+         * Dequeue first response or part of it from internal buffer and return
+         * it. Reads up to `size' characters and waits at most `timeout' seconds.
+         * Return as soon as some characters are available, not necessarily the
+         * entire response. If there are more than one response in the internal
+         * buffer, only return first one.
+         *
+         * @param[out] response Buffer to be written to
+         * @param[in] size of the buffer
+         * @param[in] timeout Maximum time in seconds to wait before giving up
+         * @return Number of characters returned or 0 if timeout.
          */
-        void createConfigParams_V5_52();
+        size_t getHvResponse(char *response, size_t size, double timeout);
 
-    private: // asyn parameters
-        #define FIRST_ROCPLUGIN_PARAM HardwareVer
-        int HardwareVer;    //!< Module hardware version
-        int HardwareRev;    //!< Module hardware revision
-        int HardwareDate;   //!< Module hardware date
-        int FirmwareVer;    //!< Module firmware version
-        int FirmwareRev;    //!< Module firmware revision
-        #define LAST_ROCPLUGIN_PARAM FirmwareRev
+        /**
+         * Create and register all status ROC v5.2 parameters to be exposed to EPICS.
+         */
+        void createStatusParams_v51();
 
+        /**
+         * Create and register all config ROC v5.2 parameters to be exposed to EPICS.
+         */
+        void createConfigParams_v51();
+
+        /**
+         * Create and register all status ROC v5.2 parameters to be exposed to EPICS.
+         */
+        void createStatusParams_v52();
+
+        /**
+         * Create and register all config ROC v5.2 parameters to be exposed to EPICS.
+         */
+        void createConfigParams_v52();
 };
 
 #endif // DSP_PLUGIN_H

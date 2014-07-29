@@ -1,0 +1,12 @@
+record(longin, "$(P)$(R)HvVoltRead") {
+    field(DTYP, "stream")
+    field(INP,  "@snshv.proto read_voltage $(PORT) $(ADDR) $(TIMEOUT)")
+    field(SCAN, "Passive")
+    field(EGU,  "V")
+}
+record(longout, "$(P)$(R)HvVoltWrite") {
+    field(DTYP, "stream")
+    field(OUT,  "@snshv.proto write_voltage $(PORT) $(ADDR) $(TIMEOUT)")
+    field(SCAN, "Passive")
+    field(EGU,  "V")
+}

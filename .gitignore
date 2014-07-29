@@ -9,10 +9,17 @@ tags
 cscope.files
 PacketAnalyzerDebug
 stress.*
+O.linux-x86_64/
+O.Common/
+occ2csv
+sms2csv
 
 # Backup files
 *~
 *\#
+
+# CodeBlocks project files
+*.layout
 
 # Temporary files
 *.new

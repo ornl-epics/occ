@@ -1,0 +1,13 @@
+Terminator = CR;
+ReplyTimeout = 5;
+ReadTimeout  = 5;
+
+read_voltage {
+    out "?LV";
+    in "?LV%05d";
+}
+
+write_voltage {
+    out "*#%05d";
+    in "*#%05d";
+}

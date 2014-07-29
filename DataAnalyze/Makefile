@@ -1,7 +1,6 @@
 CPPFLAGS=-Wall -I../occlib/ -std=c++0x
-LDFLAGS=-L../occlib -locc -lpthread -lrt -lboost_iostreams
-SRCS=occ_loopback.cpp occ_rawio.cpp occ_dump.cpp occ_flashprog.cpp
-
+LDFLAGS=
+SRCS=sms2csv.cpp occ2csv.cpp
 HDRS=
 BINS=$(SRCS:.cpp=)
 OBJS=$(SRCS:.cpp=.o)
@@ -14,7 +13,7 @@ all: $(BINS)
 debug: CPPFLAGS+=-ggdb -g -DTRACE
 debug: $(BINS)
 
-$(BINS): occ_% : occ_%.o
+$(BINS): %: %.o
 	$(CXX) -o $@ $^ $(LDFLAGS)
 
 clean:

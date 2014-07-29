@@ -1,8 +1,11 @@
 #!../../bin/linux-x86_64/ned
 
-< ../../iocBoot/iocned/envPaths
+< envPaths
 
-epicsEnvSet IOCNAME bl99-iocned
+epicsEnvSet("IOCNAME", "bl99-iocned")
+
+# StreamDevice
+epicsEnvSet("STREAM_PROTOCOL_PATH", "../../protocol/")
 
 ## Register all support components
 dbLoadDatabase("../../dbd/ned.dbd",0,0)
@@ -12,7 +15,7 @@ ned_registerRecordDeviceDriver(pdbbase)
 epicsEnvSet SAVE_DIR /home/controls/var/$(IOCNAME)
 system("install -m 777 -d $(SAVE_DIR)")
 save_restoreSet_Debug(0)
-save_restoreSet_status_prefix("BL7:IOCNAME:")
+save_restoreSet_status_prefix("BL99:IOCNAME:")
 set_requestfile_path("$(SAVE_DIR)")
 set_savefile_path("$(SAVE_DIR)")
 save_restoreSet_NumSeqFiles(3)
@@ -23,7 +26,7 @@ set_pass1_restoreFile("$(IOCNAME).sav")
 
 ## Load record instances
 epicsEnvSet("PREFIX", "SNS:")
-epicsEnvSet("PORT",   "/dev/snsocb1")
+epicsEnvSet("PORT",   "/dev/snsocb0")
 #asynSetTraceIOMask("$(PORT)",0,255)
 dbLoadRecords("../../db/ned.template","P=$(PREFIX),R=ocb1:,PORT=$(PORT),ADDR=0,TIMEOUT=1")
 nedConfigure("$(PORT)", 0, 4000000)
@@ -33,7 +36,8 @@ CmdDispatcherConfigure("cmd", "$(PORT)")
 dbLoadRecords("../../db/BasePlugin.template","P=$(PREFIX),R=cmd:,PORT=cmd,ADDR=0,TIMEOUT=1")
 
 #CmdPluginConfigure("Test", "$(PORT)")
-AdaraPluginConfigure("Adara1", "$(PORT)", 1, 0, 4)
+AdaraPluginConfigure("Adara1", "$(PORT)", 1, 2)
+dbLoadRecords("../../db/AdaraPlugin.template","P=$(PREFIX),R=adara1:,PORT=Adara1,ADDR=0,TIMEOUT=1")
 dbLoadRecords("../../db/BaseSocketPlugin.template","P=$(PREFIX),R=adara1:,PORT=Adara1,ADDR=0,TIMEOUT=1")
 dbLoadRecords("../../db/BasePlugin.template","P=$(PREFIX),R=adara1:,PORT=Adara1,ADDR=0,TIMEOUT=1")
 
@@ -44,15 +48,16 @@ dbLoadRecords("../../db/BasePlugin.template","P=$(PREFIX),R=proxy1:,PORT=proxy1,
 #DspPluginConfigure("Dsp1", "$(PORT)", "0x15FA76DF")
 DspPluginConfigure("Dsp1", "$(PORT)", "21.250.118.223", 1)
 dbLoadRecords("../../db/DspPlugin.template","P=$(PREFIX),R=dsp1:,PORT=Dsp1,ADDR=0,TIMEOUT=1")
-dbLoadRecords("../../db/BasePlugin.template","P=$(PREFIX),R=dsp1:,PORT=Dsp1,ADDR=0,TIMEOUT=1")
+dbLoadRecords("../../db/BaseModulePlugin.template","P=$(PREFIX),R=dsp1:,PORT=Dsp1,ADDR=0,TIMEOUT=1")
 
 DiscoverPluginConfigure("Disc", "$(PORT)")
 dbLoadRecords("../../db/DiscoverPlugin.template","P=$(PREFIX),R=disc:,PORT=Disc,ADDR=0,TIMEOUT=1")
 dbLoadRecords("../../db/BasePlugin.template","P=$(PREFIX),R=disc:,PORT=Disc,ADDR=0,TIMEOUT=1")
 
-RocPluginConfigure("roc1", "$(PORT)", "0x1427D924", "5.2/5.2", 1)
-dbLoadRecords("../../db/RocPlugin.template","P=$(PREFIX),R=roc1:,PORT=roc1,ADDR=0,TIMEOUT=1")
-dbLoadRecords("../../db/BasePlugin.template","P=$(PREFIX),R=roc1:,PORT=roc1,ADDR=0,TIMEOUT=1")
+RocPluginConfigure("roc1", "$(PORT)", "20.39.216.73", "v52", 0)
+dbLoadRecords("../../db/RocHv.template","P=$(PREFIX),R=roc1:,PORT=roc1,ADDR=0,TIMEOUT=1")
+dbLoadRecords("../../db/RocPlugin_v52.template","P=$(PREFIX),R=roc1:,PORT=roc1,ADDR=0,TIMEOUT=1")
+dbLoadRecords("../../db/BaseModulePlugin.template","P=$(PREFIX),R=roc1:,PORT=roc1,ADDR=0,TIMEOUT=1")
 
 DumpPluginConfigure("dump", "$(PORT)", 0)
 dbLoadRecords("../../db/DumpPlugin.template","P=$(PREFIX),R=dump:,PORT=dump,ADDR=0,TIMEOUT=1")
@@ -68,7 +73,7 @@ dbLoadRecords("../../db/BasePlugin.template","P=$(PREFIX),R=rtdl:,PORT=rtdl,ADDR
 
 FemPluginConfigure("fem1", "$(PORT)", "0x603B0817", "10.0/5.0", 1)
 dbLoadRecords("../../db/FemPlugin.template","P=$(PREFIX),R=fem1:,PORT=fem1,ADDR=0,TIMEOUT=1")
-dbLoadRecords("../../db/BasePlugin.template","P=$(PREFIX),R=fem1:,PORT=fem1,ADDR=0,TIMEOUT=1")
+dbLoadRecords("../../db/BaseModulePlugin.template","P=$(PREFIX),R=fem1:,PORT=fem1,ADDR=0,TIMEOUT=1")
 
 iocInit()
 

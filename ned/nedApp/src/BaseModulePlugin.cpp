@@ -9,9 +9,9 @@
 const float BaseModulePlugin::NO_RESPONSE_TIMEOUT = 2.0;
 
 BaseModulePlugin::BaseModulePlugin(const char *portName, const char *dispatcherPortName, const char *hardwareId,
-                                   bool behindDsp, int blocking, int numParams)
-    : BasePlugin(portName, dispatcherPortName, REASON_OCCDATA, blocking, NUM_BASEMODULEPLUGIN_PARAMS + numParams,
-                 1, asynOctetMask | asynInt32Mask | asynDrvUserMask, asynOctetMask | asynInt32Mask)
+                                   bool behindDsp, int blocking, int numParams, int interfaceMask, int interruptMask)
+    : BasePlugin(portName, dispatcherPortName, REASON_OCCDATA, blocking, NUM_BASEMODULEPLUGIN_PARAMS + numParams, 1,
+                 interfaceMask | defaultInterfaceMask, interruptMask | defaultInterruptMask)
     , m_hardwareId(parseHardwareId(hardwareId))
     , m_stateMachine(ST_NOT_INITIALIZED)
     , m_behindDsp(behindDsp)
@@ -55,10 +55,19 @@ BaseModulePlugin::BaseModulePlugin(const char *portName, const char *dispatcherP
     m_stateMachine.addState(ST_ERROR,               0,                                              ST_NOT_INITIALIZED);
     m_stateMachine.addState(ST_TIMEOUT,             0,                                              ST_NOT_INITIALIZED);
 
-    createParam("HwId",         asynParamInt32, &HardwareId);
+    createParam("HardwareId",   asynParamOctet, &HardwareId);
     createParam("Status",       asynParamInt32, &Status);
     createParam("Command",      asynParamInt32, &Command);
-    setIntegerParam(HardwareId, m_hardwareId);
+    createParam("HardwareDate", asynParamOctet, &HardwareDate);
+    createParam("HardwareVer",  asynParamInt32, &HardwareVer);
+    createParam("HardwareRev",  asynParamInt32, &HardwareRev);
+    createParam("FirmwareDate", asynParamOctet, &HardwareDate);
+    createParam("FirmwareVer",  asynParamInt32, &FirmwareVer);
+    createParam("FirmwareRev",  asynParamInt32, &FirmwareRev);
+
+    std::string hardwareIp;
+    formatHardwareId(m_hardwareId, hardwareIp);
+    setStringParam(HardwareId, hardwareIp.c_str());
     setIntegerParam(Status, ST_NOT_INITIALIZED);
     callParamCallbacks();
 }
@@ -69,12 +78,12 @@ BaseModulePlugin::~BaseModulePlugin()
 
 asynStatus BaseModulePlugin::writeInt32(asynUser *pasynUser, epicsInt32 value)
 {
-    if (!m_stateMachine.checkTransition(SM_ACTION_CMD(value))) {
-        LOG_WARN("Command '%d' not allowed at this time", value);
-        return asynError;
-    }
-
     if (pasynUser->reason == Command) {
+        if (!m_stateMachine.checkTransition(SM_ACTION_CMD(value))) {
+            LOG_WARN("Command '%d' not allowed at this time", value);
+            return asynError;
+        }
+
         switch (value) {
         case DasPacket::CMD_DISCOVER:
             reqDiscover();
@@ -525,6 +534,13 @@ uint32_t BaseModulePlugin::parseHardwareId(const std::string &text)
             id = ntohl(hwid.s_addr);
     }
     return id;
+}
+
+void BaseModulePlugin::formatHardwareId(uint32_t id, std::string &ip)
+{
+    char ipStr[15] = "";
+    snprintf(ipStr, sizeof(ipStr), "%d.%d.%d.%d", (id >> 24) & 0xFF, (id >> 16) & 0xFF, (id >> 8) & 0xFF, id & 0xFF);
+    ip = ipStr;
 }
 
 float BaseModulePlugin::noResponseCleanup(DasPacket::CommandType command)
