@@ -8,6 +8,7 @@ occ_flashprog
 tags
 cscope.files
 PacketAnalyzerDebug
+stress.*
 
 # Backup files
 *~
