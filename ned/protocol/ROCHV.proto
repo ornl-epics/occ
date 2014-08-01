@@ -22,10 +22,10 @@ extrainput   = Ignore;
 # exception handlers.  We request error code.  This will process the
 # record that reads the code, which will then clear it.
 #
-@mismatch { out "?EE"; in "?EE\?"; }
-@readtimeout { out "?EE"; in "?EE\?"; }
-@writetimeout { out "?EE"; in "?EE\?"; }
-@replytimeout { out "?EE"; in "?EE\?"; }
+#@mismatch { out "?EE"; in "?EE\?"; }
+#@readtimeout { out "?EE"; in "?EE\?"; }
+#@writetimeout { out "?EE"; in "?EE\?"; }
+#@replytimeout { out "?EE"; in "?EE\?"; }
 
 #
 # Read ramp rate (RR), read raw voltage (RV), read raw current (RC), 
@@ -45,7 +45,7 @@ getNum {
 #
 setNum {
    out "*\$1%05d";
-   in "*\$1%s";
+   in "*\$1%05d";
 }
 
 #

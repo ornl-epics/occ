@@ -1,6 +1,7 @@
 Terminator = CR;
-ReplyTimeout = 5;
-ReadTimeout  = 5;
+ReplyTimeout = 1000;
+LockTimeout = 5000;
+ReadTimeout  = 100;
 
 read_voltage {
     out "?LV";

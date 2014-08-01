@@ -18,6 +18,7 @@ record(calc, "$(P):AlarmSum") {
 record(ai, "$(P):RampRate") {
    field(DTYP, "stream")
    field(DESC, "Readback ramp rate")
+   field(SCAN, "10 second")
    field(INP, "@ROCHV.proto getNum(RR) $(PORT) $(ADDR)")
    field(HOPR, "255")
    field(LOPR, "0")
@@ -32,13 +33,13 @@ record(ai, "$(P):RampRate") {
 record(ao, "$(P):RampRateSet") {
    field(DTYP, "stream")
    field(DESC, "Set ramp rate")
-   field(OUT, "@ROCHV.proto setNum(RR) $(PORT) $(ADDR)")
+   field(OUT, "@ROCHV.proto setNum(SR) $(PORT) $(ADDR)")
    field(EGU, "ms/step")
    field(HOPR, "255")
    field(DRVH, "255")
    field(LOPR, "0")
    field(DRVL, "0")
-   field(FLNK, "$(P):RampRate")
+#   field(FLNK, "$(P):RampRate")
 }
 
 #
@@ -71,6 +72,7 @@ record(ai, "$(P):ReadADC") {
    field(LOPR, 0)
    field(HOPR, 4096)
    field(EGU, "Counts")
+   info(archive, "Monitor, 00:00:10, VAL")
 } 
 
 #
@@ -85,6 +87,7 @@ record(ao, "$(P):VoltSet") {
    field(DRVH, "2200")
    field(HOPR, "2200")
    field(EGU, "V")
+   info(autosaveFields, "VAL")
 }
   
 #
@@ -96,9 +99,11 @@ record(ai, "$(P):Volt") {
    field(INP, "@ROCHV.proto getNum(LV) $(PORT) $(ADDR)")
    field(LOPR, "-100")
    field(HOPR, "2300")
+   field(HSV, "MAJOR")
+   field(LSV, "MAJOR")
    field(EGU, "V")
-   info(autosaveFields, "HIGH LOW")
    field(SCAN, "1 second")
+   info(autosaveFields, "HIGH LOW")
 }
 
 
@@ -125,6 +130,8 @@ record(ai, "$(P):Curr") {
    field(ESLO, "1")
    field(EOFF, "0")
    field(EGU, "ma")
+   field(HSV, "MAJOR")
+   field(LSV, "MAJOR")
    info(autosaveFields, "HIGH LOW")
    field(SCAN, "1 second")
 }
@@ -260,7 +267,7 @@ record(waveform, "$(P):ErrorInp") {
    field(DESC, "Input error byte")
    field(DTYP, "stream")
    field(PINI, "YES")
-   field(INP, "@ROCHV.proto recError() $(PORT) $(ADDR)")
+   field(INP, "@ROCHV.proto getError() $(PORT) $(ADDR)")
    field(FTVL, "UCHAR")
    field(NELM, "2")
    field(SCAN, "I/O Intr")
