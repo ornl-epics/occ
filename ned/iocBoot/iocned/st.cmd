@@ -26,7 +26,7 @@ set_pass1_restoreFile("$(IOCNAME).sav")
 
 ## Load record instances
 epicsEnvSet("PREFIX", "SNS:")
-epicsEnvSet("PORT",   "/dev/snsocb0")
+epicsEnvSet("PORT",   "/dev/snsocb1")
 #asynSetTraceIOMask("$(PORT)",0,255)
 dbLoadRecords("../../db/ned.template","P=$(PREFIX),R=ocb1:,PORT=$(PORT),ADDR=0,TIMEOUT=1")
 nedConfigure("$(PORT)", 0, 4000000)
@@ -55,7 +55,8 @@ dbLoadRecords("../../db/DiscoverPlugin.template","P=$(PREFIX),R=disc:,PORT=Disc,
 dbLoadRecords("../../db/BasePlugin.template","P=$(PREFIX),R=disc:,PORT=Disc,ADDR=0,TIMEOUT=1")
 
 RocPluginConfigure("roc1", "$(PORT)", "20.39.216.73", "v52", 0)
-dbLoadRecords("../../db/RocHv.template","P=$(PREFIX),R=roc1:,PORT=roc1,ADDR=0,TIMEOUT=1")
+#dbLoadRecords("../../db/RocHv.template","P=$(PREFIX),R=roc1:,PORT=roc1,ADDR=0,TIMEOUT=1")
+dbLoadRecords("../../db/ROCHV.template","P=$(PREFIX)Det:HV1,PORT=roc1,ADDR=0,TIMEOUT=1")
 dbLoadRecords("../../db/RocPlugin_v52.template","P=$(PREFIX),R=roc1:,PORT=roc1,ADDR=0,TIMEOUT=1")
 dbLoadRecords("../../db/BaseModulePlugin.template","P=$(PREFIX),R=roc1:,PORT=roc1,ADDR=0,TIMEOUT=1")
 

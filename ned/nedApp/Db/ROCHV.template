@@ -7,11 +7,11 @@
 #
 # Summary alarm status
 #
-record(calc, "$(S):AlarmSum") {
+record(calc, "$(P):AlarmSum") {
    field(CALC, "1")
-   field(INPA, "$(S):Volt CP MS")
-   field(INPB, "$(S):Curr CP MS")
-   field(INPD, "$(S):CommAlarm CP MS")
+   field(INPA, "$(P):Volt CP MS")
+   field(INPB, "$(P):Curr CP MS")
+   field(INPC, "$(P):CommAlarm CP MS")
    info(archive, "Monitor, 00:00:10, VAL")
 }
 
@@ -152,7 +152,7 @@ record(ao, "$(P):MaxVSet") {
    field(DRVH, "2200")
    field(HOPR, "2200")
    field(EGU, "V")
-   field(FLNK, "$(P):MaxV"
+   field(FLNK, "$(P):MaxV")
 }
 
 #
@@ -219,7 +219,6 @@ record(bo, "$(P):EnableHW") {
    field(ZNAM, "*")
 }
 
-   field(
 #
 # Do the following controls by just sending "PROC"
 #
@@ -257,14 +256,15 @@ record(bo, "$(P):ResetDAC") {
 #
 # Get error code.  
 #
-record(waveform, "$(P):HVErrorInp") {
-   field(DESC, "Input error byte"
+record(waveform, "$(P):ErrorInp") {
+   field(DESC, "Input error byte")
    field(DTYP, "stream")
-   field(OUT, "@ROCHV.proto recError() $(PORT) $(ADDR)")
+   field(PINI, "YES")
+   field(INP, "@ROCHV.proto recError() $(PORT) $(ADDR)")
    field(FTVL, "UCHAR")
    field(NELM, "2")
    field(SCAN, "I/O Intr")
-   field(FLNK, "$(P):HVErrorBits")
+   field(FLNK, "$(P):ErrorBits")
 }
 
 #
@@ -280,7 +280,7 @@ record(mbbiDirect, "$(P):ErrorBits") {
 record(bi, "$(P):CommAlarm") {
    field(PINI, "YES")
    field(DTYP, "Raw Soft Channel")
-   field(INP, "$(P):ErrorBits.RVAL CPP MS")
+   field(INP, "$(P):ErrorBits.RVAL CPP NMS")
    field(OSV, "MAJOR")
    field(ZSV, "NO_ALARM")
 }

@@ -22,10 +22,10 @@ extrainput   = Ignore;
 # exception handlers.  We request error code.  This will process the
 # record that reads the code, which will then clear it.
 #
-@mismatch { out "?EE"; in "?EE\?"; )
-@readtimeout { out "?EE"; in "?EE\?"; )
-@writetimeout { out "?EE"; in "?EE\?"; )
-@replytimeout { out "?EE"; in "?EE\?"; )
+@mismatch { out "?EE"; in "?EE\?"; }
+@readtimeout { out "?EE"; in "?EE\?"; }
+@writetimeout { out "?EE"; in "?EE\?"; }
+@replytimeout { out "?EE"; in "?EE\?"; }
 
 #
 # Read ramp rate (RR), read raw voltage (RV), read raw current (RC), 
@@ -34,7 +34,7 @@ extrainput   = Ignore;
 # Code seems to have read max hv (MV)
 #
 getNum {
-   out "?\$1"
+   out "?\$1";
    in "?\$1%05d";
 }
 
@@ -72,7 +72,7 @@ getCALZ {
 # Read all three into an waveform record of ints
 getCAL {
    out "?\$1";
-   "separator = ""; in "?\$1%05d";
+   separator = ""; in "?\$1%05d";
 }
 
 #
@@ -81,7 +81,7 @@ getCAL {
 
 # send all three from a waveform record of ints
 setCAL {
-   "separator = ""; out "*\$1%05d";
+   separator = ""; out "*\$1%05d";
    in "*\$1%s";
 }
 # send all three from a calcout record where they are in A, B and C

@@ -1,7 +1,7 @@
 record(longin, "$(P)$(R)HvVoltRead") {
     field(DTYP, "stream")
     field(INP,  "@snshv.proto read_voltage $(PORT) $(ADDR) $(TIMEOUT)")
-    field(SCAN, "Passive")
+    field(SCAN, "1 second")
     field(EGU,  "V")
 }
 record(longout, "$(P)$(R)HvVoltWrite") {
