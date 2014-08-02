@@ -1,0 +1,7 @@
+file "ROCHVMain.template" {
+  { ADDR=0, TIMEOUT=1 }
+}
+file "ROCHVCal.template" {
+  { W=D, ADDR=0, TIMEOUT=1 }
+  { W=V, ADDR=0, TIMEOUT=1 }
+}

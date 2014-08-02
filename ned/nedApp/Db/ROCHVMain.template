@@ -178,43 +178,43 @@ record(ao, "$(P):MaxVSet") {
 #
 # Voltage set (DAC) conversion parameters readback
 #
-record(waveform, "$(P):VSetConv") {
-   field(DTYP, "stream")
-   field(INP, "@ROCHV.proto getCal(CD) $(PORT) $(ADDR)")
-   field(FTVL, "ULONG")
-   field(PINI, "YES")
-   field(NELM, "3")
-}
-#
-# Voltage set (DAC) conversion parameters set
-#
-record(waveform, "$(P):VSetConvSet") {
-   field(DTYP, "stream")
-   field(INP, "@ROCHV.proto setCal(SD) $(PORT) $(ADDR)")
-   field(FTVL, "ULONG")
-   field(NELM, "3")
-   field(FLNK, "$(P)VSetConv")
-}
+#record(waveform, "$(P):VSetConv") {
+#   field(DTYP, "stream")
+#   field(INP, "@ROCHV.proto getCal(CD) $(PORT) $(ADDR)")
+#   field(FTVL, "ULONG")
+#   field(PINI, "YES")
+#   field(NELM, "3")
+#}
+##
+## Voltage set (DAC) conversion parameters set
+##
+#record(waveform, "$(P):VSetConvSet") {
+#   field(DTYP, "stream")
+#   field(INP, "@ROCHV.proto setCal(SD) $(PORT) $(ADDR)")
+#   field(FTVL, "ULONG")
+#   field(NELM, "3")
+#   field(FLNK, "$(P)VSetConv")
+#}
 #
 # Voltage readback (ADC) conversion parameters readback
 #
-record(waveform, "$(P):VConv") {
-   field(DTYP, "stream")
-   field(INP, "@ROCHV.proto getCal(CV) $(PORT) $(ADDR)")
-   field(FTVL, "ULONG")
-   field(PINI, "YES")
-   field(NELM, "3")
-}
+#record(waveform, "$(P):VConv") {
+#   field(DTYP, "stream")
+#   field(INP, "@ROCHV.proto getCal(CV) $(PORT) $(ADDR)")
+#   field(FTVL, "ULONG")
+#   field(PINI, "YES")
+#   field(NELM, "3")
+#}
 #
 # Voltage readback (ADC) conversion parameters set
 #
-record(waveform, "$(P):VConvSet") {
-   field(DTYP, "stream")
-   field(INP, "@ROCHV.proto setCal(SV) $(PORT) $(ADDR)")
-   field(FTVL, "ULONG")
-   field(NELM, "3")
-   field(FLNK, "$(P):VConv.PROC")
-}
+#record(waveform, "$(P):VConvSet") {
+#   field(DTYP, "stream")
+#   field(INP, "@ROCHV.proto setCal(SV) $(PORT) $(ADDR)")
+#   field(FTVL, "ULONG")
+#   field(NELM, "3")
+#   field(FLNK, "$(P):VConv.PROC")
+#}
 
 #
 # here we have a nice switch but the question is how to init it

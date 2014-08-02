@@ -1,0 +1,51 @@
+#
+# Conversion (Calibration) parameters set.  the idea here is that you
+# set the 3 individual records, then PROC the top one to drive them...
+#
+record(ao, "$(P):$(W)ConvSet") {
+   field(DTYP, "stream")
+   field(OUT, "@ROCHV.proto setCalA(S$(W),$(P):$(W)ConvSet) $(PORT) $(ADDR)")
+   field(FLNK, "$(P):$(W)ConvX")
+}
+record(ao, "$(P):$(W)ConvSetX") {
+   field(DRVH, "65535")
+   field(HOPR, "65535")
+   field(LOPR, "0")
+   field(DRVL, "0")
+}
+record(ao, "$(P):$(W)ConvSetY") {
+   field(DRVH, "65535")
+   field(HOPR, "65535")
+   field(LOPR, "0")
+   field(DRVL, "0")
+}
+record(ao, "$(P):$(W)ConvSetZ") {
+   field(HOPR, "65535")
+   field(LOPR, "0")
+}
+
+#
+# get records 
+#
+record(ai, "$(P):$(W)ConvX") {
+   field(DTYP, "stream")
+   field(INP, "@ROCHV.proto getCalX(C$(W)) $(PORT) $(ADDR)")
+   field(HOPR, "65535")
+   field(LOPR, "0")
+   field(PINI, "YES")
+}
+record(ai, "$(P):$(W)ConvY") {
+   field(DTYP, "stream")
+   field(INP, "@ROCHV.proto getCalY(C$(W)) $(PORT) $(ADDR)")
+   field(SCAN, "I/O Intr")
+   field(HOPR, "65535")
+   field(LOPR, "0")
+}
+record(ai, "$(P):$(W)ConvZ") {
+   field(DTYP, "stream")
+   field(INP, "@ROCHV.proto getCalZ(C$(W)) $(PORT) $(ADDR)")
+   field(SCAN, "I/O Intr")
+   field(HOPR, "65535")
+   field(LOPR, "0")
+}
+
