@@ -19,7 +19,8 @@ DB += DspPlugin.template
 DB += RocPlugin_v51.template
 DB += RocPlugin_v52.template
 DB += RocHv.template
-DB += ROCHV.template
+DB += ROCHV.db
+DB += ROCHVCal.template
 DB += FemPlugin.template
 DB += DumpPlugin.template
 DB += StatPlugin.template
@@ -29,6 +30,7 @@ DB += AdaraPlugin.template
 #----------------------------------------------------
 # If <anyname>.db template is not named <anyname>*.template add
 # <anyname>_template = <templatename>
+#ROCHV_template += ../ROCHVCal.template
 
 include $(TOP)/configure/RULES
 #----------------------------------------

@@ -56,7 +56,8 @@ dbLoadRecords("../../db/BasePlugin.template","P=$(PREFIX),R=disc:,PORT=Disc,ADDR
 
 RocPluginConfigure("roc1", "$(PORT)", "20.39.216.73", "v52", 0)
 #dbLoadRecords("../../db/RocHv.template","P=$(PREFIX),R=roc1:,PORT=roc1,ADDR=0,TIMEOUT=1")
-dbLoadRecords("../../db/ROCHV.template","P=$(PREFIX)Det:HV1,PORT=roc1,ADDR=0,TIMEOUT=1")
+#dbLoadRecords("../../db/ROCHV.template","P=$(PREFIX)Det:HV1,PORT=roc1,ADDR=0,TIMEOUT=1")
+dbLoadRecords("../../db/ROCHV.db","P=$(PREFIX)Det:HV1,PORT=roc1")
 dbLoadRecords("../../db/RocPlugin_v52.template","P=$(PREFIX),R=roc1:,PORT=roc1,ADDR=0,TIMEOUT=1")
 dbLoadRecords("../../db/BaseModulePlugin.template","P=$(PREFIX),R=roc1:,PORT=roc1,ADDR=0,TIMEOUT=1")
 

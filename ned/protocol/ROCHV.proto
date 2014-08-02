@@ -34,6 +34,7 @@ extrainput   = Ignore;
 # Code seems to have read max hv (MV)
 #
 getNum {
+   @mismatch { in "<00>?\$1!>"; }
    out "?\$1";
    in "?\$1%05d";
 }
@@ -54,23 +55,24 @@ setNum {
 # Read voltage (CV), current (CC), DAC (CD) calibration numerator(X) into
 # an ai record. This one must be caused to process somehow
 #
-getCALX {
+getCalX {
    out "?\$1";
    in "?\$1%05d%*05d%*05d";
 }
 
 # Similarly to read calibration denominator. this record interrupt IO scanned.
-getCALY {
+getCalY {
    in "?\$1%*05d%05d%*05d";
 }
   
 # Similarly to read calibration offset. this record interrupt IO scanned.
-getCALZ {
+getCalZ {
    in "?\$1%*05d%*05d%05d";
 }
 
 # Read all three into an waveform record of ints
-getCAL {
+getCal {
+   @mismatch { in "<00>?\$1!>"; }
    out "?\$1";
    separator = ""; in "?\$1%05d";
 }
@@ -80,13 +82,18 @@ getCAL {
 #
 
 # send all three from a waveform record of ints
-setCAL {
+setCal {
    separator = ""; out "*\$1%05d";
-   in "*\$1%s";
+   in "*\$1%05d";
 }
 # send all three from a calcout record where they are in A, B and C
-setCALC {
+setCalC {
    out "*\$1%(A)05d%(B)05d%(C)05d";
+   in "*\$1%s";
+}
+
+setCalA {
+   out "*\$1%(\$2X)05d%(\$2Y)05d%(\$2Z)05d";
    in "*\$1%s";
 }
    
@@ -95,6 +102,10 @@ setCALC {
 # Clear error code (X), send DAC Reset (Y)
 # Use with bo records
 #
+#sendCmd {
+#   out "*\$1";
+#   in "*\$1";
+#}
 sendCmd {
    out "*\$1";
    in "*\$1";

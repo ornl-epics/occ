@@ -15,20 +15,33 @@ record(calc, "$(P):AlarmSum") {
    info(archive, "Monitor, 00:00:10, VAL")
 }
 
+#
+#  Use this one for display
+#
 record(ai, "$(P):RampRate") {
    field(DTYP, "stream")
    field(DESC, "Readback ramp rate")
-   field(SCAN, "10 second")
    field(INP, "@ROCHV.proto getNum(RR) $(PORT) $(ADDR)")
    field(HOPR, "255")
    field(LOPR, "0")
-   field(PINI, "YES")
    field(EGU, "ms/step")
 } 
 
 #
-# I suspect that the ramp rate is only effective if you use the requested HV
-# control, rather than the raw DAC control. milliseconds/step.
+# This one is the target of the flnk from the set function.  It always fails.
+# Then it causes the second ramprate read to run, and it succeeds.
+#
+record(ai, "$(P):RampRate1") {
+   field(DTYP, "stream")
+   field(DESC, "Readback ramp rate")
+   field(INP, "@ROCHV.proto getNum(RR) $(PORT) $(ADDR)")
+   field(HOPR, "255")
+   field(LOPR, "0")
+   field(PINI, "YES")
+   field(FLNK, "$(P):RampRate")
+   field(EGU, "ms/step")
+} 
+
 #
 record(ao, "$(P):RampRateSet") {
    field(DTYP, "stream")
@@ -39,7 +52,7 @@ record(ao, "$(P):RampRateSet") {
    field(DRVH, "255")
    field(LOPR, "0")
    field(DRVL, "0")
-#   field(FLNK, "$(P):RampRate")
+   field(FLNK, "$(P):RampRate1")
 }
 
 #
@@ -167,7 +180,7 @@ record(ao, "$(P):MaxVSet") {
 #
 record(waveform, "$(P):VSetConv") {
    field(DTYP, "stream")
-   field(INP, "@ROCHV.proto getCAL(CD) $(PORT) $(ADDR)")
+   field(INP, "@ROCHV.proto getCal(CD) $(PORT) $(ADDR)")
    field(FTVL, "ULONG")
    field(PINI, "YES")
    field(NELM, "3")
@@ -177,7 +190,7 @@ record(waveform, "$(P):VSetConv") {
 #
 record(waveform, "$(P):VSetConvSet") {
    field(DTYP, "stream")
-   field(INP, "@ROCHV.proto setCAL(SD) $(PORT) $(ADDR)")
+   field(INP, "@ROCHV.proto setCal(SD) $(PORT) $(ADDR)")
    field(FTVL, "ULONG")
    field(NELM, "3")
    field(FLNK, "$(P)VSetConv")
@@ -187,7 +200,7 @@ record(waveform, "$(P):VSetConvSet") {
 #
 record(waveform, "$(P):VConv") {
    field(DTYP, "stream")
-   field(INP, "@ROCHV.proto getCAL(CV) $(PORT) $(ADDR)")
+   field(INP, "@ROCHV.proto getCal(CV) $(PORT) $(ADDR)")
    field(FTVL, "ULONG")
    field(PINI, "YES")
    field(NELM, "3")
@@ -197,10 +210,10 @@ record(waveform, "$(P):VConv") {
 #
 record(waveform, "$(P):VConvSet") {
    field(DTYP, "stream")
-   field(INP, "@ROCHV.proto setCAL(SV) $(PORT) $(ADDR)")
+   field(INP, "@ROCHV.proto setCal(SV) $(PORT) $(ADDR)")
    field(FTVL, "ULONG")
    field(NELM, "3")
-   field(FLNK, "$(P):VConv")
+   field(FLNK, "$(P):VConv.PROC")
 }
 
 #
