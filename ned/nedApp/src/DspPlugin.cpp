@@ -117,7 +117,7 @@ bool DspPlugin::rspReadVersion(const DasPacket *packet)
 
     LOG_WARN("Unsupported DSP version");
     */
-    return false;
+    return true;
 }
 
 void DspPlugin::createConfigParams() {

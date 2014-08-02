@@ -286,7 +286,7 @@ static struct ocb_board_desc boards[] = {
 	},
 	{
 		.type = BOARD_SNS_PCIE,
-		.firmware = 0x000a0001,
+		.firmware = 0x000b0001,
 		.tx_fifo_len = 32768,
 		.unified_que = 1,
 		.bars = { 4096, 32768, 16777216 },
