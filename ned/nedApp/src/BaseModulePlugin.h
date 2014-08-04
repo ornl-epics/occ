@@ -115,8 +115,8 @@ class BaseModulePlugin : public BasePlugin {
         static const float NO_RESPONSE_TIMEOUT;         //!< Number of seconds to wait for module response
 
     public: // variables
-        static const int defaultInterfaceMask = BasePlugin::defaultInterfaceMask;
-        static const int defaultInterruptMask = BasePlugin::defaultInterruptMask;
+        static const int defaultInterfaceMask = BasePlugin::defaultInterfaceMask | asynOctetMask;
+        static const int defaultInterruptMask = BasePlugin::defaultInterruptMask | asynOctetMask;
 
     protected: // variables
         uint32_t m_hardwareId;                          //!< Hardware ID which this plugin is connected to
