@@ -177,9 +177,14 @@ class BaseModulePlugin : public BasePlugin {
          * module uses. It then sends the packet to the dispatcher in order to be delivered
          * through OCC optical link to the module.
          *
+         * Note: The length parameter is in bytes, although the payload is an array of
+         * 4-byte unsigned integers. OCC packets are always 4 byte aligned, but the LVDS
+         * data in them might be 2 byte aligned. The payload should always point to an
+         * array of 4 byte unsigned integers. The length should be dividable by 2.
+         *
          * @param[in] command A command of the packet to be sent out.
          * @param[in] packet Payload to be sent out, can be NULL if length is also 0.
-         * @param[in] length Payload length in number of 4-bytes.
+         * @param[in] length Payload length in bytes.
          */
         void sendToDispatcher(DasPacket::CommandType command, uint32_t *payload=0, uint32_t length=0);
 
@@ -373,7 +378,7 @@ class BaseModulePlugin : public BasePlugin {
          * @param[in] destination Hardware id of a module to receive command, can be one of DasPacket::HardwareId
          * @param[in] command Command to be put into the packet
          * @param[in] payload Payload to be sent as part of the packet.
-         * @param[in] length Payload length in number of 4-bytes.
+         * @param[in] length Payload length in bytes.
          * @return Newly created DasPacket pointer which must be deleted when not used anymore.
          */
         static DasPacket *createOpticalPacket(uint32_t destination, DasPacket::CommandType command, uint32_t *payload=0, uint32_t length=0);
@@ -384,7 +389,7 @@ class BaseModulePlugin : public BasePlugin {
          * @param[in] destination Hardware id of a module to receive command, can be one of DasPacket::HardwareId
          * @param[in] command Command to be put into the packet
          * @param[in] payload Payload to be sent as part of the packet.
-         * @param[in] length Payload length in number of 4-bytes.
+         * @param[in] length Payload length in bytes.
          * @return Newly created DasPacket pointer which must be deleted when not used anymore.
          */
         static DasPacket *createLvdsPacket(uint32_t destination, DasPacket::CommandType command, uint32_t *payload=0, uint32_t length=0);
