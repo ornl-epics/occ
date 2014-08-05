@@ -29,22 +29,16 @@ record(ao, "$(P):$(W)ConvSetZ") {
 #
 record(ai, "$(P):$(W)ConvX") {
    field(DTYP, "stream")
-   field(INP, "@ROCHV.proto getCalX(C$(W)) $(PORT) $(ADDR)")
+   field(INP, "@ROCHV.proto getCalXYZ(C$(W),$(P):$(W)Conv) $(PORT) $(ADDR)")
    field(HOPR, "65535")
    field(LOPR, "0")
    field(PINI, "YES")
 }
 record(ai, "$(P):$(W)ConvY") {
-   field(DTYP, "stream")
-   field(INP, "@ROCHV.proto getCalY(C$(W)) $(PORT) $(ADDR)")
-   field(SCAN, "I/O Intr")
    field(HOPR, "65535")
    field(LOPR, "0")
 }
 record(ai, "$(P):$(W)ConvZ") {
-   field(DTYP, "stream")
-   field(INP, "@ROCHV.proto getCalZ(C$(W)) $(PORT) $(ADDR)")
-   field(SCAN, "I/O Intr")
    field(HOPR, "65535")
    field(LOPR, "0")
 }
