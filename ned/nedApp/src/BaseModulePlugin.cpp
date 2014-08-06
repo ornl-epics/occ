@@ -61,7 +61,7 @@ BaseModulePlugin::BaseModulePlugin(const char *portName, const char *dispatcherP
     createParam("HardwareDate", asynParamOctet, &HardwareDate);
     createParam("HardwareVer",  asynParamInt32, &HardwareVer);
     createParam("HardwareRev",  asynParamInt32, &HardwareRev);
-    createParam("FirmwareDate", asynParamOctet, &HardwareDate);
+    createParam("FirmwareDate", asynParamOctet, &FirmwareDate);
     createParam("FirmwareVer",  asynParamInt32, &FirmwareVer);
     createParam("FirmwareRev",  asynParamInt32, &FirmwareRev);
 
