@@ -93,8 +93,8 @@ class BasePlugin : public asynPortDriver {
 	     * Initialize internal state of the class. This includes calling asynPortDriver
 	     * constructor, creating and setting default values for class parameters and creating
 	     * worker thread for received data callbacks. It does not, however, register to the
-	     * dispatcher messages. This needs to be done through the ENABLE_CALLBACKS parameter
-	     * @b after BasePlugin object has been fully constructed.
+	     * dispatcher messages. It needs to be manually enabled by the derived classes after
+         * BasePlugin object has been fully constructed or through Enable asyn parameter.
 	     *
 	     * @param[in] portName asyn port name.
 	     * @param[in] dispatcherPortName Name of the dispatcher asyn port to connect to.
@@ -191,9 +191,15 @@ class BasePlugin : public asynPortDriver {
         /**
          * Enable or disable callbacks from dispatcher.
          *
-         * @return asynSuccess if operation succeeded.
+         * Connecting to dispatcher means connecting to asyn port that the dispatcher
+         * provides in order to receive asynPortDriver callbacks from that port.
+         * By default callbacks are disabled. They can be enabled through the Enable
+         * asyn parameter or using this function.
+         *
+         * @param[in] enable Enable callbacks when true, disable otherwise.
+         * @return true if operation succeeded.
          */
-        asynStatus setCallbacks(bool enable);
+        bool enableCallbacks(bool enable);
 
     protected:
         asynUser *m_pasynuser;                      //!< asynUser handler for asyn management

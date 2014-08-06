@@ -81,27 +81,18 @@ BasePlugin::~BasePlugin()
         m_messageQueue.send(0, 0);
     }
 
-    (void)setCallbacks(false);
+    // Make sure to disconnect from asyn ports
+    (void)enableCallbacks(false);
 }
 
 asynStatus BasePlugin::writeInt32(asynUser *pasynUser, epicsInt32 value)
 {
-    int reason = pasynUser->reason;
-    asynStatus status = asynError;
-
-    if (reason == Enable) {
-        this->lock();
-        status = setCallbacks(value > 0);
-        this->unlock();
+    if (pasynUser->reason == Enable) {
+        if (enableCallbacks(value > 0) == false)
+            return asynError;
     }
 
-    if (status == asynSuccess) {
-        status = setIntegerParam(reason, value);
-        if (status == asynSuccess)
-            status = callParamCallbacks();
-    }
-
-    return status;
+    return asynPortDriver::writeInt32(pasynUser, value);
 }
 
 void BasePlugin::dispatcherCallback(asynUser *pasynUser, void *genericPointer)
@@ -182,17 +173,18 @@ void BasePlugin::processDataThread(void)
     }
 }
 
-asynStatus BasePlugin::setCallbacks(bool enable)
+bool BasePlugin::enableCallbacks(bool enable)
 {
+    asynStatus status = asynSuccess;
+
     asynInterface *interface = pasynManager->findInterface(m_pasynuser, asynGenericPointerType, 1);
     if (!interface) {
         asynPrint(this->pasynUserSelf, ASYN_TRACE_ERROR,
                   "BasePlugin::%s ERROR: Can't find asynGenericPointer interface on array port %s\n",
                   __func__, m_dispatcherPortName.c_str());
-        return asynError;
+        return false;
     }
 
-    asynStatus status = asynSuccess;
     if (enable && !m_asynGenericPointerInterrupt) {
         asynGenericPointer *asynGenericPointerInterface = reinterpret_cast<asynGenericPointer *>(interface->pinterface);
         status = asynGenericPointerInterface->registerInterruptUser(
@@ -218,7 +210,7 @@ asynStatus BasePlugin::setCallbacks(bool enable)
         }
     }
 
-    return status;
+    return (status == asynSuccess);
 }
 
 float BasePlugin::timerExpire(std::shared_ptr<Timer> &timer, std::function<float(void)> callback)

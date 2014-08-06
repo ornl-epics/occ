@@ -24,7 +24,6 @@ FemPlugin::FemPlugin(const char *portName, const char *dispatcherPortName, const
     LOG_DEBUG("Number of configured dynamic parameters: %zu", m_statusParams.size() + m_configParams.size());
 
     callParamCallbacks();
-    setCallbacks(true);
 }
 
 bool FemPlugin::rspDiscover(const DasPacket *packet)

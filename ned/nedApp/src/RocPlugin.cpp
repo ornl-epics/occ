@@ -50,7 +50,6 @@ RocPlugin::RocPlugin(const char *portName, const char *dispatcherPortName, const
     LOG_DEBUG("Number of configured dynamic parameters: %zu", m_statusParams.size() + m_configParams.size());
 
     callParamCallbacks();
-    setCallbacks(true);
 }
 
 bool RocPlugin::processResponse(const DasPacket *packet)

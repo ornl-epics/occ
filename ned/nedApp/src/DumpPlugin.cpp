@@ -14,7 +14,6 @@ DumpPlugin::DumpPlugin(const char *portName, const char *dispatcherPortName, int
     , m_fd(-1)
 {
     createParam("FilePath",     asynParamOctet, &FilePath);
-    setCallbacks(false);
 }
 
 DumpPlugin::~DumpPlugin()

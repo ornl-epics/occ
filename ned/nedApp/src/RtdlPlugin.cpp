@@ -26,8 +26,6 @@ RtdlPlugin::RtdlPlugin(const char *portName, const char *dispatcherPortName, int
     createParam("TofFullOffset",    asynParamInt32, &TofFullOffset);
     createParam("FrameOffset",      asynParamInt32, &FrameOffset);
     createParam("TofFixedOffset",   asynParamInt32, &TofFixedOffset);
-
-    setCallbacks(false);
 }
 
 void RtdlPlugin::processData(const DasPacketList * const packetList)

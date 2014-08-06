@@ -4,7 +4,8 @@ record(bo, "$(P)$(R)Enable")
    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Enable")
    field(ZNAM, "No")
    field(ONAM, "Yes")
-   field(VAL,  "0")
+   field(VAL,  "1")
+   field(PINI, "YES")
 }
 record(longin, "$(P)$(R)ProcCount")
 {
