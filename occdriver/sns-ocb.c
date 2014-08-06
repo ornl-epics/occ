@@ -59,33 +59,33 @@ do {									\
  */
 #define OCB_IMQ_ENTRIES		64
 #define OCB_IMQ_SIZE		(OCB_IMQ_ENTRIES * 8 * sizeof(u32))
-#define OCB_CQ_SIZE			(64 * 1024)
+#define OCB_CQ_SIZE		(64 * 1024)
 
 #define OCB_MMIO_BAR		0
 #define OCB_TXFIFO_BAR		1
-#define OCB_DDR_BAR			2
+#define OCB_DDR_BAR		2
 
 #define REG_VERSION		0x0000
 
 /* Old versions of the firmware had more configuration options, but
  * these are all that are used in the version we support for this driver.
  */
-#define REG_CONFIG						0x0004
+#define REG_CONFIG					0x0004
 #define		OCB_CONF_TX_ENABLE			0x00000001
 #define		OCB_CONF_RX_ENABLE			0x00000002
-#define		OCB_CONF_SELECT_OPTICAL		0x00000008
-#define		OCB_CONF_OPTICAL_ENABLE		0x00000010
-#define		OCB_CONF_ERROR_PKTS_ENABLE	0x00040000 // Turn detected errors into error packets
-#define		OCB_CONF_ERRORS_RESET		0x04000000 // Clear detected error counters
+#define		OCB_CONF_SELECT_OPTICAL			0x00000008
+#define		OCB_CONF_OPTICAL_ENABLE			0x00000010
+#define		OCB_CONF_ERR_PKTS_ENABLE		0x00040000 // Turn detected errors into error packets
+#define		OCB_CONF_ERRORS_RESET			0x04000000 // Clear detected error counters
 #define		OCB_CONF_RESET				0x80000000
-#define REG_STATUS						0x0008
+#define REG_STATUS					0x0008
 #define		OCB_STATUS_TX_DONE			0x00000001
 #define		OCB_STATUS_RX_LVDS			0x00000002
-#define		OCB_STATUS_BUFFER_FULL		0x00000004
-#define		OCB_STATUS_OPTICAL_PRESENT	0x00000008
-#define		OCB_STATUS_OPTICAL_NOSIGNAL	0x00000010
+#define		OCB_STATUS_BUFFER_FULL			0x00000004
+#define		OCB_STATUS_OPTICAL_PRESENT		0x00000008
+#define		OCB_STATUS_OPTICAL_NOSIGNAL		0x00000010
 #define		OCB_STATUS_TX_IDLE			0x00000040
-#define		OCB_STATUS_RX_OPTICAL		0x00000100
+#define		OCB_STATUS_RX_OPTICAL			0x00000100
 #define REG_MODULE_MASK					0x0010
 #define REG_MODULE_ID					0x0014
 #define REG_IRQ_STATUS					0x00c0
@@ -94,9 +94,9 @@ do {									\
 #define		OCB_IRQ_ENABLE				0x80000000
 #define REG_IRQ_ENABLE					0x00c4
 #define REG_FIRMWARE_DATE				0x0100
-#define REG_ERROR_CRC_COUNTER			0x0180 // CRC errors counter (PCIe only)
-#define REG_ERROR_LENGTH_COUNTER		0x0184 // Frame length errors counter (PCIe only)
-#define REG_ERROR_FRAME_COUNTER			0x0188 // Frame errors counter (PCIe only)
+#define REG_ERROR_CRC_COUNTER				0x0180 // CRC errors counter (PCIe only)
+#define REG_ERROR_LENGTH_COUNTER			0x0184 // Frame length errors counter (PCIe only)
+#define REG_ERROR_FRAME_COUNTER				0x0188 // Frame errors counter (PCIe only)
 #define REG_COMM_ERR					0x0240
 #define REG_LOST_PACKETS				0x0244		/* 16 bit register */
 
@@ -110,7 +110,7 @@ do {									\
 
 /* Command queue (split RX from older firmware, GE card) */
 #define REG_CQ_MAX_OFFSET	0x003c
-#define REG_CQ_ADDR			0x0040
+#define REG_CQ_ADDR		0x0040
 #define REG_CQ_ADDRHI		0x0044
 #define REG_CQ_PROD_ADDR	0x0048
 #define REG_CQ_PROD_ADDRHI	0x004c
@@ -119,7 +119,7 @@ do {									\
 
 /* Data queue */
 #define REG_DQ_MAX_OFFSET	0x0088
-#define REG_DQ_ADDR			0x0070
+#define REG_DQ_ADDR		0x0070
 #define REG_DQ_ADDRHI		0x0074
 #define REG_DQ_PROD_ADDR	0x0078
 #define REG_DQ_PROD_ADDRHI	0x007c
@@ -342,6 +342,8 @@ static u32 __snsocb_status(struct ocb *ocb)
 		status |= OCB_RESET_OCCURRED;
 	if (ocb->conf & OCB_CONF_RX_ENABLE)
 		status |= OCB_RX_ENABLED;
+	if (ocb->conf & OCB_CONF_ERR_PKTS_ENABLE)
+		status |= OCB_RX_ERR_PKTS_ENABLED;
 
 	hw_status = ioread32(ocb->ioaddr + REG_STATUS);
 	if (hw_status & OCB_STATUS_OPTICAL_PRESENT) {
@@ -1146,7 +1148,7 @@ static ssize_t snsocb_write(struct file *file, const char __user *buf,
 		ioread32(ocb->ioaddr + REG_CONFIG); // post write
 
 		break;
-    case OCB_CMD_ERR_PKTS_ENABLE:
+	case OCB_CMD_ERR_PKTS_ENABLE:
 		if (count != sizeof(u32))
 			return -EINVAL;
 
@@ -1155,9 +1157,9 @@ static ssize_t snsocb_write(struct file *file, const char __user *buf,
 
 		spin_lock_irq(&ocb->lock);
 		if (val)
-			ocb->conf |= OCB_CONF_ERROR_PKTS_ENABLE;
+			ocb->conf |= OCB_CONF_ERR_PKTS_ENABLE;
 		else
-			ocb->conf &= ~OCB_CONF_ERROR_PKTS_ENABLE;
+			ocb->conf &= ~OCB_CONF_ERR_PKTS_ENABLE;
 		val = ocb->conf;
 		spin_unlock_irq(&ocb->lock);
 		iowrite32(val, ocb->ioaddr + REG_CONFIG);

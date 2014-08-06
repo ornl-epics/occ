@@ -180,6 +180,7 @@ void OccPortDriver::refreshOccStatusThread()
             setIntegerParam(BoardFwVer,     occstatus.firmware_ver);
             setIntegerParam(OpticsPresent,  occstatus.optical_signal);
             setIntegerParam(OpticsEnabled,  occstatus.rx_enabled);
+            setIntegerParam(ErrPktsEnabled, occstatus.err_packets_enabled);
             setDoubleParam(FpgaTemp,        occstatus.fpga_temp);
             setDoubleParam(FpgaCoreVolt,    occstatus.fpga_core_volt);
             setDoubleParam(FpgaAuxVolt,     occstatus.fpga_aux_volt);
@@ -197,9 +198,9 @@ void OccPortDriver::refreshOccStatusThread()
 
             getIntegerParam(RxStalled,      &val);
             setIntegerParam(RxStalled,      (occstatus.stalled ? val | 1 : val & ~1));
-
-            callParamCallbacks();
         }
+
+        callParamCallbacks();
 
         this->unlock();
 
@@ -219,8 +220,7 @@ asynStatus OccPortDriver::writeInt32(asynUser *pasynUser, epicsInt32 value)
                 LOG_ERROR("Unable to %s optical link - %s(%d)", (value == CMD_OPTICS_ENABLE ? "enable" : "disable"), strerror(-ret), ret);
                 return asynError;
             }
-            setIntegerParam(OpticsEnabled, value == CMD_OPTICS_ENABLE ? 1 : 0);
-            callParamCallbacks();
+            // There's a thread to refresh OCC status, including RX enabled
             return asynSuccess;
         case CMD_ERROR_PACKETS_ENABLE:
         case CMD_ERROR_PACKETS_DISABLE:
@@ -229,8 +229,7 @@ asynStatus OccPortDriver::writeInt32(asynUser *pasynUser, epicsInt32 value)
                 LOG_ERROR("Unable to %s error packets - %s(%d)", (value == CMD_ERROR_PACKETS_ENABLE ? "enable" : "disable"), strerror(-ret), ret);
                 return asynError;
             }
-            setIntegerParam(ErrPktsEnabled, value == CMD_OPTICS_ENABLE ? 1 : 0);
-            callParamCallbacks();
+            // There's a thread to refresh OCC status, including error packets enabled
             return asynSuccess;
         default:
             LOG_ERROR("Unrecognized command '%d'", value);

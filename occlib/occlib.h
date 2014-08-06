@@ -54,6 +54,7 @@ typedef struct {
     bool stalled;                   //!< True if DMA memory for incoming data is full and device is in stalled mode.
     bool optical_signal;            //!< True when optical signal is present.
     bool rx_enabled;                //!< True when receiving of data is enabled.
+    bool err_packets_enabled;       //!< True when error packets are enabled.
     float fpga_temp;
     float fpga_core_volt;
     float fpga_aux_volt;
