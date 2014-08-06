@@ -38,7 +38,7 @@ void DumpPlugin::processData(const DasPacketList * const packetList)
         ssize_t ret = write(m_fd, packet, packet->length());
         if (ret != static_cast<ssize_t>(packet->length())) {
             if (ret == -1) {
-                LOG_ERROR("Aborting dumping to file due to an error: %s", strerror(errno));
+                LOG_ERROR("Abort dumping to file due to an error: %s", strerror(errno));
                 closeFile();
                 break;
             } else {
@@ -54,38 +54,54 @@ void DumpPlugin::processData(const DasPacketList * const packetList)
     setIntegerParam(RxCount,    nReceived);
     setIntegerParam(ProcCount,  nProcessed);
     callParamCallbacks();
+}
 
+asynStatus DumpPlugin::writeInt32(asynUser *pasynUser, epicsInt32 value)
+{
+    if (pasynUser->reason == Enable) {
+        if (value > 0) {
+            char path[1024];
+            if (m_fd == -1 && getStringParam(FilePath, sizeof(path), path) == asynSuccess && openFile(path) == false)
+                return asynError;
+        } else {
+            closeFile();
+        }
+    }
+    return BasePlugin::writeInt32(pasynUser, value);
 }
 
 asynStatus DumpPlugin::writeOctet(asynUser *pasynUser, const char *value, size_t nChars, size_t *nActual)
 {
     if (pasynUser->reason == FilePath) {
-        std::string path(value, nChars);
-        *nActual = nChars;
-        return (openFile(path) ? asynSuccess : asynError);
+        int enabled = 0;
+        // If plugin is enabled, switch file now, otherwise postpone until enabled
+        if (getIntegerParam(Enable, &enabled) == asynSuccess && enabled == 1) {
+            closeFile();
+            if (openFile(std::string(value, nChars)) == false) {
+                return asynError;
+            }
+        }
     }
     return BasePlugin::writeOctet(pasynUser, value, nChars, nActual);
 }
 
 bool DumpPlugin::openFile(const std::string &path)
 {
-    int fd = open(path.c_str(), O_WRONLY | O_APPEND | O_CREAT, S_IRUSR | S_IWUSR);
-    if (fd == -1) {
+    m_fd = open(path.c_str(), O_WRONLY | O_APPEND | O_CREAT, S_IRUSR | S_IWUSR);
+    if (m_fd == -1) {
         LOG_ERROR("Can not open dump file '%s': %s", path.c_str(), strerror(errno));
         return false;
     }
-    if (m_fd != -1)
-        close(m_fd);
 
     LOG_INFO("Switched dump file to '%s'", path.c_str());
-    m_fd = fd;
     return true;
 }
 
 void DumpPlugin::closeFile()
 {
     if (m_fd != -1) {
-        close(m_fd);
+        (void)fcntl(m_fd, F_SETFL, O_NONBLOCK); // best we can do, if fcntl() fails, close() could stall for a while
+        (void)close(m_fd);
         m_fd = -1;
     }
 }
