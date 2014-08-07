@@ -16,6 +16,20 @@ record(calc, "$(P):AlarmSum") {
 }
 
 #
+# initialization fanout.  This is because PINI doesn't work well in this
+# driver.  Therefore, this fanout needs to be processed, maybe from st.cmd,
+# at startup.
+#
+record(fanout, "$(P):InitProc") {
+   field(LNK1, "$(P):RampRateSet")
+   field(LNK2, "$(P):MaxVSet")
+   field(LNK3, "$(P):Enable")
+   field(LNK4, "$(P):VoltSet")
+   field(LNK5, "$(P):VConvSet")
+   field(LNK6, "$(P):DConvSet")
+}
+
+#
 #  Use this one for display
 #
 record(ai, "$(P):RampRate") {
@@ -24,21 +38,6 @@ record(ai, "$(P):RampRate") {
    field(INP, "@ROCHV.proto getNum(RR) $(PORT) $(ADDR)")
    field(HOPR, "255")
    field(LOPR, "0")
-   field(EGU, "ms/step")
-} 
-
-#
-# This one is the target of the flnk from the set function.  It always fails.
-# Then it causes the second ramprate read to run, and it succeeds.
-#
-record(ai, "$(P):RampRate1") {
-   field(DTYP, "stream")
-   field(DESC, "Readback ramp rate")
-   field(INP, "@ROCHV.proto getNum(RR) $(PORT) $(ADDR)")
-   field(HOPR, "255")
-   field(LOPR, "0")
-   field(PINI, "YES")
-   field(FLNK, "$(P):RampRate")
    field(EGU, "ms/step")
 } 
 
@@ -52,7 +51,8 @@ record(ao, "$(P):RampRateSet") {
    field(DRVH, "255")
    field(LOPR, "0")
    field(DRVL, "0")
-   field(FLNK, "$(P):RampRate1")
+   info(autosaveFields, "VAL")
+   field(FLNK, "$(P):RampRate")
 }
 
 #
@@ -133,14 +133,16 @@ record(ai, "$(P):Volt") {
 #}
 
 #
-# Current readback.  Do it the ordinary EPICS way.  Don't know ESLO yet.
+# Current readback.  Do it the ordinary EPICS way.  
+#
+# ESLO = .33 ma / 1023 bits  (for now)
 #
 record(ai, "$(P):Curr") {
    field(DTYP, "stream")
    field(DESC, "Current Readback")
    field(INP, "@ROCHV.proto getNum(RC) $(PORT) $(ADDR)")
    field(LINR, "SLOPE")
-   field(ESLO, "1")
+   field(ESLO, "000322581")
    field(EOFF, "0")
    field(EGU, "ma")
    field(HSV, "MAJOR")
@@ -156,12 +158,11 @@ record(ai, "$(P):MaxV") {
    field(DTYP, "stream")
    field(DESC, "maximum voltage Readback")
    field(INP, "@ROCHV.proto getNum(MV) $(PORT) $(ADDR)")
-   field(PINI, "YES")
    field(EGU, "V")
 }
 
 #
-# set max voltage.  Presumeably this is in volts, not raw DAC counts...
+# set max voltage.  This is in volts, not raw DAC counts...
 #
 record(ao, "$(P):MaxVSet") {
    field(DTYP, "stream")
@@ -172,64 +173,24 @@ record(ao, "$(P):MaxVSet") {
    field(DRVH, "2200")
    field(HOPR, "2200")
    field(EGU, "V")
+   info(autosaveFields, "VAL")
    field(FLNK, "$(P):MaxV")
 }
 
 #
-# Voltage set (DAC) conversion parameters readback
-#
-#record(waveform, "$(P):VSetConv") {
-#   field(DTYP, "stream")
-#   field(INP, "@ROCHV.proto getCal(CD) $(PORT) $(ADDR)")
-#   field(FTVL, "ULONG")
-#   field(PINI, "YES")
-#   field(NELM, "3")
-#}
-##
-## Voltage set (DAC) conversion parameters set
-##
-#record(waveform, "$(P):VSetConvSet") {
-#   field(DTYP, "stream")
-#   field(INP, "@ROCHV.proto setCal(SD) $(PORT) $(ADDR)")
-#   field(FTVL, "ULONG")
-#   field(NELM, "3")
-#   field(FLNK, "$(P)VSetConv")
-#}
-#
-# Voltage readback (ADC) conversion parameters readback
-#
-#record(waveform, "$(P):VConv") {
-#   field(DTYP, "stream")
-#   field(INP, "@ROCHV.proto getCal(CV) $(PORT) $(ADDR)")
-#   field(FTVL, "ULONG")
-#   field(PINI, "YES")
-#   field(NELM, "3")
-#}
-#
-# Voltage readback (ADC) conversion parameters set
-#
-#record(waveform, "$(P):VConvSet") {
-#   field(DTYP, "stream")
-#   field(INP, "@ROCHV.proto setCal(SV) $(PORT) $(ADDR)")
-#   field(FTVL, "ULONG")
-#   field(NELM, "3")
-#   field(FLNK, "$(P):VConv.PROC")
-#}
-
-#
-# here we have a nice switch but the question is how to init it
+# here we have a nice switch 
 #
 record(bo, "$(P):Enable") {
    field(DESC, "enable/disable switch for GUI")
    field(DTYP, "Soft Channel")
-   field(OUT, "$(P):EnableHW")
+   field(OUT, "$(P):EnableHW PP MS")
    field(ONAM, "ON")
    field(ZNAM, "OFF")
+   info(autosaveFields, "VAL")
 }
 
 #
 # ONAM and ZNAM look silly because they contain the actual commands to send
-# And how do you know what to set it to at the startup?
 #
 record(bo, "$(P):EnableHW") {
    field(DESC, "hardware enable/disable")
@@ -237,25 +198,12 @@ record(bo, "$(P):EnableHW") {
    field(OUT, "@ROCHV.proto sendBoCmd() $(PORT) $(ADDR)")
    field(ONAM, "8")
    field(ZNAM, "*")
+   info(autosaveFields, "VAL")
 }
 
 #
 # Do the following controls by just sending "PROC"
 #
-record(bo, "$(P):DisableB") {
-   field(DTYP, "stream")
-   field(OUT, "@ROCHV.proto sendCmd(*) $(PORT) $(ADDR)")
-   field(DOL, "1")
-   field(ONAM, "Disable")
-   field(ZNAM, "Disable")
-}
-record(bo, "$(P):EnableB") {
-   field(DTYP, "stream")
-   field(OUT, "@ROCHV.proto sendCmd(8) $(PORT) $(ADDR)")
-   field(DOL, "1")
-   field(ONAM, "Enable")
-   field(ZNAM, "Enable")
-}
 record(bo, "$(P):ClearErr") {
    field(DESC, "Clear error code")
    field(DTYP, "stream")
@@ -274,16 +222,15 @@ record(bo, "$(P):ResetDAC") {
 }
 
 #
-# Get error code.  
+# Get error code. 
 #
 record(waveform, "$(P):ErrorInp") {
    field(DESC, "Input error byte")
    field(DTYP, "stream")
-   field(PINI, "YES")
    field(INP, "@ROCHV.proto getError() $(PORT) $(ADDR)")
    field(FTVL, "UCHAR")
    field(NELM, "2")
-   field(SCAN, "I/O Intr")
+   field(SCAN, "1 second")
    field(FLNK, "$(P):ErrorBits")
 }
 
@@ -294,11 +241,9 @@ record(mbbiDirect, "$(P):ErrorBits") {
    field(DESC, "Provide Error Bits")
    field(DTYP, "Raw Soft Channel")
    field(INP, "$(P):ErrorInp NPP MS")
-   field(FLNK, "$(P):ClearErr")
 }
 
 record(bi, "$(P):CommAlarm") {
-   field(PINI, "YES")
    field(DTYP, "Raw Soft Channel")
    field(INP, "$(P):ErrorBits.RVAL CPP NMS")
    field(OSV, "MAJOR")
@@ -317,4 +262,124 @@ record(asyn,"$(P):AsynRec")
     field(IMAX,"30")
 }
 
+#
+# Conversion (Calibration) parameters set.  the idea here is that you
+# set the 3 individual records, then PROC the top one to drive them...
+#
+# Set for the DAC
+#
+record(ao, "$(P):DConvSet") {
+   field(DTYP, "stream")
+   field(OUT, "@ROCHV.proto setCalA(SD,$(P):DConvSet) $(PORT) $(ADDR)")
+   field(FLNK, "$(P):DConvX")
+}
+record(ao, "$(P):DConvSetX") {
+   field(DRVH, "65535")
+   field(HOPR, "65535")
+   field(LOPR, "0")
+   field(DRVL, "0")
+   info(autosaveFields, "VAL")
+}
+record(ao, "$(P):DConvSetY") {
+   field(DRVH, "65535")
+   field(HOPR, "65535")
+   field(LOPR, "0")
+   field(DRVL, "0")
+   info(autosaveFields, "VAL")
+}
+record(ao, "$(P):DConvSetZ") {
+   field(HOPR, "65535")
+   field(LOPR, "0")
+   info(autosaveFields, "VAL")
+}
+
+#
+# Check out what it does.  note this works before writing. Produces DAC setting
+#
+record(calc, "$(P):DSim") {
+   field(INPA, "$(P):DConvSetX CPP")
+   field(INPB, "$(P):DConvSetY CPP")
+   field(INPC, "$(P):DConvSetZ CPP")
+   field(INPD, "$(P):VoltSet CPP MS")
+   field(CALC, "D*(A/B)+C")
+}
+
+#
+# get records 
+#
+record(ai, "$(P):DConvX") {
+   field(DTYP, "stream")
+   field(INP, "@ROCHV.proto getCalXYZ(CD,$(P):DConv) $(PORT) $(ADDR)")
+   field(HOPR, "65535")
+   field(LOPR, "0")
+}
+record(ai, "$(P):DConvY") {
+   field(HOPR, "65535")
+   field(LOPR, "0")
+}
+record(ai, "$(P):DConvZ") {
+   field(HOPR, "65535")
+   field(LOPR, "0")
+   field(FLNK, "$(P):VoltSet PP")
+}
+
+#
+# Conversion (Calibration) parameters set.  the idea here is that you
+# set the 3 individual records, then PROC the top one to drive them...
+#
+# Set for the ADC
+#
+record(ao, "$(P):VConvSet") {
+   field(DTYP, "stream")
+   field(OUT, "@ROCHV.proto setCalA(SV,$(P):VConvSet) $(PORT) $(ADDR)")
+   field(FLNK, "$(P):VConvX")
+}
+record(ao, "$(P):VConvSetX") {
+   field(DRVH, "65535")
+   field(HOPR, "65535")
+   field(LOPR, "0")
+   field(DRVL, "0")
+   info(autosaveFields, "VAL")
+}
+record(ao, "$(P):VConvSetY") {
+   field(DRVH, "65535")
+   field(HOPR, "65535")
+   field(LOPR, "0")
+   field(DRVL, "0")
+   info(autosaveFields, "VAL")
+}
+record(ao, "$(P):VConvSetZ") {
+   field(HOPR, "65535")
+   field(LOPR, "0")
+   info(autosaveFields, "VAL")
+}
+
+#
+# Check out what it does.  note this works before writing. 
+#
+record(calc, "$(P):VSim") {
+   field(INPA, "$(P):VConvSetX CPP")
+   field(INPB, "$(P):VConvSetY CPP")
+   field(INPC, "$(P):VConvSetZ CPP")
+   field(INPD, "$(P):ReadADC PP MS")
+   field(CALC, "D*(A/B)+C")
+}
+
+#
+# get records 
+#
+record(ai, "$(P):VConvX") {
+   field(DTYP, "stream")
+   field(INP, "@ROCHV.proto getCalXYZ(CV,$(P):VConv) $(PORT) $(ADDR)")
+   field(HOPR, "65535")
+   field(LOPR, "0")
+}
+record(ai, "$(P):VConvY") {
+   field(HOPR, "65535")
+   field(LOPR, "0")
+}
+record(ai, "$(P):VConvZ") {
+   field(HOPR, "65535")
+   field(LOPR, "0")
+}
 

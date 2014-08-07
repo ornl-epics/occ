@@ -88,6 +88,6 @@ create_monitor_set("$(IOCNAME).req", 30)
 # Display status
 save_restoreShow(10)
 
-# The init read of this always fails, don't want to read all the time
+# Fanout record for init in HVROC.db instead of PINI mechanism
 epicsThreadSleep 1 
-dbtr $(PREFIX)Det:HV1:RampRate
+dbpf $(PREFIX)Det:HV1:InitProc.PROC 1
