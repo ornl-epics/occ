@@ -6,6 +6,7 @@
 #include <linux/pci.h>
 #include <linux/io.h>
 #include <linux/interrupt.h>
+#include <linux/device.h>
 #include <linux/dma-mapping.h>
 #include <linux/fs.h>
 #include <linux/cdev.h>
@@ -36,6 +37,20 @@ do {									\
 #define dev_err_ratelimited(dev, fmt, ...)				\
 	dev_level_ratelimited(dev_err, dev, fmt, ##__VA_ARGS__)
 #endif
+
+/* Helper macro for defining sysfs device attributes and hiding
+ * compound literals.
+ */
+#define SNSOCB_DEVICE_ATTR(_name, _mode, _show, _store)			\
+	&(struct device_attribute) {					\
+		.attr = {						\
+			.name = _name,					\
+			.mode = _mode,					\
+		},							\
+		.show = snsocb_sysfs_show,				\
+		.store = snsocb_sysfs_store,				\
+	}
+
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(3,8,0)
 #define __devexit
@@ -93,6 +108,9 @@ do {									\
 #define		OCB_IRQ_RX_DONE				0x00000010
 #define		OCB_IRQ_ENABLE				0x80000000
 #define REG_IRQ_ENABLE					0x00c4
+#define REG_IRQ_CNTL					0x00c8
+#define		OCB_COALESCING_ENABLE			0x80000000
+#define		OCB_EOP_ENABLE				0x40000000
 #define REG_FIRMWARE_DATE				0x0100
 #define REG_ERROR_CRC_COUNTER				0x0180 // CRC errors counter (PCIe only)
 #define REG_ERROR_LENGTH_COUNTER			0x0184 // Frame length errors counter (PCIe only)
@@ -156,6 +174,10 @@ do {									\
  */
 #define OCB_BUGGY_IDX_THRESHOLD	(16 * 2024)
 
+/* Forward declaration of functions used in the structs */
+static ssize_t snsocb_sysfs_show(struct device *dev, struct device_attribute *attr, char *buf);
+static ssize_t snsocb_sysfs_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t count);
+
 /* Layout of the hardware Incoming Message Queue */
 struct hw_imq {
 	u32	dest;
@@ -177,12 +199,13 @@ struct sw_imq {
 
 /* Board capabilities description structure */
 struct ocb_board_desc {
-    u32 type;
-    u32 firmware;
-    u32 tx_fifo_len;
-    u32 unified_que;
-    u32 bars[3];
+	u32 type;
+	u32 firmware;
+	u32 tx_fifo_len;
+	u32 unified_que;
+	u32 bars[3];
 	u32 reset_errcnt;	// Does board have support for resetting error counters?
+	struct attribute_group sysfs;
 };
 
 struct ocb {
@@ -249,7 +272,7 @@ struct ocb {
 	/* Needed to synchronize interrupts before card reset */
 	struct pci_dev *pdev;
 
-    /* Pointer to a statically allocated description for this board */
+	/* Pointer to a statically allocated description for this board */
 	struct ocb_board_desc *board;
 };
 
@@ -291,6 +314,10 @@ static struct ocb_board_desc boards[] = {
 		.unified_que = 1,
 		.bars = { 4096, 32768, 16777216 },
 		.reset_errcnt = 1,
+		.sysfs.attrs = (struct attribute **) (struct device_attribute *[]){
+			SNSOCB_DEVICE_ATTR("irq_coalescing", 0644, snsocb_sysfs_show, snsocb_sysfs_store),
+			NULL,
+		},
 	},
 /*
 	{
@@ -1226,6 +1253,31 @@ static void snsocb_free(struct device *dev)
 	kfree(ocb);
 }
 
+static ssize_t snsocb_sysfs_show(struct device *dev, struct device_attribute *attr, char *buf)
+{
+	struct ocb *ocb = dev_get_drvdata(dev);
+	if (strncmp(attr->attr.name, "irq_coalescing", strlen("irq_coalescing")) == 0) {
+		u32 val = ioread32(ocb->ioaddr + REG_IRQ_CNTL) & 0xFFFF;
+		return scnprintf(buf, PAGE_SIZE, "%u\n", val);
+	}
+	return 0;
+}
+
+static ssize_t snsocb_sysfs_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t count)
+{
+	struct ocb *ocb = dev_get_drvdata(dev);
+	if (strncmp(attr->attr.name, "irq_coalescing", strlen("irq_coalescing")) == 0) {
+		u32 val;
+		if (sscanf(buf, "%u", &val) == 1) {
+			val &= 0xFFFF;
+			if (val > 0) val |= OCB_COALESCING_ENABLE;
+			iowrite32(val, ocb->ioaddr + REG_IRQ_CNTL);
+		}
+		return count;
+	}
+	return 0;
+}
+
 static struct file_operations snsocb_fops = {
 	.owner	 = THIS_MODULE,
 	.open	 = snsocb_open,
@@ -1352,6 +1404,14 @@ static int __devexit snsocb_probe(struct pci_dev *pdev,
 		goto error_dev;
 	}
 
+	if (ocb->board->sysfs.attrs) {
+		err = sysfs_create_group(&dev->kobj, &ocb->board->sysfs);
+		if (err) {
+			dev_err(dev, "unable to create sysfs entries");
+			goto error_dev;
+		}
+        }
+
 	err = devm_request_irq(dev, pdev->irq, snsocb_interrupt, IRQF_SHARED,
 			       KBUILD_MODNAME, ocb);
 	if (err) {
@@ -1423,6 +1483,8 @@ static int __devexit snsocb_probe(struct pci_dev *pdev,
 		goto error_cdev;
 	}
 
+	dev_set_drvdata(dev, ocb);
+
 	dev_info(dev, "snsocb%d: %s OCB version %08x, datecode %08x\n",
 		 minor, snsocb_name[board_id],
 		 ioread32(ocb->ioaddr + REG_VERSION),
@@ -1440,6 +1502,8 @@ error_dq:
 	snsocb_free_queue(dev, ocb->hwimq_page, ocb->hwimq_dma, OCB_IMQ_SIZE);
 	snsocb_free_queue(dev, ocb->hwdq_page, ocb->hwdq_dma, OCB_DQ_SIZE);
 error_dev:
+	if (ocb && ocb->board && ocb->board->sysfs.attrs)
+		sysfs_remove_group(&dev->kobj, &ocb->board->sysfs);
 	put_device(&ocb->dev);
 	mutex_lock(&snsocb_devlock);
 	snsocb_devs[minor] = NULL;
@@ -1453,6 +1517,9 @@ static void __devexit snsocb_remove(struct pci_dev *pdev)
 	/* Very little to do here, since most resources are managed for us. */
 	struct ocb *ocb = pci_get_drvdata(pdev);
 	struct device *dev = &pdev->dev;
+
+	if (ocb && ocb->board && ocb->board->sysfs.attrs)
+		sysfs_remove_group(&dev->kobj, &ocb->board->sysfs);
 
 	device_del(&ocb->dev);
 	cdev_del(&ocb->cdev);
