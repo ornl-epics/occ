@@ -142,6 +142,7 @@ record(ai, "$(P):Curr") {
    field(DESC, "Current Readback")
    field(INP, "@ROCHV.proto getNum(RC) $(PORT) $(ADDR)")
    field(LINR, "SLOPE")
+   field(PREC, "4")
    field(ESLO, "000322581")
    field(EOFF, "0")
    field(EGU, "ma")
