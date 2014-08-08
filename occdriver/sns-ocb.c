@@ -200,7 +200,7 @@ struct sw_imq {
 /* Board capabilities description structure */
 struct ocb_board_desc {
 	u32 type;
-	u32 firmware;
+	u32 *firmware;
 	u32 tx_fifo_len;
 	u32 unified_que;
 	u32 bars[3];
@@ -285,7 +285,7 @@ static const char *snsocb_name[] = {
 static struct ocb_board_desc boards[] = {
 	{
 		.type = BOARD_SNS_PCIX,
-		.firmware = 0x31121106,
+		.firmware = (u32 []){ 0x31121106, 0x31130603, 0 },
 		.tx_fifo_len = 8192,
 		.unified_que = 1,
 		.bars = { 1048576, 1048576 },
@@ -293,15 +293,7 @@ static struct ocb_board_desc boards[] = {
 	},
 	{
 		.type = BOARD_SNS_PCIX,
-		.firmware = 0x31130603,
-		.tx_fifo_len = 8192,
-		.unified_que = 1,
-		.bars = { 1048576, 1048576 },
-		.reset_errcnt = 0,
-	},
-	{
-		.type = BOARD_SNS_PCIX,
-		.firmware = 0x22100817,
+		.firmware = (u32 []){ 0x22100817, 0 },
 		.tx_fifo_len = 8192,
 		.unified_que = 0,
 		.bars = { 1048576, 1048576 },
@@ -309,7 +301,15 @@ static struct ocb_board_desc boards[] = {
 	},
 	{
 		.type = BOARD_SNS_PCIE,
-		.firmware = 0x000b0001,
+		.firmware = (u32 []){ 0x000a0001, 0 },
+		.tx_fifo_len = 32768,
+		.unified_que = 1,
+		.bars = { 4096, 32768, 16777216 },
+		.reset_errcnt = 1,
+	},
+	{
+		.type = BOARD_SNS_PCIE,
+		.firmware = (u32 []){ 0x000b0001, 0 },
 		.tx_fifo_len = 32768,
 		.unified_que = 1,
 		.bars = { 4096, 32768, 16777216 },
@@ -319,14 +319,6 @@ static struct ocb_board_desc boards[] = {
 			NULL,
 		},
 	},
-/*
-	{
-		.type = BOARD_GE_PCIE,
-		.firmware = 0x0,
-		.unified_que = 0,
-		.bars = { 1048576, 1048576 }
-	},
-*/
 	{ 0 }
 };
 
@@ -1394,8 +1386,16 @@ static int __devexit snsocb_probe(struct pci_dev *pdev,
 	ocb->firmware_version = ioread32(ocb->ioaddr + REG_VERSION);
 	ocb->board = &boards[0];
 	while (ocb->board && ocb->board->type != 0) {
-		if (ocb->board->type == board_id && ocb->board->firmware == ocb->firmware_version)
-			break;
+		if (ocb->board->type == board_id) {
+			u32 *firmware = ocb->board->firmware;
+			while (*firmware != 0) {
+				if (*firmware == ocb->firmware_version)
+					break;
+				firmware++;
+			}
+			if (*firmware == ocb->firmware_version)
+				break;
+		}
 		++ocb->board;
 	}
 	if (!ocb->board || ocb->board->type == 0) {
