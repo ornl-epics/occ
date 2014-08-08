@@ -14,6 +14,11 @@ O.Common/
 occ2csv
 sms2csv
 
+# Doxygen files
+*.dox
+ned/nedApp/src/html
+ned/nedApp/src/latex
+
 # Backup files
 *~
 *\#
