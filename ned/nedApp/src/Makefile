@@ -78,6 +78,10 @@ $(PROD_NAME)_DOXS  += RocPlugin_v51.dox
 $(PROD_NAME)_DOXS  += RocPlugin_v52.dox
 $(PROD_NAME)_DOXS  += FemPlugin.dox
 
+$(PROD_NAME)_TMPL  += DspPlugin.template
+$(PROD_NAME)_TMPL  += RocPlugin.template
+$(PROD_NAME)_TMPL  += FemPlugin.template
+
 #===========================
 
 include $(TOP)/configure/RULES
@@ -89,6 +93,11 @@ include $(TOP)/configure/RULES
 
 doc: Doxyfile $($(PROD_NAME)_DOXS)
 	doxygen >/dev/null
+
+%.template: %.cpp
+	./tools/export2epics.pl -name_prefix=BL99b:xxxx: -input_file=$^ > ../Db/$@
+
+dbtemplates: $(ned_TMPL)
 
 clean::
 	rm -f $($(PROD_NAME)_DOXS)
