@@ -40,7 +40,7 @@ RocPlugin::RocPlugin(const char *portName, const char *dispatcherPortName, const
     if (m_version == "v51") {
         createStatusParams_v51();
         createConfigParams_v51();
-    } else if (m_version == "v52" || m_version == "v54") {
+    } else if (m_version == "v52" || m_version == "v55") {
         createStatusParams_v52();
         createConfigParams_v52();
     } else {
@@ -122,7 +122,7 @@ bool RocPlugin::rspReadVersion(const DasPacket *packet)
         return false;
 
     BaseModulePlugin::Version version;
-    if (!parseVersionRsp(packet, version)) {
+    if (!parseVersionRsp(packet, version, sizeof(RspReadVersion_v5x))) {
         LOG_WARN("Bad READ_VERSION response");
         return false;
     }
@@ -142,7 +142,7 @@ bool RocPlugin::rspReadVersion(const DasPacket *packet)
             return true;
         if (m_version == "v52" && version.fw_revision == 2)
             return true;
-        if (m_version == "v54" && version.fw_revision == 4)
+        if (m_version == "v55" && version.fw_revision == 5)
             return true;
     }
 
@@ -150,10 +150,12 @@ bool RocPlugin::rspReadVersion(const DasPacket *packet)
     return false;
 }
 
-bool RocPlugin::parseVersionRsp(const DasPacket *packet, BaseModulePlugin::Version &version)
+bool RocPlugin::parseVersionRsp(const DasPacket *packet, BaseModulePlugin::Version &version, size_t expectedLen)
 {
     const RspReadVersion_v5x *response;
-    if (packet->getPayloadLength() == sizeof(RspReadVersion_v5x)) {
+    if (expectedLen != 0 && expectedLen != packet->getPayloadLength()) {
+        return false;
+    } else if (packet->getPayloadLength() == sizeof(RspReadVersion_v5x)) {
         response = reinterpret_cast<const RspReadVersion_v5x*>(packet->getPayload());
     } else if (packet->getPayloadLength() == sizeof(RspReadVersion_v54)) {
         response = reinterpret_cast<const RspReadVersion_v5x*>(packet->getPayload());

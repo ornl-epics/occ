@@ -66,9 +66,26 @@ class RocPlugin : public BaseModulePlugin {
         /**
          * Try to parse the ROC version response packet an populate the structure.
          *
+         * Function will parse all known ROC version responses and populate the
+         * version structure. If the function returns false, it does not recognize
+         * the response.
+         *
+         * All ROC boards except for v5.4 have the same response. v5.4 adds an extra
+         * vendor field which the function disregards.
+         *
+         * When expectedLen parameter is non-zero, the function will only accept
+         * the response that matches the size. This is useful when the version
+         * is known in advance and this function can be used to verify that returned
+         * version matches configured one. If the parsed version length doesn't match
+         * the expected length, funtion returns false.
+         *
+         * @param[in] packet to be parsed
+         * @param[out] version structure to be populated
+         * @param[in] expectedLen expected size of the version response, used to
+         *                        verify the parsed packet matches this one
          * @return true if succesful, false if version response packet could not be parsed.
          */
-        static bool parseVersionRsp(const DasPacket *packet, BaseModulePlugin::Version &version);
+        static bool parseVersionRsp(const DasPacket *packet, BaseModulePlugin::Version &version, size_t expectedLen=0);
 
     private: // functions
         /**
