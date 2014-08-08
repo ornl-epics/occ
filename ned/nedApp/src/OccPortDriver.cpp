@@ -22,7 +22,7 @@ static const int asynStackSize     = 0;
 
 #define NUM_OCCPORTDRIVER_PARAMS ((int)(&LAST_OCCPORTDRIVER_PARAM - &FIRST_OCCPORTDRIVER_PARAM + 1))
 
-EPICS_REGISTER(ned, OccPortDriver, 3, "Port name", string, "Device id", int, "Local buffer size", int);
+EPICS_REGISTER(Occ, OccPortDriver, 2, "Port name", string, "Local buffer size", int);
 
 const float OccPortDriver::DEFAULT_BASIC_STATUS_INTERVAL = 1.0;     //!< How often to update frequent OCC status parameters
 const float OccPortDriver::DEFAULT_EXTENDED_STATUS_INTERVAL = 60.0; //!< How ofter to update less frequently changing OCC status parameters
@@ -40,7 +40,7 @@ extern "C" {
     }
 }
 
-OccPortDriver::OccPortDriver(const char *portName, int deviceId, uint32_t localBufferSize)
+OccPortDriver::OccPortDriver(const char *portName, uint32_t localBufferSize)
 	: asynPortDriver(portName, asynMaxAddr, NUM_OCCPORTDRIVER_PARAMS, asynInterfaceMask,
 	                 asynInterruptMask, asynFlags, asynAutoConnect, asynPriority, asynStackSize)
     , m_occ(NULL)

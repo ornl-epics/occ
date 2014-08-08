@@ -75,12 +75,11 @@ class epicsShareFunc OccPortDriver : public asynPortDriver {
 	     * Constructor
 	     *
 	     * @param[in] portName Name of the asyn port to which plugins can connect
-	     * @param[in] deviceId unused
 	     * @param[in] localBufferSize If not zero, a local buffer will be created
 	     *            where all data from OCC DMA buffer will be copied to as soon
 	     *            as it is available.
 	     */
-		OccPortDriver(const char *portName, int deviceId, uint32_t localBufferSize);
+		OccPortDriver(const char *portName, uint32_t localBufferSize);
 
 		/**
 		 * Destructor

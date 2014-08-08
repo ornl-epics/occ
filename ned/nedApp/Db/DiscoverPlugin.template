@@ -1,7 +1,7 @@
-record(mbbo, "$(P)$(R)Command")
+record(mbbo, "$(P)Command")
 {
     field(DTYP, "asynInt32")
-    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Command")
+    field(OUT,  "@asyn($(PORT))Command")
     field(ZRVL, "0")
     field(ONVL, "1")
     field(ZRST, "")

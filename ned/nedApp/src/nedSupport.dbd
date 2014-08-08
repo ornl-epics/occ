@@ -1,7 +1,7 @@
 include "base.dbd"
 include "stream.dbd"
 include "asyn.dbd"
-registrar("nedRegister")
+registrar("OccRegister")
 registrar("CmdDispatcherRegister")
 registrar("DiscoverPluginRegister")
 registrar("ProxyPluginRegister")

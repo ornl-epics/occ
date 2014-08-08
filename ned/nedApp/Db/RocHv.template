@@ -1,10 +1,10 @@
-record(longin, "$(P)$(R)HvVoltRead") {
+record(longin, "$(P)HvVoltRead") {
     field(DTYP, "stream")
     field(INP,  "@snshv.proto read_voltage $(PORT) $(ADDR) $(TIMEOUT)")
     field(SCAN, "1 second")
     field(EGU,  "V")
 }
-record(longout, "$(P)$(R)HvVoltWrite") {
+record(longout, "$(P)HvVoltWrite") {
     field(DTYP, "stream")
     field(OUT,  "@snshv.proto write_voltage $(PORT) $(ADDR) $(TIMEOUT)")
     field(SCAN, "Passive")

@@ -1,9 +1,9 @@
-record(mbbi, "$(P)$(R)Status")
+record(mbbi, "$(P)Status")
 {
     field(DESC, "Status of OccPortDriver")
     field(PINI, "YES")
     field(DTYP, "asynInt32")
-    field(INP,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Status")
+    field(INP,  "@asyn($(PORT))Status")
     field(ZRVL, "0")
     field(ONVL, "1")
     field(TWVL, "2")
@@ -12,11 +12,11 @@ record(mbbi, "$(P)$(R)Status")
     field(TWST, "OCC error")
     field(SCAN, "I/O Intr")
 }
-record(mbbo, "$(P)$(R)Command")
+record(mbbo, "$(P)Command")
 {
     field(DESC, "Issue OccPortDriver command")
     field(DTYP, "asynInt32")
-    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))Command")
+    field(OUT,  "@asyn($(PORT))Command")
     field(ZRVL, "0")
     field(ONVL, "1")
     field(TWVL, "2")
@@ -31,12 +31,12 @@ record(mbbo, "$(P)$(R)Command")
     field(VAL,  "1")
 }
 
-record(mbbi, "$(P)$(R)LastErr")
+record(mbbi, "$(P)LastErr")
 {
     field(DESC, "Last error returned from OCC library")
     field(PINI, "YES")
     field(DTYP, "asynInt32")
-    field(INP,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))LastErr")
+    field(INP,  "@asyn($(PORT))LastErr")
     # Those match to return code of occ_*() functions
     field(ZRVL, "0")
     field(ONVL, "1")  # EPERM
@@ -54,12 +54,12 @@ record(mbbi, "$(P)$(R)LastErr")
     field(SXST, "Device reset")
     field(SCAN, "I/O Intr")
 }
-record(mbbi, "$(P)$(R)BoardType")
+record(mbbi, "$(P)BoardType")
 {
     field(DESC, "OCC board type")
     field(PINI, "YES")
     field(DTYP, "asynInt32")
-    field(INP,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))BoardType")
+    field(INP,  "@asyn($(PORT))BoardType")
     field(ONVL, "1")
     field(TWVL, "2")
     field(FFVL, "15")
@@ -67,37 +67,37 @@ record(mbbi, "$(P)$(R)BoardType")
     field(TWST, "SNS PCI Express")
     field(FFST, "Simulator")
 }
-record(longin, "$(P)$(R)BoardFwVer")
+record(longin, "$(P)BoardFwVer")
 {
     field(DESC, "OCC board firmware version")
     field(PINI, "YES")
     field(DTYP, "asynInt32")
-    field(INP,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))BoardFwVer")
+    field(INP,  "@asyn($(PORT))BoardFwVer")
 }
-record(bi, "$(P)$(R)OpticsPresent")
+record(bi, "$(P)OpticsPresent")
 {
     field(DESC, "Is optical cable present")
     field(PINI, "YES")
     field(DTYP, "asynInt32")
-    field(INP,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))OpticsPresent")
+    field(INP,  "@asyn($(PORT))OpticsPresent")
     field(ZNAM, "No")
     field(ONAM, "Yes")
     field(SCAN, "1 second")
 }
-record(bi, "$(P)$(R)OpticsEnabled")
+record(bi, "$(P)OpticsEnabled")
 {
     field(DESC, "Is optical link enabled")
     field(DTYP, "asynInt32")
-    field(INP,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))OpticsEnabled")
+    field(INP,  "@asyn($(PORT))OpticsEnabled")
     field(ZNAM, "No")
     field(ONAM, "Yes")
     field(SCAN, "1 second")
 }
-record(mbbi, "$(P)$(R)RxStalled")
+record(mbbi, "$(P)RxStalled")
 {
     field(DESC, "Incoming data stalled")
     field(DTYP, "asynInt32")
-    field(INP,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))RxStalled")
+    field(INP,  "@asyn($(PORT))RxStalled")
     field(ZRVL, "0")
     field(ONVL, "1")
     field(TWVL, "2")
@@ -109,128 +109,128 @@ record(mbbi, "$(P)$(R)RxStalled")
     field(SCAN, "1 second")
     field(VAL,  "0")
 }
-record(bi, "$(P)$(R)ErrPktsEnabled")
+record(bi, "$(P)ErrPktsEnabled")
 {
     field(DESC, "Turn link errors into error packets")
     field(DTYP, "asynInt32")
-    field(INP,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))ErrPktsEnabled")
+    field(INP,  "@asyn($(PORT))ErrPktsEnabled")
     field(ZNAM, "No")
     field(ONAM, "Yes")
     field(PINI, "YES")
     field(VAL,  "0")
 }
-record(ai, "$(P)$(R)FpgaTemp")
+record(ai, "$(P)FpgaTemp")
 {
     field(DESC, "FPGA temperature")
     field(DTYP, "asynFloat64")
-    field(INP,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))FpgaTemp")
+    field(INP,  "@asyn($(PORT))FpgaTemp")
     field(EGU,  "Celsius")
     field(SCAN, "1 second")
 }
-record(ai, "$(P)$(R)FpgaCoreVolt")
+record(ai, "$(P)FpgaCoreVolt")
 {
     field(DESC, "FPGA core voltage")
     field(DTYP, "asynFloat64")
-    field(INP,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))FpgaCoreVolt")
+    field(INP,  "@asyn($(PORT))FpgaCoreVolt")
     field(EGU,  "Volt")
     field(SCAN, "1 second")
 }
-record(ai, "$(P)$(R)FpgaAuxVolt")
+record(ai, "$(P)FpgaAuxVolt")
 {
     field(DESC, "FPGA AUX voltage")
     field(DTYP, "asynFloat64")
-    field(INP,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))FpgaAuxVolt")
+    field(INP,  "@asyn($(PORT))FpgaAuxVolt")
     field(EGU,  "Volt")
     field(SCAN, "1 second")
 }
-record(ai, "$(P)$(R)SfpTemp")
+record(ai, "$(P)SfpTemp")
 {
     field(DESC, "SFP temperature")
     field(DTYP, "asynFloat64")
-    field(INP,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))SfpTemp")
+    field(INP,  "@asyn($(PORT))SfpTemp")
     field(EGU,  "Celsius")
     field(SCAN, "1 second")
 }
-record(ai, "$(P)$(R)SfpRxPower")
+record(ai, "$(P)SfpRxPower")
 {
     field(DESC, "SFP RX power")
     field(DTYP, "asynFloat64")
-    field(INP,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))SfpRxPower")
+    field(INP,  "@asyn($(PORT))SfpRxPower")
     field(EGU,  "uW")
     field(SCAN, "1 second")
 }
-record(ai, "$(P)$(R)SfpTxPower")
+record(ai, "$(P)SfpTxPower")
 {
     field(DESC, "SFP TX power")
     field(DTYP, "asynFloat64")
-    field(INP,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))SfpTxPower")
+    field(INP,  "@asyn($(PORT))SfpTxPower")
     field(EGU,  "uW")
     field(SCAN, "1 second")
 }
-record(ai, "$(P)$(R)SfpVccPower")
+record(ai, "$(P)SfpVccPower")
 {
     field(DESC, "SFP VCC power")
     field(DTYP, "asynFloat64")
-    field(INP,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))SfpVccPower")
+    field(INP,  "@asyn($(PORT))SfpVccPower")
     field(EGU,  "Volt")
     field(SCAN, "1 second")
 }
-record(ai, "$(P)$(R)SfpTxBiasCur")
+record(ai, "$(P)SfpTxBiasCur")
 {
     field(DESC, "SFP TX bias current")
     field(DTYP, "asynFloat64")
-    field(INP,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))SfpTxBiasCur")
+    field(INP,  "@asyn($(PORT))SfpTxBiasCur")
     field(EGU,  "uA")
     field(SCAN, "1 second")
 }
-record(longin, "$(P)$(R)ErrCrc")
+record(longin, "$(P)ErrCrc")
 {
     field(DESC, "FPGA detected CRC errors counter")
     field(DTYP, "asynInt32")
-    field(INP,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))ErrCrc")
+    field(INP,  "@asyn($(PORT))ErrCrc")
     field(SCAN, "1 second")
 }
-record(longin, "$(P)$(R)ErrLength")
+record(longin, "$(P)ErrLength")
 {
     field(DESC, "FPGA detected length errors counter")
     field(DTYP, "asynInt32")
-    field(INP,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))ErrLength")
+    field(INP,  "@asyn($(PORT))ErrLength")
     field(SCAN, "1 second")
 }
-record(longin, "$(P)$(R)ErrFrame")
+record(longin, "$(P)ErrFrame")
 {
     field(DESC, "FPGA detected frame errors counter")
     field(DTYP, "asynInt32")
-    field(INP,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))ErrFrame")
+    field(INP,  "@asyn($(PORT))ErrFrame")
     field(SCAN, "1 second")
 }
-record(longin, "$(P)$(R)DmaBufUtil")
+record(longin, "$(P)DmaBufUtil")
 {
     field(DESC, "DMA buffer utilization")
     field(DTYP, "asynInt32")
-    field(INP,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))DmaBufUtil")
+    field(INP,  "@asyn($(PORT))DmaBufUtil")
     field(SCAN, "1 second")
     field(EGU,  "%")
 }
-record(longin, "$(P)$(R)CopyBufUtil")
+record(longin, "$(P)CopyBufUtil")
 {
     field(DESC, "Local buffer utilization")
     field(DTYP, "asynInt32")
-    field(INP,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))CopyBufUtil")
+    field(INP,  "@asyn($(PORT))CopyBufUtil")
     field(SCAN, "1 second")
     field(EGU,  "%")
 }
-record(ao, "$(P)$(R)StatusInt")
+record(ao, "$(P)StatusInt")
 {
     field(DESC, "Basic status update interval")
     field(DTYP, "asynFloat64")
-    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))StatusInt")
+    field(OUT,  "@asyn($(PORT))StatusInt")
     field(EGU,  "seconds")
 }
-record(ao, "$(P)$(R)ExtStatusInt")
+record(ao, "$(P)ExtStatusInt")
 {
     field(DESC, "Extended status update interval")
     field(DTYP, "asynFloat64")
-    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))ExtStatusInt")
+    field(OUT,  "@asyn($(PORT))ExtStatusInt")
     field(EGU,  "seconds")
 }
