@@ -25,7 +25,6 @@ save_restoreSet_SeqPeriodInSeconds(600)
 set_pass1_restoreFile("$(IOCNAME).sav")
 
 ## Load record instances
-<<<<<<< HEAD
 epicsEnvSet("PREFIX", "BL99:")
 epicsEnvSet("OCC1",   "/dev/snsocb1")
 #asynSetTraceIOMask("$(OCC1)",0,255)
