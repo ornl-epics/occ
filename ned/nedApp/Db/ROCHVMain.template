@@ -25,8 +25,8 @@ record(fanout, "$(P):InitProc") {
    field(LNK2, "$(P):MaxVSet")
    field(LNK3, "$(P):Enable")
    field(LNK4, "$(P):VoltSet")
-   field(LNK5, "$(P):VConv")
-   field(LNK6, "$(P):DConv")
+   field(LNK5, "$(P):VConvX")
+   field(LNK6, "$(P):DConvX")
 }
 
 #
