@@ -67,7 +67,7 @@ record(mbbi, "$(P)$(R)BoardType")
     field(TWST, "SNS PCI Express")
     field(FFST, "Simulator")
 }
-record(bi, "$(P)$(R)BoardFwVer")
+record(longin, "$(P)$(R)BoardFwVer")
 {
     field(DESC, "OCC board firmware version")
     field(PINI, "YES")

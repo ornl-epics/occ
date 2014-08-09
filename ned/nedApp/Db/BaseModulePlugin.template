@@ -5,6 +5,7 @@ record(bo, "$(P)$(R)Enable")
     field(ZNAM, "No")
     field(ONAM, "Yes")
     field(VAL,  "1")
+    field(PINI, "YES")
 }
 record(longin, "$(P)$(R)ProcCount")
 {

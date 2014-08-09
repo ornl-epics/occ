@@ -17,7 +17,6 @@ CmdDispatcher::CmdDispatcher(const char *portName, const char *connectPortName)
     , m_nReceived(0)
     , m_nProcessed(0)
 {
-    setCallbacks(true);
 }
 
 void CmdDispatcher::processData(const DasPacketList * const packetList)

@@ -133,32 +133,40 @@ void OccPortDriver::refreshOccStatusThread()
     int ret;
     epicsTimeStamp lastExtStatusUpdate = { 0, 0 };
     occ_status_t occstatus; // Keep at function scope so that it caches values between runs
+    bool first_run = true;  // Prevent querying extended status on first run as it takes long time and PINIed PVs will complain
 
     while (true) {
-        double refreshPeriod;
+        double refreshPeriod = 1.0; // Set default value for first run only
         bool basic_status = true;
-        epicsTimeStamp now;
 
-        epicsTimeGetCurrent(&now);
+        // Basic status query only in the first run
+        if (first_run == false) {
+            epicsTimeStamp now;
+            epicsTimeGetCurrent(&now);
 
-        this->lock();
+            this->lock();
 
-        if (getDoubleParam(ExtStatusInt, &refreshPeriod) != asynSuccess)
-            refreshPeriod = DEFAULT_EXTENDED_STATUS_INTERVAL;
-        if (refreshPeriod < 1.0)
-            refreshPeriod = 1.0;
-        refreshPeriod -= 0.1; // compensate for the time difference between now and lastExtStatusUpdate are populated, 0.1 should be enough
-        if (epicsTimeDiffInSeconds(&now, &lastExtStatusUpdate) >= refreshPeriod) {
-            basic_status = false;
-            epicsTimeGetCurrent(&lastExtStatusUpdate);
+            // Determine whether extended status need to be refreshed
+            if (getDoubleParam(ExtStatusInt, &refreshPeriod) != asynSuccess)
+                refreshPeriod = DEFAULT_EXTENDED_STATUS_INTERVAL;
+            if (refreshPeriod < 1.0)
+                refreshPeriod = 1.0;
+            refreshPeriod -= 0.1; // compensate for the time difference between now and lastExtStatusUpdate are populated, 0.1 should be enough
+            if (epicsTimeDiffInSeconds(&now, &lastExtStatusUpdate) >= refreshPeriod) {
+                basic_status = false;
+                epicsTimeGetCurrent(&lastExtStatusUpdate);
+            }
+
+            // Determine refresh interval
+            if (getDoubleParam(StatusInt, &refreshPeriod) != asynSuccess)
+                refreshPeriod = DEFAULT_BASIC_STATUS_INTERVAL;
+            else if (refreshPeriod < 0.1) // prevent querying to often
+                refreshPeriod = 0.1;
+
+            this->unlock();
+        } else {
+            first_run = false;
         }
-
-        if (getDoubleParam(StatusInt, &refreshPeriod) != asynSuccess)
-            refreshPeriod = DEFAULT_BASIC_STATUS_INTERVAL;
-        else if (refreshPeriod < 0.1) // prevent querying to often
-            refreshPeriod = 0.1;
-
-        this->unlock();
 
         // This one can take long time to execute, don't lock the driver while it's executing
         ret = occ_status(m_occ, &occstatus, basic_status);
@@ -180,6 +188,7 @@ void OccPortDriver::refreshOccStatusThread()
             setIntegerParam(BoardFwVer,     occstatus.firmware_ver);
             setIntegerParam(OpticsPresent,  occstatus.optical_signal);
             setIntegerParam(OpticsEnabled,  occstatus.rx_enabled);
+            setIntegerParam(ErrPktsEnabled, occstatus.err_packets_enabled);
             setDoubleParam(FpgaTemp,        occstatus.fpga_temp);
             setDoubleParam(FpgaCoreVolt,    occstatus.fpga_core_volt);
             setDoubleParam(FpgaAuxVolt,     occstatus.fpga_aux_volt);
@@ -197,9 +206,9 @@ void OccPortDriver::refreshOccStatusThread()
 
             getIntegerParam(RxStalled,      &val);
             setIntegerParam(RxStalled,      (occstatus.stalled ? val | 1 : val & ~1));
-
-            callParamCallbacks();
         }
+
+        callParamCallbacks();
 
         this->unlock();
 
@@ -219,8 +228,7 @@ asynStatus OccPortDriver::writeInt32(asynUser *pasynUser, epicsInt32 value)
                 LOG_ERROR("Unable to %s optical link - %s(%d)", (value == CMD_OPTICS_ENABLE ? "enable" : "disable"), strerror(-ret), ret);
                 return asynError;
             }
-            setIntegerParam(OpticsEnabled, value == CMD_OPTICS_ENABLE ? 1 : 0);
-            callParamCallbacks();
+            // There's a thread to refresh OCC status, including RX enabled
             return asynSuccess;
         case CMD_ERROR_PACKETS_ENABLE:
         case CMD_ERROR_PACKETS_DISABLE:
@@ -229,8 +237,7 @@ asynStatus OccPortDriver::writeInt32(asynUser *pasynUser, epicsInt32 value)
                 LOG_ERROR("Unable to %s error packets - %s(%d)", (value == CMD_ERROR_PACKETS_ENABLE ? "enable" : "disable"), strerror(-ret), ret);
                 return asynError;
             }
-            setIntegerParam(ErrPktsEnabled, value == CMD_OPTICS_ENABLE ? 1 : 0);
-            callParamCallbacks();
+            // There's a thread to refresh OCC status, including error packets enabled
             return asynSuccess;
         default:
             LOG_ERROR("Unrecognized command '%d'", value);

@@ -6,6 +6,7 @@
 #include <linux/pci.h>
 #include <linux/io.h>
 #include <linux/interrupt.h>
+#include <linux/device.h>
 #include <linux/dma-mapping.h>
 #include <linux/fs.h>
 #include <linux/cdev.h>
@@ -37,6 +38,20 @@ do {									\
 	dev_level_ratelimited(dev_err, dev, fmt, ##__VA_ARGS__)
 #endif
 
+/* Helper macro for defining sysfs device attributes and hiding
+ * compound literals.
+ */
+#define SNSOCB_DEVICE_ATTR(_name, _mode, _show, _store)			\
+	&(struct device_attribute) {					\
+		.attr = {						\
+			.name = _name,					\
+			.mode = _mode,					\
+		},							\
+		.show = snsocb_sysfs_show,				\
+		.store = snsocb_sysfs_store,				\
+	}
+
+
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(3,8,0)
 #define __devexit
 #endif // LINUX_VERSION_CODE
@@ -59,33 +74,33 @@ do {									\
  */
 #define OCB_IMQ_ENTRIES		64
 #define OCB_IMQ_SIZE		(OCB_IMQ_ENTRIES * 8 * sizeof(u32))
-#define OCB_CQ_SIZE			(64 * 1024)
+#define OCB_CQ_SIZE		(64 * 1024)
 
 #define OCB_MMIO_BAR		0
 #define OCB_TXFIFO_BAR		1
-#define OCB_DDR_BAR			2
+#define OCB_DDR_BAR		2
 
 #define REG_VERSION		0x0000
 
 /* Old versions of the firmware had more configuration options, but
  * these are all that are used in the version we support for this driver.
  */
-#define REG_CONFIG						0x0004
+#define REG_CONFIG					0x0004
 #define		OCB_CONF_TX_ENABLE			0x00000001
 #define		OCB_CONF_RX_ENABLE			0x00000002
-#define		OCB_CONF_SELECT_OPTICAL		0x00000008
-#define		OCB_CONF_OPTICAL_ENABLE		0x00000010
-#define		OCB_CONF_ERROR_PKTS_ENABLE	0x00040000 // Turn detected errors into error packets
-#define		OCB_CONF_ERRORS_RESET		0x04000000 // Clear detected error counters
+#define		OCB_CONF_SELECT_OPTICAL			0x00000008
+#define		OCB_CONF_OPTICAL_ENABLE			0x00000010
+#define		OCB_CONF_ERR_PKTS_ENABLE		0x00040000 // Turn detected errors into error packets
+#define		OCB_CONF_ERRORS_RESET			0x04000000 // Clear detected error counters
 #define		OCB_CONF_RESET				0x80000000
-#define REG_STATUS						0x0008
+#define REG_STATUS					0x0008
 #define		OCB_STATUS_TX_DONE			0x00000001
 #define		OCB_STATUS_RX_LVDS			0x00000002
-#define		OCB_STATUS_BUFFER_FULL		0x00000004
-#define		OCB_STATUS_OPTICAL_PRESENT	0x00000008
-#define		OCB_STATUS_OPTICAL_NOSIGNAL	0x00000010
+#define		OCB_STATUS_BUFFER_FULL			0x00000004
+#define		OCB_STATUS_OPTICAL_PRESENT		0x00000008
+#define		OCB_STATUS_OPTICAL_NOSIGNAL		0x00000010
 #define		OCB_STATUS_TX_IDLE			0x00000040
-#define		OCB_STATUS_RX_OPTICAL		0x00000100
+#define		OCB_STATUS_RX_OPTICAL			0x00000100
 #define REG_MODULE_MASK					0x0010
 #define REG_MODULE_ID					0x0014
 #define REG_IRQ_STATUS					0x00c0
@@ -93,10 +108,13 @@ do {									\
 #define		OCB_IRQ_RX_DONE				0x00000010
 #define		OCB_IRQ_ENABLE				0x80000000
 #define REG_IRQ_ENABLE					0x00c4
+#define REG_IRQ_CNTL					0x00c8
+#define		OCB_COALESCING_ENABLE			0x80000000
+#define		OCB_EOP_ENABLE				0x40000000
 #define REG_FIRMWARE_DATE				0x0100
-#define REG_ERROR_CRC_COUNTER			0x0180 // CRC errors counter (PCIe only)
-#define REG_ERROR_LENGTH_COUNTER		0x0184 // Frame length errors counter (PCIe only)
-#define REG_ERROR_FRAME_COUNTER			0x0188 // Frame errors counter (PCIe only)
+#define REG_ERROR_CRC_COUNTER				0x0180 // CRC errors counter (PCIe only)
+#define REG_ERROR_LENGTH_COUNTER			0x0184 // Frame length errors counter (PCIe only)
+#define REG_ERROR_FRAME_COUNTER				0x0188 // Frame errors counter (PCIe only)
 #define REG_COMM_ERR					0x0240
 #define REG_LOST_PACKETS				0x0244		/* 16 bit register */
 
@@ -110,7 +128,7 @@ do {									\
 
 /* Command queue (split RX from older firmware, GE card) */
 #define REG_CQ_MAX_OFFSET	0x003c
-#define REG_CQ_ADDR			0x0040
+#define REG_CQ_ADDR		0x0040
 #define REG_CQ_ADDRHI		0x0044
 #define REG_CQ_PROD_ADDR	0x0048
 #define REG_CQ_PROD_ADDRHI	0x004c
@@ -119,7 +137,7 @@ do {									\
 
 /* Data queue */
 #define REG_DQ_MAX_OFFSET	0x0088
-#define REG_DQ_ADDR			0x0070
+#define REG_DQ_ADDR		0x0070
 #define REG_DQ_ADDRHI		0x0074
 #define REG_DQ_PROD_ADDR	0x0078
 #define REG_DQ_PROD_ADDRHI	0x007c
@@ -156,6 +174,10 @@ do {									\
  */
 #define OCB_BUGGY_IDX_THRESHOLD	(16 * 2024)
 
+/* Forward declaration of functions used in the structs */
+static ssize_t snsocb_sysfs_show(struct device *dev, struct device_attribute *attr, char *buf);
+static ssize_t snsocb_sysfs_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t count);
+
 /* Layout of the hardware Incoming Message Queue */
 struct hw_imq {
 	u32	dest;
@@ -177,12 +199,13 @@ struct sw_imq {
 
 /* Board capabilities description structure */
 struct ocb_board_desc {
-    u32 type;
-    u32 firmware;
-    u32 tx_fifo_len;
-    u32 unified_que;
-    u32 bars[3];
+	u32 type;
+	u32 *firmware;
+	u32 tx_fifo_len;
+	u32 unified_que;
+	u32 bars[3];
 	u32 reset_errcnt;	// Does board have support for resetting error counters?
+	struct attribute_group sysfs;
 };
 
 struct ocb {
@@ -249,7 +272,7 @@ struct ocb {
 	/* Needed to synchronize interrupts before card reset */
 	struct pci_dev *pdev;
 
-    /* Pointer to a statically allocated description for this board */
+	/* Pointer to a statically allocated description for this board */
 	struct ocb_board_desc *board;
 };
 
@@ -262,7 +285,7 @@ static const char *snsocb_name[] = {
 static struct ocb_board_desc boards[] = {
 	{
 		.type = BOARD_SNS_PCIX,
-		.firmware = 0x31121106,
+		.firmware = (u32 []){ 0x31121106, 0x31130603, 0 },
 		.tx_fifo_len = 8192,
 		.unified_que = 1,
 		.bars = { 1048576, 1048576 },
@@ -270,15 +293,7 @@ static struct ocb_board_desc boards[] = {
 	},
 	{
 		.type = BOARD_SNS_PCIX,
-		.firmware = 0x31130603,
-		.tx_fifo_len = 8192,
-		.unified_que = 1,
-		.bars = { 1048576, 1048576 },
-		.reset_errcnt = 0,
-	},
-	{
-		.type = BOARD_SNS_PCIX,
-		.firmware = 0x22100817,
+		.firmware = (u32 []){ 0x22100817, 0 },
 		.tx_fifo_len = 8192,
 		.unified_que = 0,
 		.bars = { 1048576, 1048576 },
@@ -286,20 +301,24 @@ static struct ocb_board_desc boards[] = {
 	},
 	{
 		.type = BOARD_SNS_PCIE,
-		.firmware = 0x000b0001,
+		.firmware = (u32 []){ 0x000a0001, 0 },
 		.tx_fifo_len = 32768,
 		.unified_que = 1,
 		.bars = { 4096, 32768, 16777216 },
 		.reset_errcnt = 1,
 	},
-/*
 	{
-		.type = BOARD_GE_PCIE,
-		.firmware = 0x0,
-		.unified_que = 0,
-		.bars = { 1048576, 1048576 }
+		.type = BOARD_SNS_PCIE,
+		.firmware = (u32 []){ 0x000b0001, 0 },
+		.tx_fifo_len = 32768,
+		.unified_que = 1,
+		.bars = { 4096, 32768, 16777216 },
+		.reset_errcnt = 1,
+		.sysfs.attrs = (struct attribute **) (struct device_attribute *[]){
+			SNSOCB_DEVICE_ATTR("irq_coalescing", 0644, snsocb_sysfs_show, snsocb_sysfs_store),
+			NULL,
+		},
 	},
-*/
 	{ 0 }
 };
 
@@ -342,6 +361,8 @@ static u32 __snsocb_status(struct ocb *ocb)
 		status |= OCB_RESET_OCCURRED;
 	if (ocb->conf & OCB_CONF_RX_ENABLE)
 		status |= OCB_RX_ENABLED;
+	if (ocb->conf & OCB_CONF_ERR_PKTS_ENABLE)
+		status |= OCB_RX_ERR_PKTS_ENABLED;
 
 	hw_status = ioread32(ocb->ioaddr + REG_STATUS);
 	if (hw_status & OCB_STATUS_OPTICAL_PRESENT) {
@@ -1146,7 +1167,7 @@ static ssize_t snsocb_write(struct file *file, const char __user *buf,
 		ioread32(ocb->ioaddr + REG_CONFIG); // post write
 
 		break;
-    case OCB_CMD_ERR_PKTS_ENABLE:
+	case OCB_CMD_ERR_PKTS_ENABLE:
 		if (count != sizeof(u32))
 			return -EINVAL;
 
@@ -1155,9 +1176,9 @@ static ssize_t snsocb_write(struct file *file, const char __user *buf,
 
 		spin_lock_irq(&ocb->lock);
 		if (val)
-			ocb->conf |= OCB_CONF_ERROR_PKTS_ENABLE;
+			ocb->conf |= OCB_CONF_ERR_PKTS_ENABLE;
 		else
-			ocb->conf &= ~OCB_CONF_ERROR_PKTS_ENABLE;
+			ocb->conf &= ~OCB_CONF_ERR_PKTS_ENABLE;
 		val = ocb->conf;
 		spin_unlock_irq(&ocb->lock);
 		iowrite32(val, ocb->ioaddr + REG_CONFIG);
@@ -1222,6 +1243,31 @@ static void snsocb_free(struct device *dev)
 	struct ocb *ocb = container_of(dev, struct ocb, dev);
 
 	kfree(ocb);
+}
+
+static ssize_t snsocb_sysfs_show(struct device *dev, struct device_attribute *attr, char *buf)
+{
+	struct ocb *ocb = dev_get_drvdata(dev);
+	if (strncmp(attr->attr.name, "irq_coalescing", strlen("irq_coalescing")) == 0) {
+		u32 val = ioread32(ocb->ioaddr + REG_IRQ_CNTL) & 0xFFFF;
+		return scnprintf(buf, PAGE_SIZE, "%u\n", val);
+	}
+	return 0;
+}
+
+static ssize_t snsocb_sysfs_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t count)
+{
+	struct ocb *ocb = dev_get_drvdata(dev);
+	if (strncmp(attr->attr.name, "irq_coalescing", strlen("irq_coalescing")) == 0) {
+		u32 val;
+		if (sscanf(buf, "%u", &val) == 1) {
+			val &= 0xFFFF;
+			if (val > 0) val |= OCB_COALESCING_ENABLE;
+			iowrite32(val, ocb->ioaddr + REG_IRQ_CNTL);
+		}
+		return count;
+	}
+	return 0;
 }
 
 static struct file_operations snsocb_fops = {
@@ -1340,8 +1386,16 @@ static int __devexit snsocb_probe(struct pci_dev *pdev,
 	ocb->firmware_version = ioread32(ocb->ioaddr + REG_VERSION);
 	ocb->board = &boards[0];
 	while (ocb->board && ocb->board->type != 0) {
-		if (ocb->board->type == board_id && ocb->board->firmware == ocb->firmware_version)
-			break;
+		if (ocb->board->type == board_id) {
+			u32 *firmware = ocb->board->firmware;
+			while (*firmware != 0) {
+				if (*firmware == ocb->firmware_version)
+					break;
+				firmware++;
+			}
+			if (*firmware == ocb->firmware_version)
+				break;
+		}
 		++ocb->board;
 	}
 	if (!ocb->board || ocb->board->type == 0) {
@@ -1349,6 +1403,14 @@ static int __devexit snsocb_probe(struct pci_dev *pdev,
 		err = -ENODEV;
 		goto error_dev;
 	}
+
+	if (ocb->board->sysfs.attrs) {
+		err = sysfs_create_group(&dev->kobj, &ocb->board->sysfs);
+		if (err) {
+			dev_err(dev, "unable to create sysfs entries");
+			goto error_dev;
+		}
+        }
 
 	err = devm_request_irq(dev, pdev->irq, snsocb_interrupt, IRQF_SHARED,
 			       KBUILD_MODNAME, ocb);
@@ -1421,6 +1483,8 @@ static int __devexit snsocb_probe(struct pci_dev *pdev,
 		goto error_cdev;
 	}
 
+	dev_set_drvdata(dev, ocb);
+
 	dev_info(dev, "snsocb%d: %s OCB version %08x, datecode %08x\n",
 		 minor, snsocb_name[board_id],
 		 ioread32(ocb->ioaddr + REG_VERSION),
@@ -1438,6 +1502,8 @@ error_dq:
 	snsocb_free_queue(dev, ocb->hwimq_page, ocb->hwimq_dma, OCB_IMQ_SIZE);
 	snsocb_free_queue(dev, ocb->hwdq_page, ocb->hwdq_dma, OCB_DQ_SIZE);
 error_dev:
+	if (ocb && ocb->board && ocb->board->sysfs.attrs)
+		sysfs_remove_group(&dev->kobj, &ocb->board->sysfs);
 	put_device(&ocb->dev);
 	mutex_lock(&snsocb_devlock);
 	snsocb_devs[minor] = NULL;
@@ -1451,6 +1517,9 @@ static void __devexit snsocb_remove(struct pci_dev *pdev)
 	/* Very little to do here, since most resources are managed for us. */
 	struct ocb *ocb = pci_get_drvdata(pdev);
 	struct device *dev = &pdev->dev;
+
+	if (ocb && ocb->board && ocb->board->sysfs.attrs)
+		sysfs_remove_group(&dev->kobj, &ocb->board->sysfs);
 
 	device_del(&ocb->dev);
 	cdev_del(&ocb->cdev);

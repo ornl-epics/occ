@@ -61,7 +61,7 @@ BaseModulePlugin::BaseModulePlugin(const char *portName, const char *dispatcherP
     createParam("HardwareDate", asynParamOctet, &HardwareDate);
     createParam("HardwareVer",  asynParamInt32, &HardwareVer);
     createParam("HardwareRev",  asynParamInt32, &HardwareRev);
-    createParam("FirmwareDate", asynParamOctet, &HardwareDate);
+    createParam("FirmwareDate", asynParamOctet, &FirmwareDate);
     createParam("FirmwareVer",  asynParamInt32, &FirmwareVer);
     createParam("FirmwareRev",  asynParamInt32, &FirmwareRev);
 
@@ -367,7 +367,7 @@ void BaseModulePlugin::reqWriteConfig()
         }
     }
 
-    sendToDispatcher(DasPacket::CMD_WRITE_CONFIG, data, length);
+    sendToDispatcher(DasPacket::CMD_WRITE_CONFIG, data, length*4);
     scheduleTimeoutCallback(DasPacket::CMD_WRITE_CONFIG, NO_RESPONSE_TIMEOUT);
 }
 
@@ -456,7 +456,8 @@ void BaseModulePlugin::createConfigParam(const char *name, char section, uint32_
 
 DasPacket *BaseModulePlugin::createOpticalPacket(uint32_t destination, DasPacket::CommandType command, uint32_t *payload, uint32_t length)
 {
-    DasPacket *packet = DasPacket::create(length*sizeof(uint32_t), reinterpret_cast<uint8_t *>(payload));
+    uint32_t alignedLen = (length + 3) & ~3; // round up to multiple of 4
+    DasPacket *packet = DasPacket::create(alignedLen, reinterpret_cast<uint8_t *>(payload));
     if (packet) {
         packet->source = DasPacket::HWID_SELF;
         packet->destination = destination;
@@ -468,7 +469,8 @@ DasPacket *BaseModulePlugin::createOpticalPacket(uint32_t destination, DasPacket
 
 DasPacket *BaseModulePlugin::createLvdsPacket(uint32_t destination, DasPacket::CommandType command, uint32_t *payload, uint32_t length)
 {
-    DasPacket *packet = DasPacket::create((2+2*length)*sizeof(uint32_t));
+    uint32_t alignedLen = (length + 3) & ~3; // round up to multiple of 4
+    DasPacket *packet = DasPacket::create(2*4+2*alignedLen);
     if (packet) {
         uint32_t offset = 0;
         packet->source = DasPacket::HWID_SELF;
@@ -489,7 +491,7 @@ DasPacket *BaseModulePlugin::createLvdsPacket(uint32_t destination, DasPacket::C
         } else {
             packet->payload_length -= 2*sizeof(uint32_t);
         }
-        for (uint32_t i=0; i<length; i++) {
+        for (uint32_t i=0; i<alignedLen/4; i++) {
             packet->payload[offset] = payload[i] & 0xFFFF;
             packet->payload[offset] |= evenParity(packet->payload[offset]) << 16;
             offset++;
@@ -498,6 +500,11 @@ DasPacket *BaseModulePlugin::createLvdsPacket(uint32_t destination, DasPacket::C
             offset++;
         }
         if (offset > 0) {
+            // When message is not word-aligned, the last word is not valid
+            // and must be taken out.
+            if (length < alignedLen)
+                packet->payload[--offset] = 0;
+
             offset--;
             packet->payload[offset] |= (0x1 << 17); // Last word bit...
             packet->payload[offset] ^= (0x1 << 16); // ... also flips parity

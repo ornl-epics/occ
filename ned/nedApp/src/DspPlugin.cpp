@@ -55,7 +55,6 @@ DspPlugin::DspPlugin(const char *portName, const char *dispatcherPortName, const
     }
 
     callParamCallbacks();
-    setCallbacks(true);
 }
 
 bool DspPlugin::parseVersionRsp(const DasPacket *packet, BaseModulePlugin::Version &version)

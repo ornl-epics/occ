@@ -1,0 +1,13 @@
+What:		/sys/class/snsocb/<devname>/device/irq_balance
+Date:		August 2014
+Contact:	Klemen Vodopivec <vodopiveck@ornl.gov>
+Description:
+		Tweak number of interrupts produced by the OCC board.
+
+		By default the OCC board interrupts for every OCC packet.
+		Handling the interrupt involves context switching that could
+		cause severe performance impact. By grouping several OCC
+		packets into one interrupt performance can be much improved.
+		When grouping is enabled, interrupt is asserted once per
+		number of packets configured or for the last subpacket,
+		whichever comes first. Command packets always interrupt.

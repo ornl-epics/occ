@@ -216,6 +216,7 @@ int occ_status(struct occ_handle *handle, occ_status_t *status, bool fast_status
     status->firmware_ver = info.firmware_ver;
     status->optical_signal = (info.status & OCB_OPTICAL_PRESENT);
     status->rx_enabled = (info.status & OCB_RX_ENABLED);
+    status->err_packets_enabled = (info.status & OCB_RX_ERR_PKTS_ENABLED);
 
     ret = 0;
     while (status->board == BOARD_SNS_PCIE) {

@@ -26,6 +26,7 @@ DB += DumpPlugin.template
 DB += StatPlugin.template
 DB += RtdlPlugin.template
 DB += AdaraPlugin.template
+DB += CmdPlugin.template
 
 #----------------------------------------------------
 # If <anyname>.db template is not named <anyname>*.template add

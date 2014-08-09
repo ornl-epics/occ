@@ -75,8 +75,6 @@ StatPlugin::StatPlugin(const char *portName, const char *dispatcherPortName, int
 
     callParamCallbacks();
 
-    setCallbacks(false);
-
     epicsTimeGetCurrent(&m_lastTime);
 
     std::function<float(void)> rateCalc = std::bind(&StatPlugin::calculateRate, this);

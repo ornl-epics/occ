@@ -6,8 +6,6 @@
 /**
  * Gather and display statistical information of the incoming data
  *
- * By default, RtdlPlugin will receive and process all incoming data.
- *
  * Available RtdlPlugin parameters (in addition to ones from BasePlugin):
  * asyn param    | asyn param type | init val | mode | Description                   |
  * ------------- | --------------- | -------- | ---- | ------------------------------

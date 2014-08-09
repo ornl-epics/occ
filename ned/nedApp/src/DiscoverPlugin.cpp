@@ -20,8 +20,6 @@ DiscoverPlugin::DiscoverPlugin(const char *portName, const char *dispatcherPortN
     setIntegerParam(DiscoveredTotal, 0);
     setIntegerParam(DiscoveredDsps,  0);
 
-    setCallbacks(true);
-
     callParamCallbacks();
 }
 

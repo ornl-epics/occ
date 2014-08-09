@@ -50,7 +50,6 @@ RocPlugin::RocPlugin(const char *portName, const char *dispatcherPortName, const
     LOG_DEBUG("Number of configured dynamic parameters: %zu", m_statusParams.size() + m_configParams.size());
 
     callParamCallbacks();
-    setCallbacks(true);
 }
 
 bool RocPlugin::processResponse(const DasPacket *packet)
@@ -178,9 +177,7 @@ bool RocPlugin::parseVersionRsp(const DasPacket *packet, BaseModulePlugin::Versi
 void RocPlugin::reqHvCmd(const char *data, uint32_t length)
 {
     uint32_t buffer[32] = { 0 }; // Initialize all to 0
-    uint32_t bufferLen = length / 2;
-    if (length % 2 != 0)
-        bufferLen++;
+    uint32_t bufferLen = length * 2;
 
     // Every character in protocol needs to be prefixed with a zero byte when sent over OCC
     for (uint32_t i = 0; i < length; i++) {
