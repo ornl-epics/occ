@@ -321,7 +321,6 @@ record(ai, "$(P):DConvY") {
 record(ai, "$(P):DConvZ") {
    field(HOPR, "65535")
    field(LOPR, "0")
-   field(FLNK, "$(P):VoltSet PP")
 }
 
 #
