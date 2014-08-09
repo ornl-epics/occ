@@ -34,7 +34,6 @@ extrainput   = Ignore;
 # Code seems to have read max hv (MV)
 #
 getNum {
-   @mismatch { in "<00>?\$1!>"; }
    out "?\$1";
    in "?\$1%05d";
 }
@@ -47,18 +46,6 @@ getNum {
 setNum {
    out "*\$1%05d";
    in "*\$1%05d";
-}
-
-#
-# This does a read so the next record to do a read will succeed. 
-# Unfortunately it leaves the setpoint record invalid.
-#
-setNumFix {
-   out "*\$1%05d";
-   in "*\$1%05d";
-   @mismatch { in "<00>?RR1!>"; }
-   out "?\$2";
-   in "?RR%05d";
 }
 
 #
@@ -90,7 +77,6 @@ getCalXYZ {
 
 # Read all three into an waveform record of ints
 getCal {
-   @mismatch { in "<00>?\$1!>"; }
    out "?\$1";
    separator = ""; in "?\$1%05d";
 }
@@ -112,7 +98,7 @@ setCalC {
 
 setCalA {
    out "*\$1%(\$2X)05d%(\$2Y)05d%(\$2Z)05d";
-   in "*\$1%s";
+   in "*\$1%*05d%*05d%*05d";
 }
    
 #

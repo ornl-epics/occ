@@ -45,7 +45,7 @@ foreach $line ( <INFILE> ) {
             print ("\{\n");
             print ("    field(DESC, \"$desc\")\n");
             print ("    field(DTYP, \"asynInt32\")\n");
-            print ("    field(OUT,  \"\@asyn(\$(PORT),\$(ADDR),\$(TIMEOUT))$name\")\n");
+            print ("    field(OUT,  \"\@asyn(\$(PORT))$name\")\n");
 	    print ("    field(SCAN, \"I/O Intr\")\n");
             print ("\}\n");
         } elsif ($width == 1) {
@@ -53,7 +53,7 @@ foreach $line ( <INFILE> ) {
             print ("\{\n");
             print ("    field(DESC, \"$desc\")\n");
             print ("    field(DTYP, \"asynInt32\")\n");
-            print ("    field(OUT,  \"\@asyn(\$(PORT),\$(ADDR),\$(TIMEOUT))$name\")\n");
+            print ("    field(OUT,  \"\@asyn(\$(PORT))$name\")\n");
             print ("    field(SCAN, \"I/O Intr\")\n");
             if ($valstr =~ m/([0-9]+) *= *([^,]+), *([0-9]+) *= *(.+)$/) {
                 my ($zval,$znam,$oval,$onam) = ($1,$2,$3,$4);
@@ -69,7 +69,7 @@ foreach $line ( <INFILE> ) {
             print ("\{\n");
             print ("    field(DESC, \"$desc\")\n");
             print ("    field(DTYP, \"asynInt32\")\n");
-            print ("    field(OUT,  \"\@asyn(\$(PORT),\$(ADDR),\$(TIMEOUT))$name\")\n");
+            print ("    field(OUT,  \"\@asyn(\$(PORT))$name\")\n");
             print ("    field(SCAN, \"I/O Intr\")\n");
             my $i=0;
             foreach (split(',',$valstr)) {
@@ -85,7 +85,7 @@ foreach $line ( <INFILE> ) {
             print ("\{\n");
             print ("    field(DESC, \"$desc\")\n");
             print ("    field(DTYP, \"asynInt32\")\n");
-            print ("    field(OUT,  \"\@asyn(\$(PORT),\$(ADDR),\$(TIMEOUT))$name\")\n");
+            print ("    field(OUT,  \"\@asyn(\$(PORT))$name\")\n");
             print ("    field(SCAN, \"I/O Intr\")\n");
             print ("\}\n");
         }
@@ -104,7 +104,7 @@ foreach $line ( <INFILE> ) {
             print ("\{\n");
             print ("    field(DESC, \"$desc\")\n");
             print ("    field(DTYP, \"asynInt32\")\n");
-            print ("    field(OUT,  \"\@asyn(\$(PORT),\$(ADDR),\$(TIMEOUT))$name\")\n");
+            print ("    field(OUT,  \"\@asyn(\$(PORT))$name\")\n");
 	    print ("    field(SCAN, \"I/O Intr\")\n");
 	    print ("    field(VAL,  \"$val\")\n");
             print ("\}\n");
@@ -113,7 +113,7 @@ foreach $line ( <INFILE> ) {
             print ("\{\n");
             print ("    field(DESC, \"$desc\")\n");
             print ("    field(DTYP, \"asynInt32\")\n");
-            print ("    field(OUT,  \"\@asyn(\$(PORT),\$(ADDR),\$(TIMEOUT))$name\")\n");
+            print ("    field(OUT,  \"\@asyn(\$(PORT))$name\")\n");
             print ("    field(SCAN, \"I/O Intr\")\n");
 	    print ("    field(VAL,  \"$val\")\n");
             if ($valstr =~ m/([0-9]) *= *([^,]+), *([0-9]) *= *(.+)/) {
@@ -130,7 +130,7 @@ foreach $line ( <INFILE> ) {
             print ("\{\n");
             print ("    field(DESC, \"$desc\")\n");
             print ("    field(DTYP, \"asynInt32\")\n");
-            print ("    field(OUT,  \"\@asyn(\$(PORT),\$(ADDR),\$(TIMEOUT))$name\")\n");
+            print ("    field(OUT,  \"\@asyn(\$(PORT))$name\")\n");
             print ("    field(SCAN, \"I/O Intr\")\n");
 	    print ("    field(VAL,  \"$val\")\n");
             my $i=0;
@@ -147,7 +147,7 @@ foreach $line ( <INFILE> ) {
             print ("\{\n");
             print ("    field(DESC, \"$desc\")\n");
             print ("    field(DTYP, \"asynInt32\")\n");
-            print ("    field(OUT,  \"\@asyn(\$(PORT),\$(ADDR),\$(TIMEOUT))$name\")\n");
+            print ("    field(OUT,  \"\@asyn(\$(PORT))$name\")\n");
             print ("    field(SCAN, \"I/O Intr\")\n");
 	    print ("    field(VAL,  \"$val\")\n");
             print ("\}\n");

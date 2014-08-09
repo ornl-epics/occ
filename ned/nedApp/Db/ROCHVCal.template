@@ -12,16 +12,30 @@ record(ao, "$(P):$(W)ConvSetX") {
    field(HOPR, "65535")
    field(LOPR, "0")
    field(DRVL, "0")
+   info(autosaveFields, "VAL")
 }
 record(ao, "$(P):$(W)ConvSetY") {
    field(DRVH, "65535")
    field(HOPR, "65535")
    field(LOPR, "0")
    field(DRVL, "0")
+   info(autosaveFields, "VAL")
 }
 record(ao, "$(P):$(W)ConvSetZ") {
    field(HOPR, "65535")
    field(LOPR, "0")
+   info(autosaveFields, "VAL")
+}
+
+#
+# Check out what it does.  note this works before writing. 
+#
+record(calc, "$(P):$(W)Sim") {
+   field(INPA, "$(P):$(W)ConvSetX" CPP MS)
+   field(INPB, "$(P):$(W)ConvSetY" CPP MS)
+   field(INPC, "$(P):$(W)ConvSetZ" CPP MS)
+   field(INPD, "$(P):$(S)" CPP MS)
+   field(CALC, "D*(A/B)+C"
 }
 
 #

@@ -1,128 +1,128 @@
-record(longin, "$(P)$(R)RxCountRate")
+record(longin, "$(P)RxCountRate")
 {
    field(DTYP,  "asynInt32")
-   field(INP,   "@asyn($(PORT),$(ADDR),$(TIMEOUT))RxCountRate")
+   field(INP,   "@asyn($(PORT))RxCountRate")
    field(EGU,   "pkt/s")
    field(VAL,   "0")
    field(SCAN,  "I/O Intr")
 }
-record(longin, "$(P)$(R)RxByteRate")
+record(longin, "$(P)RxByteRate")
 {
    field(DTYP,  "asynInt32")
-   field(INP,   "@asyn($(PORT),$(ADDR),$(TIMEOUT))RxByteRate")
+   field(INP,   "@asyn($(PORT))RxByteRate")
    field(EGU,   "bytes/s")
    field(VAL,   "0")
    field(SCAN,  "I/O Intr")
 }
-record(longin, "$(P)$(R)CmdCount")
+record(longin, "$(P)CmdCount")
 {
    field(DTYP,  "asynInt32")
-   field(INP,   "@asyn($(PORT),$(ADDR),$(TIMEOUT))CmdCount")
+   field(INP,   "@asyn($(PORT))CmdCount")
    field(VAL,   "0")
    field(SCAN,  "I/O Intr")
 }
-record(longin, "$(P)$(R)CmdCountRate")
+record(longin, "$(P)CmdCountRate")
 {
    field(DTYP,  "asynInt32")
-   field(INP,   "@asyn($(PORT),$(ADDR),$(TIMEOUT))CmdCountRate")
+   field(INP,   "@asyn($(PORT))CmdCountRate")
    field(EGU,   "pkt/s")
    field(VAL,   "0")
    field(SCAN,  "I/O Intr")
 }
-record(longin, "$(P)$(R)CmdByteRate")
+record(longin, "$(P)CmdByteRate")
 {
    field(DTYP,  "asynInt32")
-   field(INP,   "@asyn($(PORT),$(ADDR),$(TIMEOUT))CmdByteRate")
+   field(INP,   "@asyn($(PORT))CmdByteRate")
    field(EGU,   "bytes/s")
    field(VAL,   "0")
    field(SCAN,  "I/O Intr")
 }
-record(longin, "$(P)$(R)DataCount")
+record(longin, "$(P)DataCount")
 {
    field(DTYP,  "asynInt32")
-   field(INP,   "@asyn($(PORT),$(ADDR),$(TIMEOUT))DataCount")
+   field(INP,   "@asyn($(PORT))DataCount")
    field(VAL,   "0")
    field(SCAN,  "I/O Intr")
 }
-record(longin, "$(P)$(R)DataCountRate")
+record(longin, "$(P)DataCountRate")
 {
    field(DTYP,  "asynInt32")
-   field(INP,   "@asyn($(PORT),$(ADDR),$(TIMEOUT))DataCountRate")
+   field(INP,   "@asyn($(PORT))DataCountRate")
    field(EGU,   "pkt/s")
    field(VAL,   "0")
    field(SCAN,  "I/O Intr")
 }
-record(longin, "$(P)$(R)DataByteRate")
+record(longin, "$(P)DataByteRate")
 {
    field(DTYP,  "asynInt32")
-   field(INP,   "@asyn($(PORT),$(ADDR),$(TIMEOUT))DataByteRate")
+   field(INP,   "@asyn($(PORT))DataByteRate")
    field(EGU,   "bytes/s")
    field(VAL,   "0")
    field(SCAN,  "I/O Intr")
 }
-record(longin, "$(P)$(R)MetaCount")
+record(longin, "$(P)MetaCount")
 {
    field(DTYP,  "asynInt32")
-   field(INP,   "@asyn($(PORT),$(ADDR),$(TIMEOUT))MetaCount")
+   field(INP,   "@asyn($(PORT))MetaCount")
    field(VAL,   "0")
    field(SCAN,  "I/O Intr")
 }
-record(longin, "$(P)$(R)MetaCountRate")
+record(longin, "$(P)MetaCountRate")
 {
    field(DTYP,  "asynInt32")
-   field(INP,   "@asyn($(PORT),$(ADDR),$(TIMEOUT))MetaCountRate")
+   field(INP,   "@asyn($(PORT))MetaCountRate")
    field(EGU,   "pkt/s")
    field(VAL,   "0")
    field(SCAN,  "I/O Intr")
 }
-record(longin, "$(P)$(R)MetaByteRate")
+record(longin, "$(P)MetaByteRate")
 {
    field(DTYP,  "asynInt32")
-   field(INP,   "@asyn($(PORT),$(ADDR),$(TIMEOUT))MetaByteRate")
+   field(INP,   "@asyn($(PORT))MetaByteRate")
    field(EGU,   "bytes/s")
    field(VAL,   "0")
    field(SCAN,  "I/O Intr")
 }
-record(longin, "$(P)$(R)RtdlCount")
+record(longin, "$(P)RtdlCount")
 {
    field(DTYP,  "asynInt32")
-   field(INP,   "@asyn($(PORT),$(ADDR),$(TIMEOUT))RtdlCount")
+   field(INP,   "@asyn($(PORT))RtdlCount")
    field(VAL,   "0")
    field(SCAN,  "I/O Intr")
 }
-record(longin, "$(P)$(R)RtdlCountRate")
+record(longin, "$(P)RtdlCountRate")
 {
    field(DTYP,  "asynInt32")
-   field(INP,   "@asyn($(PORT),$(ADDR),$(TIMEOUT))RtdlCountRate")
+   field(INP,   "@asyn($(PORT))RtdlCountRate")
    field(VAL,   "0")
    field(SCAN,  "I/O Intr")
 }
-record(longin, "$(P)$(R)RtdlByteRate")
+record(longin, "$(P)RtdlByteRate")
 {
    field(DTYP,  "asynInt32")
-   field(INP,   "@asyn($(PORT),$(ADDR),$(TIMEOUT))RtdlByteRate")
+   field(INP,   "@asyn($(PORT))RtdlByteRate")
    field(EGU,   "bytes/s")
    field(VAL,   "0")
    field(SCAN,  "I/O Intr")
 }
-record(longin, "$(P)$(R)BadCount")
+record(longin, "$(P)BadCount")
 {
    field(DTYP,  "asynInt32")
-   field(INP,   "@asyn($(PORT),$(ADDR),$(TIMEOUT))BadCount")
+   field(INP,   "@asyn($(PORT))BadCount")
    field(VAL,   "0")
    field(SCAN,  "I/O Intr")
 }
-record(longin, "$(P)$(R)BadCountRate")
+record(longin, "$(P)BadCountRate")
 {
    field(DTYP,  "asynInt32")
-   field(INP,   "@asyn($(PORT),$(ADDR),$(TIMEOUT))BadCountRate")
+   field(INP,   "@asyn($(PORT))BadCountRate")
    field(VAL,   "0")
    field(SCAN,  "I/O Intr")
 }
-record(longin, "$(P)$(R)BadByteRate")
+record(longin, "$(P)BadByteRate")
 {
    field(DTYP,  "asynInt32")
-   field(INP,   "@asyn($(PORT),$(ADDR),$(TIMEOUT))BadByteRate")
+   field(INP,   "@asyn($(PORT))BadByteRate")
    field(EGU,   "bytes/s")
    field(VAL,   "0")
    field(SCAN,  "I/O Intr")
