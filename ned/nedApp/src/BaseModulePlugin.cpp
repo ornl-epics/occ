@@ -13,6 +13,8 @@ BaseModulePlugin::BaseModulePlugin(const char *portName, const char *dispatcherP
     : BasePlugin(portName, dispatcherPortName, REASON_OCCDATA, blocking, NUM_BASEMODULEPLUGIN_PARAMS + numParams, 1,
                  interfaceMask | defaultInterfaceMask, interruptMask | defaultInterruptMask)
     , m_hardwareId(parseHardwareId(hardwareId))
+    , m_statusPayloadLength(0)
+    , m_configPayloadLength(0)
     , m_stateMachine(ST_NOT_INITIALIZED)
     , m_behindDsp(behindDsp)
 {
