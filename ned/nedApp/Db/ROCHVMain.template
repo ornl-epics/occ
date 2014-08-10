@@ -21,10 +21,10 @@ record(calc, "$(P):AlarmSum") {
 # at startup.
 #
 record(fanout, "$(P):InitProc") {
-   field(LNK1, "$(P):RampRateSet")
-   field(LNK2, "$(P):MaxVSet")
+   field(LNK1, "$(P):RampRate")
+   field(LNK2, "$(P):MaxV")
    field(LNK3, "$(P):Enable")
-   field(LNK4, "$(P):VoltSet")
+#   field(LNK4, "$(P):VoltSet")
    field(LNK5, "$(P):VConvX")
    field(LNK6, "$(P):DConvX")
 }
