@@ -87,6 +87,18 @@ class RocPlugin : public BaseModulePlugin {
          */
         static bool parseVersionRsp(const DasPacket *packet, BaseModulePlugin::Version &version, size_t expectedLen=0);
 
+        /**
+         * Handle READ_CONFIG response from v5.4.
+         *
+         * Function handles workaround for broken v5.4 firmware version which
+         * appends 4 unexpected bytes at the end of the payload. Packet is copied
+         * to internal buffer and the length is modified. Then BaseModulePlugin::rspReadConfig()
+         * is invoked with the modified packet.
+         * For non-v5.4 firmwares the function simply invokes BaseModulePlugin::rspReadConfig()
+         * passing it the original packet.
+         */
+        bool rspReadConfig(const DasPacket *packet);
+
     private: // functions
         /**
          * Verify the DISCOVER response is from ROC.

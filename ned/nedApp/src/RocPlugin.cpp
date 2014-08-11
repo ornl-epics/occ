@@ -1,6 +1,8 @@
 #include "RocPlugin.h"
 #include "Log.h"
 
+#include <cstring>
+
 #define HEX_BYTE_TO_DEC(a)      ((((a)&0xFF)/16)*10 + ((a)&0xFF)%16)
 
 EPICS_REGISTER_PLUGIN(RocPlugin, 5, "Port name", string, "Dispatcher port name", string, "Hardware ID", string, "Hw & SW version", string, "Blocking", int);
@@ -40,7 +42,7 @@ RocPlugin::RocPlugin(const char *portName, const char *dispatcherPortName, const
     if (m_version == "v51") {
         createStatusParams_v51();
         createConfigParams_v51();
-    } else if (m_version == "v52" || m_version == "v55") {
+    } else if (m_version == "v52" || m_version == "v54" || m_version == "v55") {
         createStatusParams_v52();
         createConfigParams_v52();
     } else {
@@ -117,12 +119,13 @@ bool RocPlugin::rspDiscover(const DasPacket *packet)
 bool RocPlugin::rspReadVersion(const DasPacket *packet)
 {
     char date[20];
+    size_t len = (m_version == "v54" ? sizeof(RspReadVersion_v54) : sizeof(RspReadVersion_v5x));
 
     if (!BaseModulePlugin::rspReadVersion(packet))
         return false;
 
     BaseModulePlugin::Version version;
-    if (!parseVersionRsp(packet, version, sizeof(RspReadVersion_v5x))) {
+    if (!parseVersionRsp(packet, version, len)) {
         LOG_WARN("Bad READ_VERSION response");
         return false;
     }
@@ -141,6 +144,8 @@ bool RocPlugin::rspReadVersion(const DasPacket *packet)
         if (m_version == "v51" && version.fw_revision == 1)
             return true;
         if (m_version == "v52" && version.fw_revision == 2)
+            return true;
+        if (m_version == "v54" && version.fw_revision == 4)
             return true;
         if (m_version == "v55" && version.fw_revision == 5)
             return true;
@@ -174,6 +179,25 @@ bool RocPlugin::parseVersionRsp(const DasPacket *packet, BaseModulePlugin::Versi
     version.fw_day      = HEX_BYTE_TO_DEC(response->day);
 
     return true;
+}
+
+bool RocPlugin::rspReadConfig(const DasPacket *packet)
+{
+    if (m_version == "v54") {
+        uint8_t buffer[480]; // actual size of the READ_CONFIG v5.4 packet
+
+        if (packet->length() > sizeof(buffer)) {
+            LOG_ERROR("Received v5.4 READ_CONFIG response bigger than expected");
+            return asynError;
+        }
+
+        // Packet in shared queue must not be modified. So we make a copy.
+        memcpy(buffer, packet, packet->length());
+        packet = reinterpret_cast<const DasPacket *>(buffer);
+        const_cast<DasPacket *>(packet)->payload_length -= 4; // This is the only reason we're doing all the buffering
+    }
+
+    return BaseModulePlugin::rspReadConfig(packet);
 }
 
 void RocPlugin::reqHvCmd(const char *data, uint32_t length)
