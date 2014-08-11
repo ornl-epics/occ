@@ -230,6 +230,7 @@ bool RocPlugin::rspHvCmd(const DasPacket *packet)
 size_t RocPlugin::getHvResponse(char *response, size_t size, double timeout)
 {
     size_t len = 0;
+    bool eom = false;
     epicsTimeStamp expire, now;
     epicsTimeGetCurrent(&expire);
     epicsTimeAddSeconds(&expire, timeout);
@@ -241,19 +242,19 @@ size_t RocPlugin::getHvResponse(char *response, size_t size, double timeout)
             m_hvRecvBuffer.pop_front();
             *(response++) = byte;
             len++;
+            size--;
             if (byte == '\r') {
-                if (i < size)
+                if (size > 0)
                     *response = '\0';
+                eom = true;
                 break;
             }
         }
         m_hvRecvMutex.unlock();
 
-        if (len > 0)
-            break;
-
         epicsTimeGetCurrent(&now);
-    } while (epicsTimeLessThan(&now, &expire) != 0);
+    } while (size > 0 && !eom && epicsTimeLessThan(&now, &expire) != 0);
+
     return len;
 }
 
