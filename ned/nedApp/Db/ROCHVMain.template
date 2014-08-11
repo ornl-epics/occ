@@ -137,20 +137,20 @@ record(ai, "$(P):Volt") {
 #
 # ESLO = .33 ma / 1023 bits  (for now)
 #
-record(ai, "$(P):Curr") {
-   field(DTYP, "stream")
-   field(DESC, "Current Readback")
-   field(INP, "@ROCHV.proto getNum(RC) $(PORT) $(ADDR)")
-   field(LINR, "SLOPE")
-   field(PREC, "4")
-   field(ESLO, "0.000322581")
-   field(EOFF, "0")
-   field(EGU, "ma")
-   field(HSV, "MAJOR")
-   field(LSV, "MAJOR")
-   info(autosaveFields, "HIGH LOW")
-   field(SCAN, "1 second")
-}
+#record(ai, "$(P):Curr") {
+#   field(DTYP, "stream")
+#   field(DESC, "Current Readback")
+#   field(INP, "@ROCHV.proto getNum(RC) $(PORT) $(ADDR)")
+#   field(LINR, "SLOPE")
+#   field(PREC, "4")
+#   field(ESLO, "0.000322581")
+#   field(EOFF, "0")
+#   field(EGU, "ma")
+#   field(HSV, "MAJOR")
+#   field(LSV, "MAJOR")
+#   info(autosaveFields, "HIGH LOW")
+#   field(SCAN, "1 second")
+#}
 
 #
 # Max Voltage readback. Presumeably just reflects setpoint 
