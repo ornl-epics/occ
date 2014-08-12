@@ -43,6 +43,20 @@
  * single 32-bit dword field - first LVDS word in lower-part of dword
  * and second LVDS word in upper-part of dword
  *
+ * BaseModulePlugin supports all common module communication, including
+ * DISCOVER, READ_VERSION, READ_STATUS, READ_CONFIG, WRITE_CONFIG,
+ * START, STOP. There's 2 overloadable handlers for each type, reqXY
+ * sends a command to module and rspXY processes the response to that
+ * command. Sending out a command recharges the timer which defaults
+ * to 2 seconds. Received response cancels the timeout. No other command
+ * can be issues while waiting for response.
+ *
+ * There's a generic status and configuration parameter description
+ * functionality that all modules should use. Modules should only
+ * create a table of parameters using createStatusParam() and
+ * createConfigParam() functions. The BaseModulePlugin will make
+ * sure to properly map those into OCC packets.
+ *
  * General plugin parameters:
  * asyn param    | asyn param type | init val | mode | Description
  * ------------- | --------------- | -------- | ---- | -----------

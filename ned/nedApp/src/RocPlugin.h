@@ -8,6 +8,25 @@
 /**
  * Plugin for ROC module.
  *
+ * The RocPlugin extends BaseModulePlugin with the ROC board specifics.
+ * It handles DISCOVER response to verify module type and READ_VERSION
+ * which parses the version information. It also provides support for
+ * High Voltage communication through RS232 port on ROC boards and
+ * exposes that through StreamDevice friendly interfaces.
+ *
+ * Several firmware version are supported:
+ * * ROC hw=5.2 fw=5.1 as v51
+ * * ROC hw=5.2 fw=5.2 as v52
+ * * ROC hw=5.2 fw=5.4 as v54
+ * * ROC hw=5.2 fw=5.5 as v55
+ * In general firmware versions differ in status or configuration
+ * parameters they provide. Those are available in individual files
+ * called RocPlugin_<version>.cpp. RocPlugin will refuse to communicate
+ * with unsupported versions.
+ * ROC v5.4 reports wrong packet length in READ_CONFIG response for which
+ * a workaround is to overload rspReadConfig() function to modify the
+ * packet before letting base implementation do the rest.
+ *
  * General plugin parameters:
  * asyn param    | asyn param type | init val | mode | Description                   |
  * ------------- | --------------- | -------- | ---- | ------------------------------
