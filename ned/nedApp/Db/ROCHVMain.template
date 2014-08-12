@@ -23,7 +23,7 @@ record(calc, "$(P):AlarmSum") {
 record(fanout, "$(P):InitProc") {
    field(LNK1, "$(P):RampRate")
    field(LNK2, "$(P):MaxV")
-   field(LNK3, "$(P):Enable")
+#   field(LNK3, "$(P):Enable")
 #   field(LNK4, "$(P):VoltSet")
    field(LNK5, "$(P):VConvX")
    field(LNK6, "$(P):DConvX")
@@ -134,6 +134,10 @@ record(ai, "$(P):Volt") {
 
 #
 # Current readback.  Do it the ordinary EPICS way.  
+#
+# This has been removed because according to Loren Funk the current readback
+# is useless.  Not only that, not all ROC HV boards seem to even answer the
+# RC query.
 #
 # ESLO = .33 ma / 1023 bits  (for now)
 #
