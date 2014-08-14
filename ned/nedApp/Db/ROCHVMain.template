@@ -115,26 +115,24 @@ record(bo, "$(G):OnOff") {
    info(autosaveFields, "VAL")
 }
 
-
-
-record(bo, "$(P):GlobalOnOff") {
-   field(DESC, "Globally controlled HV on/off ")
-   field(DTYP, "Soft Channel")
-   field(OMSL, "closed loop")
-   field(DOL, "$(G):OnOff CPP MS")
-   field(IVOA, "Don't drive outputs")
-   field(OUT, "$(P):OnOff PP")
-   field(ONAM, "ON")
-   field(ZNAM, "OFF")
-}
 #
-#  On/Off switch using setpoint.  This is for use either from GUI or from
-#  GlobalOnOff record above
+# Global receiver
+record(calcout, "$(P):OnOffRcvr") {
+   field(DESC, "Global HV on/off RECEIVER")
+   field(INPA, "$(G):OnOff CPP MS") 
+   field(CALC, "A")
+   field(IVOA, "Don't drive outputs")
+   field(OUT, "$(P):OnOff PP MS")
+}
+
+#
+#  This is the local copy of on/off. It can be driven by GUI, or by 
+#  Global receiver.  
 #
 record(bo, "$(P):OnOff") {
    field(DESC, "HV on/off using setpoint")
    field(DTYP, "Soft Channel")
-   field(FLNK, "$(P):VoltCmd PP")
+   field(IVOA, "Don't drive outputs")
    field(ONAM, "ON")
    field(ZNAM, "OFF")
    info(autosaveFields, "VAL")
@@ -148,8 +146,8 @@ record(calcout, "$(P):VoltCmd") {
    field(OUT, "@ROCHV.proto setNum(#) $(PORT) $(ADDR)")
    field(IVOA, "Don't drive outputs")
    field(CALC, "A?B:0")
-   field(INPA, "$(P):OnOff NPP MS")
-   field(INPB, "$(P):VoltSet NPP MS")
+   field(INPA, "$(P):OnOff CPP MS")
+   field(INPC, "$(P):VoltSet CPP MS")
 }
   
 #
