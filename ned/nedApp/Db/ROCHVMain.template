@@ -117,6 +117,7 @@ record(bo, "$(G):OnOff") {
 
 #
 # Global receiver
+#
 record(calcout, "$(P):OnOffRcvr") {
    field(DESC, "Global HV on/off RECEIVER")
    field(INPA, "$(G):OnOff CPP MS") 
@@ -124,6 +125,7 @@ record(calcout, "$(P):OnOffRcvr") {
    field(IVOA, "Don't drive outputs")
    field(OUT, "$(P):OnOff PP MS")
 }
+
 
 #
 #  This is the local copy of on/off. It can be driven by GUI, or by 
@@ -147,7 +149,7 @@ record(calcout, "$(P):VoltCmd") {
    field(IVOA, "Don't drive outputs")
    field(CALC, "A?B:0")
    field(INPA, "$(P):OnOff CPP MS")
-   field(INPC, "$(P):VoltSet CPP MS")
+   field(INPB, "$(P):VoltSet CPP MS")
 }
   
 #
