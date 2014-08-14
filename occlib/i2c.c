@@ -6,18 +6,17 @@
 #include <unistd.h>
 
 ///Local Routines
-static void start_signal(byte device);
-static void stop_signal(void);
-static void read_signal(void);
-static void write_signal(void);
-static int read_acknowledge(void);
-static void write_byte_bus(byte write_byte_data);
-static int  read_byte_bus(void);
-static void Outport32(uint32_t offset, uint32_t data);
-static void Bit_Outport32(uint32_t offset, uint32_t bit_pattern, uint32_t value);
+static void start_signal(struct occ_handle *occ, byte device);
+static void stop_signal(struct occ_handle *occ);
+static void read_signal(struct occ_handle *occ);
+static void write_signal(struct occ_handle *occ);
+static int read_acknowledge(struct occ_handle *occ);
+static void write_byte_bus(struct occ_handle *occ, byte write_byte_data);
+static int  read_byte_bus(struct occ_handle *occ);
+static void Outport32(struct occ_handle *occ, uint32_t offset, uint32_t data);
+static void Bit_Outport32(struct occ_handle *occ, uint32_t offset, uint32_t bit_pattern, uint32_t value);
 
-static struct occ_handle *device_handle;
-static uint8_t pcie_bar; 
+static uint8_t pcie_bar = 0; 
 
 /*******************************************************************************/
 // void Outport32(uint32_t offset, uint32_t data);
@@ -30,12 +29,12 @@ static uint8_t pcie_bar;
 //    Output data to OCC register
 //
 /*******************************************************************************/
-static void Outport32(uint32_t offset, uint32_t data)
+static void Outport32(struct occ_handle *occ, uint32_t offset, uint32_t data)
 {
         uint32_t occ_data[1];
         occ_data[0] = data;
         //printf("occ_data = %x \n", occ_data[0]);
-	int ret = occ_io_write(device_handle, pcie_bar, offset, occ_data, 1);
+	int ret = occ_io_write(occ, pcie_bar, offset, occ_data, 1);
     if (ret < 0) {
         fprintf(stderr, "ERROR: cannot read BAR%d at offset 0x%08X - %s\n", pcie_bar, offset, strerror(-ret));
     } else {
@@ -51,11 +50,11 @@ static void Outport32(uint32_t offset, uint32_t data)
 //    Input data from OCC register
 //
 /*******************************************************************************/
-unsigned long Inport32(uint32_t offset)
+unsigned long Inport32(struct occ_handle *occ, uint32_t offset)
 {
   uint32_t data[4];
 
-  int ret = occ_io_read(device_handle, pcie_bar, offset, data, 1);
+  int ret = occ_io_read(occ, pcie_bar, offset, data, 1);
   if (ret < 0) {
       fprintf(stderr, "ERROR: cannot read BAR%d at offset 0x%08X - %s\n", pcie_bar, offset, strerror(-ret));
 	  return(0xFFFFFFFF);
@@ -76,10 +75,10 @@ unsigned long Inport32(uint32_t offset)
 //    This function writes selected bits in the specified register
 //
 /*******************************************************************************/
-void Bit_Outport32(uint32_t offset, uint32_t bit_mask, uint32_t value)
+void Bit_Outport32(struct occ_handle *occ, uint32_t offset, uint32_t bit_mask, uint32_t value)
 {
     // do a read modify write to the selected port, only modifing the requested bits
-    Outport32(offset, ((Inport32(offset) & ~bit_mask) | (value & bit_mask)));
+    Outport32(occ, offset, ((Inport32(occ, offset) & ~bit_mask) | (value & bit_mask)));
 }
 
 /*******************************************************************************/
@@ -91,23 +90,23 @@ void Bit_Outport32(uint32_t offset, uint32_t bit_mask, uint32_t value)
 //    address. A start signal is defined as:  
 //            "SDA goes low when SCL is high".
 /*******************************************************************************/
-static void start_signal(byte device)
+static void start_signal(struct occ_handle *occ, byte device)
 {
    byte bit_mask;
 
    // enable data output enable
-   Bit_Outport32(I2CR, I2CR_OE, I2CR_OE_HIGH);     // OE high
+   Bit_Outport32(occ, I2CR, I2CR_OE, I2CR_OE_HIGH);     // OE high
    usleep(1000);
 
    // Set the clock pin high
-   Bit_Outport32(I2CR, I2CR_SCL, I2CR_SCL);
+   Bit_Outport32(occ, I2CR, I2CR_SCL, I2CR_SCL);
 
    // Set the data line low
-   Bit_Outport32(I2CR, I2CR_SDA, I2CR_SDA_LOW);   // SDA low
+   Bit_Outport32(occ, I2CR, I2CR_SDA, I2CR_SDA_LOW);   // SDA low
    usleep(1000);
 
    // Set the clock line low
-   Bit_Outport32(I2CR, I2CR_SCL, I2CR_SCL_LOW);   // SCL low
+   Bit_Outport32(occ, I2CR, I2CR_SCL, I2CR_SCL_LOW);   // SCL low
    usleep(1000);
 
    // set the mask to one
@@ -119,23 +118,23 @@ static void start_signal(byte device)
       if (device & bit_mask)
          {
          // Set the data line high
-         Bit_Outport32(I2CR, I2CR_SDA, I2CR_SDA_HIGH);  // SDA high
+         Bit_Outport32(occ, I2CR, I2CR_SDA, I2CR_SDA_HIGH);  // SDA high
          usleep(1000);
          }
 
       else
          {
          // set the data line low
-         Bit_Outport32(I2CR, I2CR_SDA, I2CR_SDA_LOW);   // SDA low
+         Bit_Outport32(occ, I2CR, I2CR_SDA, I2CR_SDA_LOW);   // SDA low
          usleep(1000);
          }
 
       // clock the data
-      Bit_Outport32(I2CR, I2CR_SCL, I2CR_SCL_HIGH);     // SCL high
+      Bit_Outport32(occ, I2CR, I2CR_SCL, I2CR_SCL_HIGH);     // SCL high
       usleep(1000);
 
       // Set the clock line low
-      Bit_Outport32(I2CR, I2CR_SCL, I2CR_SCL_LOW);   // SCL low
+      Bit_Outport32(occ, I2CR, I2CR_SCL, I2CR_SCL_LOW);   // SCL low
       usleep(1000);
 
       // shift the bit mask
@@ -150,23 +149,23 @@ static void start_signal(byte device)
 //                 "SDA goes high when SCL is high".
 //
 /*********************************************************************************/
-static void stop_signal(void)
+static void stop_signal(struct occ_handle *occ)
 {
 
    // enable data output enable
-   Bit_Outport32(I2CR, I2CR_OE, I2CR_OE_HIGH);     // OE high
+   Bit_Outport32(occ, I2CR, I2CR_OE, I2CR_OE_HIGH);     // OE high
    usleep(1000);
 
    // take the data line low
-   Bit_Outport32(I2CR, I2CR_SDA, I2CR_SDA_LOW);
+   Bit_Outport32(occ, I2CR, I2CR_SDA, I2CR_SDA_LOW);
    usleep(1000);
 
    // clock the data
-   Bit_Outport32(I2CR, I2CR_SCL, I2CR_SCL_HIGH);     // SCL high
+   Bit_Outport32(occ, I2CR, I2CR_SCL, I2CR_SCL_HIGH);     // SCL high
    usleep(1000);
 
    // take the data line high
-   Bit_Outport32(I2CR, I2CR_SDA, I2CR_SDA_HIGH);  // SDA high
+   Bit_Outport32(occ, I2CR, I2CR_SDA, I2CR_SDA_HIGH);  // SDA high
    usleep(1000);
 }
 
@@ -178,22 +177,22 @@ static void stop_signal(void)
 //       R/W* bit = 1 in the data stream = read operation
 //
 /*********************************************************************************/
-static void read_signal(void)
+static void read_signal(struct occ_handle *occ)
 {
    // take the data line high
-   Bit_Outport32(I2CR, I2CR_SDA, I2CR_SDA_HIGH);  // SDA high
+   Bit_Outport32(occ, I2CR, I2CR_SDA, I2CR_SDA_HIGH);  // SDA high
    usleep(1000);
 
    // clock the data
-   Bit_Outport32(I2CR, I2CR_SCL, I2CR_SCL_HIGH);     // SCL high
+   Bit_Outport32(occ, I2CR, I2CR_SCL, I2CR_SCL_HIGH);     // SCL high
    usleep(1000);
 
    // disable the SDA output enable ---JEB
-   Bit_Outport32(I2CR, I2CR_OE, I2CR_OE_LOW);     // disable Output enable
+   Bit_Outport32(occ, I2CR, I2CR_OE, I2CR_OE_LOW);     // disable Output enable
    usleep(1000);
 
    // Set the clock line low
-   Bit_Outport32(I2CR, I2CR_SCL, I2CR_SCL_LOW);   // SCL low
+   Bit_Outport32(occ, I2CR, I2CR_SCL, I2CR_SCL_LOW);   // SCL low
    usleep(1000);
 }
 
@@ -205,18 +204,18 @@ static void read_signal(void)
 //       R/W* bit = 0 in the data stream = write operation
 //
 /*********************************************************************************/
-static void write_signal(void)
+static void write_signal(struct occ_handle *occ)
 {
    // set the data line low
-   Bit_Outport32(I2CR, I2CR_SDA, I2CR_SDA_LOW);   // SDA low
+   Bit_Outport32(occ, I2CR, I2CR_SDA, I2CR_SDA_LOW);   // SDA low
    usleep(1000);
 
    // clock the data
-   Bit_Outport32(I2CR, I2CR_SCL, I2CR_SCL_HIGH);     // SCL high
+   Bit_Outport32(occ, I2CR, I2CR_SCL, I2CR_SCL_HIGH);     // SCL high
    usleep(1000);
 
    // Set the clock line low
-   Bit_Outport32(I2CR, I2CR_SCL, I2CR_SCL_LOW);   // SCL low
+   Bit_Outport32(occ, I2CR, I2CR_SCL, I2CR_SCL_LOW);   // SCL low
    usleep(1000);
 }
 
@@ -228,26 +227,26 @@ static void write_signal(void)
 //    Routine to write the acknowledge when a data byte is read from a slave
 //
 /*********************************************************************************/
-static void write_acknowledge(void)
+static void write_acknowledge(struct occ_handle *occ)
 {
    // enable data output enable
-   Bit_Outport32(I2CR, I2CR_OE, I2CR_OE_HIGH);    // OE high
+   Bit_Outport32(occ, I2CR, I2CR_OE, I2CR_OE_HIGH);    // OE high
    usleep(1000);
 
    // set the data line low
-   Bit_Outport32(I2CR, I2CR_SDA, I2CR_SDA_LOW);   // SDA low
+   Bit_Outport32(occ, I2CR, I2CR_SDA, I2CR_SDA_LOW);   // SDA low
    usleep(1000);
 
    // clock the data
-   Bit_Outport32(I2CR, I2CR_SCL, I2CR_SCL_HIGH);     // SCL high
+   Bit_Outport32(occ, I2CR, I2CR_SCL, I2CR_SCL_HIGH);     // SCL high
    usleep(1000);
 
    // Set the clock line low
-   Bit_Outport32(I2CR, I2CR_SCL, I2CR_SCL_LOW);   // SCL low
+   Bit_Outport32(occ, I2CR, I2CR_SCL, I2CR_SCL_LOW);   // SCL low
    usleep(1000);
 
    // Set the data line high
-   Bit_Outport32(I2CR, I2CR_SDA, I2CR_SDA_HIGH);  // SDA high
+   Bit_Outport32(occ, I2CR, I2CR_SDA, I2CR_SDA_HIGH);  // SDA high
    usleep(1000);
 }
 
@@ -257,7 +256,7 @@ static void write_acknowledge(void)
 //    Routine to read the acknowledge bit following a transfer to a slave
 //
 /*********************************************************************************/
-static int read_acknowledge(void)
+static int read_acknowledge(struct occ_handle *occ)
 {
    byte I2C_input;
 
@@ -265,21 +264,21 @@ static int read_acknowledge(void)
 
 
    // Set the data line high
-   Bit_Outport32(I2CR, I2CR_SDA, I2CR_SDA_HIGH);  // SDA high
+   Bit_Outport32(occ, I2CR, I2CR_SDA, I2CR_SDA_HIGH);  // SDA high
    usleep(1000);
 
    // disable data output enable
-   Bit_Outport32(I2CR, I2CR_OE, I2CR_OE_LOW);     // OE low
+   Bit_Outport32(occ, I2CR, I2CR_OE, I2CR_OE_LOW);     // OE low
    usleep(1000);
 
-   I2C_input = (byte) (Inport32(I2CR) & I2CR_SDA_PIN);
+   I2C_input = (byte) (Inport32(occ, I2CR) & I2CR_SDA_PIN);
 
    // clock the data
-   Bit_Outport32(I2CR, I2CR_SCL, I2CR_SCL_HIGH);     // SCL high
+   Bit_Outport32(occ, I2CR, I2CR_SCL, I2CR_SCL_HIGH);     // SCL high
    usleep(1000);
 
    // Set the clock line low
-   Bit_Outport32(I2CR, I2CR_SCL, I2CR_SCL_LOW);   // SCL low
+   Bit_Outport32(occ, I2CR, I2CR_SCL, I2CR_SCL_LOW);   // SCL low
    usleep(1000);
 
    // if acknowldege is not zero then error
@@ -304,12 +303,12 @@ static int read_acknowledge(void)
 //    Routine to write a byte of data to the serial EEPROM.
 //
 /*********************************************************************************/
-static void write_byte_bus(byte write_byte_data)
+static void write_byte_bus(struct occ_handle *occ, byte write_byte_data)
 {
    byte bit_mask;
 
    // enable data output enable
-   Bit_Outport32(I2CR, I2CR_OE, I2CR_OE_HIGH);     // OE high
+   Bit_Outport32(occ, I2CR, I2CR_OE, I2CR_OE_HIGH);     // OE high
    usleep(1000);
 
 
@@ -325,7 +324,7 @@ static void write_byte_bus(byte write_byte_data)
 	 //printf("writing '1': bitmask = %x write_byte_data = %x \n", bit_mask, write_byte_data); 
 
          // Set the data line high
-         Bit_Outport32(I2CR, I2CR_SDA, I2CR_SDA_HIGH);  // SDA high
+         Bit_Outport32(occ, I2CR, I2CR_SDA, I2CR_SDA_HIGH);  // SDA high
          usleep(1000);
          }
 
@@ -334,7 +333,7 @@ static void write_byte_bus(byte write_byte_data)
          {
 	 //printf("writing '0': bitmask = %x write_byte_data = %x \n", bit_mask, write_byte_data); 
          // set the data line low
-         Bit_Outport32(I2CR, I2CR_SDA, I2CR_SDA_LOW);   // SDA low
+         Bit_Outport32(occ, I2CR, I2CR_SDA, I2CR_SDA_LOW);   // SDA low
          usleep(1000);
          }
 
@@ -342,11 +341,11 @@ static void write_byte_bus(byte write_byte_data)
       bit_mask >>= 1;
 
       // clock the data
-      Bit_Outport32(I2CR, I2CR_SCL, I2CR_SCL_HIGH);     // SCL high
+      Bit_Outport32(occ, I2CR, I2CR_SCL, I2CR_SCL_HIGH);     // SCL high
       usleep(1000);
 
       // Set the clock line low
-      Bit_Outport32(I2CR, I2CR_SCL, I2CR_SCL_LOW);   // SCL low
+      Bit_Outport32(occ, I2CR, I2CR_SCL, I2CR_SCL_LOW);   // SCL low
       usleep(1000);
       }
 }
@@ -359,18 +358,18 @@ static void write_byte_bus(byte write_byte_data)
 //      Return Value: Data read from the bus
 //
 /*********************************************************************************/
-static int read_byte_bus(void)
+static int read_byte_bus(struct occ_handle *occ)
 {
    byte I2C_input;
    byte data_from_bus;
    word bit_mask;
 
    // Set the data line high
-   Bit_Outport32(I2CR, I2CR_SDA, I2CR_SDA_HIGH);  // SDA high
+   Bit_Outport32(occ, I2CR, I2CR_SDA, I2CR_SDA_HIGH);  // SDA high
    usleep(1000);
 
       // disable the SDA output enable
-   Bit_Outport32(I2CR, I2CR_OE, I2CR_OE_LOW);     // OE LOW
+   Bit_Outport32(occ, I2CR, I2CR_OE, I2CR_OE_LOW);     // OE LOW
    usleep(1000);
 
    // reset the data byte and bit mask
@@ -381,11 +380,11 @@ static int read_byte_bus(void)
    while (bit_mask >= 1)
       {
       // clock the data
-      Bit_Outport32(I2CR, I2CR_SCL, I2CR_SCL_HIGH);     // SCL high
+      Bit_Outport32(occ, I2CR, I2CR_SCL, I2CR_SCL_HIGH);     // SCL high
       usleep(1000);
 
       // if not zero then add the bit
-      I2C_input = (byte)((Inport32(I2CR) & I2CR_SDA_PIN));
+      I2C_input = (byte)((Inport32(occ, I2CR) & I2CR_SDA_PIN));
 
       if (I2C_input)
          data_from_bus |= bit_mask;
@@ -394,7 +393,7 @@ static int read_byte_bus(void)
       bit_mask >>= 1;
 
       // Set the clock line low
-      Bit_Outport32(I2CR, I2CR_SCL, I2CR_SCL_LOW);   // SCL low
+      Bit_Outport32(occ, I2CR, I2CR_SCL, I2CR_SCL_LOW);   // SCL low
       usleep(1000);
       }
 
@@ -424,37 +423,34 @@ unsigned int Read_I2C_Bus(struct occ_handle *occ, byte address, byte offset, wor
 {
    byte temp_data;
 
-   device_handle = occ;
-   pcie_bar = 0;
-
    // Set I2C bus to initial state
-   Outport32(I2CR, I2CR_DEFAULT);     // all high
+   Outport32(occ, I2CR, I2CR_DEFAULT);     // all high
    usleep(1000);
 
    // write the start and prepare for a read
-   start_signal(address/2);
-   write_signal(); // set R/W = 0
+   start_signal(occ, address/2);
+   write_signal(occ); // set R/W = 0
 
    // read acknowledge
-   if (read_acknowledge() == SUCCESS) {
+   if (read_acknowledge(occ) == SUCCESS) {
       // write the byte offset
 	  //printf("Writing device offset %d \n",offset);
-	  write_byte_bus(offset);
+	  write_byte_bus(occ, offset);
 	  
-	  if (read_acknowledge() == SUCCESS) {
-                start_signal(address/2);
-                read_signal(); // set R/W = 1
+	  if (read_acknowledge(occ) == SUCCESS) {
+                start_signal(occ, address/2);
+                read_signal(occ); // set R/W = 1
 
-		if (read_acknowledge() == SUCCESS) {
-			temp_data = read_byte_bus();
+		if (read_acknowledge(occ) == SUCCESS) {
+			temp_data = read_byte_bus(occ);
 			*data = ((int) temp_data) << 8;
 			//printf("data = %x, temp_data = %x \n", *data,temp_data); 
 
 			// send acknowledge
-			write_acknowledge();
+			write_acknowledge(occ);
 
 			// read the second byte
-			temp_data = read_byte_bus();
+			temp_data = read_byte_bus(occ);
 			*data |= temp_data;
 
 			//printf("data = %x, temp_data = %x \n", *data,temp_data); 
@@ -462,13 +458,13 @@ unsigned int Read_I2C_Bus(struct occ_handle *occ, byte address, byte offset, wor
 			// no acknowledge on the last byte		
 
 			// send the stop signal
-			stop_signal();
+			stop_signal(occ);
 			return(SUCCESS);
 		}
 		else {
 	    		printf("Error: Ack did not go LOW! (memory read address)\n");
 			// send the stop signal
-			stop_signal();
+			stop_signal(occ);
 			return(ERROR);
 	  	}
 	  }
@@ -476,7 +472,7 @@ unsigned int Read_I2C_Bus(struct occ_handle *occ, byte address, byte offset, wor
 	  else {
 	    printf("Error: Ack did not go LOW! (byte offset)\n");
 		// send the stop signal
-		stop_signal();
+		stop_signal(occ);
 		return(ERROR);
 	  }
   
@@ -485,7 +481,7 @@ unsigned int Read_I2C_Bus(struct occ_handle *occ, byte address, byte offset, wor
    else {
 	   printf("Error: Ack did not go LOW! (memory write address)\n");
       // send the stop signal
-      stop_signal();
+      stop_signal(occ);
       return(ERROR);
    }
 }
