@@ -2,6 +2,7 @@
 #define ROC_PLUGIN_H
 
 #include "BaseModulePlugin.h"
+#include "Fifo.h"
 
 #include <list>
 
@@ -48,8 +49,7 @@ class RocPlugin : public BaseModulePlugin {
 
     private: // variables
         std::string m_version;                              //!< Version string as passed to constructor
-        std::list<char> m_hvRecvBuffer;                     //!< FIFO queue for data received from HV module but not yet processed
-        epicsMutex m_hvRecvMutex;                           //!< Mutex protecting the FIFO
+        Fifo<char> m_hvBuffer;                              //!< FIFO buffer for data received from HV module but not yet processed
 
     public: // functions
 
@@ -158,22 +158,6 @@ class RocPlugin : public BaseModulePlugin {
          * @return true if packet was processed
          */
         bool rspHvCmd(const DasPacket *packet);
-
-        /**
-         * Read HV response from internal buffer.
-         *
-         * Dequeue first response or part of it from internal buffer and return
-         * it. Reads up to `size' characters and waits at most `timeout' seconds.
-         * Return as soon as some characters are available, not necessarily the
-         * entire response. If there are more than one response in the internal
-         * buffer, only return first one.
-         *
-         * @param[out] response Buffer to be written to
-         * @param[in] size of the buffer
-         * @param[in] timeout Maximum time in seconds to wait before giving up
-         * @return Number of characters returned or 0 if timeout.
-         */
-        size_t getHvResponse(char *response, size_t size, double timeout);
 
         /**
          * Create and register all status ROC v5.2 parameters to be exposed to EPICS.

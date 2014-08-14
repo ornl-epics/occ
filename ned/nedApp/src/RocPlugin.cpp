@@ -94,13 +94,13 @@ asynStatus RocPlugin::readOctet(asynUser *pasynUser, char *value, size_t nChars,
         // Temporarily unlock the device or processResponse() will not run
         this->unlock();
 
-        *nActual = getHvResponse(value, nChars, pasynUser->timeout);
+        *nActual = m_hvBuffer.dequeue(value, nChars, pasynUser->timeout);
 
         if (*nActual == 0) {
             status = asynTimeout;
         } else if (eomReason) {
             if (value[*nActual - 1] == '\r') *eomReason |= ASYN_EOM_EOS;
-            else if (*nActual == nChars)     *eomReason |= ASYN_EOM_CNT;
+            if (*nActual == nChars)          *eomReason |= ASYN_EOM_CNT;
         }
 
         this->lock();
@@ -216,46 +216,11 @@ bool RocPlugin::rspHvCmd(const DasPacket *packet)
 {
     const uint32_t *payload = packet->getPayload();
 
-    // According to dcomserver, one character per OCC packet is expected.
-    // But accept more if present.
-    m_hvRecvMutex.lock();
-    for (uint32_t i = 0; i < (packet->getPayloadLength()/4); i++) {
-        m_hvRecvBuffer.push_back(payload[i] & 0xFF);
-    }
-    m_hvRecvMutex.unlock();
+    // Single character per OCC packet
+    char byte = payload[0] & 0xFF;
+    m_hvBuffer.enqueue(&byte, 1);
 
     return true;
-}
-
-size_t RocPlugin::getHvResponse(char *response, size_t size, double timeout)
-{
-    size_t len = 0;
-    bool eom = false;
-    epicsTimeStamp expire, now;
-    epicsTimeGetCurrent(&expire);
-    epicsTimeAddSeconds(&expire, timeout);
-
-    do {
-        m_hvRecvMutex.lock();
-        for (size_t i = 0; i < std::min(size, m_hvRecvBuffer.size()); i++) {
-            char byte = m_hvRecvBuffer.front();
-            m_hvRecvBuffer.pop_front();
-            *(response++) = byte;
-            len++;
-            size--;
-            if (byte == '\r') {
-                if (size > 0)
-                    *response = '\0';
-                eom = true;
-                break;
-            }
-        }
-        m_hvRecvMutex.unlock();
-
-        epicsTimeGetCurrent(&now);
-    } while (size > 0 && !eom && epicsTimeLessThan(&now, &expire) != 0);
-
-    return len;
 }
 
 // createStatusParams_v* and createConfigParams_v* functions are implemented in custom files for two
