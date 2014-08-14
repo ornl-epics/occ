@@ -53,7 +53,7 @@ dbLoadRecords("../../db/DiscoverPlugin.template","P=$(PREFIX)Det:disc:,PORT=Disc
 dbLoadRecords("../../db/BasePlugin.template","P=$(PREFIX)Det:disc:,PORT=Disc")
 
 RocPluginConfigure("roc1", "cmd", "20.39.216.73", "v52", 0)
-dbLoadRecords("../../db/ROCHV.db","P=$(PREFIX)Det:HV1,PORT=roc1")
+dbLoadRecords("../../db/ROCHV.db","P=$(PREFIX)Det:HV1,G=$(PREFIX)Det:HVG,PORT=roc1")
 dbLoadRecords("../../db/RocPlugin_v52.template","P=$(PREFIX)Det:roc1:,PORT=roc1")
 dbLoadRecords("../../db/BaseModulePlugin.template","P=$(PREFIX)Det:roc1:,PORT=roc1")
 

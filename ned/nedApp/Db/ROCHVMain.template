@@ -10,7 +10,7 @@
 record(calc, "$(P):AlarmSum") {
    field(CALC, "1")
    field(INPA, "$(P):Volt CP MS")
-   field(INPB, "$(P):Curr CP MS")
+#   field(INPB, "$(P):Curr CP MS")
    field(INPC, "$(P):CommAlarm CP MS")
    info(archive, "Monitor, 00:00:10, VAL")
 }
@@ -23,7 +23,7 @@ record(calc, "$(P):AlarmSum") {
 record(fanout, "$(P):InitProc") {
    field(LNK1, "$(P):RampRate")
    field(LNK2, "$(P):MaxV")
-   field(LNK3, "$(P):Enable")
+#   field(LNK3, "$(P):Enable")
 #   field(LNK4, "$(P):VoltSet")
    field(LNK5, "$(P):VConvX")
    field(LNK6, "$(P):DConvX")
@@ -89,18 +89,67 @@ record(ai, "$(P):ReadADC") {
 } 
 
 #
-# Requested output in volts
+# Requested voltage setpoint
 #
 record(ao, "$(P):VoltSet") {
+   field(DESC, "Requested voltage setpoint")
+   field(DRVL, "0")
+   field(LOPR, "0")
+   field(DRVH, "3000")
+   field(HOPR, "3000")
+   field(EGU, "V")
+   field(FLNK, "$(P):VoltCmd PP")
+   info(autosaveFields, "VAL")
+}
+
+#
+# Global on/off switch.  Note this occurs in each template but it will 
+# produce only one PV as long as they all get called with the same $(G) and
+# they are all in the same IOC.
+#
+record(bo, "$(G):OnOff") {
+   field(DESC, "Global HV on/off PV")
+   field(DTYP, "Soft Channel")
+   field(ONAM, "ON")
+   field(ZNAM, "OFF")
+   info(autosaveFields, "VAL")
+}
+
+
+
+record(bo, "$(P):GlobalOnOff") {
+   field(DESC, "Globally controlled HV on/off ")
+   field(DTYP, "Soft Channel")
+   field(OMSL, "closed loop")
+   field(DOL, "$(G):OnOff CPP MS")
+   field(IVOA, "Don't drive outputs")
+   field(OUT, "$(P):OnOff PP")
+   field(ONAM, "ON")
+   field(ZNAM, "OFF")
+}
+#
+#  On/Off switch using setpoint.  This is for use either from GUI or from
+#  GlobalOnOff record above
+#
+record(bo, "$(P):OnOff") {
+   field(DESC, "HV on/off using setpoint")
+   field(DTYP, "Soft Channel")
+   field(FLNK, "$(P):VoltCmd PP")
+   field(ONAM, "ON")
+   field(ZNAM, "OFF")
+   info(autosaveFields, "VAL")
+}
+#
+# Requested voltage command
+#
+record(calcout, "$(P):VoltCmd") {
    field(DTYP, "stream")
    field(DESC, "Requested voltage setpoint")
    field(OUT, "@ROCHV.proto setNum(#) $(PORT) $(ADDR)")
-   field(DRVL, "0")
-   field(LOPR, "0")
-   field(DRVH, "2200")
-   field(HOPR, "2200")
-   field(EGU, "V")
-   info(autosaveFields, "VAL")
+   field(IVOA, "Don't drive outputs")
+   field(CALC, "A?B:0")
+   field(INPA, "$(P):OnOff NPP MS")
+   field(INPB, "$(P):VoltSet NPP MS")
 }
   
 #
@@ -135,6 +184,10 @@ record(ai, "$(P):Volt") {
 #
 # Current readback.  Do it the ordinary EPICS way.  
 #
+# This has been removed because according to Loren Funk the current readback
+# is useless.  Not only that, not all ROC HV boards seem to even answer the
+# RC query.
+#
 # ESLO = .33 ma / 1023 bits  (for now)
 #
 #record(ai, "$(P):Curr") {
@@ -153,7 +206,7 @@ record(ai, "$(P):Volt") {
 #}
 
 #
-# Max Voltage readback. Presumeably just reflects setpoint 
+# Max Voltage readback. 
 #
 record(ai, "$(P):MaxV") {
    field(DTYP, "stream")
