@@ -309,3 +309,30 @@ record(ao, "$(P)ExtStatusInt")
     field(OUT,  "@asyn($(PORT))ExtStatusInt")
     field(EGU,  "seconds")
 }
+record(longin, "$(P)DataRateOutBs")
+{
+    field(DESC, "Data processing rate")
+    field(DTYP, "asynInt32")
+    field(INP,  "@asyn($(PORT))DataRateOut")
+    field(FLNK, "$(P)DataRateOutKBs")
+    field(SCAN, "I/O Intr")
+    field(VAL,  "0")
+    field(EGU,  "B/s")
+}
+record(calc, "$(P)DataRateOutKBs")
+{
+    field(DESC, "Data processing rate")
+    field(INPA, "$(P)DataRateOutBs NPP")
+    field(FLNK, "$(P)DataRateOutMBs")
+    field(CALC, "A/1024")
+    field(SCAN, "Passive")
+    field(EGU,  "KB/s")
+}
+record(calc, "$(P)DataRateOutMBs")
+{
+    field(DESC, "Data processing rate")
+    field(INPA, "$(P)DataRateOutKBs NPP")
+    field(CALC, "A/1024")
+    field(SCAN, "Passive")
+    field(EGU,  "MB/s")
+}

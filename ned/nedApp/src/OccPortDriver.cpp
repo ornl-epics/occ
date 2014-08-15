@@ -76,10 +76,12 @@ OccPortDriver::OccPortDriver(const char *portName, uint32_t localBufferSize)
     createParam("DmaBufSize",       asynParamInt32,     &DmaBufSize);
     createParam("CopyBufUsed",      asynParamInt32,     &CopyBufUsed);
     createParam("CopyBufSize",      asynParamInt32,     &CopyBufSize);
+    createParam("DataRateOut",      asynParamInt32,     &DataRateOut);
 
     setIntegerParam(Status, STAT_OK);
     setDoubleParam(StatusInt, DEFAULT_BASIC_STATUS_INTERVAL);
     setDoubleParam(ExtStatusInt, DEFAULT_EXTENDED_STATUS_INTERVAL);
+    setIntegerParam(DataRateOut, 0);
 
     // Initialize OCC board
     status = occ_open(portName, OCC_INTERFACE_OPTICAL, &m_occ);
@@ -273,15 +275,20 @@ void OccPortDriver::processOccDataThread()
 {
     void *data;
     uint32_t length;
-    uint32_t consumed;
+    uint32_t consumed, totalConsumed;
     bool resetErrorRatelimit = false;
     DasPacketList packetsList;
+    epicsTimeStamp last, now;
+
+    epicsTimeGetCurrent(&last);
+    totalConsumed = 0;
 
     while (true) {
         int ret = m_circularBuffer->wait(&data, &length);
         if (ret != 0) {
             int val;
             this->lock();
+            setIntegerParam(DataRateOut, 0);
             setIntegerParam(LastErr, -ret);
             getIntegerParam(RxStalled, &val);
             if (ret == -EOVERFLOW) { // DMA buffer overflow
@@ -321,6 +328,21 @@ void OccPortDriver::processOccDataThread()
 #else
             consumed += packet->length();
 #endif
+        }
+
+        // Calculate data processing throughput every second
+        totalConsumed += consumed;
+        epicsTimeGetCurrent(&now);
+        double difftime = epicsTimeDiffInSeconds(&now, &last);
+        if (difftime > 1.0) {
+            double throughput = static_cast<double>(totalConsumed) / difftime;
+            last = now;
+            totalConsumed = 0;
+
+            this->lock();
+            setIntegerParam(DataRateOut, throughput);
+            callParamCallbacks();
+            this->unlock();
         }
 
         // Decrease reference counter and wait for everybody else to do the same

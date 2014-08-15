@@ -25,7 +25,7 @@ struct occ_handle;
  *   PV valid values)
  * asyn param    | asyn param type | init val | mode | Description                   |
  * ------------- | --------------- | -------- | ---- | ------------------------------
- * Status        | asynParamInt32  | 0        | RO   | Status of OccPortDriver       (0=OK,1=buffer full,2=OCC error)
+ * Status        | asynParamInt32  | 0        | RO   | Status of OccPortDriver       (0=OK,1=buffer full,2=OCC error,3=Data corrupted)
  * Command       | asynParamInt32  | 0        | RW   | Issue OccPortDriver command   (1=optics enable)
  * LastErr       | asynParamInt32  | 0        | RO   | Last error code returned by OCC API
  * BoardType     | asynParamInt32  | 0        | RO   | OCC board type                (1=SNS PCI-X,2=SNS PCIe,15=simulator)
@@ -50,6 +50,7 @@ struct occ_handle;
  * DmaBufSize    | asynParamInt32  | 0        | RO   | DMA memory size
  * CopyBufUsed   | asynParamInt32  | 0        | RO   | Virtual buffer used space
  * CopyBufSize   | asynParamInt32  | 0        | RO   | Virtual buffer size
+ * DataRateOut   | asynParamInt32  | 0        | RO   | Data processing throughput in B/s
  */
 class epicsShareFunc OccPortDriver : public asynPortDriver {
     private:
@@ -188,7 +189,8 @@ class epicsShareFunc OccPortDriver : public asynPortDriver {
         int DmaBufSize;
         int CopyBufUsed;
         int CopyBufSize;
-        #define LAST_OCCPORTDRIVER_PARAM CopyBufSize
+        int DataRateOut;
+        #define LAST_OCCPORTDRIVER_PARAM DataRateOut
 };
 
 #endif // OCCPORTDRIVER_H
