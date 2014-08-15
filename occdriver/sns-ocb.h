@@ -82,7 +82,8 @@ typedef uint32_t u32;
 struct ocb_status {
     u32 ocb_ver;			// Position of this one should not change. OCB version defines the rest of the protocol.
     u32 board_type;			// One of the BOARD_xxx values
-    u32 firmware_ver;			// Code is 0xVVYYMMDD -- version, year, month, day (BCD)
+    u32 firmware_ver;			// Firmware version
+    u32 firmware_date;			// Code is 0xVVYYMMDD -- version, year, month, day (BCD)
     u32 status;
     u32 dq_size;			// Size of RX DMA data cyclic-queue in bytes
     u32 dq_used;			// Used space

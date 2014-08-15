@@ -53,6 +53,7 @@ OccPortDriver::OccPortDriver(const char *portName, uint32_t localBufferSize)
     createParam("LastErr",          asynParamInt32,     &LastErr);
     createParam("BoardType",        asynParamInt32,     &BoardType);
     createParam("BoardFwVer",       asynParamInt32,     &BoardFwVer);
+    createParam("BoardFwDate",      asynParamInt32,     &BoardFwDate);
     createParam("OpticsPresent",    asynParamInt32,     &OpticsPresent);
     createParam("OpticsEnabled",    asynParamInt32,     &OpticsEnabled);
     createParam("RxStalled",        asynParamInt32,     &RxStalled);
@@ -183,6 +184,7 @@ void OccPortDriver::refreshOccStatusThread()
 
             setIntegerParam(BoardType,      occstatus.board);
             setIntegerParam(BoardFwVer,     occstatus.firmware_ver);
+            setIntegerParam(BoardFwDate,    occstatus.firmware_date);
             setIntegerParam(OpticsPresent,  occstatus.optical_signal);
             setIntegerParam(OpticsEnabled,  occstatus.rx_enabled);
             setIntegerParam(ErrPktsEnabled, occstatus.err_packets_enabled);

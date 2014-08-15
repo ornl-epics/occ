@@ -165,6 +165,7 @@ class epicsShareFunc OccPortDriver : public asynPortDriver {
         int LastErr;
         int BoardType;
         int BoardFwVer;
+        int BoardFwDate;
         int OpticsPresent;
         int OpticsEnabled;
         int RxStalled;

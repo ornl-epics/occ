@@ -81,6 +81,13 @@ record(longin, "$(P)BoardFwVer")
     field(DTYP, "asynInt32")
     field(INP,  "@asyn($(PORT))BoardFwVer")
 }
+record(longin, "$(P)BoardFwDate")
+{
+    field(DESC, "OCC board firmware date")
+    field(PINI, "YES")
+    field(DTYP, "asynInt32")
+    field(INP,  "@asyn($(PORT))BoardFwDate")
+}
 record(bi, "$(P)OpticsPresent")
 {
     field(DESC, "Is optical cable present")

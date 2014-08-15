@@ -42,7 +42,6 @@ struct occ_handle {
     uint32_t dma_buf_len;
     uint32_t dma_cons_off;
     uint8_t use_optic;
-    uint32_t firmware_ver;
     uint32_t last_count;                        //<! Number of bytes available returned by the last occ_data_wait()
     uint8_t rollover_buf[ROLLOVER_BUFFER_SIZE];
 
@@ -213,6 +212,7 @@ int occ_status(struct occ_handle *handle, occ_status_t *status, bool fast_status
     status->stalled = (info.status & OCB_RX_STALLED);
     status->interface = (handle->use_optic ? OCC_INTERFACE_OPTICAL : OCC_INTERFACE_LVDS);
     status->firmware_ver = info.firmware_ver;
+    status->firmware_date = info.firmware_date;
     status->optical_signal = (info.status & OCB_OPTICAL_PRESENT);
     status->rx_enabled = (info.status & OCB_RX_ENABLED);
     status->err_packets_enabled = (info.status & OCB_RX_ERR_PKTS_ENABLED);

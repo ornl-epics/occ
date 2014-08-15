@@ -216,6 +216,7 @@ struct ocb {
 	bool stalled;
 
 	u32 firmware_version;
+	u32 firmware_date;
 
 	wait_queue_head_t tx_wq;
 	wait_queue_head_t rx_wq;
@@ -1044,6 +1045,7 @@ static ssize_t snsocb_read(struct file *file, char __user *buf,
 		info.ocb_ver = OCB_VER;
 		info.board_type = ocb->board->type;
 		info.firmware_ver = ocb->firmware_version;
+		info.firmware_date = ocb->firmware_date;
 		info.status = __snsocb_status(ocb);
 		info.dq_used = (OCB_DQ_SIZE + ocb->dq_prod - ocb->dq_cons) % OCB_DQ_SIZE;
 		info.dq_size = OCB_DQ_SIZE;
@@ -1369,6 +1371,7 @@ static int __devexit snsocb_probe(struct pci_dev *pdev,
 	 */
 	err = -ENODEV;
 	ocb->firmware_version = ioread32(ocb->ioaddr + REG_VERSION);
+	ocb->firmware_date    = ioread32(ocb->ioaddr + REG_FIRMWARE_DATE);
 	ocb->board = &boards[0];
 	while (ocb->board && ocb->board->type != 0) {
 		if (ocb->board->type == board_id) {
@@ -1472,8 +1475,8 @@ static int __devexit snsocb_probe(struct pci_dev *pdev,
 
 	dev_info(dev, "snsocb%d: %s OCB version %08x, datecode %08x\n",
 		 minor, snsocb_name[board_id],
-		 ioread32(ocb->ioaddr + REG_VERSION),
-		 ioread32(ocb->ioaddr + REG_FIRMWARE_DATE));
+		 ocb->firmware_version,
+		 ocb->firmware_date);
 
 	return 0;
 
