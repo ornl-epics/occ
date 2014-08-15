@@ -161,19 +161,6 @@ do {									\
 #define SW_IMQ_RING_SIZE	4096
 #define IMQ_TYPE_COMMAND	0x80000000
 
-/* Some of the firmware seems to glich updates to the DQ producer index,
- * spuriously setting a bit where it shouldn't. These glitches seem to be
- * in the card's register, as they persist over multiple reads. Since we
- * should be interrupted on every packet -- as long as interrupts are not
- * disabled for too long -- try to determine if the update is valid. We
- * give it 16 packets of 2KB each as an upper limit for now; we will require
- * another packet to come in later, but before the byte limit on the update
- * is reached, to advance past the glitch. This obviously will not solve
- * all of the problems, but perhaps will let us advance until the timing
- * violations are resolved in the firmware.
- */
-#define OCB_BUGGY_IDX_THRESHOLD	(16 * 2024)
-
 /* Forward declaration of functions used in the structs */
 static ssize_t snsocb_sysfs_show(struct device *dev, struct device_attribute *attr, char *buf);
 static ssize_t snsocb_sysfs_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t count);
@@ -792,10 +779,8 @@ static irqreturn_t snsocb_interrupt(int irq, void *data)
 		prod = ioread32(ocb->ioaddr + REG_DQ_PROD_INDEX);
 		adv = prod - ocb->dq_prod + OCB_DQ_SIZE;
 		adv %= OCB_DQ_SIZE;
-		if (adv < OCB_BUGGY_IDX_THRESHOLD) {
-			ocb->dq_prod = prod;
-			wake_up(&ocb->rx_wq);
-		}
+		ocb->dq_prod = prod;
+		wake_up(&ocb->rx_wq);
 		spin_unlock(&ocb->lock);
 	}
 
