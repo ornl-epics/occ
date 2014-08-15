@@ -101,8 +101,7 @@ int occ_open(const char *devfile, occ_interface_type type, struct occ_handle **h
             break;
         }
         (*handle)->dma_buf_len = info.dq_size;
-        if ((info.status & OCB_OPTICAL_PRESENT) && type == OCC_INTERFACE_OPTICAL)
-            (*handle)->use_optic = 1;
+        (*handle)->use_optic = (type == OCC_INTERFACE_OPTICAL);
 
         (*handle)->dma_buf = (void *)mmap(NULL, (*handle)->dma_buf_len,
                                              PROT_READ|PROT_WRITE, MAP_SHARED|MAP_POPULATE,
