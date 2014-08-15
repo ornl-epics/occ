@@ -213,7 +213,7 @@ void OccPortDriver::refreshOccStatusThread()
 
         this->unlock();
 
-        epicsThreadSleep(refreshPeriod);
+        m_statusEvent.wait(refreshPeriod);
     }
 }
 
@@ -230,6 +230,7 @@ asynStatus OccPortDriver::writeInt32(asynUser *pasynUser, epicsInt32 value)
                 return asynError;
             }
             // There's a thread to refresh OCC status, including RX enabled
+            m_statusEvent.signal();
             return asynSuccess;
         case CMD_ERROR_PACKETS_ENABLE:
         case CMD_ERROR_PACKETS_DISABLE:
@@ -239,6 +240,7 @@ asynStatus OccPortDriver::writeInt32(asynUser *pasynUser, epicsInt32 value)
                 return asynError;
             }
             // There's a thread to refresh OCC status, including error packets enabled
+            m_statusEvent.signal();
             return asynSuccess;
         default:
             LOG_ERROR("Unrecognized command '%d'", value);

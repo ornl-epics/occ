@@ -107,6 +107,7 @@ class epicsShareFunc OccPortDriver : public asynPortDriver {
         BaseCircularBuffer *m_circularBuffer;
         epicsThreadId m_occBufferReadThreadId;
         epicsThreadId m_occStatusRefreshThreadId;
+        epicsEvent m_statusEvent;
         static const float DEFAULT_BASIC_STATUS_INTERVAL;
         static const float DEFAULT_EXTENDED_STATUS_INTERVAL;
 
