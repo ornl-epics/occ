@@ -217,6 +217,10 @@ int occ_status(struct occ_handle *handle, occ_status_t *status, bool fast_status
     status->rx_enabled = (info.status & OCB_RX_ENABLED);
     status->err_packets_enabled = (info.status & OCB_RX_ERR_PKTS_ENABLED);
 
+    // No need to query transceiver info if we know it's not there
+    if (status->optical_signal == 0)
+        fast_status = true;
+
     ret = 0;
     while (status->board == BOARD_SNS_PCIE) {
         uint32_t valInt;
