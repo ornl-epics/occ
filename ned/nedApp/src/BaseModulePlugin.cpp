@@ -158,9 +158,6 @@ void BaseModulePlugin::processData(const DasPacketList * const packetList)
     for (const DasPacket *packet = packetList->first(); packet != 0; packet = packetList->next(packet)) {
         nReceived++;
 
-        if (!packet->isResponse())
-            continue;
-
         // Silently skip packets we're not interested in
         if (!packet->isResponse() || packet->getSourceAddress() != m_hardwareId)
             continue;
