@@ -204,7 +204,7 @@ void OccPortDriver::refreshOccStatusThread()
             setIntegerParam(CopyBufSize,    m_circularBuffer->size());
 
             getIntegerParam(RxStalled,      &val);
-            setIntegerParam(RxStalled,      (occstatus.stalled ? val | 1 : val & ~1));
+            setIntegerParam(RxStalled,      (occstatus.stalled ? val | STALL_DMA : val & ~STALL_DMA));
         }
 
         callParamCallbacks();
@@ -276,13 +276,18 @@ void OccPortDriver::processOccDataThread()
     while (true) {
         int ret = m_circularBuffer->wait(&data, &length);
         if (ret != 0) {
+            int val;
             this->lock();
             setIntegerParam(LastErr, -ret);
-            setIntegerParam(Status, ret == -EOVERFLOW ? STAT_BUFFER_FULL : STAT_OCC_ERROR);
-            if (ret == -EOVERFLOW) {
-                int val;
-                getIntegerParam(RxStalled, &val);
-                setIntegerParam(RxStalled, val | 2);
+            getIntegerParam(RxStalled, &val);
+            if (ret == -EOVERFLOW) { // DMA buffer overflow
+                setIntegerParam(Status, STAT_BUFFER_FULL);
+                setIntegerParam(RxStalled, val | STALL_DMA);
+            } else if (ret == -ENOSPC) { // Local circular buffer is full
+                setIntegerParam(Status, STAT_BUFFER_FULL);
+                setIntegerParam(RxStalled, val | STALL_COPY);
+            } else {
+                setIntegerParam(Status, STAT_OCC_ERROR);
             }
             callParamCallbacks();
             this->unlock();
@@ -300,11 +305,12 @@ void OccPortDriver::processOccDataThread()
         }
         resetErrorRatelimit = false;
 
+        // Notify everybody about new data
         sendToPlugins(REASON_OCCDATA, &packetsList);
 
-        consumed = 0;
         // Plugins have been notified, hopefully they're all non-blocking.
         // While waiting, calculate how much data can be consumed from circular buffer.
+        consumed = 0;
         for (const DasPacket *packet = packetsList.first(); packet != 0; packet = packetsList.next(packet)) {
 #ifdef DWORD_PADDING_WORKAROUND
             consumed += packet->getAlignedLength();
@@ -313,10 +319,20 @@ void OccPortDriver::processOccDataThread()
 #endif
         }
 
+        // Decrease reference counter and wait for everybody else to do the same
         packetsList.release(); // reset() set it to 1
         packetsList.waitAllReleased();
 
+        // Nobody is using data anymore
         m_circularBuffer->consume(consumed);
+
+        // Corrupted data check
+        if (consumed == 0 && length > DasPacket::MinLength) {
+            setIntegerParam(Status, STAT_BAD_DATA);
+            callParamCallbacks();
+            LOG_ERROR("Corrupted data in queue, aborting process thread");
+            break;
+        }
     }
 }
 
