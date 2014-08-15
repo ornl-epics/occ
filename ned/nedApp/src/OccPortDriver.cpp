@@ -71,8 +71,10 @@ OccPortDriver::OccPortDriver(const char *portName, uint32_t localBufferSize)
     createParam("SfpTxBiasCur",     asynParamFloat64,   &SfpTxBiasCur);
     createParam("StatusInt",        asynParamFloat64,   &StatusInt);
     createParam("ExtStatusInt",     asynParamFloat64,   &ExtStatusInt);
-    createParam("DmaBufUtil",       asynParamInt32,     &DmaBufUtil);
-    createParam("CopyBufUtil",      asynParamInt32,     &CopyBufUtil);
+    createParam("DmaBufUsed",       asynParamInt32,     &DmaBufUsed);
+    createParam("DmaBufSize",       asynParamInt32,     &DmaBufSize);
+    createParam("CopyBufUsed",      asynParamInt32,     &CopyBufUsed);
+    createParam("CopyBufSize",      asynParamInt32,     &CopyBufSize);
 
     setIntegerParam(Status, STAT_OK);
     setDoubleParam(StatusInt, DEFAULT_BASIC_STATUS_INTERVAL);
@@ -178,11 +180,6 @@ void OccPortDriver::refreshOccStatusThread()
             LOG_ERROR("Failed to query OCC status: %s(%d)", strerror(-ret), ret);
         } else {
             int val;
-            uint32_t dmaBufUtil = 0;
-
-            if (occstatus.dma_size > 0) {
-                dmaBufUtil = 100 * occstatus.dma_used / occstatus.dma_size;
-            }
 
             setIntegerParam(BoardType,      occstatus.board);
             setIntegerParam(BoardFwVer,     occstatus.firmware_ver);
@@ -201,8 +198,10 @@ void OccPortDriver::refreshOccStatusThread()
             setDoubleParam(SfpVccPower,     occstatus.sfp_vcc_power);
             setDoubleParam(SfpTxBiasCur,    occstatus.sfp_tx_bias_cur);
 
-            setIntegerParam(DmaBufUtil,     dmaBufUtil);
-            setIntegerParam(CopyBufUtil,    m_circularBuffer->utilization());
+            setIntegerParam(DmaBufUsed,     occstatus.dma_used);
+            setIntegerParam(DmaBufSize,     occstatus.dma_size);
+            setIntegerParam(CopyBufUsed,    m_circularBuffer->used());
+            setIntegerParam(CopyBufSize,    m_circularBuffer->size());
 
             getIntegerParam(RxStalled,      &val);
             setIntegerParam(RxStalled,      (occstatus.stalled ? val | 1 : val & ~1));

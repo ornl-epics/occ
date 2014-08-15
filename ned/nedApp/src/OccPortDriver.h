@@ -46,8 +46,10 @@ struct occ_handle;
  * SfpTxBiasCur  | asynParamFloat64| 0.0      | RO   | SFP TX bias current in uA
  * StatusInt     | asynParamFloat64| 1.0      | RW   | OCC status refresh interval in s
  * ExtStatusInt  | asynParamFloat64| 60.0     | RW   | OCC extended status refresh interval in s
- * DmaBufUtil    | asynParamInt32  | 0        | RO   | DMA memory utilization [0-100]
- * CopyBufUtil   | asynParamInt32  | 0        | RO   | Virtual buffer utilization [0-100]
+ * DmaBufUsed    | asynParamInt32  | 0        | RO   | DMA memory used space
+ * DmaBufSize    | asynParamInt32  | 0        | RO   | DMA memory size
+ * CopyBufUsed   | asynParamInt32  | 0        | RO   | Virtual buffer used space
+ * CopyBufSize   | asynParamInt32  | 0        | RO   | Virtual buffer size
  */
 class epicsShareFunc OccPortDriver : public asynPortDriver {
     private:
@@ -169,9 +171,11 @@ class epicsShareFunc OccPortDriver : public asynPortDriver {
         int SfpTxBiasCur;
         int StatusInt;
         int ExtStatusInt;
-        int DmaBufUtil;
-        int CopyBufUtil;
-        #define LAST_OCCPORTDRIVER_PARAM CopyBufUtil
+        int DmaBufUsed;
+        int DmaBufSize;
+        int CopyBufUsed;
+        int CopyBufSize;
+        #define LAST_OCCPORTDRIVER_PARAM CopyBufSize
 };
 
 #endif // OCCPORTDRIVER_H

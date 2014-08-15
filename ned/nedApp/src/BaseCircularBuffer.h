@@ -49,9 +49,14 @@ class BaseCircularBuffer {
         virtual bool empty() = 0;
 
         /**
-         * Return current buffer utilization in percents.
+         * Return buffer used space in bytes.
          */
-        virtual uint32_t utilization() = 0;
+        virtual uint32_t used() = 0;
+
+        /**
+         * Return buffer size in bytes.
+         */
+        virtual uint32_t size() = 0;
 };
 
 #endif // BASE_CIRCULAR_BUFFER_H

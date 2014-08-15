@@ -204,21 +204,77 @@ record(longin, "$(P)ErrFrame")
     field(INP,  "@asyn($(PORT))ErrFrame")
     field(SCAN, "1 second")
 }
-record(longin, "$(P)DmaBufUtil")
+record(longin, "$(P)DmaBufUsed")
 {
-    field(DESC, "DMA buffer utilization")
+    field(DESC, "DMA buffer used space")
     field(DTYP, "asynInt32")
-    field(INP,  "@asyn($(PORT))DmaBufUtil")
+    field(INP,  "@asyn($(PORT))DmaBufUsed")
+    field(FLNK, "$(P)DmaBufUsedMb")
     field(SCAN, "1 second")
-    field(EGU,  "%")
+    field(VAL,  "0")
+    field(EGU,  "B")
 }
-record(longin, "$(P)CopyBufUtil")
+record(calc, "$(P)DmaBufUsedMb")
 {
-    field(DESC, "Local buffer utilization")
+    field(DESC, "DMA buffer used space")
+    field(INPA, "$(P)DmaBufUsed NPP")
+    field(CALC, "A/(1024*1024)")
+    field(SCAN, "Passive")
+    field(EGU,  "MB")
+}
+record(longin, "$(P)DmaBufSize")
+{
+    field(DESC, "DMA buffer total size")
     field(DTYP, "asynInt32")
-    field(INP,  "@asyn($(PORT))CopyBufUtil")
+    field(INP,  "@asyn($(PORT))DmaBufSize")
+    field(FLNK, "$(P)DmaBufSizeMb")
+    field(SCAN, "Passive")
+    field(PINI, "YES")
+    field(EGU,  "B")
+}
+record(calc, "$(P)DmaBufSizeMb")
+{
+    field(DESC, "DMA buffer used space")
+    field(INPA, "$(P)DmaBufSize NPP")
+    field(CALC, "A/(1024*1024)")
+    field(SCAN, "Passive")
+    field(EGU,  "MB")
+}
+record(longin, "$(P)CopyBufUsed")
+{
+    field(DESC, "Local buffer used space")
+    field(DTYP, "asynInt32")
+    field(INP,  "@asyn($(PORT))CopyBufUsed")
+    field(FLNK, "$(P)CopyBufUsedMb")
     field(SCAN, "1 second")
-    field(EGU,  "%")
+    field(VAL,  "0")
+    field(EGU,  "B")
+}
+record(calc, "$(P)CopyBufUsedMb")
+{
+    field(DESC, "Local buffer used space")
+    field(INPA, "$(P)CopyBufUsed NPP")
+    field(CALC, "A/(1024*1024)")
+    field(SCAN, "Passive")
+    field(EGU,  "MB")
+}
+record(longin, "$(P)CopyBufSize")
+{
+    field(DESC, "Local buffer total size")
+    field(DTYP, "asynInt32")
+    field(INP,  "@asyn($(PORT))CopyBufSize")
+    field(FLNK, "$(P)CopyBufSizeMb")
+    field(SCAN, "Passive")
+    field(PINI, "YES")
+    field(EGU,  "B")
+}
+record(calc, "$(P)CopyBufSizeMb")
+{
+    field(DESC, "Local buffer used space")
+    field(INPA, "$(P)CopyBufSize NPP")
+    field(CALC, "A/(1024*1024)")
+    field(SCAN, "Passive")
+    field(EGU,  "MB")
 }
 record(ao, "$(P)StatusInt")
 {

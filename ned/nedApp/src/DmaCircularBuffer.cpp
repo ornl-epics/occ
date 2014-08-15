@@ -33,8 +33,3 @@ bool DmaCircularBuffer::empty()
     status = occ_data_wait(m_occ, &data, &len, 1);
     return (status == 0 && len > 0);
 }
-
-uint32_t DmaCircularBuffer::utilization()
-{
-    return 0;
-}
