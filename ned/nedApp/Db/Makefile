@@ -36,5 +36,7 @@ DB += CmdPlugin.template
 include $(TOP)/configure/RULES
 #----------------------------------------
 #  ADD RULES AFTER THIS LINE
-
+#
+test: $(TOP)/db/ROCHV.db
+	dbReadTest -I$(TOP)/db -I$(TOP)/dbd -SP=test:area:L -SPORT=any -SADDR=0 -SG=test:area:G ned.dbd ROCHV.db
 

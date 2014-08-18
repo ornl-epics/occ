@@ -10,7 +10,6 @@
 record(calc, "$(P):AlarmSum") {
    field(CALC, "1")
    field(INPA, "$(P):Volt CP MS")
-#   field(INPB, "$(P):Curr CP MS")
    field(INPC, "$(P):CommAlarm CP MS")
    info(archive, "Monitor, 00:00:10, VAL")
 }
@@ -45,6 +44,7 @@ record(ai, "$(P):RampRate") {
 record(ao, "$(P):RampRateSet") {
    field(DTYP, "stream")
    field(DESC, "Set ramp rate")
+   field(ASG, "BEAMLINE")
    field(OUT, "@ROCHV.proto setNum(SR) $(PORT) $(ADDR)")
    field(EGU, "ms/step")
    field(HOPR, "255")
@@ -62,6 +62,7 @@ record(ao, "$(P):RampRateSet") {
 #
 record(ao, "$(P):DACSet") {
    field(DTYP, "stream")
+   field(ASG, "BEAMLINE")
    field(DESC, "Set DAC")
    field(OUT, "@ROCHV.proto setNum(&) $(PORT) $(ADDR)")
    field(EGU, "Counts")
@@ -93,6 +94,7 @@ record(ai, "$(P):ReadADC") {
 #
 record(ao, "$(P):VoltSet") {
    field(DESC, "Requested voltage setpoint")
+   field(ASG, "BEAMLINE")
    field(DRVL, "0")
    field(LOPR, "0")
    field(DRVH, "3000")
@@ -221,6 +223,7 @@ record(ai, "$(P):MaxV") {
 record(ao, "$(P):MaxVSet") {
    field(DTYP, "stream")
    field(DESC, "Requested voltage limit")
+   field(ASG, "BEAMLINE")
    field(OUT, "@ROCHV.proto setNum(M) $(PORT) $(ADDR)")
    field(DRVL, "0")
    field(LOPR, "0")
@@ -236,6 +239,7 @@ record(ao, "$(P):MaxVSet") {
 #
 record(bo, "$(P):Enable") {
    field(DESC, "enable/disable switch for GUI")
+   field(ASG, "BEAMLINE")
    field(DTYP, "Soft Channel")
    field(OUT, "$(P):EnableHW PP MS")
    field(ONAM, "ON")
@@ -260,6 +264,7 @@ record(bo, "$(P):EnableHW") {
 #
 record(bo, "$(P):ClearErr") {
    field(DESC, "Clear error code")
+   field(ASG, "BEAMLINE")
    field(DTYP, "stream")
    field(OUT, "@ROCHV.proto sendCmd(X) $(PORT) $(ADDR)")
    field(DOL, "1")
@@ -268,6 +273,7 @@ record(bo, "$(P):ClearErr") {
 }
 record(bo, "$(P):ResetDAC") {
    field(DESC, "Yes reset the DAC")
+   field(ASG, "BEAMLINE")
    field(DTYP, "stream")
    field(OUT, "@ROCHV.proto sendCmd(X) $(PORT) $(ADDR)")
    field(DOL, "1")
@@ -324,12 +330,14 @@ record(asyn,"$(P):AsynRec")
 #
 record(ao, "$(P):DConvSet") {
    field(DTYP, "stream")
+   field(ASG, "BEAMLINE")
    field(OUT, "@ROCHV.proto setCalA(SD,$(P):DConvSet) $(PORT) $(ADDR)")
    field(FLNK, "$(P):DConvX")
 }
 record(ao, "$(P):DConvSetX") {
    field(DRVH, "65535")
    field(HOPR, "65535")
+   field(ASG, "BEAMLINE")
    field(LOPR, "0")
    field(DRVL, "0")
    info(autosaveFields, "VAL")
@@ -337,12 +345,14 @@ record(ao, "$(P):DConvSetX") {
 record(ao, "$(P):DConvSetY") {
    field(DRVH, "65535")
    field(HOPR, "65535")
+   field(ASG, "BEAMLINE")
    field(LOPR, "0")
    field(DRVL, "0")
    info(autosaveFields, "VAL")
 }
 record(ao, "$(P):DConvSetZ") {
    field(HOPR, "65535")
+   field(ASG, "BEAMLINE")
    field(LOPR, "0")
    info(autosaveFields, "VAL")
 }
@@ -383,11 +393,13 @@ record(ai, "$(P):DConvZ") {
 # Set for the ADC
 #
 record(ao, "$(P):VConvSet") {
+   field(ASG, "BEAMLINE")
    field(DTYP, "stream")
    field(OUT, "@ROCHV.proto setCalA(SV,$(P):VConvSet) $(PORT) $(ADDR)")
    field(FLNK, "$(P):VConvX")
 }
 record(ao, "$(P):VConvSetX") {
+   field(ASG, "BEAMLINE")
    field(DRVH, "65535")
    field(HOPR, "65535")
    field(LOPR, "0")
@@ -395,6 +407,7 @@ record(ao, "$(P):VConvSetX") {
    info(autosaveFields, "VAL")
 }
 record(ao, "$(P):VConvSetY") {
+   field(ASG, "BEAMLINE")
    field(DRVH, "65535")
    field(HOPR, "65535")
    field(LOPR, "0")
@@ -402,6 +415,7 @@ record(ao, "$(P):VConvSetY") {
    info(autosaveFields, "VAL")
 }
 record(ao, "$(P):VConvSetZ") {
+   field(ASG, "BEAMLINE")
    field(HOPR, "65535")
    field(LOPR, "0")
    info(autosaveFields, "VAL")
