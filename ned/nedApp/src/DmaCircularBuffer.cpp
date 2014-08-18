@@ -11,10 +11,10 @@ DmaCircularBuffer::~DmaCircularBuffer()
 {
 }
 
-int DmaCircularBuffer::wait(void **data, uint32_t *len)
+int DmaCircularBuffer::wait(void **data, uint32_t *len, double timeout)
 {
     size_t l = 0;
-    int status = occ_data_wait(m_occ, data, &l, 0);
+    int status = occ_data_wait(m_occ, data, &l, timeout*1000);
     *len = l;
     return status;
 }

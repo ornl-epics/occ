@@ -96,18 +96,22 @@ uint32_t CircularBuffer::push(void *data, uint32_t len)
     return (head + tail);
 }
 
-int CircularBuffer::wait(void **data, uint32_t *len)
+int CircularBuffer::wait(void **data, uint32_t *len, double timeout)
 {
     if (!m_buffer || !m_rollover) {
         *len = 0;
         return -EFAULT;
     }
 
-    while (m_error == 0 && empty())
+    if (timeout > 0.0)
+        m_event.wait(timeout);
+    else
         m_event.wait();
 
     if (m_error != 0)
         return m_error;
+    if (empty())
+        return -ETIME;
 
     m_lock.lock();
     *data = (char *)m_buffer + m_consumer;

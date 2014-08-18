@@ -109,6 +109,8 @@ class epicsShareFunc OccPortDriver : public asynPortDriver {
         epicsThreadId m_occBufferReadThreadId;
         epicsThreadId m_occStatusRefreshThreadId;
         epicsEvent m_statusEvent;
+        epicsTimeStamp m_dataRateOutTime;                       //!< Used to track time since last DataRateOut parameter calculation, private to calculateDataRateOut() function
+        uint32_t m_dataRateOutCount;                            //!< Used to track number of bytes since last DataRateOut parameter calculation, private to calculateDataRateOut() function
         static const float DEFAULT_BASIC_STATUS_INTERVAL;
         static const float DEFAULT_EXTENDED_STATUS_INTERVAL;
 
@@ -129,6 +131,16 @@ class epicsShareFunc OccPortDriver : public asynPortDriver {
          * Overloaded method.
          */
 		asynStatus writeGenericPointer (asynUser *pasynUser, void *pointer);
+
+        /**
+         * Calculate data processing rate
+         */
+		void calculateDataRateOut(uint32_t consumed);
+
+		/**
+		 * Report an error detected in receive data thread
+		 */
+		void reportRecvDataError(int ret);
 
     public:
         /**

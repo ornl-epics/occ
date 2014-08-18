@@ -34,7 +34,7 @@ class DmaCircularBuffer : public BaseCircularBuffer {
          * @param[out] len On success, updated to the number of bytes of data.
          * @return Matches return code of occ_data_wait()
          */
-        int wait(void **data, uint32_t *len);
+        int wait(void **data, uint32_t *len, double timeout=0.0);
 
         /**
          * Advance consumer index.

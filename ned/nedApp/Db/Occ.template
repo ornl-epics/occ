@@ -96,7 +96,7 @@ record(bi, "$(P)OpticsPresent")
     field(INP,  "@asyn($(PORT))OpticsPresent")
     field(ZNAM, "No")
     field(ONAM, "Yes")
-    field(SCAN, "1 second")
+    field(SCAN, "I/O Intr")
 }
 record(bi, "$(P)OpticsEnabled")
 {
@@ -105,7 +105,7 @@ record(bi, "$(P)OpticsEnabled")
     field(INP,  "@asyn($(PORT))OpticsEnabled")
     field(ZNAM, "No")
     field(ONAM, "Yes")
-    field(SCAN, "1 second")
+    field(SCAN, "I/O Intr")
 }
 record(mbbi, "$(P)RxStalled")
 {
@@ -125,7 +125,7 @@ record(mbbi, "$(P)RxStalled")
     field(ONSV, "MAJOR")
     field(TWSV, "MAJOR")
     field(THSV, "MAJOR")
-    field(SCAN, "1 second")
+    field(SCAN, "I/O Intr")
     field(VAL,  "0")
 }
 record(bi, "$(P)ErrPktsEnabled")
@@ -137,6 +137,7 @@ record(bi, "$(P)ErrPktsEnabled")
     field(ONAM, "Yes")
     field(PINI, "YES")
     field(VAL,  "0")
+    field(SCAN, "I/O Intr")
 }
 record(ai, "$(P)FpgaTemp")
 {
@@ -144,7 +145,7 @@ record(ai, "$(P)FpgaTemp")
     field(DTYP, "asynFloat64")
     field(INP,  "@asyn($(PORT))FpgaTemp")
     field(EGU,  "Celsius")
-    field(SCAN, "1 second")
+    field(SCAN, "I/O Intr")
 }
 record(ai, "$(P)FpgaCoreVolt")
 {
@@ -152,7 +153,7 @@ record(ai, "$(P)FpgaCoreVolt")
     field(DTYP, "asynFloat64")
     field(INP,  "@asyn($(PORT))FpgaCoreVolt")
     field(EGU,  "Volt")
-    field(SCAN, "1 second")
+    field(SCAN, "I/O Intr")
 }
 record(ai, "$(P)FpgaAuxVolt")
 {
@@ -160,7 +161,7 @@ record(ai, "$(P)FpgaAuxVolt")
     field(DTYP, "asynFloat64")
     field(INP,  "@asyn($(PORT))FpgaAuxVolt")
     field(EGU,  "Volt")
-    field(SCAN, "1 second")
+    field(SCAN, "I/O Intr")
 }
 record(ai, "$(P)SfpTemp")
 {
@@ -168,7 +169,7 @@ record(ai, "$(P)SfpTemp")
     field(DTYP, "asynFloat64")
     field(INP,  "@asyn($(PORT))SfpTemp")
     field(EGU,  "Celsius")
-    field(SCAN, "1 second")
+    field(SCAN, "10 second")
 }
 record(ai, "$(P)SfpRxPower")
 {
@@ -176,7 +177,7 @@ record(ai, "$(P)SfpRxPower")
     field(DTYP, "asynFloat64")
     field(INP,  "@asyn($(PORT))SfpRxPower")
     field(EGU,  "uW")
-    field(SCAN, "1 second")
+    field(SCAN, "10 second")
 }
 record(ai, "$(P)SfpTxPower")
 {
@@ -184,7 +185,7 @@ record(ai, "$(P)SfpTxPower")
     field(DTYP, "asynFloat64")
     field(INP,  "@asyn($(PORT))SfpTxPower")
     field(EGU,  "uW")
-    field(SCAN, "1 second")
+    field(SCAN, "10 second")
 }
 record(ai, "$(P)SfpVccPower")
 {
@@ -192,7 +193,7 @@ record(ai, "$(P)SfpVccPower")
     field(DTYP, "asynFloat64")
     field(INP,  "@asyn($(PORT))SfpVccPower")
     field(EGU,  "Volt")
-    field(SCAN, "1 second")
+    field(SCAN, "10 second")
 }
 record(ai, "$(P)SfpTxBiasCur")
 {
@@ -200,28 +201,28 @@ record(ai, "$(P)SfpTxBiasCur")
     field(DTYP, "asynFloat64")
     field(INP,  "@asyn($(PORT))SfpTxBiasCur")
     field(EGU,  "uA")
-    field(SCAN, "1 second")
+    field(SCAN, "10 second")
 }
 record(longin, "$(P)ErrCrc")
 {
     field(DESC, "FPGA detected CRC errors counter")
     field(DTYP, "asynInt32")
     field(INP,  "@asyn($(PORT))ErrCrc")
-    field(SCAN, "1 second")
+    field(SCAN, "I/O Intr")
 }
 record(longin, "$(P)ErrLength")
 {
     field(DESC, "FPGA detected length errors counter")
     field(DTYP, "asynInt32")
     field(INP,  "@asyn($(PORT))ErrLength")
-    field(SCAN, "1 second")
+    field(SCAN, "I/O Intr")
 }
 record(longin, "$(P)ErrFrame")
 {
     field(DESC, "FPGA detected frame errors counter")
     field(DTYP, "asynInt32")
     field(INP,  "@asyn($(PORT))ErrFrame")
-    field(SCAN, "1 second")
+    field(SCAN, "I/O Intr")
 }
 record(longin, "$(P)DmaBufUsed")
 {
@@ -229,7 +230,7 @@ record(longin, "$(P)DmaBufUsed")
     field(DTYP, "asynInt32")
     field(INP,  "@asyn($(PORT))DmaBufUsed")
     field(FLNK, "$(P)DmaBufUsedMb")
-    field(SCAN, "1 second")
+    field(SCAN, "I/O Intr")
     field(VAL,  "0")
     field(EGU,  "B")
 }
@@ -265,7 +266,7 @@ record(longin, "$(P)CopyBufUsed")
     field(DTYP, "asynInt32")
     field(INP,  "@asyn($(PORT))CopyBufUsed")
     field(FLNK, "$(P)CopyBufUsedMb")
-    field(SCAN, "1 second")
+    field(SCAN, "I/O Intr")
     field(VAL,  "0")
     field(EGU,  "B")
 }

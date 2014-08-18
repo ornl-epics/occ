@@ -45,7 +45,7 @@ class CircularBuffer : public BaseCircularBuffer {
          * @retval -EOVERFLOW on buffer full
          * @retval -EFAULT on internal error, ie. the buffers have not been allocated
          */
-        int wait(void **data, uint32_t *len);
+        int wait(void **data, uint32_t *len, double timeout=0.0);
 
         /**
          * Advance consumer index.

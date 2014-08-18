@@ -14,7 +14,7 @@
 
 static const int asynMaxAddr       = 1;
 static const int asynInterfaceMask = asynInt32Mask | asynOctetMask | asynGenericPointerMask | asynDrvUserMask | asynFloat64Mask; // don't remove DrvUserMask or you'll break callback's reasons
-static const int asynInterruptMask = asynInt32Mask | asynOctetMask | asynGenericPointerMask;
+static const int asynInterruptMask = asynInt32Mask | asynOctetMask | asynGenericPointerMask | asynFloat64Mask;
 static const int asynFlags         = 0;
 static const int asynAutoConnect   = 1;
 static const int asynPriority      = 0;
@@ -271,37 +271,74 @@ asynStatus OccPortDriver::writeGenericPointer(asynUser *pasynUser, void *pointer
     return asynSuccess;
 }
 
+void OccPortDriver::calculateDataRateOut(uint32_t consumed)
+{
+    epicsTimeStamp now;
+    double difftime;
+
+    this->lock();
+    m_dataRateOutCount += consumed;
+
+    epicsTimeGetCurrent(&now);
+    difftime = epicsTimeDiffInSeconds(&now, &m_dataRateOutTime);
+    if (difftime > 1.0) {
+        double throughput = static_cast<double>(m_dataRateOutCount) / difftime;
+        m_dataRateOutTime = now;
+        m_dataRateOutCount = 0;
+
+        setIntegerParam(DataRateOut, throughput);
+        callParamCallbacks();
+    }
+    this->unlock();
+}
+
+void OccPortDriver::reportRecvDataError(int ret)
+{
+    this->lock();
+    setIntegerParam(DataRateOut, 0);
+
+    if (ret == -EBADMSG) {
+        setIntegerParam(Status, STAT_BAD_DATA);
+    } else {
+        int val;
+        setIntegerParam(LastErr, -ret);
+        getIntegerParam(RxStalled, &val);
+        if (ret == -EOVERFLOW) { // DMA buffer overflow
+            setIntegerParam(Status, STAT_BUFFER_FULL);
+            setIntegerParam(RxStalled, val | STALL_DMA);
+        } else if (ret == -ENOSPC) { // Local circular buffer is full
+            setIntegerParam(Status, STAT_BUFFER_FULL);
+            setIntegerParam(RxStalled, val | STALL_COPY);
+        } else {
+            setIntegerParam(Status, STAT_OCC_ERROR);
+        }
+    }
+    callParamCallbacks();
+    this->unlock();
+}
+
 void OccPortDriver::processOccDataThread()
 {
     void *data;
     uint32_t length;
-    uint32_t consumed, totalConsumed;
+    uint32_t consumed;
     bool resetErrorRatelimit = false;
     DasPacketList packetsList;
-    epicsTimeStamp last, now;
 
-    epicsTimeGetCurrent(&last);
-    totalConsumed = 0;
+    // Initialize members used in helper function calculateDataRateOut()
+    epicsTimeGetCurrent(&m_dataRateOutTime);
+    m_dataRateOutCount = 0;
 
     while (true) {
-        int ret = m_circularBuffer->wait(&data, &length);
-        if (ret != 0) {
-            int val;
-            this->lock();
-            setIntegerParam(DataRateOut, 0);
-            setIntegerParam(LastErr, -ret);
-            getIntegerParam(RxStalled, &val);
-            if (ret == -EOVERFLOW) { // DMA buffer overflow
-                setIntegerParam(Status, STAT_BUFFER_FULL);
-                setIntegerParam(RxStalled, val | STALL_DMA);
-            } else if (ret == -ENOSPC) { // Local circular buffer is full
-                setIntegerParam(Status, STAT_BUFFER_FULL);
-                setIntegerParam(RxStalled, val | STALL_COPY);
-            } else {
-                setIntegerParam(Status, STAT_OCC_ERROR);
-            }
-            callParamCallbacks();
-            this->unlock();
+        consumed = 0;
+
+        // Wait for data, use a timeout for data rate out calculation
+        int ret = m_circularBuffer->wait(&data, &length, 1.0);
+        if (ret == -ETIME) {
+            calculateDataRateOut(0);
+            continue;
+        } else if (ret != 0) {
+            reportRecvDataError(ret);
             LOG_ERROR("Unable to receive data from OCC, stopped - %s(%d)\n", strerror(-ret), ret);
             break;
         }
@@ -321,7 +358,6 @@ void OccPortDriver::processOccDataThread()
 
         // Plugins have been notified, hopefully they're all non-blocking.
         // While waiting, calculate how much data can be consumed from circular buffer.
-        consumed = 0;
         for (const DasPacket *packet = packetsList.first(); packet != 0; packet = packetsList.next(packet)) {
 #ifdef DWORD_PADDING_WORKAROUND
             consumed += packet->getAlignedLength();
@@ -331,19 +367,7 @@ void OccPortDriver::processOccDataThread()
         }
 
         // Calculate data processing throughput every second
-        totalConsumed += consumed;
-        epicsTimeGetCurrent(&now);
-        double difftime = epicsTimeDiffInSeconds(&now, &last);
-        if (difftime > 1.0) {
-            double throughput = static_cast<double>(totalConsumed) / difftime;
-            last = now;
-            totalConsumed = 0;
-
-            this->lock();
-            setIntegerParam(DataRateOut, throughput);
-            callParamCallbacks();
-            this->unlock();
-        }
+        calculateDataRateOut(consumed);
 
         // Decrease reference counter and wait for everybody else to do the same
         packetsList.release(); // reset() set it to 1
@@ -354,8 +378,7 @@ void OccPortDriver::processOccDataThread()
 
         // Corrupted data check
         if (consumed == 0 && length > DasPacket::MinLength) {
-            setIntegerParam(Status, STAT_BAD_DATA);
-            callParamCallbacks();
+            reportRecvDataError(-EBADMSG);
             LOG_ERROR("Corrupted data in queue, aborting process thread");
             break;
         }

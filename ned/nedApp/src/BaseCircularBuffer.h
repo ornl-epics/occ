@@ -33,7 +33,7 @@ class BaseCircularBuffer {
          * @retval 0 on success
          * @retval negative on error, actual values are implementation specific
          */
-        virtual int wait(void **data, uint32_t *len) = 0;
+        virtual int wait(void **data, uint32_t *len, double timeout=0.0) = 0;
 
         /**
          * Advance consumer index.
