@@ -63,6 +63,9 @@
  * HwId          | asynParamInt32  | 0        | RO   | Connected module hardware id
  * Status        | asynParamInt32  | 0        | RO   | Status of RocPlugin            (0=not initialized,1=response timeout,2=invalid type,3=version mismatch,12=ready)
  * Command       | asynParamInt32  | 0        | RW   | Issue RocPlugin command        (1=initialize,2=read status,3=write config to module,4=read config from module)
+ * Supported     | asynParamInt32  | 0        | RO   | Flag whether module is supported
+ * Verified      | asynParamInt32  | 0        | RO   | Flag whether module type and version were verified
+ * Type          | asynParamInt32  | 0        | RO   | Module type, see DasPacket::ModuleType
  */
 class BaseModulePlugin : public BasePlugin {
     public: // structures and defines
@@ -78,6 +81,18 @@ class BaseModulePlugin : public BasePlugin {
             ST_WAITING_VER_RSP      = 6,    //!< Waiting for READ_VERSION response
             ST_WAITING              = 7,
             ST_READY                = 8,
+        };
+
+        /**
+         * Possible module verification statuses
+         */
+        enum TypeVersionStatus {
+            ST_TYPE_VERSION_INIT    = 0,
+            ST_TYPE_OK              = 1,
+            ST_TYPE_ERR             = 2,
+            ST_VERSION_OK           = 3,
+            ST_VERSION_ERR          = 4,
+            ST_TYPE_VERSION_OK      = 5,
         };
 
         /**
@@ -139,6 +154,7 @@ class BaseModulePlugin : public BasePlugin {
         std::map<int, StatusParamDesc> m_statusParams;  //!< Map of exported status parameters
         std::map<int, ConfigParamDesc> m_configParams;  //!< Map of exported config parameters
         StateMachine<State, int> m_stateMachine;        //!< State machine for the current status
+        StateMachine<TypeVersionStatus, int> m_verifySM;//!< State machine for verification status
 
     private: // variables
         bool m_behindDsp;
@@ -485,8 +501,11 @@ class BaseModulePlugin : public BasePlugin {
         int FirmwareVer;    //!< Module firmware version
         int FirmwareRev;    //!< Module firmware revision
         int FirmwareDate;   //!< Module firmware date
+        int Supported;      //!< Flag whether module is supported
+        int Verified;       //!< Hardware id, version and type all verified
+        int Type;           //!< Configured module type
     private:
-        int HardwareId;     //!< Hardare ID that this object is controlling
+        int HardwareId;     //!< Hardware ID that this object is controlling
         #define LAST_BASEMODULEPLUGIN_PARAM HardwareId
 
 };

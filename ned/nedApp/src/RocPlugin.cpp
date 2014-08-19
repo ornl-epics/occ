@@ -40,14 +40,18 @@ RocPlugin::RocPlugin(const char *portName, const char *dispatcherPortName, const
     , m_version(version)
 {
     if (m_version == "v51") {
+        setIntegerParam(Supported, 1);
         createStatusParams_v51();
         createConfigParams_v51();
     } else if (m_version == "v52" || m_version == "v54" || m_version == "v55") {
+        setIntegerParam(Supported, 1);
         createStatusParams_v52();
         createConfigParams_v52();
     } else {
+        setIntegerParam(Supported, 0);
         LOG_ERROR("Unsupported ROC version '%s'", version);
     }
+    setIntegerParam(Type, DasPacket::MOD_TYPE_ROC);
 
     LOG_DEBUG("Number of configured dynamic parameters: %zu", m_statusParams.size() + m_configParams.size());
 

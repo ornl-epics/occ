@@ -16,6 +16,7 @@ BaseModulePlugin::BaseModulePlugin(const char *portName, const char *dispatcherP
     , m_statusPayloadLength(0)
     , m_configPayloadLength(0)
     , m_stateMachine(ST_NOT_INITIALIZED)
+    , m_verifySM(ST_TYPE_VERSION_INIT)
     , m_behindDsp(behindDsp)
 {
     if (m_hardwareId == 0) {
@@ -53,6 +54,15 @@ BaseModulePlugin::BaseModulePlugin(const char *portName, const char *dispatcherP
     m_stateMachine.addState(ST_WAITING,             SM_ACTION_ERR(DasPacket::CMD_STOP),             ST_ERROR);
     m_stateMachine.addState(ST_WAITING,             SM_ACTION_TIMEOUT(DasPacket::CMD_STOP),         ST_TIMEOUT);
 
+    m_verifySM.addState(ST_TYPE_VERSION_INIT,       SM_ACTION_ACK(DasPacket::CMD_DISCOVER),         ST_TYPE_OK);
+    m_verifySM.addState(ST_TYPE_VERSION_INIT,       SM_ACTION_ERR(DasPacket::CMD_DISCOVER),         ST_TYPE_ERR);
+    m_verifySM.addState(ST_TYPE_VERSION_INIT,       SM_ACTION_ACK(DasPacket::CMD_READ_VERSION),     ST_VERSION_OK);
+    m_verifySM.addState(ST_TYPE_VERSION_INIT,       SM_ACTION_ERR(DasPacket::CMD_READ_VERSION),     ST_VERSION_ERR);
+    m_verifySM.addState(ST_TYPE_OK,                 SM_ACTION_ACK(DasPacket::CMD_READ_VERSION),     ST_TYPE_VERSION_OK);
+    m_verifySM.addState(ST_TYPE_OK,                 SM_ACTION_ERR(DasPacket::CMD_READ_VERSION),     ST_VERSION_ERR);
+    m_verifySM.addState(ST_VERSION_OK,              SM_ACTION_ACK(DasPacket::CMD_DISCOVER),         ST_TYPE_VERSION_OK);
+    m_verifySM.addState(ST_VERSION_OK,              SM_ACTION_ERR(DasPacket::CMD_DISCOVER),         ST_TYPE_ERR);
+
     // Temporary fix to get us from error state
     m_stateMachine.addState(ST_ERROR,               0,                                              ST_NOT_INITIALIZED);
     m_stateMachine.addState(ST_TIMEOUT,             0,                                              ST_NOT_INITIALIZED);
@@ -66,6 +76,9 @@ BaseModulePlugin::BaseModulePlugin(const char *portName, const char *dispatcherP
     createParam("FirmwareDate", asynParamOctet, &FirmwareDate);
     createParam("FirmwareVer",  asynParamInt32, &FirmwareVer);
     createParam("FirmwareRev",  asynParamInt32, &FirmwareRev);
+    createParam("Supported",    asynParamInt32, &Supported);
+    createParam("Verified",     asynParamInt32, &Verified);
+    createParam("Type",         asynParamInt32, &Type);
 
     std::string hardwareIp;
     formatHardwareId(m_hardwareId, hardwareIp);
@@ -184,9 +197,13 @@ bool BaseModulePlugin::processResponse(const DasPacket *packet)
     switch (command) {
     case DasPacket::CMD_DISCOVER:
         ack = rspDiscover(packet);
+        m_verifySM.transition(ack ? SM_ACTION_ACK(DasPacket::CMD_DISCOVER) : SM_ACTION_ERR(DasPacket::CMD_DISCOVER));
+        setIntegerParam(Verified, m_verifySM.getCurrentState());
         break;
     case DasPacket::CMD_READ_VERSION:
         ack = rspReadVersion(packet);
+        m_verifySM.transition(ack ? SM_ACTION_ACK(DasPacket::CMD_READ_VERSION) : SM_ACTION_ERR(DasPacket::CMD_READ_VERSION));
+        setIntegerParam(Verified, m_verifySM.getCurrentState());
         break;
     case DasPacket::CMD_READ_CONFIG:
         ack = rspReadConfig(packet);

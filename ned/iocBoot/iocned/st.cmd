@@ -44,7 +44,7 @@ dbLoadRecords("../../db/BaseSocketPlugin.template","P=$(PREFIX)Det:proxy1:,PORT=
 dbLoadRecords("../../db/BasePlugin.template","P=$(PREFIX)Det:proxy1:,PORT=proxy1")
 
 #DspPluginConfigure("Dsp1", "$(OCC1)", "0x15FA76DF")
-DspPluginConfigure("Dsp1", "cmd", "21.250.118.223", 1)
+DspPluginConfigure("Dsp1", "cmd", "21.250.118.223", "v63", 0)
 dbLoadRecords("../../db/DspPlugin.template","P=$(PREFIX)Det:dsp1:,PORT=Dsp1")
 dbLoadRecords("../../db/BaseModulePlugin.template","P=$(PREFIX)Det:dsp1:,PORT=Dsp1")
 
