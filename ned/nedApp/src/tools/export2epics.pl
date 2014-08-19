@@ -41,20 +41,22 @@ foreach $line ( <INFILE> ) {
         $desc = trunc($desc, $MAX_DESC_LEN, $name, "DESC");
        
         if ($valstr =~ /^range/) {
-            print ("record(longout, \"\$(P)\$(R)$name\")\n");
+            print ("record(longin, \"\$(P)$name\")\n");
             print ("\{\n");
             print ("    field(DESC, \"$desc\")\n");
             print ("    field(DTYP, \"asynInt32\")\n");
-            print ("    field(OUT,  \"\@asyn(\$(PORT))$name\")\n");
+            print ("    field(INP,  \"\@asyn(\$(PORT))$name\")\n");
 	    print ("    field(SCAN, \"I/O Intr\")\n");
+	    print ("    field(PINI, \"YES\")\n");
             print ("\}\n");
         } elsif ($width == 1) {
-            print ("record(bo, \"\$(P)\$(R)$name\")\n");
+            print ("record(bi, \"\$(P)$name\")\n");
             print ("\{\n");
             print ("    field(DESC, \"$desc\")\n");
             print ("    field(DTYP, \"asynInt32\")\n");
-            print ("    field(OUT,  \"\@asyn(\$(PORT))$name\")\n");
+            print ("    field(INP,  \"\@asyn(\$(PORT))$name\")\n");
             print ("    field(SCAN, \"I/O Intr\")\n");
+	    print ("    field(PINI, \"YES\")\n");
             if ($valstr =~ m/([0-9]+) *= *([^,]+), *([0-9]+) *= *(.+)$/) {
                 my ($zval,$znam,$oval,$onam) = ($1,$2,$3,$4);
                 if ($zval != 0) { my $temp=$znam; $znam=$onam; $onam=$temp; }
@@ -65,12 +67,13 @@ foreach $line ( <INFILE> ) {
             }
             print ("\}\n");
         } elsif ($width > 1 && $width < 15 && $valstr ne "") {
-            print ("record(mbbo, \"\$(P)\$(R)$name\")\n");
+            print ("record(mbbi, \"\$(P)$name\")\n");
             print ("\{\n");
             print ("    field(DESC, \"$desc\")\n");
             print ("    field(DTYP, \"asynInt32\")\n");
-            print ("    field(OUT,  \"\@asyn(\$(PORT))$name\")\n");
+            print ("    field(INP,  \"\@asyn(\$(PORT))$name\")\n");
             print ("    field(SCAN, \"I/O Intr\")\n");
+	    print ("    field(PINI, \"YES\")\n");
             my $i=0;
             foreach (split(',',$valstr)) {
                 my ($xval,$xnam) = split('=', $_);
@@ -81,12 +84,13 @@ foreach $line ( <INFILE> ) {
             }
             print ("\}\n");
         } else {
-            print ("record(longout, \"\$(P)\$(R)$name\")\n");
+            print ("record(longin, \"\$(P)$name\")\n");
             print ("\{\n");
             print ("    field(DESC, \"$desc\")\n");
             print ("    field(DTYP, \"asynInt32\")\n");
-            print ("    field(OUT,  \"\@asyn(\$(PORT))$name\")\n");
+            print ("    field(INP,  \"\@asyn(\$(PORT))$name\")\n");
             print ("    field(SCAN, \"I/O Intr\")\n");
+	    print ("    field(PINI, \"YES\")\n");
             print ("\}\n");
         }
     }
@@ -100,21 +104,19 @@ foreach $line ( <INFILE> ) {
         $desc = trunc($desc, $MAX_DESC_LEN, $name, "DESC");
        
         if ($valstr =~ /^range/) {
-            print ("record(longout, \"\$(P)\$(R)$name\")\n");
+            print ("record(longout, \"\$(P)$name\")\n");
             print ("\{\n");
             print ("    field(DESC, \"$desc\")\n");
             print ("    field(DTYP, \"asynInt32\")\n");
             print ("    field(OUT,  \"\@asyn(\$(PORT))$name\")\n");
-	    print ("    field(SCAN, \"I/O Intr\")\n");
 	    print ("    field(VAL,  \"$val\")\n");
             print ("\}\n");
         } elsif ($width == 1) {
-            print ("record(bo, \"\$(P)\$(R)$name\")\n");
+            print ("record(bo, \"\$(P)$name\")\n");
             print ("\{\n");
             print ("    field(DESC, \"$desc\")\n");
             print ("    field(DTYP, \"asynInt32\")\n");
             print ("    field(OUT,  \"\@asyn(\$(PORT))$name\")\n");
-            print ("    field(SCAN, \"I/O Intr\")\n");
 	    print ("    field(VAL,  \"$val\")\n");
             if ($valstr =~ m/([0-9]) *= *([^,]+), *([0-9]) *= *(.+)/) {
                 my ($zval,$znam,$oval,$onam) = ($1,$2,$3,$4);
@@ -126,12 +128,11 @@ foreach $line ( <INFILE> ) {
             }
             print ("\}\n");
         } elsif ($width > 1 && $width < 15 && $valstr ne "") {
-            print ("record(mbbo, \"\$(P)\$(R)$name\")\n");
+            print ("record(mbbo, \"\$(P)$name\")\n");
             print ("\{\n");
             print ("    field(DESC, \"$desc\")\n");
             print ("    field(DTYP, \"asynInt32\")\n");
             print ("    field(OUT,  \"\@asyn(\$(PORT))$name\")\n");
-            print ("    field(SCAN, \"I/O Intr\")\n");
 	    print ("    field(VAL,  \"$val\")\n");
             my $i=0;
             foreach (split(',', $valstr)) {
@@ -143,12 +144,11 @@ foreach $line ( <INFILE> ) {
             }
             print ("\}\n");
         } else {
-            print ("record(longout, \"\$(P)\$(R)$name\")\n");
+            print ("record(longout, \"\$(P)$name\")\n");
             print ("\{\n");
             print ("    field(DESC, \"$desc\")\n");
             print ("    field(DTYP, \"asynInt32\")\n");
             print ("    field(OUT,  \"\@asyn(\$(PORT))$name\")\n");
-            print ("    field(SCAN, \"I/O Intr\")\n");
 	    print ("    field(VAL,  \"$val\")\n");
             print ("\}\n");
         }
