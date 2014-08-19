@@ -57,30 +57,30 @@
  * createConfigParam() functions. The BaseModulePlugin will make
  * sure to properly map those into OCC packets.
  *
+ * Commands can be issued independently from each other as long as
+ * response for the previous command was received or timed out.
+ *
  * General plugin parameters:
  * asyn param    | asyn param type | init val | mode | Description
  * ------------- | --------------- | -------- | ---- | -----------
  * HwId          | asynParamInt32  | 0        | RO   | Connected module hardware id
- * Status        | asynParamInt32  | 0        | RO   | Status of RocPlugin            (0=not initialized,1=response timeout,2=invalid type,3=version mismatch,12=ready)
- * Command       | asynParamInt32  | 0        | RW   | Issue RocPlugin command        (1=initialize,2=read status,3=write config to module,4=read config from module)
+ * LastCmdRsp    | asynParamInt32  | 0        | RO   | Last command response status   (see LastCommandResponse for valid values)
+ * Command       | asynParamInt32  | 0        | RW   | Issue RocPlugin command        (see DasPacket::CommandType for valid values)
  * Supported     | asynParamInt32  | 0        | RO   | Flag whether module is supported
  * Verified      | asynParamInt32  | 0        | RO   | Flag whether module type and version were verified
- * Type          | asynParamInt32  | 0        | RO   | Module type, see DasPacket::ModuleType
+ * Type          | asynParamInt32  | 0        | RO   | Module type                    (see DasPacket::ModuleType for valid values)
  */
 class BaseModulePlugin : public BasePlugin {
     public: // structures and defines
         /**
-         * Valid statuses of the plugin.
+         * Valid last command return codes
          */
-        enum State {
-            ST_NOT_INITIALIZED      = 0,    //!< RocPlugin has not yet been initialized
-            ST_ERROR                = 1,    //!< Error state
-            ST_TIMEOUT              = 3,    //!< Plugin is initialized, communication with module has been tested and module version/type have been verified
-            ST_WAITING_TYPE_RSP     = 4,    //!< Module type has been verified to be ROC board
-            ST_TYPE_VERIFIED        = 5,    //!< Module version has been verified to match configured one
-            ST_WAITING_VER_RSP      = 6,    //!< Waiting for READ_VERSION response
-            ST_WAITING              = 7,
-            ST_READY                = 8,
+        enum LastCommandResponse {
+            LAST_CMD_NONE           = 0,    //!< No command issued yet
+            LAST_CMD_OK             = 1,    //!< Last command response received and parsed
+            LAST_CMD_WAIT           = 2,    //!< Waiting for last command response
+            LAST_CMD_TIMEOUT        = 3,    //!< Did not receive response for the last command
+            LAST_CMD_ERROR          = 4,    //!< Error processing last command response
         };
 
         /**
@@ -153,14 +153,14 @@ class BaseModulePlugin : public BasePlugin {
         uint32_t m_configPayloadLength;                 //!< Size in bytes of the READ_CONFIG request/response payload, calculated dynamically by createConfigParam()
         std::map<int, StatusParamDesc> m_statusParams;  //!< Map of exported status parameters
         std::map<int, ConfigParamDesc> m_configParams;  //!< Map of exported config parameters
-        StateMachine<State, int> m_stateMachine;        //!< State machine for the current status
         StateMachine<TypeVersionStatus, int> m_verifySM;//!< State machine for verification status
+        DasPacket::CommandType m_waitingResponse;       //!< Expected response code while waiting for response or timeout event, 0 otherwise
 
     private: // variables
         bool m_behindDsp;
         std::map<char, uint32_t> m_configSectionSizes;  //!< Configuration section sizes, in words (word=2B for submodules, =4B for DSPs)
         std::map<char, uint32_t> m_configSectionOffsets;//!< Status response payload size, in words (word=2B for submodules, =4B for DSPs)
-        std::shared_ptr<Timer> m_timeoutTimer;          //!< Currently running timer for response timeout handling, based on state machine only one should be required at any time
+        std::shared_ptr<Timer> m_timeoutTimer;          //!< Currently running timer for response timeout handling
 
     public: // functions
 
@@ -449,11 +449,8 @@ class BaseModulePlugin : public BasePlugin {
         /**
          * A no-response cleanup function.
          *
-         * The timeout callback gets called always, even when the response
-         * was received and processed. There's no timeout cancel mechanism
-         * in place. Based on the action passed as parameter and current
-         * state machine state, function detects whether the response was
-         * received or not.
+         * The timeout is canceled if the response is received before timeout
+         * expires.
          *
          * @param[in] command Command sent to module for which response should be received.
          * @return true if the timeout function did the cleanup, that is received was *not* received.
@@ -494,7 +491,7 @@ class BaseModulePlugin : public BasePlugin {
     protected:
         #define FIRST_BASEMODULEPLUGIN_PARAM Command
         int Command;        //!< Command to plugin, like initialize the module, read configuration, verify module version etc.
-        int Status;         //!< Status of the DSP plugin
+        int LastCmdRsp;     //!< Last command response status
         int HardwareVer;    //!< Module hardware version
         int HardwareRev;    //!< Module hardware revision
         int HardwareDate;   //!< Module hardware date

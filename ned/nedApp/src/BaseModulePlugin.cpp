@@ -15,44 +15,14 @@ BaseModulePlugin::BaseModulePlugin(const char *portName, const char *dispatcherP
     , m_hardwareId(parseHardwareId(hardwareId))
     , m_statusPayloadLength(0)
     , m_configPayloadLength(0)
-    , m_stateMachine(ST_NOT_INITIALIZED)
     , m_verifySM(ST_TYPE_VERSION_INIT)
+    , m_waitingResponse(static_cast<DasPacket::CommandType>(0))
     , m_behindDsp(behindDsp)
 {
     if (m_hardwareId == 0) {
         LOG_ERROR("Invalid hardware id '%s'", hardwareId);
         return;
     }
-
-    m_stateMachine.addState(ST_NOT_INITIALIZED,     SM_ACTION_CMD(DasPacket::CMD_DISCOVER),         ST_WAITING_TYPE_RSP);
-    m_stateMachine.addState(ST_WAITING_TYPE_RSP,    SM_ACTION_ACK(DasPacket::CMD_DISCOVER),         ST_TYPE_VERIFIED);
-    m_stateMachine.addState(ST_WAITING_TYPE_RSP,    SM_ACTION_ERR(DasPacket::CMD_DISCOVER),         ST_ERROR);
-    m_stateMachine.addState(ST_WAITING_TYPE_RSP,    SM_ACTION_TIMEOUT(DasPacket::CMD_DISCOVER),     ST_TIMEOUT);
-    m_stateMachine.addState(ST_TYPE_VERIFIED,       SM_ACTION_CMD(DasPacket::CMD_READ_VERSION),     ST_WAITING_VER_RSP);
-    m_stateMachine.addState(ST_WAITING_VER_RSP,     SM_ACTION_ACK(DasPacket::CMD_READ_VERSION),     ST_READY);
-    m_stateMachine.addState(ST_WAITING_VER_RSP,     SM_ACTION_ERR(DasPacket::CMD_READ_VERSION),     ST_ERROR);
-    m_stateMachine.addState(ST_WAITING_VER_RSP,     SM_ACTION_TIMEOUT(DasPacket::CMD_READ_VERSION), ST_ERROR);
-
-    m_stateMachine.addState(ST_READY,               SM_ACTION_CMD(DasPacket::CMD_READ_STATUS),      ST_WAITING);
-    m_stateMachine.addState(ST_WAITING,             SM_ACTION_ACK(DasPacket::CMD_READ_STATUS),      ST_READY);
-    m_stateMachine.addState(ST_WAITING,             SM_ACTION_ERR(DasPacket::CMD_READ_STATUS),      ST_ERROR);
-    m_stateMachine.addState(ST_WAITING,             SM_ACTION_TIMEOUT(DasPacket::CMD_READ_STATUS),  ST_TIMEOUT);
-    m_stateMachine.addState(ST_READY,               SM_ACTION_CMD(DasPacket::CMD_READ_CONFIG),      ST_WAITING);
-    m_stateMachine.addState(ST_WAITING,             SM_ACTION_ACK(DasPacket::CMD_READ_CONFIG),      ST_READY);
-    m_stateMachine.addState(ST_WAITING,             SM_ACTION_ERR(DasPacket::CMD_READ_CONFIG),      ST_ERROR);
-    m_stateMachine.addState(ST_WAITING,             SM_ACTION_TIMEOUT(DasPacket::CMD_READ_CONFIG),  ST_TIMEOUT);
-    m_stateMachine.addState(ST_READY,               SM_ACTION_CMD(DasPacket::CMD_WRITE_CONFIG),     ST_WAITING);
-    m_stateMachine.addState(ST_WAITING,             SM_ACTION_ACK(DasPacket::CMD_WRITE_CONFIG),     ST_READY);
-    m_stateMachine.addState(ST_WAITING,             SM_ACTION_ERR(DasPacket::CMD_WRITE_CONFIG),     ST_ERROR);
-    m_stateMachine.addState(ST_WAITING,             SM_ACTION_TIMEOUT(DasPacket::CMD_WRITE_CONFIG), ST_TIMEOUT);
-    m_stateMachine.addState(ST_READY,               SM_ACTION_CMD(DasPacket::CMD_START),            ST_WAITING);
-    m_stateMachine.addState(ST_WAITING,             SM_ACTION_ACK(DasPacket::CMD_START),            ST_READY);
-    m_stateMachine.addState(ST_WAITING,             SM_ACTION_ERR(DasPacket::CMD_START),            ST_ERROR);
-    m_stateMachine.addState(ST_WAITING,             SM_ACTION_TIMEOUT(DasPacket::CMD_START),        ST_TIMEOUT);
-    m_stateMachine.addState(ST_READY,               SM_ACTION_CMD(DasPacket::CMD_STOP),             ST_WAITING);
-    m_stateMachine.addState(ST_WAITING,             SM_ACTION_ACK(DasPacket::CMD_STOP),             ST_READY);
-    m_stateMachine.addState(ST_WAITING,             SM_ACTION_ERR(DasPacket::CMD_STOP),             ST_ERROR);
-    m_stateMachine.addState(ST_WAITING,             SM_ACTION_TIMEOUT(DasPacket::CMD_STOP),         ST_TIMEOUT);
 
     m_verifySM.addState(ST_TYPE_VERSION_INIT,       SM_ACTION_ACK(DasPacket::CMD_DISCOVER),         ST_TYPE_OK);
     m_verifySM.addState(ST_TYPE_VERSION_INIT,       SM_ACTION_ERR(DasPacket::CMD_DISCOVER),         ST_TYPE_ERR);
@@ -63,12 +33,8 @@ BaseModulePlugin::BaseModulePlugin(const char *portName, const char *dispatcherP
     m_verifySM.addState(ST_VERSION_OK,              SM_ACTION_ACK(DasPacket::CMD_DISCOVER),         ST_TYPE_VERSION_OK);
     m_verifySM.addState(ST_VERSION_OK,              SM_ACTION_ERR(DasPacket::CMD_DISCOVER),         ST_TYPE_ERR);
 
-    // Temporary fix to get us from error state
-    m_stateMachine.addState(ST_ERROR,               0,                                              ST_NOT_INITIALIZED);
-    m_stateMachine.addState(ST_TIMEOUT,             0,                                              ST_NOT_INITIALIZED);
-
     createParam("HardwareId",   asynParamOctet, &HardwareId);
-    createParam("Status",       asynParamInt32, &Status);
+    createParam("LastCmdRsp",  asynParamInt32, &LastCmdRsp);
     createParam("Command",      asynParamInt32, &Command);
     createParam("HardwareDate", asynParamOctet, &HardwareDate);
     createParam("HardwareVer",  asynParamInt32, &HardwareVer);
@@ -83,7 +49,7 @@ BaseModulePlugin::BaseModulePlugin(const char *portName, const char *dispatcherP
     std::string hardwareIp;
     formatHardwareId(m_hardwareId, hardwareIp);
     setStringParam(HardwareId, hardwareIp.c_str());
-    setIntegerParam(Status, ST_NOT_INITIALIZED);
+    setIntegerParam(LastCmdRsp, LAST_CMD_NONE);
     callParamCallbacks();
 }
 
@@ -94,8 +60,8 @@ BaseModulePlugin::~BaseModulePlugin()
 asynStatus BaseModulePlugin::writeInt32(asynUser *pasynUser, epicsInt32 value)
 {
     if (pasynUser->reason == Command) {
-        if (!m_stateMachine.checkTransition(SM_ACTION_CMD(value))) {
-            LOG_WARN("Command '%d' not allowed at this time", value);
+        if (m_waitingResponse != 0) {
+            LOG_WARN("Command '%d' not allowed while waiting for 0x%02X response", value, m_waitingResponse);
             return asynError;
         }
 
@@ -121,17 +87,17 @@ asynStatus BaseModulePlugin::writeInt32(asynUser *pasynUser, epicsInt32 value)
         case DasPacket::CMD_STOP:
             reqStop();
             break;
-        case 0:
-            break;
         default:
             LOG_WARN("Unrecognized '%d' command", SM_ACTION_CMD(value));
             return asynError;
         }
-        m_stateMachine.transition(SM_ACTION_CMD(value));
-        setIntegerParam(Status, m_stateMachine.getCurrentState());
+        m_waitingResponse = static_cast<DasPacket::CommandType>(value);
+        setIntegerParam(LastCmdRsp, LAST_CMD_WAIT);
         callParamCallbacks();
         return asynSuccess;
     }
+
+    // Not a command, it's probably the new configuration option
     std::map<int, struct ConfigParamDesc>::iterator it = m_configParams.find(pasynUser->reason);
     if (it != m_configParams.end()) {
         uint32_t mask = (0x1ULL << it->second.width) - 1;
@@ -144,6 +110,8 @@ asynStatus BaseModulePlugin::writeInt32(asynUser *pasynUser, epicsInt32 value)
             return asynSuccess;
         }
     }
+
+    // Just issue default handler to see if it can handle it
     return BasePlugin::writeInt32(pasynUser, value);
 }
 
@@ -189,10 +157,11 @@ bool BaseModulePlugin::processResponse(const DasPacket *packet)
     bool ack = false;
     DasPacket::CommandType command = packet->getResponseType();
 
-    if (!m_stateMachine.checkTransition(SM_ACTION_ACK(command))) {
-        LOG_WARN("Response '0x%X' not allowed in this state, ignoring", command);
+    if (m_waitingResponse != command) {
+        LOG_WARN("Response '0x%02X' not allowed while waiting for 0x%02X", command, m_waitingResponse);
         return false;
     }
+    m_waitingResponse = static_cast<DasPacket::CommandType>(0);
 
     switch (command) {
     case DasPacket::CMD_DISCOVER:
@@ -225,9 +194,7 @@ bool BaseModulePlugin::processResponse(const DasPacket *packet)
         return false;
     }
 
-    int action = (ack ? SM_ACTION_ACK(command) : SM_ACTION_ERR(command));
-    m_stateMachine.transition(action);
-    setIntegerParam(Status, m_stateMachine.getCurrentState());
+    setIntegerParam(LastCmdRsp, (ack ? LAST_CMD_OK : LAST_CMD_ERROR));
     callParamCallbacks();
     return true;
 }
@@ -568,9 +535,11 @@ void BaseModulePlugin::formatHardwareId(uint32_t id, std::string &ip)
 
 float BaseModulePlugin::noResponseCleanup(DasPacket::CommandType command)
 {
-    m_stateMachine.transition(SM_ACTION_TIMEOUT(command));
-    setIntegerParam(Status, m_stateMachine.getCurrentState());
-    callParamCallbacks();
+    if (m_waitingResponse == command) {
+        m_waitingResponse = static_cast<DasPacket::CommandType>(0);
+        setIntegerParam(LastCmdRsp, LAST_CMD_TIMEOUT);
+        callParamCallbacks();
+    }
     return 0;
 }
 
