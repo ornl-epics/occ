@@ -19,20 +19,22 @@ CmdDispatcher::CmdDispatcher(const char *portName, const char *connectPortName)
 {
 }
 
-void CmdDispatcher::processData(const DasPacketList * const packetList)
+void CmdDispatcher::processDataUnlocked(const DasPacketList * const packetList)
 {
     const DasPacket *first = 0;
     const DasPacket *last = 0;
     DasPacketList cmdList;
+    uint32_t nReceived = 0;
+    uint32_t nProcessed = 0;
 
     for (const DasPacket *packet = packetList->first(); packet != 0; packet = packetList->next(packet)) {
-        m_nReceived++;
+        nReceived++;
 
         if (packet->isCommand() && packet->cmdinfo.command != DasPacket::CMD_RTDL && packet->cmdinfo.command != DasPacket::CMD_TSYNC) {
             if (first == 0)
                 first = packet;
             last = packet;
-            m_nProcessed++;
+            nProcessed++;
         } else if (first) {
             sendToPlugins(first, last);
             first = last = 0;
@@ -43,9 +45,13 @@ void CmdDispatcher::processData(const DasPacketList * const packetList)
     }
 
     // Update parameters
+    this->lock();
+    m_nReceived += nReceived;
+    m_nProcessed += nProcessed;
     setIntegerParam(ProcCount,  m_nProcessed);
     setIntegerParam(RxCount,    m_nReceived);
     callParamCallbacks();
+    this->unlock();
 }
 
 void CmdDispatcher::sendToPlugins(const DasPacket *first, const DasPacket *last)

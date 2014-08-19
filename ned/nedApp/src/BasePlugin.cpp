@@ -85,6 +85,13 @@ BasePlugin::~BasePlugin()
     (void)enableCallbacks(false);
 }
 
+void BasePlugin::processDataUnlocked(const DasPacketList * const packetList)
+{
+    this->lock();
+    processData(packetList);
+    this->unlock();
+}
+
 asynStatus BasePlugin::writeInt32(asynUser *pasynUser, epicsInt32 value)
 {
     if (pasynUser->reason == Enable) {
@@ -106,9 +113,7 @@ void BasePlugin::dispatcherCallback(asynUser *pasynUser, void *genericPointer)
         /* In blocking mode, process the callback in calling thread. Return when
          * processing is complete.
          */
-        this->lock();
-        processData(packetList);
-        this->unlock();
+        processDataUnlocked(packetList);
     } else {
         /* Non blocking mode means the callback will be processed in our background
          * thread. Make a reservation so that it doesn't go away.
@@ -165,9 +170,7 @@ void BasePlugin::processDataThread(void)
         if (packetList == 0)
             continue;
 
-        this->lock();
-        processData(packetList);
-        this->unlock();
+        processDataUnlocked(packetList);
 
         packetList->release();
     }

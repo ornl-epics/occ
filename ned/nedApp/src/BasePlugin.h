@@ -117,7 +117,7 @@ class BasePlugin : public asynPortDriver {
 		/**
 		 * Destructor.
 		 */
-		virtual ~BasePlugin();
+		virtual ~BasePlugin() = 0;
 
         /**
          * Process the DAS packets received from the dispatcher.
@@ -135,7 +135,15 @@ class BasePlugin : public asynPortDriver {
          * @param[in] packetList List of received packets.
          * @return Last packet from the list that this function processed, or 0 for none.
          */
-        virtual void processData(const DasPacketList * const packetList) = 0;
+        virtual void processData(const DasPacketList * const packetList) {};
+
+        /**
+         * Unlocked version of processData()
+         *
+         * Sometimes locking the entire processData() isn't desirable. Derived
+         * class should implement either one but not both.
+         */
+        virtual void processDataUnlocked(const DasPacketList * const packetList);
 
         /**
          * Handle integer parameter value change.
@@ -239,8 +247,6 @@ class BasePlugin : public asynPortDriver {
         int RxCount;
         int ProcCount;
         #define LAST_BASEPLUGIN_PARAM ProcCount
-
-
 };
 
 #endif // PLUGIN_DRIVER_H

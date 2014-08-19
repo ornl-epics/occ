@@ -34,7 +34,7 @@ class CmdDispatcher : public BasePlugin {
         /**
          * Process only command data and send it to connected plugins.
          */
-        void processData(const DasPacketList * const packetList);
+        void processDataUnlocked(const DasPacketList * const packetList);
 
         /**
          * Send selected consequtive packets to connected plugins.
