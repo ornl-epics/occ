@@ -11,21 +11,18 @@
 EPICS_REGISTER_PLUGIN(DiscoverPlugin, 2, "Port name", string, "Dispatcher port name", string);
 
 DiscoverPlugin::DiscoverPlugin(const char *portName, const char *dispatcherPortName)
-    : BasePlugin(portName, dispatcherPortName, REASON_OCCDATA, 1, NUM_DISCOVERPLUGIN_PARAMS)
+    : BasePlugin(portName, dispatcherPortName, REASON_OCCDATA, 1, NUM_DISCOVERPLUGIN_PARAMS, 0,
+                 BasePlugin::defaultInterfaceMask | asynOctetMask, BasePlugin::defaultInterruptMask | asynOctetMask)
 {
-    createParam("Command",              asynParamInt32, &Command);
-    createParam("NumModules",           asynParamInt32, &DiscoveredTotal);
-    createParam("NumDsps",              asynParamInt32, &DiscoveredDsps);
-
-    setIntegerParam(DiscoveredTotal, 0);
-    setIntegerParam(DiscoveredDsps,  0);
-
+    createParam("Trigger",  asynParamInt32, &Trigger);
+    createParam("Output",   asynParamOctet, &Output);
+    setStringParam(Output, "Not initialized");
     callParamCallbacks();
 }
 
 asynStatus DiscoverPlugin::writeInt32(asynUser *pasynUser, epicsInt32 value)
 {
-    if (pasynUser->reason == Command) {
+    if (pasynUser->reason == Trigger) {
         m_discovered.clear();
         reqDiscover();
         return asynSuccess;
@@ -37,10 +34,8 @@ void DiscoverPlugin::processData(const DasPacketList * const packetList)
 {
     int nReceived = 0;
     int nProcessed = 0;
-    int nDiscoveredTotal = 0;
     getIntegerParam(RxCount,         &nReceived);
     getIntegerParam(ProcCount,       &nProcessed);
-    getIntegerParam(DiscoveredTotal, &nDiscoveredTotal);
 
     for (const DasPacket *packet = packetList->first(); packet != 0; packet = packetList->next(packet)) {
         nReceived++;
@@ -90,24 +85,27 @@ void DiscoverPlugin::processData(const DasPacketList * const packetList)
             }
         }
 
-        int val;
-        getIntegerParam(DiscoveredDsps, &val);
-        setIntegerParam(DiscoveredDsps, val + 1);
-
-        nDiscoveredTotal++;
         nProcessed++;
     }
 
-    setIntegerParam(DiscoveredTotal, nDiscoveredTotal);
     setIntegerParam(RxCount,         nReceived);
     setIntegerParam(ProcCount,       nProcessed);
     callParamCallbacks();
 }
 
-void DiscoverPlugin::report(FILE *fp, int details)
+uint32_t DiscoverPlugin::formatOutput(char *buffer, uint32_t size)
 {
-    fprintf(fp, "Discovered modules:\n");
-    for (std::map<uint32_t, ModuleDesc>::iterator it = m_discovered.begin(); it != m_discovered.end(); it++) {
+    int ret;
+    int length = size;
+    uint32_t i = 1;
+
+    ret = snprintf(buffer, length, "Discovered modules:\n");
+    if (ret > length)
+        return 0;
+    length -= ret;
+    buffer += ret;
+
+    for (std::map<uint32_t, ModuleDesc>::iterator it = m_discovered.begin(); it != m_discovered.end(); it++, i++) {
         char moduleId[16];
         char parentId[16];
         const char *type;
@@ -133,17 +131,42 @@ void DiscoverPlugin::report(FILE *fp, int details)
         resolveIP(it->first, moduleId);
         resolveIP(it->second.parent, parentId);
         if (it->second.parent != 0) {
-            fprintf(fp, "\t%-8s: %-15s ver %d.%d/%d.%d date %.04d/%.02d/%.02d (DSP=%s)\n",
-                    type, moduleId, version.hw_version, version.hw_revision,
-                    version.fw_version, version.fw_revision, version.fw_year,
-                    version.fw_month, version.fw_day, parentId);
+            ret = snprintf(buffer, length,
+                           "  %3u %-8s: %-15s ver %d.%d/%d.%d date %.04d/%.02d/%.02d (DSP=%s)\n",
+                           i, type, moduleId, version.hw_version, version.hw_revision,
+                           version.fw_version, version.fw_revision, version.fw_year,
+                           version.fw_month, version.fw_day, parentId);
         } else {
-            fprintf(fp, "\t%-8s: %-15s ver %d.%d/%d.%d date %.04d/%.02d/%.02d\n",
-                    type, moduleId, version.hw_version, version.hw_revision,
-                    version.fw_version, version.fw_revision, version.fw_year,
-                    version.fw_month, version.fw_day);
+            ret = snprintf(buffer, length,
+                           "  %3u %-8s: %-15s ver %d.%d/%d.%d date %.04d/%.02d/%.02d\n",
+                           i, type, moduleId, version.hw_version, version.hw_revision,
+                           version.fw_version, version.fw_revision, version.fw_year,
+                           version.fw_month, version.fw_day);
         }
+        if (ret == -1 || ret > length)
+            break;
+
+        length -= ret;
+        buffer += ret;
     }
+    return (size - length);
+}
+
+asynStatus DiscoverPlugin::readOctet(asynUser *pasynUser, char *value, size_t nChars, size_t *nActual, int *eomReason)
+{
+    if (pasynUser->reason == Output) {
+        *nActual = formatOutput(value, nChars);
+        if (eomReason) *eomReason |= ASYN_EOM_EOS;
+        return asynSuccess;
+    }
+    return BasePlugin::readOctet(pasynUser, value, nChars, nActual, eomReason);
+}
+
+void DiscoverPlugin::report(FILE *fp, int details)
+{
+    char buffer[16*1024];
+    uint32_t length = formatOutput(buffer, sizeof(buffer));
+    fwrite(buffer, 1, length, fp);
     return BasePlugin::report(fp, details);
 }
 

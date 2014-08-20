@@ -15,9 +15,8 @@
  * General plugin parameters:
  * asyn param    | asyn param type | init val | mode | Description                   |
  * ------------- | --------------- | -------- | ---- | ------------------------------
- * Command       | asynParamInt32  | 0        | RW   | Trigger discovery
- * NumModules    | asynParamInt32  | 0        | RO   | Number of all modules discovered.
- * NumDsps       | asynParamInt32  | 0        | RO   | Number of DSP modules discovered.
+ * Trigger       | asynParamInt32  | 0        | RW   | Trigger discovery
+ * Output        | asynParamOctet  | Not init | RO   | Output text listing found modules
  */
 class DiscoverPlugin : public BasePlugin {
 
@@ -37,6 +36,7 @@ class DiscoverPlugin : public BasePlugin {
         };
 
         std::map<uint32_t, ModuleDesc> m_discovered;    //!< Map of modules discovered, key is module's hardware id
+        static const int defaultInterruptMask = BasePlugin::defaultInterruptMask | asynOctetMask;
 
     public:
         /**
@@ -59,6 +59,11 @@ class DiscoverPlugin : public BasePlugin {
          * Process incoming packets.
          */
         void processData(const DasPacketList * const packetList);
+
+        /**
+         * Overloaded method to handle reading the output string.
+         */
+        asynStatus readOctet(asynUser *pasynUser, char *value, size_t nChars, size_t *nActual, int *eomReason);
 
         /**
          * Overloaded function to print details about discovered devices.
@@ -93,12 +98,16 @@ class DiscoverPlugin : public BasePlugin {
          */
         void resolveIP(uint32_t hardwareId, char *ip);
 
+        /**
+         * Print discovered modules into a buffer
+         */
+        uint32_t formatOutput(char *buffer, uint32_t size);
+
     private:
-        #define FIRST_DISCOVERPLUGIN_PARAM Command
-        int Command;            //!< Trigger discovery of modules
-        int DiscoveredTotal;    //!< Number of all modules discovered
-        int DiscoveredDsps;     //!< Number of DSP modules discovered
-        #define LAST_DISCOVERPLUGIN_PARAM DiscoveredDsps
+        #define FIRST_DISCOVERPLUGIN_PARAM Trigger
+        int Trigger;            //!< Trigger discovery of modules
+        int Output;
+        #define LAST_DISCOVERPLUGIN_PARAM Output
 };
 
 #endif // DISCOVER_PLUGIN_H

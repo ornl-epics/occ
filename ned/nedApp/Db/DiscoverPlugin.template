@@ -1,9 +1,23 @@
-record(mbbo, "$(P)Command")
+record(bo, "$(P)Trigger")
 {
     field(DTYP, "asynInt32")
-    field(OUT,  "@asyn($(PORT))Command")
-    field(ZRVL, "0")
-    field(ONVL, "1")
-    field(ZRST, "")
-    field(ONST, "Discover")
+    field(OUT,  "@asyn($(PORT))Trigger")
+    field(FLNK, "$(P)Refresh")
+    field(ZNAM, "None")
+    field(ONAM, "Discover")
+}
+record(calcout, "$(P)Refresh")
+{
+    field(DESC, "Delay processing Output")
+    field(ODLY, "1.0")
+    field(OUT,  "$(P)Output.PROC")
+    field(OOPT, "Every Time")
+    field(OEVT, "1")
+}
+record(waveform, "$(P)Output")
+{
+    field(DTYP, "asynOctetRead")
+    field(INP,  "@asyn($(PORT))Output")
+    field(FTVL, "CHAR")
+    field(NELM, "16192")
 }
