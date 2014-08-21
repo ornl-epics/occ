@@ -217,10 +217,6 @@ int occ_status(struct occ_handle *handle, occ_status_t *status, bool fast_status
     status->rx_enabled = (info.status & OCB_RX_ENABLED);
     status->err_packets_enabled = (info.status & OCB_RX_ERR_PKTS_ENABLED);
 
-    // No need to query transceiver info if we know it's not there
-    if (status->optical_signal == 0)
-        fast_status = true;
-
     ret = 0;
     while (status->board == BOARD_SNS_PCIE) {
         uint32_t valInt;
@@ -266,31 +262,33 @@ int occ_status(struct occ_handle *handle, occ_status_t *status, bool fast_status
             // Set global error, will override at end if all goes well
             ret = -EIO;
 
-            // Get SFP temperature
-            if (Read_I2C_Bus(handle, OCC_PCIE_I2C_ADDR, OCC_PCIE_I2C_SFP_TEMP, &valWord) != 1)
-                break;
-            status->sfp_temp = (float)valWord / 256.0;
+            // No need to query transceiver info if we know it's not there
+            if (status->optical_signal != 0) {
+                // Get SFP temperature
+                if (Read_I2C_Bus(handle, OCC_PCIE_I2C_ADDR, OCC_PCIE_I2C_SFP_TEMP, &valWord) != 1)
+                    break;
+                status->sfp_temp = (float)valWord / 256.0;
 
-            // Get SFP RX In Power
-            if (Read_I2C_Bus(handle, OCC_PCIE_I2C_ADDR, OCC_PCIE_I2C_SFP_RX_POWER, &valWord) != 1)
-                break;
-            status->sfp_rx_power = 0.1 * valWord;
+                // Get SFP RX In Power
+                if (Read_I2C_Bus(handle, OCC_PCIE_I2C_ADDR, OCC_PCIE_I2C_SFP_RX_POWER, &valWord) != 1)
+                    break;
+                status->sfp_rx_power = 0.1 * valWord;
 
-            // Get SFP TX Power
-            if (Read_I2C_Bus(handle, OCC_PCIE_I2C_ADDR, OCC_PCIE_I2C_SFP_TX_POWER, &valWord) != 1)
-                break;
-            status->sfp_tx_power = 0.1 * valWord;
+                // Get SFP TX Power
+                if (Read_I2C_Bus(handle, OCC_PCIE_I2C_ADDR, OCC_PCIE_I2C_SFP_TX_POWER, &valWord) != 1)
+                    break;
+                status->sfp_tx_power = 0.1 * valWord;
 
-            // Get SFP Vcc Power
-            if (Read_I2C_Bus(handle, OCC_PCIE_I2C_ADDR, OCC_PCIE_I2C_SFP_VCC_POWER, &valWord) != 1)
-                break;
-            status->sfp_vcc_power = 0.0001 * valWord;
+                // Get SFP Vcc Power
+                if (Read_I2C_Bus(handle, OCC_PCIE_I2C_ADDR, OCC_PCIE_I2C_SFP_VCC_POWER, &valWord) != 1)
+                    break;
+                status->sfp_vcc_power = 0.0001 * valWord;
 
-            // Get SFP Tx Bias Current
-            if (Read_I2C_Bus(handle, OCC_PCIE_I2C_ADDR, OCC_PCIE_I2C_SFP_TX_BIAS_CUR, &valWord) != 1)
-                break;
-            status->sfp_tx_bias_cur = 2.0 * valWord;
-
+                // Get SFP Tx Bias Current
+                if (Read_I2C_Bus(handle, OCC_PCIE_I2C_ADDR, OCC_PCIE_I2C_SFP_TX_BIAS_CUR, &valWord) != 1)
+                    break;
+                status->sfp_tx_bias_cur = 2.0 * valWord;
+            }
         }
 
         ret = 0;
