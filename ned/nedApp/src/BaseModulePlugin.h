@@ -403,33 +403,6 @@ class BaseModulePlugin : public BasePlugin {
         void createConfigParam(const char *name, char section, uint32_t offset, uint32_t nBits, uint32_t shift, int value);
 
         /**
-         * Create an optical packet to be sent to DSP.
-         *
-         * @param[in] destination Hardware id of a module to receive command, can be one of DasPacket::HardwareId
-         * @param[in] command Command to be put into the packet
-         * @param[in] payload Payload to be sent as part of the packet.
-         * @param[in] length Payload length in bytes.
-         * @return Newly created DasPacket pointer which must be deleted when not used anymore.
-         */
-        static DasPacket *createOpticalPacket(uint32_t destination, DasPacket::CommandType command, uint32_t *payload=0, uint32_t length=0);
-
-        /**
-         * Create a LVDS packet to be sent from DSP to their submodules.
-         *
-         * @param[in] destination Hardware id of a module to receive command, can be one of DasPacket::HardwareId
-         * @param[in] command Command to be put into the packet
-         * @param[in] payload Payload to be sent as part of the packet.
-         * @param[in] length Payload length in bytes.
-         * @return Newly created DasPacket pointer which must be deleted when not used anymore.
-         */
-        static DasPacket *createLvdsPacket(uint32_t destination, DasPacket::CommandType command, uint32_t *payload=0, uint32_t length=0);
-
-        /**
-         * Return true if number has even number of 1s, false otherwise.
-         */
-        static bool evenParity(int number);
-
-        /**
          * Parse hardware id in IP like format or HEX prefixed with 0x.
          *
          * Recognized formats:

@@ -11,7 +11,7 @@
  */
 struct DasPacket
 {
-    public:
+    public: // Supporting structures and enums
         /**
          * Structure representing single Event
          */
@@ -152,9 +152,10 @@ struct DasPacket
 #endif
         };
 
-        static const uint32_t MinLength = 6*4;  //!< Minumum total length of any DAS packet, at least the header must be present
-        static const uint32_t MaxLength = 1800*8 + MinLength;   //!< Maximum total length of DAS packets
+        static const uint32_t MinLength;    //!< Minumum total length of any DAS packet, at least the header must be present
+        static const uint32_t MaxLength;    //!< Maximum total length of DAS packets
 
+    public: // Structure definition - represents OCC header
         uint32_t destination;                   //!< Destination id
         uint32_t source;                        //!< Sender id
         union {
@@ -170,20 +171,51 @@ struct DasPacket
         uint32_t payload_length;                //!< payload length, might include the RTDL at the start
         uint32_t reserved1;
         uint32_t reserved2;
-        uint32_t payload[0];                    //!< 4-byte aligned payload data
 
+        uint32_t payload[0];                    //!< 4-byte aligned payload data, support empty packets
+
+        static DasPacket *create(uint32_t payloadLength, const uint8_t *payload=0);
+
+    public: // functions
         /**
-         * Create DasPacket of variable size based on the payloadLength.
+         * Create DasPacket OCC command (for DSPs)
          *
-         * @param[in] payloadLength Size of the packet payload in bytes.
+         * When sending commands to DSP, the packet format is very simple.
+         * The OCC header defines common fields and the payload is the actual
+         * little-endian data in units of 4 bytes.
+         *
+         * @param[in] source address of the sender
+         * @param[in] destination address
+         * @param[in] cmdinfo describing newly created command packet
+         * @param[in] payload_length Size of the packet payload in bytes.
          * @param[in] payload Payload to be copied into the DasPacket buffer, must match payloadLength. If 0, nothing will be copied.
          */
-        static DasPacket *create(uint32_t payloadLength, const uint8_t *payload=0);
+        static DasPacket *createOcc(uint32_t source_, uint32_t destination_, CommandType command, uint32_t payload_length_, uint32_t *payload_ = 0);
+
+        /**
+         * Create DasPacket LVDS command (non DSPs)
+         *
+         * Other modules are connected to DSP thru LVDS link. The DSP simply
+         * passes thru the data it receives, so the software must format
+         * the package as expected by modules. LVDS is 21-bit
+         * bus and the protocol itself uses 5 control bits. There's 16 bits for data.
+         *
+         * This functions re-formats payload data into LVDS data, taking care
+         * of protocol flags and packing it into OCC packet. The result
+         * is the packet about twice the size of the original payload.
+         *
+         * @param[in] source address of the sender
+         * @param[in] destination address
+         * @param[in] cmdinfo describing newly created command packet
+         * @param[in] payload_length Size of the packet payload in bytes.
+         * @param[in] payload Payload to be copied into the DasPacket buffer, must match payloadLength. If 0, nothing will be copied.
+         */
+        static DasPacket *createLvds(uint32_t source_, uint32_t destination_, CommandType command, uint32_t payload_length_, uint32_t *payload_ = 0);
 
         /**
          * Check if packet is valid, like the alignment check, size check, etc.
          */
-        bool valid() const;
+        bool isValid() const;
 
         /**
          * Total length of the packet in bytes.
@@ -205,6 +237,9 @@ struct DasPacket
          */
         bool isData() const;
 
+        /**
+         * Is this a bad packet as identified by OCC board?
+         */
         bool isBadPacket() const;
 
         /**
@@ -308,15 +343,23 @@ struct DasPacket
     private:
 
         /**
-         * Constructor.
+         * Constructor for creating command packets
          *
          * The constructor is kept private to prevent user make mistake allocating
          * this dynamically sizable object.
          *
-         * @param[in] payloadLength Size of the packet payload in bytes.
+         * @param[in] source address of the sender
+         * @param[in] destination address
+         * @param[in] cmdinfo describing newly created command packet
+         * @param[in] payload_length Size of the packet payload in bytes.
          * @param[in] payload Payload to be copied into the DasPacket buffer, must match payloadLength. If 0, nothing will be copied.
          */
-        DasPacket(uint32_t payloadLength, const uint8_t *payload=0);
+        DasPacket(uint32_t source, uint32_t destination, CommandInfo cmdinfo, uint32_t payload_length, uint32_t *payload = 0);
+
+        /**
+         * Calculate and return even parity bit of the number given.
+         */
+        static bool lvdsParity(int number);
 };
 
 #endif // DASPACKET_HPP

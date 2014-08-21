@@ -3,85 +3,117 @@
 #include <stdexcept>
 #include <string.h>
 
-// Get rid of these defines gradually as we re-implement into structured way
-#define DAS_ROOT_ID                         0x000f10cc
-#define DAS_BROADCAST                       0x00000000
+// Static members initilization
+const uint32_t DasPacket::MinLength = sizeof(DasPacket);
+const uint32_t DasPacket::MaxLength = 1800*8 + MinLength;
 
-#define DAS_PASSTHROUGH_LVDS                0x40000000
-#define DAS_COMMAND                         0x80000000
-#define DAS_RESPONSE                        (DAS_COMMAND | 0x20000000)
-
-#define DAS_LVDS_PARITY                     (1 << 16)
-#define DAS_LVDS_LAST                       (1 << 17)
-#define DAS_LVDS_FIRST                      (1 << 18)
-#define DAS_LVDS_CMD                        (1 << 19)
-
-#define DAS_CMD_READ_VERSION                (DAS_COMMAND | 0x20)
-#define DAS_CMD_READ_CONFIG                 (DAS_COMMAND | 0x21)
-#define DAS_CMD_READ_STATUS                 (DAS_COMMAND | 0x22)
-#define DAS_CMD_WRITE_CONF                  (DAS_COMMAND | 0x30)
-#define DAS_CMD_SERIAL_TX                   (DAS_COMMAND | 0x50)
-#define DAS_CMD_DISCOVER                    (DAS_COMMAND | 0x80)
-#define DAS_CMD_RESET                       (DAS_COMMAND | 0x81)
-#define DAS_CMD_START                       (DAS_COMMAND | 0x82)
-#define DAS_CMD_STOP                        (DAS_COMMAND | 0x83)
-#define DAS_CMD_READ_CHAN_VERSION           (DAS_CMD_READ_VERSION | 0x1000)
-#define DAS_CMD_READ_CHAN_CONFIG            (DAS_CMD_READ_CONFIG | 0x1000)
-#define DAS_CMD_READ_CHAN_STATUS            (DAS_CMD_READ_STATUS | 0x1000)
-#define DAS_CMD_WRITE_CHAN_CONF             (DAS_CMD_WRITE_CONF | 0x1000)
-
-#define DAS_CMD_TSYNC                       (DAS_COMMAND | 0x84)
-#define DAS_CMD_RTDL                        (DAS_COMMAND | 0x85)
-
-#define DAS_RSP_MASK                        (DAS_RESPONSE | 0xff)
-#define DAS_RSP_VERSION                     (DAS_RESPONSE | 0x20)
-#define DAS_RSP_CONFIG                      (DAS_RESPONSE | 0x21)
-#define DAS_RSP_STATUS                      (DAS_RESPONSE | 0x22)
-#define DAS_RSP_ERROR                       (DAS_RESPONSE | 0x40)
-#define DAS_RSP_ACK                         (DAS_RESPONSE | 0x41)
-#define DAS_RSP_SERIAL_RX                   (DAS_RESPONSE | 0x51)
-#define DAS_RSP_DEVLIST                     (DAS_RESPONSE | 0x7e)
-#define DAS_RSP_DISCOVER                    (DAS_RESPONSE | 0x80)
-#define DAS_RSP_RESET                       (DAS_RESPONSE | 0x81)
-#define DAS_RSP_START                       (DAS_RESPONSE | 0x82)
-#define DAS_RSP_STOP                        (DAS_RESPONSE | 0x83)
-#define DAS_RSP_CHAN                        (DAS_RESPONSE | 0xf8ff)
-#define DAS_RSP_CHAN_VERSION                (DAS_RSP_VERSION | 0x1000)
-#define DAS_RSP_CHAN_CONFIG                 (DAS_RSP_CONFIG | 0x1000)
-#define DAS_RSP_CHAN_STATUS                 (DAS_RSP_STATUS | 0x1000)
-#define DAS_RSP_CHAN_MASK                   (7 << 8)
-
-DasPacket *DasPacket::create(uint32_t payloadLen, const uint8_t *payload)
-{
-    DasPacket *packet = 0;
-    payloadLen = (payloadLen + 3) & ~3;
-    void *addr = malloc(sizeof(DasPacket) + payloadLen);
-    if (addr)
-        packet = new (addr) DasPacket(payloadLen, payload);
-    return packet;
-}
-
-DasPacket::DasPacket(uint32_t payloadLen, const uint8_t *payload_)
-    : destination(0)
-    , source(0)
-    , info(0)
-    , payload_length(payloadLen)
+DasPacket::DasPacket(uint32_t source_, uint32_t destination_, CommandInfo cmdinfo_, uint32_t payload_length_, uint32_t *payload_)
+    : destination(destination_)
+    , source(source_)
+    , cmdinfo(cmdinfo_)
+    , payload_length(payload_length_)
     , reserved1(0)
     , reserved2(0)
 {
     if (payload_) {
-        memcpy(payload, payload_, payloadLen);
-        if (payload_length != payloadLen) {
-            memset(&payload[payload_length], 0, payload_length - payloadLen);
-        }
+        memcpy(payload, payload_, payload_length);
     } else {
         memset(payload, 0, payload_length);
     }
 }
 
-bool DasPacket::valid() const
+DasPacket *DasPacket::createOcc(uint32_t source, uint32_t destination, CommandType command, uint32_t payload_length, uint32_t *payload)
 {
-    return (length() > 0);
+    DasPacket *packet = 0;
+    CommandInfo cmdinfo;
+
+    memset(&cmdinfo, 0, sizeof(cmdinfo));
+
+    payload_length = (payload_length + 3) & ~3;
+    cmdinfo.is_command = true;
+    cmdinfo.command = command;
+
+    void *addr = malloc(sizeof(DasPacket) + payload_length);
+    if (addr)
+        packet = new (addr) DasPacket(source, destination, cmdinfo, payload_length, payload);
+    return packet;
+}
+
+DasPacket *DasPacket::createLvds(uint32_t source, uint32_t destination, CommandType command, uint32_t payload_length, uint32_t *payload)
+{
+    DasPacket *packet = 0;
+    CommandInfo cmdinfo;
+
+    memset(&cmdinfo, 0, sizeof(cmdinfo));
+
+    uint32_t aligned_length = (payload_length + 3) & ~3; // 4-byte aligned data required
+    uint32_t real_payload_length;
+
+    real_payload_length = (payload_length + 3) & ~3; // 4-byte aligned data
+    real_payload_length *= 2; // 32 bits are devided into two dwords
+    real_payload_length += (destination != HWID_BROADCAST ? 2*sizeof(uint32_t) : 0); // First 2 dwords of the payload represent LVDS address for non-global commands
+
+    cmdinfo.is_command = true;
+    cmdinfo.is_passthru = true;
+    cmdinfo.command = command;
+
+    void *addr = malloc(sizeof(DasPacket) + real_payload_length);
+    if (addr) {
+        uint32_t offset = 0;
+
+        // Cmdinfo from the OCC header is the first dword DSP passes thru
+        // It must have all the LVDS flags
+        cmdinfo.lvds_cmd = true;
+        cmdinfo.lvds_start = true;
+        cmdinfo.lvds_parity = lvdsParity(*reinterpret_cast<uint32_t *>(&cmdinfo) & 0xFFFFFF);
+
+        // Destination in OCC header is always 0 for LVDS packets
+        // Don't copy the payload
+        packet = new (addr) DasPacket(source, 0, cmdinfo, real_payload_length, 0);
+
+        // Add 2 dwords for destination address, both LVDS pass-thru
+        if (destination != HWID_BROADCAST) {
+            packet->payload[offset] = destination & 0xFFFF;
+            packet->payload[offset] |= (lvdsParity(packet->payload[offset]) << 16);
+            offset++;
+            packet->payload[offset] = (destination >> 16 ) & 0xFFFF;
+            packet->payload[offset] |= (lvdsParity(packet->payload[offset]) << 16);
+            offset++;
+        }
+
+        // Split each 32 bits from the payload into two 16 bit parts and put them into separate dwords;
+        // lower 16 bits into first dword, upper 16 bits into second dword
+        // Add LVDS parity check to each word
+        for (uint32_t i=0; i<aligned_length/4; i++) {
+            packet->payload[offset] = payload[i] & 0xFFFF;
+            packet->payload[offset] |= lvdsParity(packet->payload[offset]) << 16;
+            offset++;
+            packet->payload[offset] = (payload[i] >> 16) & 0xFFFF;
+            packet->payload[offset] |= lvdsParity(packet->payload[offset]) << 16;
+            offset++;
+        }
+
+        // Finalize LVDS packet - last dword must have the stop flag
+        if (offset > 0) {
+            // When message is not word-aligned, the last word is not valid
+            // and must be taken out.
+            if (payload_length < aligned_length)
+                packet->payload[--offset] = 0;
+
+            offset--;
+            packet->payload[offset] |= (0x1 << 17); // Last word flag...
+            packet->payload[offset] ^= (0x1 << 16); // ... which flips parity
+        } else {
+            packet->cmdinfo.lvds_stop = true;       // Same here
+            packet->cmdinfo.lvds_parity ^= 0x1;
+        }
+    }
+    return packet;
+}
+
+bool DasPacket::isValid() const
+{
+    return (length() > MinLength);
 }
 
 uint32_t DasPacket::length() const
@@ -136,6 +168,7 @@ bool DasPacket::isRtdl() const
 
 const DasPacket::RtdlHeader *DasPacket::getRtdlHeader() const
 {
+    // RTDL packets always come from DSP only, so the RtdlHeader is at the start of payload
     if (cmdinfo.is_command && cmdinfo.command == DasPacket::CommandType::CMD_RTDL)
         return (RtdlHeader *)payload;
     if (!datainfo.is_command && datainfo.rtdl_present && payload_length >= sizeof(RtdlHeader))
@@ -145,6 +178,7 @@ const DasPacket::RtdlHeader *DasPacket::getRtdlHeader() const
 
 const DasPacket::Event *DasPacket::getEventData(uint32_t *count) const
 {
+    // DSP aggregates detectors data into data packets and the data is always at the start of payload
     const uint8_t *start = 0;
     *count = 0;
     if (!datainfo.is_command) {
@@ -213,4 +247,15 @@ uint32_t DasPacket::getPayloadLength() const
     } else {
         return payload_length;
     }
+}
+
+bool DasPacket::lvdsParity(int number)
+{
+    // even parity
+    int temp = 0;
+    while (number != 0) {
+        temp = temp ^ (number & 0x1);
+        number >>= 1;
+    }
+    return temp;
 }

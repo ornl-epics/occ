@@ -119,13 +119,15 @@ void BaseModulePlugin::sendToDispatcher(DasPacket::CommandType command, uint32_t
 {
     DasPacket *packet;
     if (m_behindDsp)
-        packet = createLvdsPacket(m_hardwareId, command, payload, length);
+        packet = DasPacket::createLvds(DasPacket::HWID_SELF, m_hardwareId, command, length, payload);
     else
-        packet = createOpticalPacket(m_hardwareId, command, payload, length);
+        packet = DasPacket::createOcc(DasPacket::HWID_SELF, m_hardwareId, command, length, payload);
 
     if (packet) {
         BasePlugin::sendToDispatcher(packet);
         delete packet;
+    } else {
+        LOG_ERROR("Failed to create and send packet");
     }
 }
 
@@ -435,78 +437,6 @@ void BaseModulePlugin::createConfigParam(const char *name, char section, uint32_
     if (m_behindDsp && nBits > 16)
         length++;
     m_configSectionSizes[section] = std::max(m_configSectionSizes[section], length);
-}
-
-DasPacket *BaseModulePlugin::createOpticalPacket(uint32_t destination, DasPacket::CommandType command, uint32_t *payload, uint32_t length)
-{
-    uint32_t alignedLen = (length + 3) & ~3; // round up to multiple of 4
-    DasPacket *packet = DasPacket::create(alignedLen, reinterpret_cast<uint8_t *>(payload));
-    if (packet) {
-        packet->source = DasPacket::HWID_SELF;
-        packet->destination = destination;
-        packet->cmdinfo.is_command = true;
-        packet->cmdinfo.command = command;
-    }
-    return packet;
-}
-
-DasPacket *BaseModulePlugin::createLvdsPacket(uint32_t destination, DasPacket::CommandType command, uint32_t *payload, uint32_t length)
-{
-    uint32_t alignedLen = (length + 3) & ~3; // round up to multiple of 4
-    DasPacket *packet = DasPacket::create(2*4+2*alignedLen);
-    if (packet) {
-        uint32_t offset = 0;
-        packet->source = DasPacket::HWID_SELF;
-        packet->destination = 0;
-        packet->cmdinfo.command = command;
-        packet->cmdinfo.is_command = true;
-        packet->cmdinfo.is_passthru = true;
-        packet->cmdinfo.lvds_cmd = true;
-        packet->cmdinfo.lvds_start = true;
-        packet->cmdinfo.lvds_parity = evenParity(packet->info & 0xFFFFFF);
-        if (destination != DasPacket::HWID_BROADCAST) {
-            packet->payload[offset] = destination & 0xFFFF;
-            packet->payload[offset] |= (evenParity(packet->payload[offset]) << 16);
-            offset++;
-            packet->payload[offset] = (destination >> 16 ) & 0xFFFF;
-            packet->payload[offset] |= (evenParity(packet->payload[offset]) << 16);
-            offset++;
-        } else {
-            packet->payload_length -= 2*sizeof(uint32_t);
-        }
-        for (uint32_t i=0; i<alignedLen/4; i++) {
-            packet->payload[offset] = payload[i] & 0xFFFF;
-            packet->payload[offset] |= evenParity(packet->payload[offset]) << 16;
-            offset++;
-            packet->payload[offset] = (payload[i] >> 16) & 0xFFFF;
-            packet->payload[offset] |= evenParity(packet->payload[offset]) << 16;
-            offset++;
-        }
-        if (offset > 0) {
-            // When message is not word-aligned, the last word is not valid
-            // and must be taken out.
-            if (length < alignedLen)
-                packet->payload[--offset] = 0;
-
-            offset--;
-            packet->payload[offset] |= (0x1 << 17); // Last word bit...
-            packet->payload[offset] ^= (0x1 << 16); // ... also flips parity
-        } else {
-            packet->cmdinfo.lvds_stop = true;
-            packet->cmdinfo.lvds_parity ^= 0x1;
-        }
-    }
-    return packet;
-}
-
-bool BaseModulePlugin::evenParity(int number)
-{
-    int temp = 0;
-    while (number != 0) {
-        temp = temp ^ (number & 0x1);
-        number >>= 1;
-    }
-    return temp;
 }
 
 uint32_t BaseModulePlugin::parseHardwareId(const std::string &text)

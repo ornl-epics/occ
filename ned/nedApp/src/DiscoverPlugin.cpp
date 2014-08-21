@@ -1,10 +1,9 @@
-#include "BaseModulePlugin.h"
 #include "DiscoverPlugin.h"
 #include "DspPlugin.h"
 #include "Log.h"
 #include "RocPlugin.h"
 
-#include <string.h>
+#include <cstring>
 
 #define NUM_DISCOVERPLUGIN_PARAMS ((int)(&LAST_DISCOVERPLUGIN_PARAM - &FIRST_DISCOVERPLUGIN_PARAM + 1))
 
@@ -172,7 +171,7 @@ void DiscoverPlugin::report(FILE *fp, int details)
 
 void DiscoverPlugin::reqDiscover()
 {
-    DasPacket *packet = BaseModulePlugin::createOpticalPacket(DasPacket::HWID_BROADCAST, DasPacket::CMD_DISCOVER);
+    DasPacket *packet = DasPacket::createOcc(DasPacket::HWID_SELF, DasPacket::HWID_BROADCAST, DasPacket::CMD_DISCOVER, 0, 0);
     if (!packet) {
         LOG_ERROR("Failed to allocate DISCOVER packet");
         return;
@@ -183,7 +182,7 @@ void DiscoverPlugin::reqDiscover()
 
 void DiscoverPlugin::reqLvdsDiscover(uint32_t hardwareId)
 {
-    DasPacket *packet = BaseModulePlugin::createLvdsPacket(hardwareId, DasPacket::CMD_DISCOVER);
+    DasPacket *packet = DasPacket::createLvds(DasPacket::HWID_SELF, DasPacket::HWID_BROADCAST, DasPacket::CMD_DISCOVER, 0, 0);
     if (!packet) {
         LOG_ERROR("Failed to allocate DISCOVER LVDS packet");
         return;
@@ -194,7 +193,7 @@ void DiscoverPlugin::reqLvdsDiscover(uint32_t hardwareId)
 
 void DiscoverPlugin::reqVersion(uint32_t hardwareId)
 {
-    DasPacket *packet = BaseModulePlugin::createOpticalPacket(hardwareId, DasPacket::CMD_READ_VERSION);
+    DasPacket *packet = DasPacket::createOcc(DasPacket::HWID_SELF, DasPacket::HWID_BROADCAST, DasPacket::CMD_READ_VERSION, 0, 0);
     if (!packet) {
         LOG_ERROR("Failed to allocate READ_VERSION packet");
         return;
@@ -205,7 +204,7 @@ void DiscoverPlugin::reqVersion(uint32_t hardwareId)
 
 void DiscoverPlugin::reqLvdsVersion(uint32_t hardwareId)
 {
-    DasPacket *packet = BaseModulePlugin::createLvdsPacket(hardwareId, DasPacket::CMD_READ_VERSION);
+    DasPacket *packet = DasPacket::createLvds(DasPacket::HWID_SELF, DasPacket::HWID_BROADCAST, DasPacket::CMD_READ_VERSION, 0, 0);
     if (!packet) {
         LOG_ERROR("Failed to allocate READ_VERSION LVDS packet");
         return;
