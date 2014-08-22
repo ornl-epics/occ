@@ -47,7 +47,6 @@ foreach $line ( <INFILE> ) {
             print ("    field(DTYP, \"asynInt32\")\n");
             print ("    field(INP,  \"\@asyn(\$(PORT))$name\")\n");
 	    print ("    field(SCAN, \"I/O Intr\")\n");
-	    print ("    field(PINI, \"YES\")\n");
             print ("\}\n");
         } elsif ($width == 1) {
             print ("record(bi, \"\$(P)$name\")\n");
@@ -56,7 +55,6 @@ foreach $line ( <INFILE> ) {
             print ("    field(DTYP, \"asynInt32\")\n");
             print ("    field(INP,  \"\@asyn(\$(PORT))$name\")\n");
             print ("    field(SCAN, \"I/O Intr\")\n");
-	    print ("    field(PINI, \"YES\")\n");
             if ($valstr =~ m/([0-9]+) *= *([^,]+), *([0-9]+) *= *(.+)$/) {
                 my ($zval,$znam,$oval,$onam) = ($1,$2,$3,$4);
                 if ($zval != 0) { my $temp=$znam; $znam=$onam; $onam=$temp; }
@@ -73,7 +71,6 @@ foreach $line ( <INFILE> ) {
             print ("    field(DTYP, \"asynInt32\")\n");
             print ("    field(INP,  \"\@asyn(\$(PORT))$name\")\n");
             print ("    field(SCAN, \"I/O Intr\")\n");
-	    print ("    field(PINI, \"YES\")\n");
             my $i=0;
             foreach (split(',',$valstr)) {
                 my ($xval,$xnam) = split('=', $_);
@@ -90,7 +87,6 @@ foreach $line ( <INFILE> ) {
             print ("    field(DTYP, \"asynInt32\")\n");
             print ("    field(INP,  \"\@asyn(\$(PORT))$name\")\n");
             print ("    field(SCAN, \"I/O Intr\")\n");
-	    print ("    field(PINI, \"YES\")\n");
             print ("\}\n");
         }
     }

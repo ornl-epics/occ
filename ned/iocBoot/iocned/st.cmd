@@ -22,6 +22,7 @@ save_restoreSet_NumSeqFiles(3)
 save_restoreSet_SeqPeriodInSeconds(600)
 ###set_pass0_restoreFile("$(IOCNAME).sav")
 ###set_pass0_restoreFile("$(IOCNAME)_pass0.sav")
+set_pass0_restoreFile("$(IOCNAME).sav")
 set_pass1_restoreFile("$(IOCNAME).sav")
 
 ## Load record instances
@@ -36,7 +37,6 @@ dbLoadRecords("../../db/CmdPlugin.template","P=$(PREFIX)Det:cmd:,PORT=cmd")
 
 AdaraPluginConfigure("Adara1", "$(OCC1)", 1, 2)
 dbLoadRecords("../../db/AdaraPlugin.template","P=$(PREFIX)Det:adara1:,PORT=Adara1")
-dbLoadRecords("../../db/BaseSocketPlugin.template","P=$(PREFIX)Det:adara1:,PORT=Adara1")
 dbLoadRecords("../../db/BasePlugin.template","P=$(PREFIX)Det:adara1:,PORT=Adara1")
 
 ProxyPluginConfigure("proxy1", "$(OCC1)")

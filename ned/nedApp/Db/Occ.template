@@ -352,6 +352,7 @@ record(calc, "$(P)DataRateOutKBs")
     field(CALC, "A/1024")
     field(SCAN, "Passive")
     field(EGU,  "KB/s")
+    field(PREC, "1")
 }
 record(calc, "$(P)DataRateOutMBs")
 {
@@ -360,4 +361,5 @@ record(calc, "$(P)DataRateOutMBs")
     field(CALC, "A/1024")
     field(SCAN, "Passive")
     field(EGU,  "MB/s")
+    field(PREC, "2")
 }
