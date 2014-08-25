@@ -34,7 +34,7 @@ BaseModulePlugin::BaseModulePlugin(const char *portName, const char *dispatcherP
     m_verifySM.addState(ST_VERSION_OK,              SM_ACTION_ERR(DasPacket::CMD_DISCOVER),         ST_TYPE_ERR);
 
     createParam("HardwareId",   asynParamOctet, &HardwareId);
-    createParam("LastCmdRsp",  asynParamInt32, &LastCmdRsp);
+    createParam("LastCmdRsp",   asynParamInt32, &LastCmdRsp);
     createParam("Command",      asynParamInt32, &Command);
     createParam("HardwareDate", asynParamOctet, &HardwareDate);
     createParam("HardwareVer",  asynParamInt32, &HardwareVer);
@@ -248,6 +248,7 @@ bool BaseModulePlugin::rspReadStatus(const DasPacket *packet)
         LOG_ERROR("Received wrong READ_STATUS response based on length; received %u, expected %u", packet->getPayloadLength(), m_statusPayloadLength);
         return false;
     }
+
 
     const uint32_t *payload = packet->getPayload();
     for (std::map<int, StatusParamDesc>::iterator it=m_statusParams.begin(); it != m_statusParams.end(); it++) {

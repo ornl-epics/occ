@@ -31,11 +31,7 @@
  * General plugin parameters:
  * asyn param    | asyn param type | init val | mode | Description                   |
  * ------------- | --------------- | -------- | ---- | ------------------------------
- * HwDate        | asynOctet       | ""       | RO   | Hardware date as YYYY/MM/DD
- * HwVer         | asynParamInt32  | 0        | RO   | Hardware version
- * HwRev         | asynParamInt32  | 0        | RO   | Hardware revision
- * FwVer         | asynParamInt32  | 0        | RO   | Firmware version
- * FwRev         | asynParamInt32  | 0        | RO   | Firmware revision
+ * AcquireStat   | asynParamInt32  | 0        | RO   | Acquire status for v5.4
  */
 class RocPlugin : public BaseModulePlugin {
     public: // variables
@@ -106,18 +102,6 @@ class RocPlugin : public BaseModulePlugin {
          */
         static bool parseVersionRsp(const DasPacket *packet, BaseModulePlugin::Version &version, size_t expectedLen=0);
 
-        /**
-         * Handle READ_CONFIG response from v5.4.
-         *
-         * Function handles workaround for broken v5.4 firmware version which
-         * appends 4 unexpected bytes at the end of the payload. Packet is copied
-         * to internal buffer and the length is modified. Then BaseModulePlugin::rspReadConfig()
-         * is invoked with the modified packet.
-         * For non-v5.4 firmwares the function simply invokes BaseModulePlugin::rspReadConfig()
-         * passing it the original packet.
-         */
-        bool rspReadConfig(const DasPacket *packet);
-
     private: // functions
         /**
          * Verify the DISCOVER response is from ROC.
@@ -134,6 +118,36 @@ class RocPlugin : public BaseModulePlugin {
          * @return true if packet was parsed and module version verified.
          */
         bool rspReadVersion(const DasPacket *packet);
+
+        /**
+         * Handle READ_CONFIG response from v5.4.
+         *
+         * Function handles workaround for broken v5.4 firmware version which
+         * appends 4 unexpected bytes at the end of the payload. Packet is copied
+         * to internal buffer and the length is modified. Then BaseModulePlugin::rspReadConfig()
+         * is invoked with the modified packet.
+         * For non-v5.4 firmwares the function simply invokes BaseModulePlugin::rspReadConfig()
+         * passing it the original packet.
+         */
+        bool rspReadConfig(const DasPacket *packet);
+
+        /**
+         * Override START response handler.
+         *
+         * Implemented only for v5.4 and v5.5 to detect successful acquisition start
+         * and record it through AcquireStat parameter. Other ROC version have a dedicated
+         * status register for that.
+         */
+        bool rspStart(const DasPacket *packet);
+
+        /**
+         * Override STOP response handler.
+         *
+         * Implemented only for v5.4 and v5.5 to detect successful acquisition stop
+         * and record it through AcquireStat parameter. Other ROC version have a dedicated
+         * status register for that.
+         */
+        bool rspStop(const DasPacket *packet);
 
         /**
          * Pass user command to HighVoltage module through RS232.
@@ -178,6 +192,21 @@ class RocPlugin : public BaseModulePlugin {
          * Create and register all config ROC v5.2 parameters to be exposed to EPICS.
          */
         void createConfigParams_v52();
+
+        /**
+         * Create and register all status ROC v5.4 parameters to be exposed to EPICS.
+         */
+        void createStatusParams_v54();
+
+        /**
+         * Create and register all config ROC v5.4 parameters to be exposed to EPICS.
+         */
+        void createConfigParams_v54();
+
+    protected:
+        #define FIRST_ROCPLUGIN_PARAM AcquireStat
+        int AcquireStat;
+        #define LAST_ROCPLUGIN_PARAM AcquireStat
 };
 
 #endif // DSP_PLUGIN_H

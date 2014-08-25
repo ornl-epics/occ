@@ -43,10 +43,15 @@ RocPlugin::RocPlugin(const char *portName, const char *dispatcherPortName, const
         setIntegerParam(Supported, 1);
         createStatusParams_v51();
         createConfigParams_v51();
-    } else if (m_version == "v52" || m_version == "v54" || m_version == "v55") {
+    } else if (m_version == "v52") {
         setIntegerParam(Supported, 1);
         createStatusParams_v52();
         createConfigParams_v52();
+    } else if (m_version == "v54" || m_version == "v55") {
+        setIntegerParam(Supported, 1);
+        createStatusParams_v54();
+        createConfigParams_v54();
+        createParam("AcquireStat", asynParamInt32, &AcquireStat); // v5.4 doesn't support AcquireStat through registers, we simulate by receiving ACK on START
     } else {
         setIntegerParam(Supported, 0);
         LOG_ERROR("Unsupported ROC version '%s'", version);
@@ -202,6 +207,26 @@ bool RocPlugin::rspReadConfig(const DasPacket *packet)
     }
 
     return BaseModulePlugin::rspReadConfig(packet);
+}
+
+bool RocPlugin::rspStart(const DasPacket *packet)
+{
+    bool ack = BaseModulePlugin::rspStart(packet);
+    if (m_version == "v54" || m_version == "v55") {
+        setIntegerParam(AcquireStat, (ack ? 1 : 0));
+        callParamCallbacks();
+    }
+    return ack;
+}
+
+bool RocPlugin::rspStop(const DasPacket *packet)
+{
+    bool ack = BaseModulePlugin::rspStop(packet);
+    if (m_version == "v54" || m_version == "v55") {
+        setIntegerParam(AcquireStat, (ack ? 0 : 1));
+        callParamCallbacks();
+    }
+    return ack;
 }
 
 void RocPlugin::reqHvCmd(const char *data, uint32_t length)

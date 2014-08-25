@@ -202,8 +202,8 @@ record(bi, "$(P)HVStatus")
     field(DTYP, "asynInt32")
     field(INP,  "@asyn($(PORT))HVStatus")
     field(SCAN, "I/O Intr")
-    field(ZNAM, "no")
-    field(ONAM, "yes")
+    field(ZNAM, "not present")
+    field(ONAM, "present")
 }
 record(bi, "$(P)CalcActive")
 {
@@ -225,30 +225,27 @@ record(bi, "$(P)AcquireStat")
 }
 record(bi, "$(P)Discovered")
 {
-    field(DESC, "Discovered.")
+    field(DESC, "Discovered")
     field(DTYP, "asynInt32")
     field(INP,  "@asyn($(PORT))Discovered")
     field(SCAN, "I/O Intr")
     field(ZNAM, "not discovered")
     field(ONAM, "discovered")
 }
-record(bi, "$(P)Configured2")
+record(mbbi, "$(P)Configured")
 {
     field(DESC, "Configured")
     field(DTYP, "asynInt32")
-    field(INP,  "@asyn($(PORT))Configured2")
+    field(INP,  "@asyn($(PORT))Configured")
     field(SCAN, "I/O Intr")
-    field(ZNAM, "not configured")
-    field(ONAM, "configured")
-}
-record(bi, "$(P)Configured1")
-{
-    field(DESC, "Configured")
-    field(DTYP, "asynInt32")
-    field(INP,  "@asyn($(PORT))Configured1")
-    field(SCAN, "I/O Intr")
-    field(ZNAM, "not configured")
-    field(ONAM, "configured")
+    field(ZRVL, "0")
+    field(ZRST, "not configured")
+    field(ONVL, "1")
+    field(ONST, "section 1 conf'd")
+    field(TWVL, "2")
+    field(TWST, "section 2 conf'd")
+    field(THVL, "3")
+    field(THST, "all conf'd")
 }
 record(longin, "$(P)RisEdgeA")
 {

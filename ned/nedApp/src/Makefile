@@ -66,6 +66,7 @@ $(PROD_NAME)_SRCS  += DspPlugin.cpp
 $(PROD_NAME)_SRCS  += RocPlugin.cpp
 $(PROD_NAME)_SRCS  += RocPlugin_v51.cpp
 $(PROD_NAME)_SRCS  += RocPlugin_v52.cpp
+$(PROD_NAME)_SRCS  += RocPlugin_v54.cpp
 $(PROD_NAME)_SRCS  += FemPlugin.cpp
 $(PROD_NAME)_SRCS  += DiscoverPlugin.cpp
 $(PROD_NAME)_SRCS  += DumpPlugin.cpp
@@ -76,6 +77,7 @@ $(PROD_NAME)_DOXS  += DspPlugin.dox
 $(PROD_NAME)_DOXS  += RocPlugin.dox
 $(PROD_NAME)_DOXS  += RocPlugin_v51.dox
 $(PROD_NAME)_DOXS  += RocPlugin_v52.dox
+$(PROD_NAME)_DOXS  += RocPlugin_v54.dox
 $(PROD_NAME)_DOXS  += FemPlugin.dox
 
 $(PROD_NAME)_TMPL  += DspPlugin.template
