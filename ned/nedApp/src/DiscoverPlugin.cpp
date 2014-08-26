@@ -23,7 +23,7 @@ asynStatus DiscoverPlugin::writeInt32(asynUser *pasynUser, epicsInt32 value)
 {
     if (pasynUser->reason == Trigger) {
         m_discovered.clear();
-        reqDiscover();
+        reqDiscover(DasPacket::HWID_BROADCAST);
         return asynSuccess;
     }
     return BasePlugin::writeInt32(pasynUser, value);
@@ -49,22 +49,21 @@ void DiscoverPlugin::processData(const DasPacketList * const packetList)
                 // It appears that only DSPs will respond to a broadcast address and from
                 // their responses all their submodules can be observed. Since we're
                 // also interested in module types, we'll do a p2p discover to every module.
-                m_discovered[packet->source].type = packet->cmdinfo.module_type;
+                m_discovered[packet->source].type = DasPacket::MOD_TYPE_DSP;
+                reqVersion(packet->getSourceAddress());
 
                 // The global LVDS discover packet should address all modules connected
                 // through LVDS. For some unidentified reason, ROC boards connected directly
                 // to DSP don't respond, whereas ROCs behind FEM do.
                 // So we do P2P to each module.
                 for (uint32_t i=0; i<packet->payload_length/sizeof(uint32_t); i++) {
+                    m_discovered[packet->payload[i]].parent = packet->getRouterAddress();
                     reqLvdsDiscover(packet->payload[i]);
+                    reqLvdsVersion(packet->payload[i]);
                 }
-
-                reqVersion(packet->getSourceAddress());
             } else if (packet->cmdinfo.is_passthru) {
                 // Source hardware id belongs to the DSP, the actual module id is in payload
                 m_discovered[packet->getSourceAddress()].type = packet->cmdinfo.module_type;
-                m_discovered[packet->getSourceAddress()].parent = packet->getRouterAddress();
-                reqLvdsVersion(packet->getSourceAddress());
             } else {
                 m_discovered[packet->getSourceAddress()].type = packet->cmdinfo.module_type;
             }
@@ -124,7 +123,7 @@ uint32_t DiscoverPlugin::formatOutput(char *buffer, uint32_t size)
             case DasPacket::MOD_TYPE_IROC:      type = "IROC";      break;
             case DasPacket::MOD_TYPE_ROC:       type = "ROC";       break;
             case DasPacket::MOD_TYPE_SANSROC:   type = "SANSROC";   break;
-            default:                            type = "unknown module type";
+            default:                            type = "unknown";
         }
 
         resolveIP(it->first, moduleId);
@@ -163,15 +162,15 @@ asynStatus DiscoverPlugin::readOctet(asynUser *pasynUser, char *value, size_t nC
 
 void DiscoverPlugin::report(FILE *fp, int details)
 {
-    char buffer[16*1024];
+    char buffer[16*1024]; // Should be sufficient for about 230 modules
     uint32_t length = formatOutput(buffer, sizeof(buffer));
     fwrite(buffer, 1, length, fp);
     return BasePlugin::report(fp, details);
 }
 
-void DiscoverPlugin::reqDiscover()
+void DiscoverPlugin::reqDiscover(uint32_t hardwareId)
 {
-    DasPacket *packet = DasPacket::createOcc(DasPacket::HWID_SELF, DasPacket::HWID_BROADCAST, DasPacket::CMD_DISCOVER, 0, 0);
+    DasPacket *packet = DasPacket::createOcc(DasPacket::HWID_SELF, hardwareId, DasPacket::CMD_DISCOVER, 0, 0);
     if (!packet) {
         LOG_ERROR("Failed to allocate DISCOVER packet");
         return;
@@ -182,7 +181,7 @@ void DiscoverPlugin::reqDiscover()
 
 void DiscoverPlugin::reqLvdsDiscover(uint32_t hardwareId)
 {
-    DasPacket *packet = DasPacket::createLvds(DasPacket::HWID_SELF, DasPacket::HWID_BROADCAST, DasPacket::CMD_DISCOVER, 0, 0);
+    DasPacket *packet = DasPacket::createLvds(DasPacket::HWID_SELF, hardwareId, DasPacket::CMD_DISCOVER, 0, 0);
     if (!packet) {
         LOG_ERROR("Failed to allocate DISCOVER LVDS packet");
         return;
@@ -193,7 +192,7 @@ void DiscoverPlugin::reqLvdsDiscover(uint32_t hardwareId)
 
 void DiscoverPlugin::reqVersion(uint32_t hardwareId)
 {
-    DasPacket *packet = DasPacket::createOcc(DasPacket::HWID_SELF, DasPacket::HWID_BROADCAST, DasPacket::CMD_READ_VERSION, 0, 0);
+    DasPacket *packet = DasPacket::createOcc(DasPacket::HWID_SELF, hardwareId, DasPacket::CMD_READ_VERSION, 0, 0);
     if (!packet) {
         LOG_ERROR("Failed to allocate READ_VERSION packet");
         return;
@@ -204,7 +203,7 @@ void DiscoverPlugin::reqVersion(uint32_t hardwareId)
 
 void DiscoverPlugin::reqLvdsVersion(uint32_t hardwareId)
 {
-    DasPacket *packet = DasPacket::createLvds(DasPacket::HWID_SELF, DasPacket::HWID_BROADCAST, DasPacket::CMD_READ_VERSION, 0, 0);
+    DasPacket *packet = DasPacket::createLvds(DasPacket::HWID_SELF, hardwareId, DasPacket::CMD_READ_VERSION, 0, 0);
     if (!packet) {
         LOG_ERROR("Failed to allocate READ_VERSION LVDS packet");
         return;
