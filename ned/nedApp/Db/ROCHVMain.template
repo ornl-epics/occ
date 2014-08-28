@@ -151,7 +151,7 @@ record(calcout, "$(P):VoltCmd") {
    field(IVOA, "Don't drive outputs")
    field(CALC, "A?B:0")
    field(INPA, "$(P):OnOff CPP MS")
-   field(INPB, "$(P):VoltSet CPP MS")
+   field(INPB, "$(P):VoltSet CPP NMS")
 }
   
 #
