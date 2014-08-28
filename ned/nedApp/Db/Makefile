@@ -20,6 +20,7 @@ DB += RocPlugin_v51.template
 DB += RocPlugin_v52.template
 DB += RocHv.template
 DB += ROCHV.db
+DB += ROCHVSum.db
 DB += FemPlugin.template
 DB += DumpPlugin.template
 DB += StatPlugin.template

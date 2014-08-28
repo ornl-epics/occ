@@ -1,0 +1,26 @@
+record(calc, "BL16B:Det:HVG1:AlarmSum") {
+   field(CALC, "1")
+   field(INPA, "BL16B:Det:HV11:AlarmSum CP MS")
+   field(INPB, "BL16B:Det:HV12:AlarmSum CP MS")
+   field(INPC, "BL16B:Det:HV13:AlarmSum CP MS")
+   field(INPD, "BL16B:Det:HV14:AlarmSum CP MS")
+   field(INPE, "BL16B:Det:HV15:AlarmSum CP MS")
+   field(INPF, "BL16B:Det:HV16:AlarmSum CP MS")
+   field(INPG, "BL16B:Det:HV17:AlarmSum CP MS")
+   field(INPH, "BL16B:Det:HV21:AlarmSum CP MS")
+   field(INPI, "BL16B:Det:HV22:AlarmSum CP MS")
+   field(INPJ, "BL16B:Det:HV30:AlarmSum CP MS")
+   field(INPK, "BL16B:Det:HV31:AlarmSum CP MS")
+   field(INPL, "BL16B:Det:HV32:AlarmSum CP MS")
+}
+record(calc, "BL16B:Det:HVG:AlarmSum") {
+   field(CALC, "1")
+   field(INPA, "BL16B:Det:HVG1:AlarmSum CP MS")
+   field(INPB, "BL16B:Det:HV33:AlarmSum CP MS")
+   field(INPC, "BL16B:Det:HV34:AlarmSum CP MS")
+   field(INPD, "BL16B:Det:HV35:AlarmSum CP MS")
+   field(INPE, "BL16B:Det:HV36:AlarmSum CP MS")
+   field(INPF, "BL16B:Det:HV37:AlarmSum CP MS")
+   field(INPG, "BL16B:Det:HV38:AlarmSum CP MS")
+   field(INPH, "BL16B:Det:HV39:AlarmSum CP MS")
+}
