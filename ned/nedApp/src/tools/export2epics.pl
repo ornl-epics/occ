@@ -9,6 +9,9 @@ if (!defined $name_prefix || !defined $input_file) {
     print { STDERR } "Usage: $0 -name_prefix=<BLXXX:Det:RocYYY:> -input_file=<input file>\n";
     exit 1;
 }
+if (!defined $cfg_rbv || $cfg_rbv != 1) {
+    $cfg_rbv = 0;
+}
 
 my $MAX_NAME_LEN      = 29 - length($name_prefix);
 my $MAX_DESC_LEN      = 29;
@@ -98,21 +101,36 @@ foreach $line ( <INFILE> ) {
 
         $name = trunc($name, $MAX_NAME_LEN, $name, "name");
         $desc = trunc($desc, $MAX_DESC_LEN, $name, "DESC");
+        $io = ( $cfg_rbv == 1 ? "INP" : "OUT" );
        
         if ($valstr =~ /^range/) {
-            print ("record(longout, \"\$(P)$name\")\n");
+            my $type = ( $cfg_rbv == 1 ? "longin" : "longout" );
+            print ("record($type, \"\$(P)$name\")\n");
             print ("\{\n");
+            print ("    info(autosaveFields, \"VAL\")\n");
             print ("    field(DESC, \"$desc\")\n");
             print ("    field(DTYP, \"asynInt32\")\n");
-            print ("    field(OUT,  \"\@asyn(\$(PORT))$name\")\n");
+            print ("    field($io,  \"\@asyn(\$(PORT))$name\")\n");
+            if ($cfg_rbv == 0) {
+	        print ("    field(PINI, \"YES\")\n");
+            } else {
+                print ("    field(SCAN, \"I/O Intr\")\n");
+            }
 	    print ("    field(VAL,  \"$val\")\n");
             print ("\}\n");
         } elsif ($width == 1) {
-            print ("record(bo, \"\$(P)$name\")\n");
+            my $type = ( $cfg_rbv == 1 ? "bi" : "bo" );
+            print ("record($type, \"\$(P)$name\")\n");
             print ("\{\n");
+            print ("    info(autosaveFields, \"VAL\")\n");
             print ("    field(DESC, \"$desc\")\n");
             print ("    field(DTYP, \"asynInt32\")\n");
-            print ("    field(OUT,  \"\@asyn(\$(PORT))$name\")\n");
+            print ("    field($io,  \"\@asyn(\$(PORT))$name\")\n");
+            if ($cfg_rbv == 0) {
+	        print ("    field(PINI, \"YES\")\n");
+            } else {
+                print ("    field(SCAN, \"I/O Intr\")\n");
+            }
 	    print ("    field(VAL,  \"$val\")\n");
             if ($valstr =~ m/([0-9]) *= *([^,]+), *([0-9]) *= *(.+)/) {
                 my ($zval,$znam,$oval,$onam) = ($1,$2,$3,$4);
@@ -124,11 +142,18 @@ foreach $line ( <INFILE> ) {
             }
             print ("\}\n");
         } elsif ($width > 1 && $width < 15 && $valstr ne "") {
-            print ("record(mbbo, \"\$(P)$name\")\n");
+            my $type = ( $cfg_rbv == 1 ? "mbbi" : "mbbo" );
+            print ("record($type, \"\$(P)$name\")\n");
             print ("\{\n");
+            print ("    info(autosaveFields, \"VAL\")\n");
             print ("    field(DESC, \"$desc\")\n");
             print ("    field(DTYP, \"asynInt32\")\n");
-            print ("    field(OUT,  \"\@asyn(\$(PORT))$name\")\n");
+            print ("    field($io,  \"\@asyn(\$(PORT))$name\")\n");
+            if ($cfg_rbv == 0) {
+	        print ("    field(PINI, \"YES\")\n");
+            } else {
+                print ("    field(SCAN, \"I/O Intr\")\n");
+            }
 	    print ("    field(VAL,  \"$val\")\n");
             my $i=0;
             foreach (split(',', $valstr)) {
@@ -140,17 +165,21 @@ foreach $line ( <INFILE> ) {
             }
             print ("\}\n");
         } else {
-            print ("record(longout, \"\$(P)$name\")\n");
+            my $type = ( $cfg_rbv == 1 ? "longin" : "longout" );
+            print ("record($type, \"\$(P)$name\")\n");
             print ("\{\n");
+            print ("    info(autosaveFields, \"VAL\")\n");
             print ("    field(DESC, \"$desc\")\n");
             print ("    field(DTYP, \"asynInt32\")\n");
-            print ("    field(OUT,  \"\@asyn(\$(PORT))$name\")\n");
+            print ("    field($io,  \"\@asyn(\$(PORT))$name\")\n");
+            if ($cfg_rbv == 0) {
+	        print ("    field(PINI, \"YES\")\n");
+            } else {
+                print ("    field(SCAN, \"I/O Intr\")\n");
+            }
 	    print ("    field(VAL,  \"$val\")\n");
             print ("\}\n");
         }
     }
-
 }
 close (INFILE);
-
-

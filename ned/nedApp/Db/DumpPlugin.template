@@ -1,7 +1,5 @@
-record(waveform, "$(P)FilePath")
+record(stringout, "$(P)FilePath")
 {
    field(DTYP,  "asynOctetWrite")
-   field(INP,   "@asyn($(PORT))FilePath")
-   field(FTVL,  "CHAR")
-   field(NELM,  "1024")
+   field(OUT,   "@asyn($(PORT))FilePath")
 }

@@ -73,7 +73,7 @@ class DiscoverPlugin : public BasePlugin {
         /**
          * Send out a broadcast DISCOVER command to all modules.
          */
-        void reqDiscover();
+        void reqDiscover(uint32_t hardwareId);
 
         /**
          * Send a DISCOVER command to a particular module through LVDS on DSP.

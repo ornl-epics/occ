@@ -2150,1643 +2150,2101 @@ record(bi, "$(P)Ch8BOverflw")
 }
 record(longout, "$(P)Ch1PosIdx")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan1 position index")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch1PosIdx")
+    field(PINI, "YES")
     field(VAL,  "0")
 }
 record(longout, "$(P)Ch2PosIdx")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan2 position index")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch2PosIdx")
+    field(PINI, "YES")
     field(VAL,  "256")
 }
 record(longout, "$(P)Ch3PosIdx")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan3 position index")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch3PosIdx")
+    field(PINI, "YES")
     field(VAL,  "512")
 }
 record(longout, "$(P)Ch4PosIdx")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan4 position index")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch4PosIdx")
+    field(PINI, "YES")
     field(VAL,  "768")
 }
 record(longout, "$(P)Ch5PosIdx")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan5 position index")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch5PosIdx")
+    field(PINI, "YES")
     field(VAL,  "1024")
 }
 record(longout, "$(P)Ch6PosIdx")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan6 position index")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch6PosIdx")
+    field(PINI, "YES")
     field(VAL,  "1280")
 }
 record(longout, "$(P)Ch7PosIdx")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan7 position index")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch7PosIdx")
+    field(PINI, "YES")
     field(VAL,  "1536")
 }
 record(longout, "$(P)Ch8PosIdx")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan8 position index")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch8PosIdx")
+    field(PINI, "YES")
     field(VAL,  "1792")
 }
 record(longout, "$(P)Ch1AInOff")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan1 A input offset")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch1AInOff")
+    field(PINI, "YES")
     field(VAL,  "100")
 }
 record(longout, "$(P)Ch2AInOff")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan2 A input offset")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch2AInOff")
+    field(PINI, "YES")
     field(VAL,  "100")
 }
 record(longout, "$(P)Ch3AInOff")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan3 A input offset")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch3AInOff")
+    field(PINI, "YES")
     field(VAL,  "100")
 }
 record(longout, "$(P)Ch4AInOff")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan4 A input offset")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch4AInOff")
+    field(PINI, "YES")
     field(VAL,  "100")
 }
 record(longout, "$(P)Ch5AInOff")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan5 A input offset")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch5AInOff")
+    field(PINI, "YES")
     field(VAL,  "100")
 }
 record(longout, "$(P)Ch6AInOff")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan6 A input offset")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch6AInOff")
+    field(PINI, "YES")
     field(VAL,  "100")
 }
 record(longout, "$(P)Ch7AInOff")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan7 A input offset")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch7AInOff")
+    field(PINI, "YES")
     field(VAL,  "100")
 }
 record(longout, "$(P)Ch8AInOff")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan8 A input offset")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch8AInOff")
+    field(PINI, "YES")
     field(VAL,  "100")
 }
 record(longout, "$(P)Ch1BInOff")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan1 B input offset")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch1BInOff")
+    field(PINI, "YES")
     field(VAL,  "100")
 }
 record(longout, "$(P)Ch2BInOff")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan2 B input offset")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch2BInOff")
+    field(PINI, "YES")
     field(VAL,  "100")
 }
 record(longout, "$(P)Ch3BInOff")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan3 B input offset")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch3BInOff")
+    field(PINI, "YES")
     field(VAL,  "100")
 }
 record(longout, "$(P)Ch4BInOff")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan4 B input offset")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch4BInOff")
+    field(PINI, "YES")
     field(VAL,  "100")
 }
 record(longout, "$(P)Ch5BInOff")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan5 B input offset")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch5BInOff")
+    field(PINI, "YES")
     field(VAL,  "100")
 }
 record(longout, "$(P)Ch6BInOff")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan6 B input offset")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch6BInOff")
+    field(PINI, "YES")
     field(VAL,  "100")
 }
 record(longout, "$(P)Ch7BInOff")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan7 B input offset")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch7BInOff")
+    field(PINI, "YES")
     field(VAL,  "100")
 }
 record(longout, "$(P)Ch8BInOff")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan8 B input offset")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch8BInOff")
+    field(PINI, "YES")
     field(VAL,  "100")
 }
 record(longout, "$(P)Ch1AAdcOff")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan1 A ADC offset")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch1AAdcOff")
+    field(PINI, "YES")
     field(VAL,  "100")
 }
 record(longout, "$(P)Ch2AAdcOff")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan2 A ADC offset")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch2AAdcOff")
+    field(PINI, "YES")
     field(VAL,  "100")
 }
 record(longout, "$(P)Ch3AAdcOff")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan3 A ADC offset")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch3AAdcOff")
+    field(PINI, "YES")
     field(VAL,  "100")
 }
 record(longout, "$(P)Ch4AAdcOff")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan4 A ADC offset")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch4AAdcOff")
+    field(PINI, "YES")
     field(VAL,  "100")
 }
 record(longout, "$(P)Ch5AAdcOff")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan5 A ADC offset")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch5AAdcOff")
+    field(PINI, "YES")
     field(VAL,  "100")
 }
 record(longout, "$(P)Ch6AAdcOff")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan6 A ADC offset")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch6AAdcOff")
+    field(PINI, "YES")
     field(VAL,  "100")
 }
 record(longout, "$(P)Ch7AAdcOff")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan7 A ADC offset")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch7AAdcOff")
+    field(PINI, "YES")
     field(VAL,  "100")
 }
 record(longout, "$(P)Ch8AAdcOff")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan8 A ADC offset")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch8AAdcOff")
+    field(PINI, "YES")
     field(VAL,  "100")
 }
 record(longout, "$(P)Ch1BAdcOff")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan1 B ADC offset")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch1BAdcOff")
+    field(PINI, "YES")
     field(VAL,  "100")
 }
 record(longout, "$(P)Ch2BAdcOff")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan2 B ADC offset")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch2BAdcOff")
+    field(PINI, "YES")
     field(VAL,  "100")
 }
 record(longout, "$(P)Ch3BAdcOff")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan3 B ADC offset")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch3BAdcOff")
+    field(PINI, "YES")
     field(VAL,  "100")
 }
 record(longout, "$(P)Ch4BAdcOff")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan4 B ADC offset")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch4BAdcOff")
+    field(PINI, "YES")
     field(VAL,  "100")
 }
 record(longout, "$(P)Ch5BAdcOff")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan5 B ADC offset")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch5BAdcOff")
+    field(PINI, "YES")
     field(VAL,  "100")
 }
 record(longout, "$(P)Ch6BAdcOff")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan6 B ADC offset")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch6BAdcOff")
+    field(PINI, "YES")
     field(VAL,  "100")
 }
 record(longout, "$(P)Ch7BAdcOff")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan7 B ADC offset")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch7BAdcOff")
+    field(PINI, "YES")
     field(VAL,  "100")
 }
 record(longout, "$(P)Ch8BAdcOff")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan8 B ADC offset")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch8BAdcOff")
+    field(PINI, "YES")
     field(VAL,  "100")
 }
 record(longout, "$(P)Ch1AThresh")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan1 A threshold")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch1AThresh")
+    field(PINI, "YES")
     field(VAL,  "400")
 }
 record(longout, "$(P)Ch2AThresh")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan2 A threshold")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch2AThresh")
+    field(PINI, "YES")
     field(VAL,  "400")
 }
 record(longout, "$(P)Ch3AThresh")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan3 A threshold")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch3AThresh")
+    field(PINI, "YES")
     field(VAL,  "400")
 }
 record(longout, "$(P)Ch4AThresh")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan4 A threshold")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch4AThresh")
+    field(PINI, "YES")
     field(VAL,  "400")
 }
 record(longout, "$(P)Ch5AThresh")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan5 A threshold")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch5AThresh")
+    field(PINI, "YES")
     field(VAL,  "400")
 }
 record(longout, "$(P)Ch6AThresh")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan6 A threshold")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch6AThresh")
+    field(PINI, "YES")
     field(VAL,  "400")
 }
 record(longout, "$(P)Ch7AThresh")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan7 A threshold")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch7AThresh")
+    field(PINI, "YES")
     field(VAL,  "400")
 }
 record(longout, "$(P)Ch8AThresh")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan8 A threshold")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch8AThresh")
+    field(PINI, "YES")
     field(VAL,  "400")
 }
 record(longout, "$(P)Ch1BThresh")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan1 B threshold")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch1BThresh")
+    field(PINI, "YES")
     field(VAL,  "400")
 }
 record(longout, "$(P)Ch2BThresh")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan2 B threshold")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch2BThresh")
+    field(PINI, "YES")
     field(VAL,  "400")
 }
 record(longout, "$(P)Ch3BThresh")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan3 B threshold")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch3BThresh")
+    field(PINI, "YES")
     field(VAL,  "400")
 }
 record(longout, "$(P)Ch4BThresh")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan4 B threshold")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch4BThresh")
+    field(PINI, "YES")
     field(VAL,  "400")
 }
 record(longout, "$(P)Ch5BThresh")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan5 B threshold")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch5BThresh")
+    field(PINI, "YES")
     field(VAL,  "400")
 }
 record(longout, "$(P)Ch6BThresh")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan6 B threshold")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch6BThresh")
+    field(PINI, "YES")
     field(VAL,  "400")
 }
 record(longout, "$(P)Ch7BThresh")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan7 B threshold")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch7BThresh")
+    field(PINI, "YES")
     field(VAL,  "400")
 }
 record(longout, "$(P)Ch8BThresh")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan8 B threshold")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch8BThresh")
+    field(PINI, "YES")
     field(VAL,  "400")
 }
 record(longout, "$(P)Ch1PosThres")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan1 positive threshold")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch1PosThres")
+    field(PINI, "YES")
     field(VAL,  "400")
 }
 record(longout, "$(P)Ch2PosThres")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan2 positive threshold")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch2PosThres")
+    field(PINI, "YES")
     field(VAL,  "400")
 }
 record(longout, "$(P)Ch3PosThres")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan3 positive threshold")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch3PosThres")
+    field(PINI, "YES")
     field(VAL,  "400")
 }
 record(longout, "$(P)Ch4PosThres")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan4 positive threshold")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch4PosThres")
+    field(PINI, "YES")
     field(VAL,  "400")
 }
 record(longout, "$(P)Ch5PosThres")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan5 positive threshold")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch5PosThres")
+    field(PINI, "YES")
     field(VAL,  "400")
 }
 record(longout, "$(P)Ch6PosThres")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan6 positive threshold")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch6PosThres")
+    field(PINI, "YES")
     field(VAL,  "400")
 }
 record(longout, "$(P)Ch7PosThres")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan7 positive threshold")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch7PosThres")
+    field(PINI, "YES")
     field(VAL,  "400")
 }
 record(longout, "$(P)Ch8PosThres")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan8 positive threshold")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch8PosThres")
+    field(PINI, "YES")
     field(VAL,  "400")
 }
 record(longout, "$(P)Ch1AFulScal")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan1 A full scale")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch1AFulScal")
+    field(PINI, "YES")
     field(VAL,  "10")
 }
 record(longout, "$(P)Ch2AFulScal")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan2 A full scale")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch2AFulScal")
+    field(PINI, "YES")
     field(VAL,  "10")
 }
 record(longout, "$(P)Ch3AFulScal")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan3 A full scale")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch3AFulScal")
+    field(PINI, "YES")
     field(VAL,  "10")
 }
 record(longout, "$(P)Ch4AFulScal")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan4 A full scale")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch4AFulScal")
+    field(PINI, "YES")
     field(VAL,  "10")
 }
 record(longout, "$(P)Ch5AFulScal")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan5 A full scale")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch5AFulScal")
+    field(PINI, "YES")
     field(VAL,  "10")
 }
 record(longout, "$(P)Ch6AFulScal")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan6 A full scale")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch6AFulScal")
+    field(PINI, "YES")
     field(VAL,  "10")
 }
 record(longout, "$(P)Ch7AFulScal")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan7 A full scale")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch7AFulScal")
+    field(PINI, "YES")
     field(VAL,  "10")
 }
 record(longout, "$(P)Ch8AFulScal")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan8 A full scale")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch8AFulScal")
+    field(PINI, "YES")
     field(VAL,  "10")
 }
 record(longout, "$(P)Ch1BFulScal")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan1 B full scale")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch1BFulScal")
+    field(PINI, "YES")
     field(VAL,  "10")
 }
 record(longout, "$(P)Ch2BFulScal")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan2 B full scale")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch2BFulScal")
+    field(PINI, "YES")
     field(VAL,  "10")
 }
 record(longout, "$(P)Ch3BFulScal")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan3 B full scale")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch3BFulScal")
+    field(PINI, "YES")
     field(VAL,  "10")
 }
 record(longout, "$(P)Ch4BFulScal")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan4 B full scale")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch4BFulScal")
+    field(PINI, "YES")
     field(VAL,  "10")
 }
 record(longout, "$(P)Ch5BFulScal")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan5 B full scale")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch5BFulScal")
+    field(PINI, "YES")
     field(VAL,  "10")
 }
 record(longout, "$(P)Ch6BFulScal")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan6 B full scale")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch6BFulScal")
+    field(PINI, "YES")
     field(VAL,  "10")
 }
 record(longout, "$(P)Ch7BFulScal")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan7 B full scale")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch7BFulScal")
+    field(PINI, "YES")
     field(VAL,  "10")
 }
 record(longout, "$(P)Ch8BFulScal")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan8 B full scale")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch8BFulScal")
+    field(PINI, "YES")
     field(VAL,  "10")
 }
 record(longout, "$(P)Ch1AGainAdj")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan1 A gain adjust")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch1AGainAdj")
+    field(PINI, "YES")
     field(VAL,  "0")
 }
 record(longout, "$(P)Ch2AGainAdj")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan2 A gain adjust")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch2AGainAdj")
+    field(PINI, "YES")
     field(VAL,  "0")
 }
 record(longout, "$(P)Ch3AGainAdj")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan3 A gain adjust")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch3AGainAdj")
+    field(PINI, "YES")
     field(VAL,  "0")
 }
 record(longout, "$(P)Ch4AGainAdj")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan4 A gain adjust")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch4AGainAdj")
+    field(PINI, "YES")
     field(VAL,  "0")
 }
 record(longout, "$(P)Ch5AGainAdj")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan5 A gain adjust")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch5AGainAdj")
+    field(PINI, "YES")
     field(VAL,  "0")
 }
 record(longout, "$(P)Ch6AGainAdj")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan6 A gain adjust")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch6AGainAdj")
+    field(PINI, "YES")
     field(VAL,  "0")
 }
 record(longout, "$(P)Ch7AGainAdj")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan7 A gain adjust")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch7AGainAdj")
+    field(PINI, "YES")
     field(VAL,  "0")
 }
 record(longout, "$(P)Ch8AGainAdj")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan8 A gain adjust")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch8AGainAdj")
+    field(PINI, "YES")
     field(VAL,  "0")
 }
 record(longout, "$(P)Ch1BGainAdj")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan1 B gain adjust")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch1BGainAdj")
+    field(PINI, "YES")
     field(VAL,  "0")
 }
 record(longout, "$(P)Ch2BGainAdj")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan2 B gain adjust")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch2BGainAdj")
+    field(PINI, "YES")
     field(VAL,  "0")
 }
 record(longout, "$(P)Ch3BGainAdj")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan3 B gain adjust")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch3BGainAdj")
+    field(PINI, "YES")
     field(VAL,  "0")
 }
 record(longout, "$(P)Ch4BGainAdj")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan4 B gain adjust")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch4BGainAdj")
+    field(PINI, "YES")
     field(VAL,  "0")
 }
 record(longout, "$(P)Ch5BGainAdj")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan5 B gain adjust")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch5BGainAdj")
+    field(PINI, "YES")
     field(VAL,  "0")
 }
 record(longout, "$(P)Ch6BGainAdj")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan6 B gain adjust")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch6BGainAdj")
+    field(PINI, "YES")
     field(VAL,  "0")
 }
 record(longout, "$(P)Ch7BGainAdj")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan7 B gain adjust")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch7BGainAdj")
+    field(PINI, "YES")
     field(VAL,  "0")
 }
 record(longout, "$(P)Ch8BGainAdj")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan8 B gain adjust")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch8BGainAdj")
+    field(PINI, "YES")
     field(VAL,  "0")
 }
 record(longout, "$(P)Ch1AScale")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan1 A scale")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch1AScale")
+    field(PINI, "YES")
     field(VAL,  "2048")
 }
 record(longout, "$(P)Ch2AScale")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan2 A scale")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch2AScale")
+    field(PINI, "YES")
     field(VAL,  "2048")
 }
 record(longout, "$(P)Ch3AScale")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan3 A scale")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch3AScale")
+    field(PINI, "YES")
     field(VAL,  "2048")
 }
 record(longout, "$(P)Ch4AScale")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan4 A scale")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch4AScale")
+    field(PINI, "YES")
     field(VAL,  "2048")
 }
 record(longout, "$(P)Ch5AScale")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan5 A scale")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch5AScale")
+    field(PINI, "YES")
     field(VAL,  "2048")
 }
 record(longout, "$(P)Ch6AScale")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan6 A scale")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch6AScale")
+    field(PINI, "YES")
     field(VAL,  "2048")
 }
 record(longout, "$(P)Ch7AScale")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan7 A scale")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch7AScale")
+    field(PINI, "YES")
     field(VAL,  "2048")
 }
 record(longout, "$(P)Ch8AScale")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan8 A scale")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch8AScale")
+    field(PINI, "YES")
     field(VAL,  "2048")
 }
 record(longout, "$(P)Ch1BScale")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan1 B scale")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch1BScale")
+    field(PINI, "YES")
     field(VAL,  "2048")
 }
 record(longout, "$(P)Ch2BScale")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan2 B scale")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch2BScale")
+    field(PINI, "YES")
     field(VAL,  "2048")
 }
 record(longout, "$(P)Ch3BScale")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan3 B scale")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch3BScale")
+    field(PINI, "YES")
     field(VAL,  "2048")
 }
 record(longout, "$(P)Ch4BScale")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan4 B scale")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch4BScale")
+    field(PINI, "YES")
     field(VAL,  "2048")
 }
 record(longout, "$(P)Ch5BScale")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan5 B scale")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch5BScale")
+    field(PINI, "YES")
     field(VAL,  "2048")
 }
 record(longout, "$(P)Ch6BScale")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan6 B scale")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch6BScale")
+    field(PINI, "YES")
     field(VAL,  "2048")
 }
 record(longout, "$(P)Ch7BScale")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan7 B scale")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch7BScale")
+    field(PINI, "YES")
     field(VAL,  "2048")
 }
 record(longout, "$(P)Ch8BScale")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan8 B scale")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch8BScale")
+    field(PINI, "YES")
     field(VAL,  "2048")
 }
 record(longout, "$(P)Ch1AOffset")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan1 A offset")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch1AOffset")
+    field(PINI, "YES")
     field(VAL,  "1600")
 }
 record(longout, "$(P)Ch2AOffset")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan2 A offset")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch2AOffset")
+    field(PINI, "YES")
     field(VAL,  "1600")
 }
 record(longout, "$(P)Ch3AOffset")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan3 A offset")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch3AOffset")
+    field(PINI, "YES")
     field(VAL,  "1600")
 }
 record(longout, "$(P)Ch4AOffset")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan4 A offset")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch4AOffset")
+    field(PINI, "YES")
     field(VAL,  "1600")
 }
 record(longout, "$(P)Ch5AOffset")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan5 A offset")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch5AOffset")
+    field(PINI, "YES")
     field(VAL,  "1600")
 }
 record(longout, "$(P)Ch6AOffset")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan6 A offset")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch6AOffset")
+    field(PINI, "YES")
     field(VAL,  "1600")
 }
 record(longout, "$(P)Ch7AOffset")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan7 A offset")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch7AOffset")
+    field(PINI, "YES")
     field(VAL,  "1600")
 }
 record(longout, "$(P)Ch8AOffset")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan8 A offset")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch8AOffset")
+    field(PINI, "YES")
     field(VAL,  "1600")
 }
 record(longout, "$(P)Ch1BOffset")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan1 B offset")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch1BOffset")
+    field(PINI, "YES")
     field(VAL,  "1600")
 }
 record(longout, "$(P)Ch2BOffset")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan2 B offset")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch2BOffset")
+    field(PINI, "YES")
     field(VAL,  "1600")
 }
 record(longout, "$(P)Ch3BOffset")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan3 B offset")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch3BOffset")
+    field(PINI, "YES")
     field(VAL,  "1600")
 }
 record(longout, "$(P)Ch4BOffset")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan4 B offset")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch4BOffset")
+    field(PINI, "YES")
     field(VAL,  "1600")
 }
 record(longout, "$(P)Ch5BOffset")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan5 B offset")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch5BOffset")
+    field(PINI, "YES")
     field(VAL,  "1600")
 }
 record(longout, "$(P)Ch6BOffset")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan6 B offset")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch6BOffset")
+    field(PINI, "YES")
     field(VAL,  "1600")
 }
 record(longout, "$(P)Ch7BOffset")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan7 B offset")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch7BOffset")
+    field(PINI, "YES")
     field(VAL,  "1600")
 }
 record(longout, "$(P)Ch8BOffset")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan8 B offset")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch8BOffset")
+    field(PINI, "YES")
     field(VAL,  "1600")
 }
 record(longout, "$(P)Ch1ScaleFac")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan1 scale factor")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch1ScaleFac")
+    field(PINI, "YES")
     field(VAL,  "2048")
 }
 record(longout, "$(P)Ch2ScaleFac")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan2 scale factor")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch2ScaleFac")
+    field(PINI, "YES")
     field(VAL,  "2048")
 }
 record(longout, "$(P)Ch3ScaleFac")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan3 scale factor")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch3ScaleFac")
+    field(PINI, "YES")
     field(VAL,  "2048")
 }
 record(longout, "$(P)Ch4ScaleFac")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan4 scale factor")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch4ScaleFac")
+    field(PINI, "YES")
     field(VAL,  "2048")
 }
 record(longout, "$(P)Ch5ScaleFac")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan5 scale factor")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch5ScaleFac")
+    field(PINI, "YES")
     field(VAL,  "2048")
 }
 record(longout, "$(P)Ch6ScaleFac")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan6 scale factor")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch6ScaleFac")
+    field(PINI, "YES")
     field(VAL,  "2048")
 }
 record(longout, "$(P)Ch7ScaleFac")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan7 scale factor")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch7ScaleFac")
+    field(PINI, "YES")
     field(VAL,  "2048")
 }
 record(longout, "$(P)Ch8ScaleFac")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan8 scale factor")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch8ScaleFac")
+    field(PINI, "YES")
     field(VAL,  "2048")
 }
 record(longout, "$(P)Ch1AAvgMin")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan1 A average minimum")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch1AAvgMin")
+    field(PINI, "YES")
     field(VAL,  "100")
 }
 record(longout, "$(P)Ch2AAvgMin")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan2 A average minimum")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch2AAvgMin")
+    field(PINI, "YES")
     field(VAL,  "100")
 }
 record(longout, "$(P)Ch3AAvgMin")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan3 A average minimum")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch3AAvgMin")
+    field(PINI, "YES")
     field(VAL,  "100")
 }
 record(longout, "$(P)Ch4AAvgMin")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan4 A average minimum")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch4AAvgMin")
+    field(PINI, "YES")
     field(VAL,  "100")
 }
 record(longout, "$(P)Ch5AAvgMin")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan5 A average minimum")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch5AAvgMin")
+    field(PINI, "YES")
     field(VAL,  "100")
 }
 record(longout, "$(P)Ch6AAvgMin")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan6 A average minimum")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch6AAvgMin")
+    field(PINI, "YES")
     field(VAL,  "100")
 }
 record(longout, "$(P)Ch7AAvgMin")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan7 A average minimum")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch7AAvgMin")
+    field(PINI, "YES")
     field(VAL,  "100")
 }
 record(longout, "$(P)Ch8AAvgMin")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan8 A average minimum")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch8AAvgMin")
+    field(PINI, "YES")
     field(VAL,  "100")
 }
 record(longout, "$(P)Ch1BAvgMin")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan1 B average minimum")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch1BAvgMin")
+    field(PINI, "YES")
     field(VAL,  "100")
 }
 record(longout, "$(P)Ch2BAvgMin")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan2 B average minimum")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch2BAvgMin")
+    field(PINI, "YES")
     field(VAL,  "100")
 }
 record(longout, "$(P)Ch3BAvgMin")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan3 B average minimum")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch3BAvgMin")
+    field(PINI, "YES")
     field(VAL,  "100")
 }
 record(longout, "$(P)Ch4BAvgMin")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan4 B average minimum")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch4BAvgMin")
+    field(PINI, "YES")
     field(VAL,  "100")
 }
 record(longout, "$(P)Ch5BAvgMin")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan5 B average minimum")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch5BAvgMin")
+    field(PINI, "YES")
     field(VAL,  "100")
 }
 record(longout, "$(P)Ch6BAvgMin")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan6 B average minimum")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch6BAvgMin")
+    field(PINI, "YES")
     field(VAL,  "100")
 }
 record(longout, "$(P)Ch7BAvgMin")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan7 B average minimum")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch7BAvgMin")
+    field(PINI, "YES")
     field(VAL,  "100")
 }
 record(longout, "$(P)Ch8BAvgMin")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan8 B average minimum")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch8BAvgMin")
+    field(PINI, "YES")
     field(VAL,  "100")
 }
 record(longout, "$(P)Ch1AAvgMax")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan1 A average maximum")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch1AAvgMax")
+    field(PINI, "YES")
     field(VAL,  "1000")
 }
 record(longout, "$(P)Ch2AAvgMax")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan2 A average maximum")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch2AAvgMax")
+    field(PINI, "YES")
     field(VAL,  "1000")
 }
 record(longout, "$(P)Ch3AAvgMax")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan3 A average maximum")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch3AAvgMax")
+    field(PINI, "YES")
     field(VAL,  "1000")
 }
 record(longout, "$(P)Ch4AAvgMax")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan4 A average maximum")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch4AAvgMax")
+    field(PINI, "YES")
     field(VAL,  "1000")
 }
 record(longout, "$(P)Ch5AAvgMax")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan5 A average maximum")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch5AAvgMax")
+    field(PINI, "YES")
     field(VAL,  "1000")
 }
 record(longout, "$(P)Ch6AAvgMax")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan6 A average maximum")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch6AAvgMax")
+    field(PINI, "YES")
     field(VAL,  "1000")
 }
 record(longout, "$(P)Ch7AAvgMax")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan7 A average maximum")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch7AAvgMax")
+    field(PINI, "YES")
     field(VAL,  "1000")
 }
 record(longout, "$(P)Ch8AAvgMax")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan8 A average maximum")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch8AAvgMax")
+    field(PINI, "YES")
     field(VAL,  "1000")
 }
 record(longout, "$(P)Ch1BAvgMax")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan1 B average maximum")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch1BAvgMax")
+    field(PINI, "YES")
     field(VAL,  "1000")
 }
 record(longout, "$(P)Ch2BAvgMax")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan2 B average maximum")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch2BAvgMax")
+    field(PINI, "YES")
     field(VAL,  "1000")
 }
 record(longout, "$(P)Ch3BAvgMax")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan3 B average maximum")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch3BAvgMax")
+    field(PINI, "YES")
     field(VAL,  "1000")
 }
 record(longout, "$(P)Ch4BAvgMax")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan4 B average maximum")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch4BAvgMax")
+    field(PINI, "YES")
     field(VAL,  "1000")
 }
 record(longout, "$(P)Ch5BAvgMax")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan5 B average maximum")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch5BAvgMax")
+    field(PINI, "YES")
     field(VAL,  "1000")
 }
 record(longout, "$(P)Ch6BAvgMax")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan6 B average maximum")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch6BAvgMax")
+    field(PINI, "YES")
     field(VAL,  "1000")
 }
 record(longout, "$(P)Ch7BAvgMax")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan7 B average maximum")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch7BAvgMax")
+    field(PINI, "YES")
     field(VAL,  "1000")
 }
 record(longout, "$(P)Ch8BAvgMax")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan8 B average maximum")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch8BAvgMax")
+    field(PINI, "YES")
     field(VAL,  "1000")
 }
 record(longout, "$(P)Ch1ASamMin")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan1 A sample minimum")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch1ASamMin")
+    field(PINI, "YES")
     field(VAL,  "100")
 }
 record(longout, "$(P)Ch2ASamMin")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan2 A sample minimum")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch2ASamMin")
+    field(PINI, "YES")
     field(VAL,  "100")
 }
 record(longout, "$(P)Ch3ASamMin")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan3 A sample minimum")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch3ASamMin")
+    field(PINI, "YES")
     field(VAL,  "100")
 }
 record(longout, "$(P)Ch4ASamMin")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan4 A sample minimum")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch4ASamMin")
+    field(PINI, "YES")
     field(VAL,  "100")
 }
 record(longout, "$(P)Ch5ASamMin")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan5 A sample minimum")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch5ASamMin")
+    field(PINI, "YES")
     field(VAL,  "100")
 }
 record(longout, "$(P)Ch6ASamMin")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan6 A sample minimum")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch6ASamMin")
+    field(PINI, "YES")
     field(VAL,  "100")
 }
 record(longout, "$(P)Ch7ASamMin")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan7 A sample minimum")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch7ASamMin")
+    field(PINI, "YES")
     field(VAL,  "100")
 }
 record(longout, "$(P)Ch8ASamMin")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan8 A sample minimum")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch8ASamMin")
+    field(PINI, "YES")
     field(VAL,  "100")
 }
 record(longout, "$(P)Ch1BSamMin")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan1 B sample minimum")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch1BSamMin")
+    field(PINI, "YES")
     field(VAL,  "100")
 }
 record(longout, "$(P)Ch2BSamMin")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan2 B sample minimum")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch2BSamMin")
+    field(PINI, "YES")
     field(VAL,  "100")
 }
 record(longout, "$(P)Ch3BSamMin")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan3 B sample minimum")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch3BSamMin")
+    field(PINI, "YES")
     field(VAL,  "100")
 }
 record(longout, "$(P)Ch4BSamMin")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan4 B sample minimum")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch4BSamMin")
+    field(PINI, "YES")
     field(VAL,  "100")
 }
 record(longout, "$(P)Ch5BSamMin")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan5 B sample minimum")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch5BSamMin")
+    field(PINI, "YES")
     field(VAL,  "100")
 }
 record(longout, "$(P)Ch6BSamMin")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan6 B sample minimum")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch6BSamMin")
+    field(PINI, "YES")
     field(VAL,  "100")
 }
 record(longout, "$(P)Ch7BSamMin")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan7 B sample minimum")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch7BSamMin")
+    field(PINI, "YES")
     field(VAL,  "100")
 }
 record(longout, "$(P)Ch8BSamMin")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan8 B sample minimum")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch8BSamMin")
+    field(PINI, "YES")
     field(VAL,  "100")
 }
 record(longout, "$(P)Ch1ASamMax")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan1 A sample maximum")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch1ASamMax")
+    field(PINI, "YES")
     field(VAL,  "1000")
 }
 record(longout, "$(P)Ch2ASamMax")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan2 A sample maximum")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch2ASamMax")
+    field(PINI, "YES")
     field(VAL,  "1000")
 }
 record(longout, "$(P)Ch3ASamMax")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan3 A sample maximum")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch3ASamMax")
+    field(PINI, "YES")
     field(VAL,  "1000")
 }
 record(longout, "$(P)Ch4ASamMax")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan4 A sample maximum")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch4ASamMax")
+    field(PINI, "YES")
     field(VAL,  "1000")
 }
 record(longout, "$(P)Ch5ASamMax")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan5 A sample maximum")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch5ASamMax")
+    field(PINI, "YES")
     field(VAL,  "1000")
 }
 record(longout, "$(P)Ch6ASamMax")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan6 A sample maximum")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch6ASamMax")
+    field(PINI, "YES")
     field(VAL,  "1000")
 }
 record(longout, "$(P)Ch7ASamMax")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan7 A sample maximum")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch7ASamMax")
+    field(PINI, "YES")
     field(VAL,  "1000")
 }
 record(longout, "$(P)Ch8ASamMax")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan8 A sample maximum")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch8ASamMax")
+    field(PINI, "YES")
     field(VAL,  "1000")
 }
 record(longout, "$(P)Ch1BSamMax")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan1 B sample maximum")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch1BSamMax")
+    field(PINI, "YES")
     field(VAL,  "1000")
 }
 record(longout, "$(P)Ch2BSamMax")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan2 B sample maximum")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch2BSamMax")
+    field(PINI, "YES")
     field(VAL,  "1000")
 }
 record(longout, "$(P)Ch3BSamMax")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan3 B sample maximum")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch3BSamMax")
+    field(PINI, "YES")
     field(VAL,  "1000")
 }
 record(longout, "$(P)Ch4BSamMax")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan4 B sample maximum")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch4BSamMax")
+    field(PINI, "YES")
     field(VAL,  "1000")
 }
 record(longout, "$(P)Ch5BSamMax")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan5 B sample maximum")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch5BSamMax")
+    field(PINI, "YES")
     field(VAL,  "1000")
 }
 record(longout, "$(P)Ch6BSamMax")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan6 B sample maximum")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch6BSamMax")
+    field(PINI, "YES")
     field(VAL,  "1000")
 }
 record(longout, "$(P)Ch7BSamMax")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan7 B sample maximum")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch7BSamMax")
+    field(PINI, "YES")
     field(VAL,  "1000")
 }
 record(longout, "$(P)Ch8BSamMax")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan8 B sample maximum")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch8BSamMax")
+    field(PINI, "YES")
     field(VAL,  "1000")
 }
 record(longout, "$(P)Ch8BSlopMax")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Maximum slope")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch8BSlopMax")
+    field(PINI, "YES")
     field(VAL,  "0")
 }
 record(bo, "$(P)Ch1Enable")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan1 enable")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch1Enable")
+    field(PINI, "YES")
     field(VAL,  "1")
     field(ZNAM, "disable")
     field(ONAM, "enable")
 }
 record(bo, "$(P)Ch2Enable")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan2 enable")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch2Enable")
+    field(PINI, "YES")
     field(VAL,  "1")
     field(ZNAM, "disable")
     field(ONAM, "enable")
 }
 record(bo, "$(P)Ch3Enable")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan3 enable")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch3Enable")
+    field(PINI, "YES")
     field(VAL,  "1")
     field(ZNAM, "disable")
     field(ONAM, "enable")
 }
 record(bo, "$(P)Ch4Enable")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan4 enable")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch4Enable")
+    field(PINI, "YES")
     field(VAL,  "1")
     field(ZNAM, "disable")
     field(ONAM, "enable")
 }
 record(bo, "$(P)Ch5Enable")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan5 enable")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch5Enable")
+    field(PINI, "YES")
     field(VAL,  "1")
     field(ZNAM, "disable")
     field(ONAM, "enable")
 }
 record(bo, "$(P)Ch6Enable")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan6 enable")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch6Enable")
+    field(PINI, "YES")
     field(VAL,  "1")
     field(ZNAM, "disable")
     field(ONAM, "enable")
 }
 record(bo, "$(P)Ch7Enable")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan7 enable")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch7Enable")
+    field(PINI, "YES")
     field(VAL,  "1")
     field(ZNAM, "disable")
     field(ONAM, "enable")
 }
 record(bo, "$(P)Ch8Enable")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan8 enable")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch8Enable")
+    field(PINI, "YES")
     field(VAL,  "1")
     field(ZNAM, "disable")
     field(ONAM, "enable")
 }
 record(bo, "$(P)Ch1VerbEn")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan1 verbose enable")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch1VerbEn")
+    field(PINI, "YES")
     field(VAL,  "0")
     field(ZNAM, "disable")
     field(ONAM, "enable")
 }
 record(bo, "$(P)Ch2VerbEn")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan2 verbose enable")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch2VerbEn")
+    field(PINI, "YES")
     field(VAL,  "0")
     field(ZNAM, "disable")
     field(ONAM, "enable")
 }
 record(bo, "$(P)Ch3VerbEn")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan3 verbose enable")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch3VerbEn")
+    field(PINI, "YES")
     field(VAL,  "0")
     field(ZNAM, "disable")
     field(ONAM, "enable")
 }
 record(bo, "$(P)Ch4VerbEn")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan4 verbose enable")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch4VerbEn")
+    field(PINI, "YES")
     field(VAL,  "0")
     field(ZNAM, "disable")
     field(ONAM, "enable")
 }
 record(bo, "$(P)Ch5VerbEn")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan5 verbose enable")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch5VerbEn")
+    field(PINI, "YES")
     field(VAL,  "0")
     field(ZNAM, "disable")
     field(ONAM, "enable")
 }
 record(bo, "$(P)Ch6VerbEn")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan6 verbose enable")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch6VerbEn")
+    field(PINI, "YES")
     field(VAL,  "0")
     field(ZNAM, "disable")
     field(ONAM, "enable")
 }
 record(bo, "$(P)Ch7VerbEn")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan7 verbose enable")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch7VerbEn")
+    field(PINI, "YES")
     field(VAL,  "0")
     field(ZNAM, "disable")
     field(ONAM, "enable")
 }
 record(bo, "$(P)Ch8VerbEn")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Chan8 verbose enable")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Ch8VerbEn")
+    field(PINI, "YES")
     field(VAL,  "0")
     field(ZNAM, "disable")
     field(ONAM, "enable")
 }
 record(longout, "$(P)TimeVetoLo")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Timestamp veto low")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))TimeVetoLo")
+    field(PINI, "YES")
     field(VAL,  "0")
 }
 record(longout, "$(P)TimeVetoHi")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Timestamp veto high")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))TimeVetoHi")
+    field(PINI, "YES")
     field(VAL,  "0")
 }
 record(longout, "$(P)FakeTrigDel")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Fake trigger delay")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))FakeTrigDel")
+    field(PINI, "YES")
     field(VAL,  "20000")
 }
 record(longout, "$(P)MinAdcVal")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Minimum ADC")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))MinAdcVal")
+    field(PINI, "YES")
     field(VAL,  "100")
 }
 record(longout, "$(P)MaxAdcVal")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Maximum ADC")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))MaxAdcVal")
+    field(PINI, "YES")
     field(VAL,  "1000")
 }
 record(longout, "$(P)MinDisWidth")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Minimum discriminator width")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))MinDisWidth")
+    field(PINI, "YES")
     field(VAL,  "1")
 }
 record(longout, "$(P)Sample1")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Sample 1 point [0:10]")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Sample1")
+    field(PINI, "YES")
     field(VAL,  "2")
 }
 record(longout, "$(P)Sample2")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Sample 1 point [2:50]")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Sample2")
+    field(PINI, "YES")
     field(VAL,  "14")
 }
 record(bo, "$(P)LvdsRate")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "LVDS output rate")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))LvdsRate")
+    field(PINI, "YES")
     field(VAL,  "1")
     field(ZNAM, "20Mhz")
     field(ONAM, "40Mhz")
 }
 record(bo, "$(P)AutoCorrSam")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Auto correction sample mode")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))AutoCorrSam")
+    field(PINI, "YES")
     field(VAL,  "0")
     field(ZNAM, "TSYNC")
     field(ONAM, "fake trigger")
 }
 record(bo, "$(P)EdgeDetecEn")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Edge detect enable")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))EdgeDetecEn")
+    field(PINI, "YES")
     field(VAL,  "1")
     field(ZNAM, "disable")
     field(ONAM, "enable")
 }
 record(mbbo, "$(P)MastDiscSel")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Master discriminator select")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))MastDiscSel")
+    field(PINI, "YES")
     field(VAL,  "0")
     field(ZRVL, "0")
     field(ZRST, "SUM discr")
@@ -3799,36 +4257,44 @@ record(mbbo, "$(P)MastDiscSel")
 }
 record(bo, "$(P)EnableAcq")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "ROC enable acquisition")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))EnableAcq")
+    field(PINI, "YES")
     field(VAL,  "1")
     field(ZNAM, "disable")
     field(ONAM, "enable")
 }
 record(bo, "$(P)AutoCorr")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Auto correction mode")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))AutoCorr")
+    field(PINI, "YES")
     field(VAL,  "0")
     field(ZNAM, "enabled")
     field(ONAM, "disabled")
 }
 record(bo, "$(P)HighResMode")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "High resolution mode")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))HighResMode")
+    field(PINI, "YES")
     field(VAL,  "1")
     field(ZNAM, "low res 0-127")
     field(ONAM, "high res 0-255")
 }
 record(mbbo, "$(P)OutputMode")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Output mode")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))OutputMode")
+    field(PINI, "YES")
     field(VAL,  "0")
     field(ZRVL, "0")
     field(ZRST, "normal")
@@ -3839,9 +4305,11 @@ record(mbbo, "$(P)OutputMode")
 }
 record(mbbo, "$(P)AcqMode")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Output mode")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))AcqMode")
+    field(PINI, "YES")
     field(VAL,  "0")
     field(ZRVL, "0")
     field(ZRST, "normal")
@@ -3852,36 +4320,44 @@ record(mbbo, "$(P)AcqMode")
 }
 record(bo, "$(P)TxEnable")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "TX enable")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))TxEnable")
+    field(PINI, "YES")
     field(VAL,  "1")
     field(ZNAM, "external")
     field(ONAM, "always enabled")
 }
 record(bo, "$(P)TsyncSel")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "TSYNC select")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))TsyncSel")
+    field(PINI, "YES")
     field(VAL,  "0")
     field(ZNAM, "external")
     field(ONAM, "internal 60Hz")
 }
 record(bo, "$(P)TclkSel")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "TCLK select")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))TclkSel")
+    field(PINI, "YES")
     field(VAL,  "0")
     field(ZNAM, "external")
     field(ONAM, "internal 10MHz")
 }
 record(bo, "$(P)Reset")
 {
+    info(autosaveFields, "VAL")
     field(DESC, "Reset enable")
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Reset")
+    field(PINI, "YES")
     field(VAL,  "0")
     field(ZNAM, "disable")
     field(ONAM, "enable")
