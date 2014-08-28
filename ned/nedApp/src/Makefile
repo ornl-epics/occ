@@ -83,6 +83,10 @@ $(PROD_NAME)_DOXS  += FemPlugin.dox
 $(PROD_NAME)_TMPL  += DspPlugin.template
 $(PROD_NAME)_TMPL  += RocPlugin.template
 $(PROD_NAME)_TMPL  += FemPlugin.template
+$(PROD_NAME)_TMPL  += RocPlugin_v51.template
+$(PROD_NAME)_TMPL  += RocPlugin_v52.template
+$(PROD_NAME)_TMPL  += RocPlugin_v54.template
+
 
 #===========================
 
@@ -98,6 +102,7 @@ doc: Doxyfile $($(PROD_NAME)_DOXS)
 
 %.template: %.cpp
 	./tools/export2epics.pl -name_prefix=BL99b:xxxx: -input_file=$^ > ../Db/$@
+	./tools/export2epics.pl -name_prefix=BL99b:xxxx: -input_file=$^ -cfg_rbv=1 > ../Db/RB_$@
 
 dbtemplates: $(ned_TMPL)
 

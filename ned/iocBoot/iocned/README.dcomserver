@@ -1,0 +1,31 @@
+Sometimes it's useful to let dcomserver configure the whole system an use its
+settings for all detectors. nED doesn't support old configuration syntax but
+there's a workaround which requires a little work from the user. Hopefully
+it's not used often.
+
+The general idea is to let dcomserver configure all the modules and then
+shut it down. Start nED in read-back mode. Then read configuration from all
+modules and let autosave save them. Now switch nED into normal mode and since
+the PVs are the same, autosave will restore them. From now on nED is using the
+configuration from dcomserver.
+
+Read-back mode is enabled in startup file st.cmd by selecting EPICS database
+files which start with RB_. In read-back mode changes to configuration PVs will
+not be applied to detectors.
+
+The RB_ files are identical to their non-RB_ counterparts except that they only
+provide read-back fields which will auto-process on any change, thus let
+autosave do the work automatically. Since record names in both files are the
+same, two files can not be used at the same time for the same detector
+configuration.
+
+Example:
+
+# This configuration will load normal PVs
+RocPluginConfigure("roc21", "cmd2", "20.39.216.13", "v55", 0)
+dbLoadRecords("../../db/RocPlugin_v54.template","P=$(PREFIX)Det:roc21:,PORT=roc21")
+
+# while this one will load read-back PVs
+RocPluginConfigure("roc21", "cmd2", "20.39.216.13", "v55", 0)
+dbLoadRecords("../../db/RB_RocPlugin_v54.template","P=$(PREFIX)Det:roc21:,PORT=roc21")
+
