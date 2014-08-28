@@ -1,4 +1,4 @@
-record(calc, "BL16B:Det:HVG1:AlarmSum") {
+record(calc, "BL16B:Det:HVG:AlarmSum1") {
    field(CALC, "1")
    field(INPA, "BL16B:Det:HV11:AlarmSum CP MS")
    field(INPB, "BL16B:Det:HV12:AlarmSum CP MS")
@@ -15,7 +15,7 @@ record(calc, "BL16B:Det:HVG1:AlarmSum") {
 }
 record(calc, "BL16B:Det:HVG:AlarmSum") {
    field(CALC, "1")
-   field(INPA, "BL16B:Det:HVG1:AlarmSum CP MS")
+   field(INPA, "BL16B:Det:HVG:AlarmSum1 CP MS")
    field(INPB, "BL16B:Det:HV33:AlarmSum CP MS")
    field(INPC, "BL16B:Det:HV34:AlarmSum CP MS")
    field(INPD, "BL16B:Det:HV35:AlarmSum CP MS")
