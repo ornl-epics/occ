@@ -91,14 +91,6 @@ class DiscoverPlugin : public BasePlugin {
         void reqLvdsVersion(uint32_t hardwareId);
 
         /**
-         * Convert hardware id to IP address.
-         *
-         * @param[in] hardwareId Id to convert.
-         * @param[out] ip Array to receive converted string, must be at least 16 chars long, it's always \0 terminated
-         */
-        void resolveIP(uint32_t hardwareId, char *ip);
-
-        /**
          * Print discovered modules into a buffer
          */
         uint32_t formatOutput(char *buffer, uint32_t size);

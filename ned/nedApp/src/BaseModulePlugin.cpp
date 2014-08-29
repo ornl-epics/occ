@@ -12,18 +12,13 @@ BaseModulePlugin::BaseModulePlugin(const char *portName, const char *dispatcherP
                                    bool behindDsp, int blocking, int numParams, int interfaceMask, int interruptMask)
     : BasePlugin(portName, dispatcherPortName, REASON_OCCDATA, blocking, NUM_BASEMODULEPLUGIN_PARAMS + numParams, 1,
                  interfaceMask | defaultInterfaceMask, interruptMask | defaultInterruptMask)
-    , m_hardwareId(parseHardwareId(hardwareId))
+    , m_hardwareId(ip2addr(hardwareId))
     , m_statusPayloadLength(0)
     , m_configPayloadLength(0)
     , m_verifySM(ST_TYPE_VERSION_INIT)
     , m_waitingResponse(static_cast<DasPacket::CommandType>(0))
     , m_behindDsp(behindDsp)
 {
-    if (m_hardwareId == 0) {
-        LOG_ERROR("Invalid hardware id '%s'", hardwareId);
-        return;
-    }
-
     m_verifySM.addState(ST_TYPE_VERSION_INIT,       SM_ACTION_ACK(DasPacket::CMD_DISCOVER),         ST_TYPE_OK);
     m_verifySM.addState(ST_TYPE_VERSION_INIT,       SM_ACTION_ERR(DasPacket::CMD_DISCOVER),         ST_TYPE_ERR);
     m_verifySM.addState(ST_TYPE_VERSION_INIT,       SM_ACTION_ACK(DasPacket::CMD_READ_VERSION),     ST_VERSION_OK);
@@ -46,8 +41,7 @@ BaseModulePlugin::BaseModulePlugin(const char *portName, const char *dispatcherP
     createParam("Verified",     asynParamInt32, &Verified);
     createParam("Type",         asynParamInt32, &Type);
 
-    std::string hardwareIp;
-    formatHardwareId(m_hardwareId, hardwareIp);
+    std::string hardwareIp = addr2ip(m_hardwareId);
     setStringParam(HardwareId, hardwareIp.c_str());
     setIntegerParam(LastCmdRsp, LAST_CMD_NONE);
     callParamCallbacks();
@@ -55,7 +49,6 @@ BaseModulePlugin::BaseModulePlugin(const char *portName, const char *dispatcherP
 
 BaseModulePlugin::~BaseModulePlugin()
 {}
-
 
 asynStatus BaseModulePlugin::writeInt32(asynUser *pasynUser, epicsInt32 value)
 {
@@ -440,7 +433,7 @@ void BaseModulePlugin::createConfigParam(const char *name, char section, uint32_
     m_configSectionSizes[section] = std::max(m_configSectionSizes[section], length);
 }
 
-uint32_t BaseModulePlugin::parseHardwareId(const std::string &text)
+uint32_t BaseModulePlugin::ip2addr(const std::string &text)
 {
     uint32_t id = 0;
 
@@ -457,11 +450,12 @@ uint32_t BaseModulePlugin::parseHardwareId(const std::string &text)
     return id;
 }
 
-void BaseModulePlugin::formatHardwareId(uint32_t id, std::string &ip)
+std::string BaseModulePlugin::addr2ip(uint32_t addr)
 {
-    char ipStr[15] = "";
-    snprintf(ipStr, sizeof(ipStr), "%d.%d.%d.%d", (id >> 24) & 0xFF, (id >> 16) & 0xFF, (id >> 8) & 0xFF, id & 0xFF);
-    ip = ipStr;
+    char buf[16] = "";
+    snprintf(buf, sizeof(buf), "%d.%d.%d.%d", (addr >> 24) & 0xFF, (addr >> 16) & 0xFF, (addr >> 8) & 0xFF, addr & 0xFF);
+    buf[sizeof(buf)-1] = '\0';
+    return std::string(buf);
 }
 
 float BaseModulePlugin::noResponseCleanup(DasPacket::CommandType command)

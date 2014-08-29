@@ -183,9 +183,9 @@ class BaseModulePlugin : public BasePlugin {
                          int interruptMask=BaseModulePlugin::defaultInterruptMask);
 
         /**
-         * Destructor
+         * Abstract destructor
          */
-        virtual ~BaseModulePlugin();
+        virtual ~BaseModulePlugin() = 0;
 
         /**
          * Handle parameters write requests for integer type.
@@ -260,7 +260,7 @@ class BaseModulePlugin : public BasePlugin {
          * @param[in] packet with response to DISCOVER
          * @return true if timeout has not yet expired, false otherwise.
          */
-        virtual bool rspDiscover(const DasPacket *packet) = 0;
+        virtual bool rspDiscover(const DasPacket *packet);
 
         /**
          * Called when read version request to the module should be made.
@@ -403,21 +403,24 @@ class BaseModulePlugin : public BasePlugin {
         void createConfigParam(const char *name, char section, uint32_t offset, uint32_t nBits, uint32_t shift, int value);
 
         /**
-         * Parse hardware id in IP like format or HEX prefixed with 0x.
+         * Convert IP or hex string into 4 byte hardware address.
          *
-         * Recognized formats:
+         * Recognized string formats:
          * - "21.250.118.223"
          * - "0x15FA76DF"
          *
          * @param[in] text to be parsed
          * @return Parsed hardware ID or 0 on error.
          */
-        static uint32_t parseHardwareId(const std::string &text);
+        static uint32_t ip2addr(const std::string &text);
 
         /**
-         * Converter integer hardware ID into IP address.
+         * Convert 4 byte hardware address into IP like string.
+         *
+         * @param[in] address to be converter
+         * @return IP like string
          */
-        void formatHardwareId(uint32_t hardwareId, std::string &ip);
+        static std::string addr2ip(uint32_t address);
 
         /**
          * A no-response cleanup function.

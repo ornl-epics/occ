@@ -104,8 +104,8 @@ uint32_t DiscoverPlugin::formatOutput(char *buffer, uint32_t size)
     buffer += ret;
 
     for (std::map<uint32_t, ModuleDesc>::iterator it = m_discovered.begin(); it != m_discovered.end(); it++, i++) {
-        char moduleId[16];
-        char parentId[16];
+        std::string moduleId(BaseModulePlugin::addr2ip(it->first));
+        std::string parentId(BaseModulePlugin::addr2ip(it->second.parent));
         const char *type;
         BaseModulePlugin::Version version = it->second.version;
 
@@ -126,18 +126,16 @@ uint32_t DiscoverPlugin::formatOutput(char *buffer, uint32_t size)
             default:                            type = "unknown";
         }
 
-        resolveIP(it->first, moduleId);
-        resolveIP(it->second.parent, parentId);
         if (it->second.parent != 0) {
             ret = snprintf(buffer, length,
                            "  %3u %-8s: %-15s ver %d.%d/%d.%d date %.04d/%.02d/%.02d (DSP=%s)\n",
-                           i, type, moduleId, version.hw_version, version.hw_revision,
+                           i, type, moduleId.c_str(), version.hw_version, version.hw_revision,
                            version.fw_version, version.fw_revision, version.fw_year,
-                           version.fw_month, version.fw_day, parentId);
+                           version.fw_month, version.fw_day, parentId.c_str());
         } else {
             ret = snprintf(buffer, length,
                            "  %3u %-8s: %-15s ver %d.%d/%d.%d date %.04d/%.02d/%.02d\n",
-                           i, type, moduleId, version.hw_version, version.hw_revision,
+                           i, type, moduleId.c_str(), version.hw_version, version.hw_revision,
                            version.fw_version, version.fw_revision, version.fw_year,
                            version.fw_month, version.fw_day);
         }
@@ -210,13 +208,4 @@ void DiscoverPlugin::reqLvdsVersion(uint32_t hardwareId)
     }
     sendToDispatcher(packet);
     delete packet;
-}
-
-void DiscoverPlugin::resolveIP(uint32_t hardwareId, char *ip)
-{
-    uint8_t tokens[4];
-    for (int i=0; i<4; i++) {
-        tokens[i] = (hardwareId >> (i*8)) & 0xFF;
-    }
-    sprintf(ip, "%u.%u.%u.%u", tokens[3], tokens[2], tokens[1], tokens[0]);
 }
