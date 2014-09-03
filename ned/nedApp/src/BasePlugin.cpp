@@ -46,6 +46,7 @@ BasePlugin::BasePlugin(const char *portName, const char *dispatcherPortName, int
     createParam("Enable",       asynParamInt32,     &Enable); // Plugin does not receive any data until callbacks are enabled
     createParam("ProcCount",    asynParamInt32,     &ProcCount);
     createParam("RxCount",      asynParamInt32,     &RxCount);
+    createParam("TxCount",      asynParamInt32,     &TxCount);
 
     setIntegerParam(ProcCount,  0);
     setIntegerParam(RxCount,    0);

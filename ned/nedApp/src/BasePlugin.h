@@ -245,6 +245,7 @@ class BasePlugin : public asynPortDriver {
         #define FIRST_BASEPLUGIN_PARAM Enable
         int Enable;
         int RxCount;
+        int TxCount;        //!< Number of sent commands
         int ProcCount;
         #define LAST_BASEPLUGIN_PARAM ProcCount
 };

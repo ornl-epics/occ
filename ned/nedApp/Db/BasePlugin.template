@@ -20,3 +20,10 @@ record(longin, "$(P)RxCount")
    field(VAL,   "0")
    field(SCAN,  "I/O Intr")
 }
+record(longin, "$(P)TxCount")
+{
+   field(DTYP,  "asynInt32")
+   field(INP,   "@asyn($(PORT))TxCount")
+   field(VAL,   "0")
+   field(SCAN,  "I/O Intr")
+}

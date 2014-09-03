@@ -82,6 +82,11 @@ void GenericModulePlugin::request(const DasPacket::CommandType command)
     if (packet) {
         BasePlugin::sendToDispatcher(packet);
         delete packet;
+
+        int nSent = 0;
+        getIntegerParam(TxCount, &nSent);
+        setIntegerParam(TxCount, ++nSent);
+        callParamCallbacks();
     }
 }
 

@@ -73,6 +73,10 @@ FemPluginConfigure("fem1", "cmd", "0x603B0817", "10.0/5.0", 1)
 dbLoadRecords("../../db/FemPlugin.template","P=$(PREFIX)Det:fem1:,PORT=fem1")
 dbLoadRecords("../../db/BaseModulePlugin.template","P=$(PREFIX)Det:fem1:,PORT=fem1")
 
+GenericModulePluginConfigure("gm", "cmd", 0)
+dbLoadRecords("../../db/GenericModulePlugin.template","P=$(PREFIX)Det:gm:,PORT=gm")
+dbLoadRecords("../../db/BasePlugin.template","P=$(PREFIX)Det:gm:,PORT=gm")
+
 iocInit()
 
 # Create request file and start periodic 'save'

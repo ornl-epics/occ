@@ -15,6 +15,10 @@ record(mbbo, "$(P)ReqCmd")
     field(FRST, "Start acquisition")
     field(FVVL, "131")
     field(FVST, "Stop acquisition")
+    field(SXVL, "129")
+    field(SXST, "Reset")
+    field(SVVL, "35")
+    field(SVST, "Read temperature")
 }
 record(stringout, "$(P)ReqDest")
 {
