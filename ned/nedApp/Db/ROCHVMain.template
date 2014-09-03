@@ -26,6 +26,12 @@ record(fanout, "$(P):InitProc") {
 #   field(LNK4, "$(P):VoltSet")
    field(LNK5, "$(P):VConvX")
    field(LNK6, "$(P):DConvX")
+   field(FLNK, "$(P):InitProc1")
+}
+
+record(fanout, "$(P):InitProc1") {
+   field(LNK1, "$(P):ReadADC") 
+   field(LNK2, "$(P):ErrorInp") 
 }
 
 #
@@ -81,7 +87,6 @@ record(ao, "$(P):DACSet") {
 record(ai, "$(P):ReadADC") {
    field(DTYP, "stream")
    field(DESC, "Read raw voltage")
-   field(SCAN, "1 second")
    field(INP, "@ROCHV.proto getNum(RV) $(PORT) $(ADDR)")
    field(LOPR, 0)
    field(HOPR, 4096)
@@ -290,7 +295,6 @@ record(waveform, "$(P):ErrorInp") {
    field(INP, "@ROCHV.proto getError() $(PORT) $(ADDR)")
    field(FTVL, "UCHAR")
    field(NELM, "2")
-   field(SCAN, "1 second")
    field(FLNK, "$(P):ErrorBits")
 }
 
