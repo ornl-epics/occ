@@ -18,7 +18,6 @@ FemPlugin::FemPlugin(const char *portName, const char *dispatcherPortName, const
         createConfigParams_V10();
     } else {
         LOG_ERROR("Unsupported FEM version '%s'", version);
-        return;
     }
 
     LOG_DEBUG("Number of configured dynamic parameters: %zu", m_statusParams.size() + m_configParams.size());

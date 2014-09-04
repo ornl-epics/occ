@@ -40,7 +40,7 @@ class DspPlugin : public BaseModulePlugin {
         DspPlugin(const char *portName, const char *dispatcherPortName, const char *hardwareId, const char *version, int blocking);
 
         /**
-         * Try to parse the ROC version response packet an populate the structure.
+         * Try to parse the DSP version response packet an populate the structure.
          *
          * @return true if succesful, false if version response packet could not be parsed.
          */

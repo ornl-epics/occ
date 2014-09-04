@@ -17,6 +17,7 @@ DB += BaseModulePlugin.template
 DB += DiscoverPlugin.template
 DB += DspPlugin.template
 DB += FemPlugin.template
+DB += AcpcFemPlugin.template
 DB += RocPlugin_v51.template
 DB += RocPlugin_v52.template
 DB += RocPlugin_v54.template
