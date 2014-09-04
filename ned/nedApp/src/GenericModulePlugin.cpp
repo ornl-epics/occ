@@ -86,6 +86,18 @@ void GenericModulePlugin::request(const DasPacket::CommandType command)
         int nSent = 0;
         getIntegerParam(TxCount, &nSent);
         setIntegerParam(TxCount, ++nSent);
+
+        // Invalidate all params
+        setIntegerParam(RspCmd,     0);
+        setIntegerParam(RspCmdAck,  0);
+        setIntegerParam(RspHwType,  0);
+        setStringParam(RspSrc,      "");
+        setStringParam(RspRouter,   "");
+        setStringParam(RspDest,     "");
+        setIntegerParam(RspLen,     0);
+        setIntegerParam(RspDataLen, 0);
+        m_payloadLen = 0;
+
         callParamCallbacks();
     }
 }
@@ -124,6 +136,7 @@ bool GenericModulePlugin::response(const DasPacket *packet)
     setIntegerParam(RspLen,     sizeof(DasPacket) + packet->payload_length);
     setIntegerParam(RspDataLen, packet->getPayloadLength());
 
+    // Cache the payload to read it through readOctet()
     m_payloadLen = std::min(packet->getPayloadLength()/4, static_cast<uint32_t>(sizeof(m_payload)));
     memcpy(m_payload, packet->getPayload(), m_payloadLen*4);
 
