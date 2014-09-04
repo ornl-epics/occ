@@ -452,5 +452,6 @@ record(ai, "$(P):VConvY") {
 record(ai, "$(P):VConvZ") {
    field(HOPR, "65535")
    field(LOPR, "0")
+   field(FLNK, "$(P):ReadADC") 
 }
 
