@@ -2,17 +2,9 @@ record(bo, "$(P)Trigger")
 {
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT))Trigger")
-    field(FLNK, "$(P)Refresh")
+    field(FLNK, "$(P)Output.PROC")
     field(ZNAM, "None")
     field(ONAM, "Discover")
-}
-record(calcout, "$(P)Refresh")
-{
-    field(DESC, "Delay processing Output")
-    field(ODLY, "1.0")
-    field(OUT,  "$(P)Output.PROC")
-    field(OOPT, "Every Time")
-    field(OEVT, "1")
 }
 record(waveform, "$(P)Output")
 {
@@ -20,4 +12,9 @@ record(waveform, "$(P)Output")
     field(INP,  "@asyn($(PORT))Output")
     field(FTVL, "CHAR")
     field(NELM, "16192")
+}
+# Upgrade record from BasePlugin
+record(longin, "$(P)ProcCount")
+{
+    field(FLNK, "$(P)Output.PROC")
 }
