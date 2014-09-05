@@ -105,6 +105,28 @@ record(longin, "$(P)RtdlByteRate")
    field(VAL,   "0")
    field(SCAN,  "I/O Intr")
 }
+record(longin, "$(P)TsyncCount")
+{
+   field(DTYP,  "asynInt32")
+   field(INP,   "@asyn($(PORT))TsyncCount")
+   field(VAL,   "0")
+   field(SCAN,  "I/O Intr")
+}
+record(longin, "$(P)TsyncCountRate")
+{
+   field(DTYP,  "asynInt32")
+   field(INP,   "@asyn($(PORT))TsyncCountRate")
+   field(VAL,   "0")
+   field(SCAN,  "I/O Intr")
+}
+record(longin, "$(P)TsyncByteRate")
+{
+   field(DTYP,  "asynInt32")
+   field(INP,   "@asyn($(PORT))TsyncByteRate")
+   field(EGU,   "bytes/s")
+   field(VAL,   "0")
+   field(SCAN,  "I/O Intr")
+}
 record(longin, "$(P)BadCount")
 {
    field(DTYP,  "asynInt32")

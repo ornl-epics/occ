@@ -23,6 +23,9 @@
  * RtdlCount     | asynParamInt32  | 0        | RO   | RTDL packet count
  * RtdlCountRate | asynParamInt32  | 0        | RO   | RTDL packet count rate
  * RtdlByteRate  | asynParamInt32  | 0        | RO   | RTDL byte rate
+ * TsyncCount    | asynParamInt32  | 0        | RO   | TSYNC packet count
+ * TsyncCountRate| asynParamInt32  | 0        | RO   | TSYNC packet count rate
+ * TsyncByteRate | asynParamInt32  | 0        | RO   | TSYNC byte rate
  * BadCount      | asynParamInt32  | 0        | RO   | Bad packet count
  * BadCountRate  | asynParamInt32  | 0        | RO   | Bad packet count rate
  * BadByteRate   | asynParamInt32  | 0        | RO   | Bad byte rate
@@ -64,6 +67,8 @@ class StatPlugin : public BasePlugin {
         uint64_t m_metaBytes;
         uint64_t m_rtdlCount;
         uint64_t m_rtdlBytes;
+        uint64_t m_tsyncCount;
+        uint64_t m_tsyncBytes;
         uint64_t m_badCount;
         uint64_t m_badBytes;
         uint64_t m_lastReceivedCount;
@@ -76,6 +81,8 @@ class StatPlugin : public BasePlugin {
         uint64_t m_lastMetaBytes;
         uint64_t m_lastRtdlCount;
         uint64_t m_lastRtdlBytes;
+        uint64_t m_lastTsyncCount;
+        uint64_t m_lastTsyncBytes;
         uint64_t m_lastBadCount;
         uint64_t m_lastBadBytes;
         epicsTimeStamp m_lastTime;
@@ -96,6 +103,9 @@ class StatPlugin : public BasePlugin {
         int RtdlCount;          //!< Number of RTDL packets
         int RtdlCountRate;      //!< RTDL count rate in packets/second
         int RtdlByteRate;       //!< RTDL byte rate in bytes/second
+        int TsyncCount;         //!< Number of TSYNC packets
+        int TsyncCountRate;     //!< TSYNC count rate in packets/second
+        int TsyncByteRate;      //!< TSYNC byte rate in bytes/second
         int BadCount;           //!< Number of bad packets
         int BadCountRate;       //!< Bad packet count rate in packets/second
         int BadByteRate;        //!< Bad packet byte rate in bytes/second
