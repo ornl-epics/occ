@@ -45,11 +45,23 @@ class Fifo : private std::deque<T> {
          */
         size_t dequeue(T *buffer, size_t count, double timeout=0.0)
         {
+            epicsTimeStamp endTime, now;
+            epicsTimeGetCurrent(&endTime);
+            epicsTimeAddSeconds(&endTime, timeout);
+
             m_mutex.lock();
-            if (std::deque<T>::size() == 0 && timeout > 0.0) {
+
+            // We'll wakeup for each event, but might consume more than one at
+            // a time. Make sure we have some data regarless of the event.
+            while (std::deque<T>::size() == 0 && timeout > 0.0) {
                 m_mutex.unlock();
+
                 if (m_event.wait(timeout) == false)
                     return 0;
+
+                epicsTimeGetCurrent(&now);
+                timeout = epicsTimeDiffInSeconds(&endTime, &now);
+
                 m_mutex.lock();
             }
 
@@ -60,6 +72,7 @@ class Fifo : private std::deque<T> {
                 *buffer++ = std::deque<T>::front();
                 std::deque<T>::pop_front();
             }
+
             m_mutex.unlock();
 
             return count;
