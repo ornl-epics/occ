@@ -1,5 +1,0 @@
-record(stringout, "$(P)FilePath")
-{
-   field(DTYP,  "asynOctetWrite")
-   field(OUT,   "@asyn($(PORT))FilePath")
-}

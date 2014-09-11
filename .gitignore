@@ -2,7 +2,7 @@
 occ_dump
 occ_rawio
 occ_loopback
-PacketAnalyzer
+tools/PacketAnalyzer/PacketAnalyzer
 test_files
 occ_flashprog
 tags
