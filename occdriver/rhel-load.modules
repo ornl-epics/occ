@@ -1,0 +1,2 @@
+#!/bin/sh
+exec /sbin/modprobe sns-ocb >/dev/null 2>&1
