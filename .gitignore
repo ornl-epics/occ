@@ -8,10 +8,16 @@ occ_flashprog
 tags
 cscope.files
 PacketAnalyzerDebug
+stress.*
 O.linux-x86_64/
 O.Common/
 occ2csv
 sms2csv
+
+# Doxygen files
+*.dox
+ned/nedApp/src/html
+ned/nedApp/src/latex
 
 # Backup files
 *~

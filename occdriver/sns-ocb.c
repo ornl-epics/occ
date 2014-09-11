@@ -118,7 +118,6 @@ do {									\
 #define REG_COMM_ERR					0x0240
 #define REG_LOST_PACKETS				0x0244		/* 16 bit register */
 
-/* Inbound message queue (RX, split RX from older firmware, GE card) */
 #define REG_IMQ_ADDR		0x0058
 #define REG_IMQ_ADDRHI		0x005c
 #define REG_IMQ_PROD_ADDR	0x0060
@@ -536,6 +535,7 @@ static ssize_t snsocb_rx(struct file *file, char __user *buf, size_t count)
 		info[1] |= OCB_RX_MSG;
 
 	spin_unlock_irq(&ocb->lock);
+
 	if (ret)
 		goto out;
 

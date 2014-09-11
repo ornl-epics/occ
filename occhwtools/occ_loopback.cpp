@@ -9,6 +9,9 @@
 #include <signal.h>
 #include <vector>
 
+#include <fcntl.h>
+#include <string.h>
+
 #define OCC_MAX_PACKET_SIZE 1800
 #define TX_MAX_SIZE         1800        // Maximum packet size in bytes to be send over OCC
 #define RX_BUF_SIZE         1800        // Size in bytes of the receive buffer e
@@ -19,6 +22,10 @@
 using namespace std;
 
 static bool shutdown = false;
+
+#ifdef TRACE
+char outbuf[10000000];
+#endif
 
 struct program_context {
     const char *device_file;
@@ -187,7 +194,7 @@ void ratelimit(unsigned long rate, unsigned long processed, struct timespec *sta
 }
 
 size_t __occ_align(size_t size) {
-    return (size + 7) & ~7;
+    return (size + 3) & ~3;
 }
 
 /**
@@ -240,7 +247,7 @@ static void *send_to_occ(void *arg) {
             if (packet_size == 0)
                 packet_size = rand() % (TX_MAX_SIZE - sizeof(struct occ_packet_header)) + sizeof(struct occ_packet_header) + 1;
 
-            // Align packet_size to 8 bytes
+            // Align packet_size to 4 bytes
             packet_size = __occ_align(packet_size);
         }
 
@@ -257,7 +264,7 @@ static void *send_to_occ(void *arg) {
                 fill_n(payload + hdr->payload_length, new_payload_length - hdr->payload_length, 0);
                 hdr->payload_length = new_payload_length;
                 packet_size = sizeof(struct occ_packet_header) + hdr->payload_length;
-                cout << "INFO: input packet not 8-byte aligned, padding with '\\0's" << endl;
+                cout << "INFO: input packet not 4-byte aligned, padding with '\\0's" << endl;
             }
         }
 
@@ -304,7 +311,7 @@ static void *send_to_occ(void *arg) {
 }
 
 inline size_t __occ_packet_align(size_t size) {
-    return (size + 7) & ~7;
+    return (size + 3) & ~3;
 }
 
 bool compareWithSent(struct program_context *ctx, unsigned char *data, size_t datalen) {
@@ -333,15 +340,14 @@ void *receive_from_occ(void *arg) {
     struct program_context *ctx = (struct program_context *)arg;
     ofstream outfile;
 
+#ifdef TRACE
+    int offset = 0;
+#endif
+
     if (ctx->output_file)
         outfile.open(ctx->output_file, ios_base::binary);
     else
         outfile.setstate(ios_base::eofbit);
-
-    if (occ_enable_rx(ctx->occ, true) != 0) {
-        status->error = "cannot enable RX";
-        return status;
-    }
 
     while (!shutdown) {
         unsigned char *data = NULL;
@@ -354,10 +360,16 @@ void *receive_from_occ(void *arg) {
             status->error = "cannot read from OCC device";
             break;
         }
-
 #ifdef TRACE
-        cout << "occ_data_wait() => " << datalen << endl;
+        if (datalen > 10000) {
+          status->error = "bad datalen";
+          cout << "(receive_from) bad datalen =>" << datalen << endl;
+          cout << "(receive_from) offset =>" << offset << endl;
+          memcpy(&outbuf[offset], data, datalen);
+          offset += datalen;
+        }
 #endif
+
 #ifdef TRACE1
         cout << hex;
         for (size_t i = 0; i < datalen; i++) {
@@ -371,12 +383,14 @@ void *receive_from_occ(void *arg) {
         }
         cout << dec << endl;
 #endif
-
+#ifdef TRACE
+        unsigned char *data1 = data;
+#endif
         size_t remain = datalen;
         while (remain > 0) {
             struct occ_packet_header *hdr = (struct occ_packet_header *)data;
             unsigned char *payload = data + sizeof(struct occ_packet_header);
-            size_t packet_len = __occ_packet_align(sizeof(struct occ_packet_header) + hdr->payload_length);
+            size_t packet_len = __occ_packet_align(sizeof(struct occ_packet_header) + (hdr->payload_length & 0xFFFF));
             if (packet_len > OCC_MAX_PACKET_SIZE) {
                 // Acknowledge everything but skip processing the rest
                 cerr << "Bad packet based on length check (" << packet_len << ">1800), skipping... (" << hex << data << dec << endl;
@@ -388,10 +402,16 @@ void *receive_from_occ(void *arg) {
 
             if (outfile.good()) {
                 if (ctx->raw_mode)
-                    outfile.write(reinterpret_cast<const char *>(data), packet_len);
+                    outfile.write((const char *)(data), packet_len);
                 else
-                    outfile.write(reinterpret_cast<const char *>(payload), hdr->payload_length);
+                    outfile.write((const char *)(payload), hdr->payload_length & 0xFFFF);
             }
+
+            uint32_t packet_len1 = packet_len;
+            if (hdr->payload_length & (0x1 << 31))
+                packet_len1 += 4;
+
+            hdr->payload_length &= 0xFFFF;
 
             if (!compareWithSent(ctx, data, packet_len)) {
                 status->error = "Received data mismatch";
@@ -399,8 +419,8 @@ void *receive_from_occ(void *arg) {
                 break;
             }
 
-            remain -= packet_len;
-            data += packet_len;
+            remain -= packet_len1;
+            data += packet_len1;
         }
         // Adjust to the actual processed data for acknowledgement
         datalen -= remain;
@@ -409,6 +429,10 @@ void *receive_from_occ(void *arg) {
         cout << "occ_data_ack(" << datalen << ")" << endl;
 #endif
         if (datalen > 0) {
+#ifdef TRACE
+            memcpy(&outbuf[offset], data1, datalen);
+            offset += datalen;
+#endif
             ret = occ_data_ack(ctx->occ, datalen);
             if (ret != 0) {
                 status->error = "cannot advance consumer index";
@@ -418,6 +442,12 @@ void *receive_from_occ(void *arg) {
 
         status->n_bytes += datalen;
     }
+
+#ifdef TRACE
+    int fd = open("/tmp/occ_dump.bin", O_CREAT | O_WRONLY | O_TRUNC);
+    write(fd, outbuf, sizeof(outbuf));
+    close(fd);
+#endif
 
     outfile.close();
 
@@ -435,11 +465,18 @@ int main(int argc, char **argv) {
         usage(argv[0]);
         return 1;
     }
-
+#ifdef TRACE
+    memset(outbuf, '#', sizeof(outbuf));
+#endif    
     if (occ_open(ctx.device_file, OCC_INTERFACE_OPTICAL, &ctx.occ) != 0) {
         cerr << "ERROR: cannot initialize OCC interface" << endl;
         return 3;
     }
+
+    if (occ_enable_rx(ctx.occ, true) != 0) {
+        return 3;
+    }
+    usleep(1000);
 
     do {
 

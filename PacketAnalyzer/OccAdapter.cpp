@@ -26,6 +26,7 @@ OccAdapter::~OccAdapter()
 bool OccAdapter::isPcie()
 {
     occ_status_t status;
+
     if (occ_status(m_occ, &status, true) != 0)
         throw runtime_error("Failed to read OCC status");
 
@@ -93,6 +94,7 @@ string OccAdapter::occErrorString(int error)
 uint32_t OccAdapter::getDmaSize()
 {
     occ_status_t status;
+
     if (occ_status(m_occ, &status, true) == 0)
         return status.dma_size;
     return 0;
