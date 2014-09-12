@@ -12,3 +12,4 @@ exit 0
 DEVNAME=${DEVNAME:5}
 
 echo 40 > /sys/class/snsocb/$DEVNAME/device/irq_coalescing
+echo "32M\$1024M" > /sys/class/snsocb/$DEVNAME/device/dma_big_mem
