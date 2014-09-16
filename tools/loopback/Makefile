@@ -1,8 +1,8 @@
 OCCLIB=../../lib
 CPPFLAGS=-Wall -I$(OCCLIB) -std=c++0x
-LDFLAGS=-L$(OCCLIB) -locc -Wl,-rpath,$(OCCLIB) -pthread
+LDFLAGS=-L$(OCCLIB) -locc -lrt -Wl,-rpath,$(OCCLIB) -pthread
 SRCS=loopback.cpp
-BIN=occ_loopback
+BIN=loopback
 
 HDRS=
 OBJS=$(SRCS:.cpp=.o)
