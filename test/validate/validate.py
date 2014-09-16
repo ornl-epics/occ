@@ -8,7 +8,7 @@ verbose=False
 occ_device = "/dev/snsocb0"
 test_file_suffix = ".vlt"
 raw_file_marker = "raw"
-path = "validation_loopback_tests"
+path = "loopback"
 repeat_count=1
 pass_count=0
 fail_count=0
@@ -56,8 +56,8 @@ def main(argv):
     i = len(filename)
 
     if filename.endswith(test_file_suffix, 0, i):
-      cmd_line = ['./occ_loopback','-d',occ_device,'-i', path+"/"+filename]
-  
+      cmd_line = ['../../tools/loopback/loopback','-d',occ_device,'-i', path+"/"+filename]
+ 
       # append -r flag if file is to treated as raw mode
       if filename.find(raw_file_marker, 0, i) != -1:
         cmd_line.append('-r')
