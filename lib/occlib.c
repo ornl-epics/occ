@@ -360,10 +360,10 @@ int occ_data_wait(struct occ_handle *handle, void **address, size_t *count, uint
                 return -ETIME;
             else if (pollfd.revents & POLLERR)
                 return -ECONNRESET;
-            else if ( !(pollfd.revents & POLLIN) && (pollfd.revents & POLLHUP) )
-                return -EOVERFLOW;
             else if ( !(pollfd.revents & POLLIN) )
                 return -ETIME;
+            // Ignore POLLHUP, instead do a read which will give us more
+            // information about the error.
         }
 
         ret = pread(handle->fd, info, sizeof(info), OCB_CMD_RX);
@@ -373,7 +373,9 @@ int occ_data_wait(struct occ_handle *handle, void **address, size_t *count, uint
         if (!(info[1] & OCB_RX_MSG)) {
             if (info[1] & OCB_RESET_OCCURRED)
                 return -ECONNRESET;
-            if (info[1] & (OCB_DMA_STALLED | OCB_FIFO_OVERFLOW))
+            if (info[1] & OCB_DMA_STALLED)
+                return -ENOSPC;
+            if (info[1] & OCB_FIFO_OVERFLOW)
                 return -EOVERFLOW;
             continue;
         }
