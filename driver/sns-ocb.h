@@ -22,10 +22,11 @@ typedef uint32_t u32;
 #define OCB_CMD_GET_STATUS		2
 
 /* Status flags returned in status member of ocb_status struct */
+#define OCB_FIFO_OVERFLOW		(1 << 8)
 #define OCB_RX_ERR_PKTS_ENABLED		(1 << 7)
 #define OCB_RX_ENABLED			(1 << 6)
 #define OCB_RX_MSG			(1 << 5)
-#define OCB_RX_STALLED			(1 << 4)
+#define OCB_DMA_STALLED			(1 << 4)
 #define OCB_RESET_OCCURRED		(1 << 3)
 #define OCB_MODE_OPTICAL		(1 << 2)
 #define OCB_OPTICAL_PRESENT		(1 << 1)

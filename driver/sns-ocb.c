@@ -104,7 +104,8 @@ do {									\
 #define REG_MODULE_MASK					0x0010
 #define REG_MODULE_ID					0x0014
 #define REG_IRQ_STATUS					0x00c0
-#define		OCB_IRQ_RX_STALL			0x00000002
+#define		OCB_IRQ_DMA_STALL			0x00000002
+#define		OCB_IRQ_FIFO_OVERFLOW			0x00000004
 #define		OCB_IRQ_RX_DONE				0x00000010
 #define		OCB_IRQ_ENABLE				0x80000000
 #define REG_IRQ_ENABLE					0x00c4
@@ -212,7 +213,7 @@ struct ocb {
 	bool emulate_dq;
 	bool reset_in_progress;
 	bool reset_occurred;
-	bool stalled;
+	int stalled; // valid values are 0, OCB_DMA_STALLED and OCB_FIFO_OVERFLOW
 
 	u32 firmware_version;
 	u32 firmware_date;
@@ -314,24 +315,24 @@ static struct class *snsocb_class;
 static dev_t snsocb_basedev;
 static struct ocb *snsocb_devs[OCB_MAX_DEVS];
 
-static void __snsocb_stalled(struct ocb *ocb)
+static void __snsocb_stalled(struct ocb *ocb, int type)
 {
 	/* We've stalled for some reason; disable RX, as it appears the GE
 	 * card gets unhappy and nuke interrupts on the machine.
 	 *
 	 * Caller must hold ocb->lock.
 	 */
-	ocb->stalled = true;
+	ocb->stalled = type;
 	iowrite32(ocb->conf & ~OCB_CONF_RX_ENABLE, ocb->ioaddr + REG_CONFIG);
 	wake_up(&ocb->rx_wq);
 }
 
-static void snsocb_stalled(struct ocb *ocb)
+static void snsocb_stalled(struct ocb *ocb, int type)
 {
 	unsigned long flags;
 
 	spin_lock_irqsave(&ocb->lock, flags);
-	__snsocb_stalled(ocb);
+	__snsocb_stalled(ocb, type);
 	spin_unlock_irqrestore(&ocb->lock, flags);
 }
 
@@ -340,10 +341,9 @@ static u32 __snsocb_status(struct ocb *ocb)
 	/* Caller must hold ocb->lock */
 	u32 hw_status, status = 0;
 
+	status |= ocb->stalled;
 	if (ocb->use_optical)
 		status |= OCB_MODE_OPTICAL;
-	if (ocb->stalled)
-		status |= OCB_RX_STALLED;
 	if (ocb->reset_occurred)
 		status |= OCB_RESET_OCCURRED;
 	if (ocb->conf & OCB_CONF_RX_ENABLE)
@@ -634,7 +634,7 @@ static int snsocb_rxone(struct ocb *ocb)
 		dev_err_ratelimited(&ocb->dev,
 				    "IMQ too-long length (reg %x)\n", creg);
 		spin_lock_irq(&ocb->lock);
-		__snsocb_stalled(ocb);
+		__snsocb_stalled(ocb, OCB_DMA_STALLED);
 		goto consume_queue;
 	}
 
@@ -651,7 +651,7 @@ static int snsocb_rxone(struct ocb *ocb)
 	if (room_needed > used_room) {
 		dev_warn_ratelimited(&ocb->dev, "userspace stalled RX\n");
 		spin_lock_irq(&ocb->lock);
-		__snsocb_stalled(ocb);
+		__snsocb_stalled(ocb, OCB_DMA_STALLED);
 		goto consume_queue;
 	}
 
@@ -759,28 +759,28 @@ out_update:
 static irqreturn_t snsocb_interrupt(int irq, void *data)
 {
 	struct ocb *ocb = data;
-	u32 intr_status, prod, adv;
+	u32 intr_status;
 
 	intr_status = ioread32(ocb->ioaddr + REG_IRQ_STATUS);
 	if (!intr_status)
 		return IRQ_NONE;
 
-	if (intr_status & OCB_IRQ_RX_STALL) {
-		snsocb_stalled(ocb);
+	if (intr_status & OCB_IRQ_DMA_STALL) {
+		snsocb_stalled(ocb, OCB_DMA_STALLED);
+		goto out;
+	} else if (intr_status & OCB_IRQ_FIFO_OVERFLOW) {
+		snsocb_stalled(ocb, OCB_FIFO_OVERFLOW);
 		goto out;
 	}
 
 	if (ocb->emulate_dq) {
 		if (snsocb_saveimqs(ocb))
-			snsocb_stalled(ocb);
+			snsocb_stalled(ocb, OCB_DMA_STALLED);
 		else
 			tasklet_hi_schedule(&ocb->rxtask);
 	} else {
 		spin_lock(&ocb->lock);
-		prod = ioread32(ocb->ioaddr + REG_DQ_PROD_INDEX);
-		adv = prod - ocb->dq_prod + OCB_DQ_SIZE;
-		adv %= OCB_DQ_SIZE;
-		ocb->dq_prod = prod;
+		ocb->dq_prod = ioread32(ocb->ioaddr + REG_DQ_PROD_INDEX);
 		wake_up(&ocb->rx_wq);
 		spin_unlock(&ocb->lock);
 	}
@@ -1201,7 +1201,7 @@ static int snsocb_open(struct inode *inode, struct file *file)
 		ocb->conf |= OCB_CONF_SELECT_OPTICAL;
 		ocb->conf |= OCB_CONF_OPTICAL_ENABLE;
 	}
-	ocb->irqs = OCB_IRQ_ENABLE | OCB_IRQ_RX_DONE | OCB_IRQ_RX_STALL;
+	ocb->irqs = OCB_IRQ_ENABLE | OCB_IRQ_RX_DONE | OCB_IRQ_DMA_STALL | OCB_IRQ_FIFO_OVERFLOW;
 	snsocb_reset(ocb);
 
 	return err;

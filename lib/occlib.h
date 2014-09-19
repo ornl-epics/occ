@@ -52,7 +52,8 @@ typedef struct {
     uint32_t firmware_date;         //!< Build date of the FPGA firmware.
     uint32_t dma_size;              //!< Size of the DMA memory in bytes.
     uint32_t dma_used;              //!< DMA memory used space in bytes.
-    bool stalled;                   //!< True if DMA memory for incoming data is full and device is in stalled mode.
+    bool stalled;                   //!< True if DMA memory for incoming data is full and device stopped processing incoming data.
+    bool overflowed;                //!< True if internal FIFO overflow was detected and device stopped processing incoming data.
     bool optical_signal;            //!< True when optical signal is present.
     bool rx_enabled;                //!< True when receiving of data is enabled.
     bool err_packets_enabled;       //!< True when error packets are enabled.
