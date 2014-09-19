@@ -209,7 +209,8 @@ int occ_status(struct occ_handle *handle, occ_status_t *status, bool fast_status
     status->dma_size = handle->dma_buf_len;
     status->dma_used = info.dq_used;
     status->board = (info.board_type == BOARD_SNS_PCIE ? OCC_BOARD_PCIE : OCC_BOARD_PCIX);
-    status->stalled = (info.status & OCB_RX_STALLED);
+    status->stalled = (info.status & OCB_DMA_STALLED);
+    status->overflowed = (info.status & OCB_FIFO_OVERFLOW);
     status->interface = (handle->use_optic ? OCC_INTERFACE_OPTICAL : OCC_INTERFACE_LVDS);
     status->firmware_ver = info.firmware_ver;
     status->firmware_date = info.firmware_date;
@@ -359,10 +360,10 @@ int occ_data_wait(struct occ_handle *handle, void **address, size_t *count, uint
                 return -ETIME;
             else if (pollfd.revents & POLLERR)
                 return -ECONNRESET;
-            else if ( !(pollfd.revents & POLLIN) && (pollfd.revents & POLLHUP) )
-                return -EOVERFLOW;
             else if ( !(pollfd.revents & POLLIN) )
                 return -ETIME;
+            // Ignore POLLHUP, instead do a read which will give us more
+            // information about the error.
         }
 
         ret = pread(handle->fd, info, sizeof(info), OCB_CMD_RX);
@@ -372,7 +373,9 @@ int occ_data_wait(struct occ_handle *handle, void **address, size_t *count, uint
         if (!(info[1] & OCB_RX_MSG)) {
             if (info[1] & OCB_RESET_OCCURRED)
                 return -ECONNRESET;
-            if (info[1] & OCB_RX_STALLED)
+            if (info[1] & OCB_DMA_STALLED)
+                return -ENOSPC;
+            if (info[1] & OCB_FIFO_OVERFLOW)
                 return -EOVERFLOW;
             continue;
         }
