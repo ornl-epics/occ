@@ -23,6 +23,6 @@ fi
 
 DEVNAME=`basename $DEV`
 
-od -x $BASEDIR/PCIe_Config_Space
+od -x $BASEDIR/PCI_Config_Space
 cp PCI_Config_Space /sys/class/snsocb/$DEVNAME/device/config
 
