@@ -1,6 +1,6 @@
 OCCLIB=../../lib
 CPPFLAGS=-Wall -I$(OCCLIB) -std=c++0x
-LDFLAGS=-L$(OCCLIB) -locc -Wl,-rpath,$(OCCLIB) -lboost_iostreams
+LDFLAGS=-L$(OCCLIB) -locc -lrt -Wl,-rpath,$(OCCLIB) -lboost_iostreams
 SRCS=flashprog.cpp
 BIN=occ_flash
 
