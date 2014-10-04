@@ -181,14 +181,19 @@ static void centered_output(char fillc, uint8_t width, const char *text) {
  * @param[in]   ns  Number of nanoseconds to sleep.
  */
 static void nsleep(uint32_t ns) {
-    timespec tS;
+    timespec tS, tS2;
+    uint32_t ret;
 
-    tS.tv_sec = 0;
-    tS.tv_nsec = 0;
-    clock_settime(CLOCK_PROCESS_CPUTIME_ID, &tS);
+    ret = clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &tS);
+    if (ret != 0)
+        throw std::runtime_error("clock_gettime returned failure");
     while (1) {
-        clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &tS);
-        if ((tS.tv_nsec) > ns)
+        ret = clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &tS2);
+        if (ret != 0)
+            throw std::runtime_error("clock_gettime returned failure");
+        if (tS2.tv_sec != tS.tv_sec)
+            break;        
+        if ((tS2.tv_nsec - tS.tv_nsec) > ns)
             break;
     }  
 }
@@ -259,8 +264,12 @@ static void flash_write(occ_handle *occ, uint8_t bar, uint32_t flash_addr,
     /** 
      * @bug A small delay is necessary between writes to avoid status reg errors
      * when programming.  (The reason this delay is required is still unknown)
+     * Testing found that usleep(1) actually induces a delay of about 70uS on
+     * the systems used for testing.  usleep(1) will work here, but causes
+     * unnecessarily slow programming phase.  The current implementation has
+     * been shown to reliably give a delay of about 3uS.
      */
-    nsleep(250); 
+    nsleep(2500); 
 }
 
 /**
