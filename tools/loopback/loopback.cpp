@@ -527,5 +527,8 @@ int main(int argc, char **argv) {
 
     occ_close(ctx.occ);
 
+    if (receive_status->n_bytes == 0)
+        ret = 2;
+
     return ret;
 }
