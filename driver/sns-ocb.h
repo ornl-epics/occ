@@ -3,6 +3,7 @@
 
 #if !defined(__KERNEL__)
 typedef uint32_t u32;
+typedef uint64_t u64;
 #endif
 
 /* The user should read an appropriate amount of data from the device for
@@ -22,6 +23,7 @@ typedef uint32_t u32;
 #define OCB_CMD_GET_STATUS		2
 
 /* Status flags returned in status member of ocb_status struct */
+#define OCB_OPTICAL_FAULT			(1 << 9)
 #define OCB_FIFO_OVERFLOW		(1 << 8)
 #define OCB_RX_ERR_PKTS_ENABLED		(1 << 7)
 #define OCB_RX_ENABLED			(1 << 6)
@@ -83,8 +85,10 @@ typedef uint32_t u32;
 struct ocb_status {
     u32 ocb_ver;			// Position of this one should not change. OCB version defines the rest of the protocol.
     u32 board_type;			// One of the BOARD_xxx values
+    u32 hardware_ver;			// Hardware version
     u32 firmware_ver;			// Firmware version
     u32 firmware_date;			// Code is 0xVVYYMMDD -- version, year, month, day (BCD)
+    u64 fpga_serial;			// FPGA serial number
     u32 status;
     u32 dq_size;			// Size of RX DMA data cyclic-queue in bytes
     u32 dq_used;			// Used space

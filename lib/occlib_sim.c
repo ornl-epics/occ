@@ -135,7 +135,7 @@ int occ_status(struct occ_handle *handle, occ_status_t *status, bool fast_status
     status->board = OCC_BOARD_SIMULATOR;
     status->interface = OCC_INTERFACE_OPTICAL;
     status->firmware_ver = 0x000F0001;
-    status->optical_signal = true;
+    status->optical_signal = OCC_OPT_CONNECTED;
     status->rx_enabled = handle->rx_enabled;
 
     return 0;

@@ -99,10 +99,13 @@ do {									\
 #define		OCB_STATUS_BUFFER_FULL			0x00000004
 #define		OCB_STATUS_OPTICAL_PRESENT		0x00000008
 #define		OCB_STATUS_OPTICAL_NOSIGNAL		0x00000010
+#define		OCB_STATUS_OPTICAL_FAULT		0x00000020
 #define		OCB_STATUS_TX_IDLE			0x00000040
 #define		OCB_STATUS_RX_OPTICAL			0x00000100
 #define REG_MODULE_MASK					0x0010
 #define REG_MODULE_ID					0x0014
+#define REG_SERNO_LO 					0x0018
+#define REG_SERNO_HI 					0x001C
 #define REG_IRQ_STATUS					0x00c0
 #define		OCB_IRQ_DMA_STALL			0x00000002
 #define		OCB_IRQ_FIFO_OVERFLOW			0x00000004
@@ -187,7 +190,7 @@ struct sw_imq {
 /* Board capabilities description structure */
 struct ocb_board_desc {
 	u32 type;
-	u32 *firmware;
+	u32 *version;
 	u32 tx_fifo_len;
 	u32 unified_que;
 	u32 bars[3];
@@ -215,8 +218,9 @@ struct ocb {
 	bool reset_occurred;
 	int stalled; // valid values are 0, OCB_DMA_STALLED and OCB_FIFO_OVERFLOW
 
-	u32 firmware_version;
+	u32 version;
 	u32 firmware_date;
+	u64 fpga_serial;
 
 	wait_queue_head_t tx_wq;
 	wait_queue_head_t rx_wq;
@@ -273,7 +277,7 @@ static const char *snsocb_name[] = {
 static struct ocb_board_desc boards[] = {
 	{
 		.type = BOARD_SNS_PCIX,
-		.firmware = (u32 []){ 0x31121106, 0x31130603, 0 },
+		.version = (u32 []){ 0x31121106, 0x31130603, 0 },
 		.tx_fifo_len = 8192,
 		.unified_que = 1,
 		.bars = { 1048576, 1048576 },
@@ -281,7 +285,7 @@ static struct ocb_board_desc boards[] = {
 	},
 	{
 		.type = BOARD_SNS_PCIX,
-		.firmware = (u32 []){ 0x22100817, 0 },
+		.version = (u32 []){ 0x22100817, 0 },
 		.tx_fifo_len = 8192,
 		.unified_que = 0,
 		.bars = { 1048576, 1048576 },
@@ -289,7 +293,7 @@ static struct ocb_board_desc boards[] = {
 	},
 	{
 		.type = BOARD_SNS_PCIE,
-		.firmware = (u32 []){ 0x000a0001, 0 },
+		.version = (u32 []){ 0x000a0001, 0 },
 		.tx_fifo_len = 32768,
 		.unified_que = 1,
 		.bars = { 4096, 32768, 16777216 },
@@ -297,7 +301,7 @@ static struct ocb_board_desc boards[] = {
 	},
 	{
 		.type = BOARD_SNS_PCIE,
-		.firmware = (u32 []){ 0x000b0001, 0 },
+		.version = (u32 []){ 0x000b0001, 0 },
 		.tx_fifo_len = 32768,
 		.unified_que = 1,
 		.bars = { 4096, 32768, 16777216 },
@@ -356,6 +360,8 @@ static u32 __snsocb_status(struct ocb *ocb)
 		status |= OCB_OPTICAL_PRESENT;
 		if (hw_status & OCB_STATUS_OPTICAL_NOSIGNAL)
 			status |= OCB_OPTICAL_NOSIGNAL;
+		if (hw_status & OCB_STATUS_OPTICAL_FAULT)
+			status |= OCB_OPTICAL_FAULT;
 	}
 
 	return status;
@@ -1044,8 +1050,10 @@ static ssize_t snsocb_read(struct file *file, char __user *buf,
 		spin_lock_irq(&ocb->lock);
 		info.ocb_ver = OCB_VER;
 		info.board_type = ocb->board->type;
-		info.firmware_ver = ocb->firmware_version;
+		info.hardware_ver = (ocb->board->type == BOARD_SNS_PCIE ? ((ocb->version >> 16) & 0xFFFF) : 0);
+		info.firmware_ver = (ocb->board->type == BOARD_SNS_PCIE ? (ocb->version & 0xFFFF) : ocb->version);
 		info.firmware_date = ocb->firmware_date;
+		info.fpga_serial = ocb->fpga_serial;
 		info.status = __snsocb_status(ocb);
 		info.dq_used = (OCB_DQ_SIZE + ocb->dq_prod - ocb->dq_cons) % OCB_DQ_SIZE;
 		info.dq_size = OCB_DQ_SIZE;
@@ -1370,24 +1378,26 @@ static int __devexit snsocb_probe(struct pci_dev *pdev,
 	 * Code is 0xVVYYMMDD -- version, year, month, day (BCD)
 	 */
 	err = -ENODEV;
-	ocb->firmware_version = ioread32(ocb->ioaddr + REG_VERSION);
+	ocb->version          = ioread32(ocb->ioaddr + REG_VERSION);
 	ocb->firmware_date    = ioread32(ocb->ioaddr + REG_FIRMWARE_DATE);
+	ocb->fpga_serial      = ioread32(ocb->ioaddr + REG_SERNO_LO);
+	ocb->fpga_serial     |= (u64)ioread32(ocb->ioaddr + REG_SERNO_HI) << 32;
 	ocb->board = &boards[0];
 	while (ocb->board && ocb->board->type != 0) {
 		if (ocb->board->type == board_id) {
-			u32 *firmware = ocb->board->firmware;
-			while (*firmware != 0) {
-				if (*firmware == ocb->firmware_version)
+			u32 *version = ocb->board->version;
+			while (*version != 0) {
+				if (*version == ocb->version)
 					break;
-				firmware++;
+				version++;
 			}
-			if (*firmware == ocb->firmware_version)
+			if (*version == ocb->version)
 				break;
 		}
 		++ocb->board;
 	}
 	if (!ocb->board || ocb->board->type == 0) {
-		dev_err(dev, "unsupported %s firmware 0x%08x\n", snsocb_name[board_id], ocb->firmware_version);
+		dev_err(dev, "unsupported %s firmware 0x%08x\n", snsocb_name[board_id], ocb->version);
 		err = -ENODEV;
 		goto error_dev;
 	}
@@ -1475,7 +1485,7 @@ static int __devexit snsocb_probe(struct pci_dev *pdev,
 
 	dev_info(dev, "snsocb%d: %s OCB version %08x, datecode %08x\n",
 		 minor, snsocb_name[board_id],
-		 ocb->firmware_version,
+		 ocb->version,
 		 ocb->firmware_date);
 
 	return 0;
