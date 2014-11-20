@@ -1,6 +1,8 @@
 #include "AnalyzeOutput.hpp"
 #include "LabPacket.hpp"
 
+#define __STDC_FORMAT_MACROS
+#include <inttypes.h>
 #include <iomanip>
 #include <ncurses.h>
 #include <sstream>
@@ -62,14 +64,14 @@ void AnalyzeOutput::showMetrics()
     double otherThroughput = (m_metrics.other.bytes - m_lastMetrics.other.bytes) / runtime;
 
     mvprintw(0, 0, "OCC incoming packets metrics");
-    mvprintw(1, 0, "Total   : %lu packets", m_metrics.total.goodCount    + m_metrics.total.badCount);
-    mvprintw(2, 0, "Commands: %lu packets", m_metrics.commands.goodCount + m_metrics.commands.badCount);
-    mvprintw(3, 0, "Data    : %lu packets", m_metrics.data.goodCount     + m_metrics.data.badCount);
-    mvprintw(4, 0, "|- RTDL : %lu (%lu bad) packets", m_metrics.rtdl.goodCount,  m_metrics.rtdl.badCount);
-    mvprintw(5, 0, "|- Meta : %lu (%lu bad) packets", m_metrics.meta.goodCount,  m_metrics.meta.badCount);
-    mvprintw(6, 0, "|- Event: %lu (%lu bad) packets", m_metrics.event.goodCount, m_metrics.event.badCount);
-    mvprintw(7, 0, "|- Ramp : %lu (%lu bad) packets", m_metrics.ramp.goodCount,  m_metrics.ramp.badCount);
-    mvprintw(8, 0, "|- Other: %lu (%lu bad) packets", m_metrics.other.goodCount, m_metrics.other.badCount);
+    mvprintw(1, 0, "Total   : %" PRIu64 " packets", m_metrics.total.goodCount    + m_metrics.total.badCount);
+    mvprintw(2, 0, "Commands: %" PRIu64 " packets", m_metrics.commands.goodCount + m_metrics.commands.badCount);
+    mvprintw(3, 0, "Data    : %" PRIu64 " packets", m_metrics.data.goodCount     + m_metrics.data.badCount);
+    mvprintw(4, 0, "|- RTDL : %" PRIu64 " (%" PRIu64 " bad) packets", m_metrics.rtdl.goodCount,  m_metrics.rtdl.badCount);
+    mvprintw(5, 0, "|- Meta : %" PRIu64 " (%" PRIu64 " bad) packets", m_metrics.meta.goodCount,  m_metrics.meta.badCount);
+    mvprintw(6, 0, "|- Event: %" PRIu64 " (%" PRIu64 " bad) packets", m_metrics.event.goodCount, m_metrics.event.badCount);
+    mvprintw(7, 0, "|- Ramp : %" PRIu64 " (%" PRIu64 " bad) packets", m_metrics.ramp.goodCount,  m_metrics.ramp.badCount);
+    mvprintw(8, 0, "|- Other: %" PRIu64 " (%" PRIu64 " bad) packets", m_metrics.other.goodCount, m_metrics.other.badCount);
 
     mvprintw(1, 40, "[%6.2f%cp/s %6.2f%cB/s]            ", speedFormatted(totalSpeed), speedTag(totalSpeed), speedFormatted(totalThroughput), speedTag(totalThroughput));
     mvprintw(2, 40, "[%6.2f%cp/s %6.2f%cB/s]            ", speedFormatted(cmdSpeed),   speedTag(cmdSpeed),   speedFormatted(cmdThroughput),   speedTag(cmdThroughput));
