@@ -104,10 +104,12 @@ typedef struct {
  * Function returns a valid handle only if connection has been established
  * and verified. Handle should be used for all OCC driver communication and
  * occ_close() should be used when the communication is no longer required.
-  *
+ *
  * \param[in] devfile Full path to the device file for selected OCC board.
  * \param[in] type Device type, either LVDS or optical.
  * \param[out] handle Handle to be used with the rest of the API interfaces.
+ * \note When occlib_sim is used, devfile should be a pair of RX and TX pipe
+ *       names separated by single comma, ie. /tmp/occ.rx,/tmp/occ.tx
  * \retval 0 on success
  * \retval -ENOENT No such device.
  * \retval -ENOMSG Driver/library version mismatch.
