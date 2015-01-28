@@ -61,9 +61,10 @@ static int open_pipe(const char *path, int flags, mode_t mode) {
     return ret;
 }
 
-int occ_open(const char *devfile, occ_interface_type type, struct occ_handle **handle) {
+int occ_open(const char *pipe_names, occ_interface_type type, struct occ_handle **handle) {
     int ret;
-    char path[PATH_MAX];
+    char rxpath[PATH_MAX], txpath[PATH_MAX];
+    char *saveptr;
 
     *handle = malloc(sizeof(struct occ_handle));
     if (*handle == NULL) {
@@ -73,20 +74,30 @@ int occ_open(const char *devfile, occ_interface_type type, struct occ_handle **h
     memset(*handle, 0, sizeof(struct occ_handle));
     (*handle)->magic = OCC_HANDLE_MAGIC;
 
-    snprintf(path, sizeof(path), "%s%s", devfile, PIPE_RX_SUFFIX);
-    ret = open_pipe(path, O_RDONLY, 0666);
+    strncpy(rxpath, pipe_names, sizeof(rxpath));
+    strncpy(txpath, "/missing/TX/pipe", sizeof(txpath));
+
+    saveptr = strchr(pipe_names, ',');
+    if (saveptr != NULL) {
+        rxpath[saveptr-pipe_names] = '\0';
+        saveptr++;
+        strncpy(txpath, saveptr, sizeof(txpath));
+    }
+
+fprintf(stderr, "RX pipe: %s\n", rxpath);
+fprintf(stderr, "TX pipe: %s\n", txpath);
+
+    ret = open_pipe(rxpath, O_RDONLY, 0666);
     if (ret < 0) {
-        close(ret);
         free(*handle);
         *handle = NULL;
         return ret;
     }
     (*handle)->fd_rx = ret;
 
-    snprintf(path, sizeof(path), "%s%s", devfile, PIPE_TX_SUFFIX);
-    ret = open_pipe(path, O_WRONLY, 0644);
+    ret = open_pipe(txpath, O_WRONLY, 0644);
     if (ret < 0) {
-        close(ret);
+        close((*handle)->fd_rx);
         free(*handle);
         *handle = NULL;
         return ret;
