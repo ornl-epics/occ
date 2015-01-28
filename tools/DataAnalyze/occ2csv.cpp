@@ -99,7 +99,7 @@ int main(int argc, char **argv) {
         }
     }
 
-    fprintf(outfd, "ID;Destination;Source;Cmdinfo;Length;Subpacket id;Timestamp\n");
+    fprintf(outfd, "ID;Destination;Source;Cmdinfo;Payload Length (inc RTDL);Subpacket id;Timestamp\n");
 
     while ((ret = fread(&header, sizeof(header), 1, infd)) > 0) {
         uint16_t subpacket_id = (header.info >> 8) & 0xFFFF; // Only valid for data packets
@@ -114,10 +114,7 @@ int main(int argc, char **argv) {
         if (ret == -1 && (uint32_t)ret != header.length)
             break;
 
-        uint32_t events_len = header.length;
-        if (header.info & 0x8)
-            events_len -= 6*sizeof(uint32_t); // skip RTDL header
-        fprintf(outfd, "%u;0x%.08X;0x%.08X;0x%.08X;%u", ++packet_id, header.dest_id, header.src_id, header.info, events_len);
+        fprintf(outfd, "%u;0x%.08X;0x%.08X;0x%.08X;%u", ++packet_id, header.dest_id, header.src_id, header.info, header.length);
 
         if ((header.info & 0x80000085) == 0x80000085)       fprintf(outfd, ";RTDL(cmd);0;%u.%09u\n",    buf[0], buf[1]);
         else if ((header.info & 0x200000FF) == 0x200000FF)  fprintf(outfd, ";RTDL(data);0;%u.%09u\n",   buf[0], buf[1]);
