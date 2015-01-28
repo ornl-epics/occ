@@ -1,6 +1,7 @@
 #include "occlib_hw.h"
 #include "i2c.h"
 #include <sns-ocb.h>
+#include <stdio.h>
 
 #include <errno.h>
 #include <fcntl.h>
@@ -21,7 +22,9 @@
 #define OCC_PCIE_REG_FPGA_TEMP          0x310
 #define OCC_PCIE_REG_FPGA_CORE_VOLT     0x314
 #define OCC_PCIE_REG_FPGA_AUX_VOLT      0x318
-#define OCC_PCIE_I2C_ADDR               0xA2
+#define OCC_PCIE_I2C_ADDR0              0xA0
+#define OCC_PCIE_I2C_SFP_TYPE           8
+#define OCC_PCIE_I2C_ADDR2              0xA2
 #define OCC_PCIE_I2C_SFP_TEMP           96
 #define OCC_PCIE_I2C_SFP_VCC_POWER      98
 #define OCC_PCIE_I2C_SFP_TX_BIAS_CUR    100
@@ -270,28 +273,38 @@ int occ_status(struct occ_handle *handle, occ_status_t *status, bool fast_status
 
             // No need to query transceiver info if we know it's not there
             if (status->optical_signal != OCC_OPT_NO_SFP) {
+                // Get SFP type
+                if (Read_I2C_Bus(handle, OCC_PCIE_I2C_ADDR0, OCC_PCIE_I2C_SFP_TYPE, &valWord) != 1)
+                    break;
+                if ((valWord & 0xF) == 0x1)
+                    status->sfp_type = OCC_SFP_MODE_SINGLE;
+                else if ((valWord & 0xF) == 0xC)
+                    status->sfp_type = OCC_SFP_MODE_MULTI;
+                else
+                    status->sfp_type = OCC_SFP_MODE_UNKNOWN;
+
                 // Get SFP temperature
-                if (Read_I2C_Bus(handle, OCC_PCIE_I2C_ADDR, OCC_PCIE_I2C_SFP_TEMP, &valWord) != 1)
+                if (Read_I2C_Bus(handle, OCC_PCIE_I2C_ADDR2, OCC_PCIE_I2C_SFP_TEMP, &valWord) != 1)
                     break;
                 status->sfp_temp = (float)valWord / 256.0;
 
                 // Get SFP RX In Power
-                if (Read_I2C_Bus(handle, OCC_PCIE_I2C_ADDR, OCC_PCIE_I2C_SFP_RX_POWER, &valWord) != 1)
+                if (Read_I2C_Bus(handle, OCC_PCIE_I2C_ADDR2, OCC_PCIE_I2C_SFP_RX_POWER, &valWord) != 1)
                     break;
                 status->sfp_rx_power = 0.1 * valWord;
 
                 // Get SFP TX Power
-                if (Read_I2C_Bus(handle, OCC_PCIE_I2C_ADDR, OCC_PCIE_I2C_SFP_TX_POWER, &valWord) != 1)
+                if (Read_I2C_Bus(handle, OCC_PCIE_I2C_ADDR2, OCC_PCIE_I2C_SFP_TX_POWER, &valWord) != 1)
                     break;
                 status->sfp_tx_power = 0.1 * valWord;
 
                 // Get SFP Vcc Power
-                if (Read_I2C_Bus(handle, OCC_PCIE_I2C_ADDR, OCC_PCIE_I2C_SFP_VCC_POWER, &valWord) != 1)
+                if (Read_I2C_Bus(handle, OCC_PCIE_I2C_ADDR2, OCC_PCIE_I2C_SFP_VCC_POWER, &valWord) != 1)
                     break;
                 status->sfp_vcc_power = 0.0001 * valWord;
 
                 // Get SFP Tx Bias Current
-                if (Read_I2C_Bus(handle, OCC_PCIE_I2C_ADDR, OCC_PCIE_I2C_SFP_TX_BIAS_CUR, &valWord) != 1)
+                if (Read_I2C_Bus(handle, OCC_PCIE_I2C_ADDR2, OCC_PCIE_I2C_SFP_TX_BIAS_CUR, &valWord) != 1)
                     break;
                 status->sfp_tx_bias_cur = 2.0 * valWord;
             }

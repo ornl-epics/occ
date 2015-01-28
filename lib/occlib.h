@@ -52,6 +52,16 @@ typedef enum {
     OCC_OPT_LASER_FAULT = 3,
 } occ_optical_signal_type;
 
+
+/**
+ * SFP module type
+ */
+typedef enum {
+    OCC_SFP_MODE_UNKNOWN = 0,
+    OCC_SFP_MODE_SINGLE  = 1,
+    OCC_SFP_MODE_MULTI   = 2,
+} occ_sfp_type;
+
 /**
  * Structure describing OCC board and driver information.
  */
@@ -72,6 +82,7 @@ typedef struct {
     float fpga_temp;
     float fpga_core_volt;
     float fpga_aux_volt;
+    occ_sfp_type sfp_type;          //!< SFP type, single or multi mode
     float sfp_temp;
     float sfp_rx_power;
     float sfp_tx_power;
