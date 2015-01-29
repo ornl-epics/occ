@@ -406,11 +406,11 @@ static int read_byte_bus(struct occ_handle *occ)
 /*********************************************************************************/
 // int Read_I2C_Bus(byte address, word *data);
 //
-//       address   - Memory address to read.
+//       address   - Memory address to read, aligned to even number.
 //       offset    - Byte offset from memory address                              
-//       data      - Data pointer to put the data.                               
+//       data      - Data pointer to put the 2 byte data, even address as MSB, odd as LSB
 //
-//    Routine to read data from the I2C serial bus.                              
+//    Routine to read 2 bytes from the I2C serial bus.                              
 //
 //                    
 //                                                                               

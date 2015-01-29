@@ -8,8 +8,6 @@
 #define EVENT_PIXELID_MIN       0
 #define EVENT_TOF_MAX           0x32000
 #define MAX_EVENTS_PER_PACKET               1800
-#define TEST_DSP_COUNTER_MAX    400         // defined by DSP test firmware
-#define TEST_DSP_COUNTER_MIN    1           // defined by DSP test firmware
 
 LabPacket::LabPacket(uint32_t datalen) :
     DasPacket(datalen)
@@ -134,20 +132,18 @@ bool LabPacket::verifyRamp(uint32_t &errorOffset, uint32_t &lastValue) const
             errorOffset = i;
             lastValue = -1;
             return false;
-        } else if (lastValue == TEST_DSP_COUNTER_MAX) {
-            lastValue = TEST_DSP_COUNTER_MIN;
         } else {
             lastValue++;
+            lastValue &= 0xFFFFFFF;
         }
 
         if (event->pixelid != lastValue) {
             errorOffset = i;
             lastValue = -1;
             return false;
-        } else if (lastValue == TEST_DSP_COUNTER_MAX) {
-            lastValue = TEST_DSP_COUNTER_MIN;
         } else {
             lastValue++;
+            lastValue &= 0xFFFFFFF;
         }
     }
 
