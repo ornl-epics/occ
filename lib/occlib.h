@@ -83,6 +83,8 @@ typedef struct {
     float fpga_core_volt;
     float fpga_aux_volt;
     occ_sfp_type sfp_type;          //!< SFP type, single or multi mode
+    char sfp_part_number[21];       //!< SFP part number ASCII string
+    char sfp_serial_number[17];     //!< SFP serial number ASCII string
     float sfp_temp;
     float sfp_rx_power;
     float sfp_tx_power;

@@ -24,6 +24,10 @@
 #define OCC_PCIE_REG_FPGA_AUX_VOLT      0x318
 #define OCC_PCIE_I2C_ADDR0              0xA0
 #define OCC_PCIE_I2C_SFP_TYPE           8
+#define OCC_PCIE_I2C_SFP_PARTNO_START   40
+#define OCC_PCIE_I2C_SFP_PARTNO_END     59
+#define OCC_PCIE_I2C_SFP_SERNO_START    68
+#define OCC_PCIE_I2C_SFP_SERNO_END      83
 #define OCC_PCIE_I2C_ADDR2              0xA2
 #define OCC_PCIE_I2C_SFP_TEMP           96
 #define OCC_PCIE_I2C_SFP_VCC_POWER      98
@@ -273,6 +277,30 @@ int occ_status(struct occ_handle *handle, occ_status_t *status, bool fast_status
 
             // No need to query transceiver info if we know it's not there
             if (status->optical_signal != OCC_OPT_NO_SFP) {
+                int i;
+
+                // Get SFP serial number - multiple addresses with 1 ASCII char per address
+                memset(status->sfp_serial_number, 0, sizeof(status->sfp_serial_number));
+                for (i = OCC_PCIE_I2C_SFP_SERNO_START; i <= OCC_PCIE_I2C_SFP_SERNO_END; i += 2) {
+                    int j = i - OCC_PCIE_I2C_SFP_SERNO_START;
+                    if (Read_I2C_Bus(handle, OCC_PCIE_I2C_ADDR0, i, &valWord) == 1 &&
+                        j < (sizeof(status->sfp_serial_number) - 1)) {
+                        status->sfp_serial_number[j]   = (valWord & 0xFF00) >> 8;
+                        status->sfp_serial_number[j+1] = (valWord & 0xFF);
+                    }
+                }
+
+                // Get SFP part number - multiple addresses with 1 ASCII char per address
+                memset(status->sfp_part_number, 0, sizeof(status->sfp_part_number));
+                for (i = OCC_PCIE_I2C_SFP_PARTNO_START; i <= OCC_PCIE_I2C_SFP_PARTNO_END; i += 2) {
+                    int j = i - OCC_PCIE_I2C_SFP_PARTNO_START;
+                    if (Read_I2C_Bus(handle, OCC_PCIE_I2C_ADDR0, i, &valWord) == 1 &&
+                        j < (sizeof(status->sfp_part_number) - 1)) {
+                        status->sfp_part_number[j]   = (valWord & 0xFF00) >> 8;
+                        status->sfp_part_number[j+1] = (valWord & 0xFF);
+                    }
+                }
+
                 // Get SFP type
                 if (Read_I2C_Bus(handle, OCC_PCIE_I2C_ADDR0, OCC_PCIE_I2C_SFP_TYPE, &valWord) != 1)
                     break;
