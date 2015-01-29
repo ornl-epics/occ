@@ -212,11 +212,16 @@ int occ_status(struct occ_handle *handle, occ_status_t *status, bool fast_status
     status->stalled = (info.status & OCB_DMA_STALLED);
     status->overflowed = (info.status & OCB_FIFO_OVERFLOW);
     status->interface = (handle->use_optic ? OCC_INTERFACE_OPTICAL : OCC_INTERFACE_LVDS);
+    status->hardware_ver = info.hardware_ver;
     status->firmware_ver = info.firmware_ver;
     status->firmware_date = info.firmware_date;
-    status->optical_signal = (info.status & OCB_OPTICAL_PRESENT);
+    status->fpga_serial_number = info.fpga_serial;
     status->rx_enabled = (info.status & OCB_RX_ENABLED);
     status->err_packets_enabled = (info.status & OCB_RX_ERR_PKTS_ENABLED);
+    if (!(info.status & OCB_OPTICAL_PRESENT))    status->optical_signal = OCC_OPT_NO_SFP;
+    else if (info.status & OCB_OPTICAL_FAULT)    status->optical_signal = OCC_OPT_LASER_FAULT;
+    else if (info.status & OCB_OPTICAL_NOSIGNAL) status->optical_signal = OCC_OPT_NO_CABLE;
+    else                                         status->optical_signal = OCC_OPT_CONNECTED;
 
     ret = 0;
     while (status->board == BOARD_SNS_PCIE) {
@@ -264,7 +269,7 @@ int occ_status(struct occ_handle *handle, occ_status_t *status, bool fast_status
             ret = -EIO;
 
             // No need to query transceiver info if we know it's not there
-            if (status->optical_signal != 0) {
+            if (status->optical_signal != OCC_OPT_NO_SFP) {
                 // Get SFP temperature
                 if (Read_I2C_Bus(handle, OCC_PCIE_I2C_ADDR, OCC_PCIE_I2C_SFP_TEMP, &valWord) != 1)
                     break;

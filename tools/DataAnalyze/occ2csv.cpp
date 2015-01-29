@@ -30,6 +30,7 @@ static void usage(const char *progname) {
     printf("Options:\n");
     printf("  -i, --input-file FILE   Full path to file to be read or - for stdin\n");
     printf("  -o, --output-file FILE  Full path fo file to be writen to or - for stdout\n");
+    printf("  -p, --payload           Print payload as 32 bit HEX numbers\n");
     printf("\n");
     printf("Example output: %s < occ-dump.raw\n", progname);
     printf("ID;Destination;Source;Cmdinfo;Length;Subpacket id;Timestamp\n");
@@ -50,6 +51,7 @@ int main(int argc, char **argv) {
     FILE *infd, *outfd;
     uint32_t packet_id = 0;
     uint32_t buf[BUFFER_SIZE];
+    int payload = 0;
 
     for (int i = 1; i < argc; i++) {
         const char *key = argv[i];
@@ -57,6 +59,9 @@ int main(int argc, char **argv) {
         if (strncmp(key, "-h", 2) == 0 || strncmp(key, "--help", 6) == 0) {
             usage(argv[0]);
             return 1;
+        }
+        if (strncmp(key, "-p", 2) == 0 || strncmp(key, "--payload", 9) == 0) {
+            payload = 1;
         }
         if (strncmp(key, "-i", 2) == 0 || strncmp(key, "--input-file", 12) == 0) {
             if ((i + 1) >= argc)
@@ -110,8 +115,21 @@ int main(int argc, char **argv) {
         else if ((header.info & 0x200000FF) == 0x200000FF)  fprintf(outfd, ";RTDL(data);0;%u.%09u\n",   buf[0], buf[1]);
         else if ((header.info & 0x80000084) == 0x80000084)  fprintf(outfd, ";TSYNC;0;0\n");
         else if (header.info & 0x80000000)                  fprintf(outfd, ";CMD(0x%.02X);0;%u.%09u\n", header.info & 0xFF, 0, 0);
-        else if ((header.info & 0x4) == 0x4)                fprintf(outfd, ";NEUTRON;%u;%u.%09u\n",     subpacket_id, buf[0], buf[1]);
-        else                                                fprintf(outfd, ";META;%u;%u.%09u\n",        subpacket_id, buf[0], buf[1]);
+        else if ((header.info & 0xC) == 0xC)                fprintf(outfd, ";NEUTRON;%u;%u.%09u\n",     subpacket_id, buf[0], buf[1]);
+        else if ((header.info & 0xC) == 0x4)                fprintf(outfd, ";NEUTRON;%u;missing RTDL\n",subpacket_id);
+        else if ((header.info & 0x8) == 0x8)                fprintf(outfd, ";META;%u;%u.%09u\n",        subpacket_id, buf[0], buf[1]);
+        else                                                fprintf(outfd, ";META;%u;missing RTDL\n",   subpacket_id);
+
+        if (payload && (header.info & 0x800000F0) == 0) {
+            uint32_t skip = (header.info & 0x8) ? 6 : 0;
+            uint32_t i = skip;
+            for (; i < header.length/4; i++) {
+                if (i == skip)             fprintf(outfd,   "  ");
+                else if ((i - 6) % 4 == 0) fprintf(outfd, "\n  ");
+                fprintf(outfd, "%08X ", buf[i]);
+            }
+            if (i > skip) fprintf(outfd, "\n");
+        }
     }
 
     fclose(outfd);

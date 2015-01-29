@@ -42,3 +42,7 @@ clean:
 
 doc: $(HDRS) occlib.doxygen
 	doxygen occlib.doxygen
+
+simulator: all
+	mv lib$(LIBNAME).so lib$(LIBNAME)_hw.so
+	ln -s lib$(LIBSIMNAME).so lib$(LIBNAME).so

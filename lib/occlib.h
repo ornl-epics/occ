@@ -43,20 +43,32 @@ typedef enum {
 } occ_board_type;
 
 /**
+ * Optical signal status
+ */
+typedef enum {
+    OCC_OPT_CONNECTED   = 0,
+    OCC_OPT_NO_SFP      = 1,
+    OCC_OPT_NO_CABLE    = 2,
+    OCC_OPT_LASER_FAULT = 3,
+} occ_optical_signal_type;
+
+/**
  * Structure describing OCC board and driver information.
  */
 typedef struct {
     occ_board_type board;           //!< Board type used by this handle.
     occ_interface_type interface;   //!< Interface type used by this handle.
+    uint32_t hardware_ver;          //!< Version of the hardware.
     uint32_t firmware_ver;          //!< Version of the FPGA firmware.
     uint32_t firmware_date;         //!< Build date of the FPGA firmware.
     uint32_t dma_size;              //!< Size of the DMA memory in bytes.
     uint32_t dma_used;              //!< DMA memory used space in bytes.
     bool stalled;                   //!< True if DMA memory for incoming data is full and device stopped processing incoming data.
     bool overflowed;                //!< True if internal FIFO overflow was detected and device stopped processing incoming data.
-    bool optical_signal;            //!< True when optical signal is present.
+    occ_optical_signal_type optical_signal; //!< Optical signal status
     bool rx_enabled;                //!< True when receiving of data is enabled.
     bool err_packets_enabled;       //!< True when error packets are enabled.
+    uint64_t fpga_serial_number;    //!< FPGA serial number
     float fpga_temp;
     float fpga_core_volt;
     float fpga_aux_volt;
@@ -92,10 +104,12 @@ typedef struct {
  * Function returns a valid handle only if connection has been established
  * and verified. Handle should be used for all OCC driver communication and
  * occ_close() should be used when the communication is no longer required.
-  *
+ *
  * \param[in] devfile Full path to the device file for selected OCC board.
  * \param[in] type Device type, either LVDS or optical.
  * \param[out] handle Handle to be used with the rest of the API interfaces.
+ * \note When occlib_sim is used, devfile should be a pair of RX and TX pipe
+ *       names separated by single comma, ie. /tmp/occ.rx,/tmp/occ.tx
  * \retval 0 on success
  * \retval -ENOENT No such device.
  * \retval -ENOMSG Driver/library version mismatch.
@@ -155,7 +169,7 @@ int occ_enable_rx(struct occ_handle *handle, bool enable);
 /**
  * Enable outputing error packets
  *
- * OCC FPGA detects communication errors. It recognizes three groups of 
+ * OCC FPGA detects communication errors. It recognizes three groups of
  * errors:
  * - CRC errors are detected when the data integrity for a packet fails
  * - Frame length errors are the ones when the packet length doesn't match actual data
@@ -176,7 +190,7 @@ int occ_enable_error_packets(struct occ_handle *handle, bool enable);
  *
  * \param[in] handle Valid OCC API handle.
  * \param[out] status Pointer to a structure where status information is put.
- * \param[in] fast_status If true, limit update to frequently used status vars.  
+ * \param[in] fast_status If true, limit update to frequently used status vars.
  * \return 0 on success, negative errno on error.
  */
 int occ_status(struct occ_handle *handle, occ_status_t *status, bool fast_status);

@@ -25,6 +25,9 @@ install:
 	install -m 0755 rhel-load.modules /etc/sysconfig/modules/snsocb.modules
 	install -m 0644 sns-ocb.ko $(TARGETDIR)/sns-ocb$(VER).ko
 	ln -sf sns-ocb$(VER).ko $(TARGETDIR)/sns-ocb.ko
-	@depmod
+	depmod
+
+load:
+	insmod ./sns-ocb.ko
 
 endif
