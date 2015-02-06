@@ -140,7 +140,7 @@ int main(int argc, char **argv) {
             uint32_t i = skip;
             for (; i < header.length/4; i++) {
                 if (i == skip)             fprintf(outfd,   "  ");
-                else if ((i - 6) % 4 == 0) fprintf(outfd, "\n  ");
+                else if ((i - skip) % 4 == 0) fprintf(outfd, "\n  ");
                 fprintf(outfd, "%08X ", buf[i]);
             }
             if (i > skip) fprintf(outfd, "\n");
