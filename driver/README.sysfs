@@ -26,3 +26,67 @@ interrupt. High interrupt latencies can cause it to overflow, but also a
 train of relatively low latencies can cause it to overflow. For this second
 case it helps to reduce number of interrupts as this reduces the effect
 on that FIFO.
+
+=== Big (more than 4MB) DMA buffer ===
+By default snsocb driver provides 2MB DMA buffer. More than that can be
+configured after snsocb is loaded and before it's being used. It's only
+supported on selected devices. The feature can be configured through
+dma_big_mem sysfs file. More details after big kernel allocation introduction.
+
+Note: dma_big_mem file will only show in /sys if device supports this feature.
+
+Linux kernel can not allocate more than 10 pages of memory. Page size can be
+changed by recompiling the kernel but is not suggested. There's a CMA feature
+available in Linux 3.6+ which allows to reserve big chunk of memory at boot
+time and let drivers use it exclusively. On older kernels the snsocb driver
+provides similar functionality.
+
+Next section deals with details how to configure kernel parameters as well as
+snsocb driver to use more than 4MB buffer.
+Reserve chunk of memory through kernel parameters at boot time. Check dmesg
+output to see available memory regions. Sample output on 32GB system could be:
+
+BIOS-provided physical RAM map:
+ BIOS-e820: 0000000000000000 - 0000000000091800 (usable)
+ BIOS-e820: 0000000000091800 - 00000000000a0000 (reserved)
+ BIOS-e820: 00000000000e0000 - 0000000000100000 (reserved)
+ BIOS-e820: 0000000000100000 - 000000007dec1000 (usable)
+ BIOS-e820: 000000007dec1000 - 000000007df00000 (reserved)
+ BIOS-e820: 000000007df00000 - 000000007e009000 (ACPI data)
+ BIOS-e820: 000000007e009000 - 000000007e20c000 (ACPI NVS)
+ BIOS-e820: 000000007e20c000 - 000000007f368000 (reserved)
+ BIOS-e820: 000000007f368000 - 000000007f800000 (ACPI NVS)
+ BIOS-e820: 0000000080000000 - 0000000090000000 (reserved)
+ BIOS-e820: 00000000fed1c000 - 00000000fed40000 (reserved)
+ BIOS-e820: 00000000ff000000 - 0000000100000000 (reserved)
+ BIOS-e820: 0000000100000000 - 0000000880000000 (usable)
+
+Pick a usable region at higher addresses. To reserve 100MB block at offset
+0x100000 one would add this line to the kernel parameters (/boot/grub/menu.lst)
+memmap=100M$1G
+or
+memmap=100M$1024M
+or
+memmap=100M$1073741824
+
+Changes are applied after rebooting the system.
+With some memory reserved, we need to tell snsocb driver about it. There's
+a dma_big_mem file in sysfs, ie. /sys/class/snsocb/snsocb0/device/dma_big_mem.
+When first reading contents of dma_big_mem file it will print 0$0 which means
+the device is using default size for DMA buffer. User can change that by writing
+to dma_big_mem file while device is not being used. The syntax is similar to
+memmap= kernel parameter seen before:
+    [0-9]+M$[0-9]+[MG\0]
+Following previous example of memmap=100M$1G one could write to dma_big_mem
+100M$1G or 100M$1024M or 100M$1073741824 which are all the same. Driver will
+report an error on any problem it encounters applying that change, for example
+bad syntax. Note however that it does not verify the size or the offset against
+the reserved memory table. User must be very careful to select the memory
+within the reserved range.
+One can verify the changes were applied by reading the file back.
+
+DMA buffer size should be determined by the user and depends on the application
+how fast it can process data. OS scheduler and delays should also be taken into
+account. On non-RT Linux kernel scheduling delays as high as 15ms were
+observed. There are two rules that driver enforces: size must be power of two
+and offset must be page aligned (usually 4096 bytes).

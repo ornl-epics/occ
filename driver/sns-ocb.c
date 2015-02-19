@@ -47,8 +47,8 @@ do {									\
 			.name = _name,					\
 			.mode = _mode,					\
 		},							\
-		.show = snsocb_sysfs_show,				\
-		.store = snsocb_sysfs_store,				\
+		.show = _show,						\
+		.store = _store,					\
 	}
 
 
@@ -122,6 +122,7 @@ do {									\
 #define REG_COMM_ERR					0x0240
 #define REG_LOST_PACKETS				0x0244		/* 16 bit register */
 
+/* Inbound message queue (RX, split RX from older firmware, GE card) */
 #define REG_IMQ_ADDR		0x0058
 #define REG_IMQ_ADDRHI		0x005c
 #define REG_IMQ_PROD_ADDR	0x0060
@@ -165,8 +166,10 @@ do {									\
 #define IMQ_TYPE_COMMAND	0x80000000
 
 /* Forward declaration of functions used in the structs */
-static ssize_t snsocb_sysfs_show(struct device *dev, struct device_attribute *attr, char *buf);
-static ssize_t snsocb_sysfs_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t count);
+static ssize_t snsocb_sysfs_show_irq_coallesce(struct device *dev, struct device_attribute *attr, char *buf);
+static ssize_t snsocb_sysfs_store_irq_coallesce(struct device *dev, struct device_attribute *attr, const char *buf, size_t count);
+static ssize_t snsocb_sysfs_show_dma_big_mem(struct device *dev, struct device_attribute *attr, char *buf);
+static ssize_t snsocb_sysfs_store_dma_big_mem(struct device *dev, struct device_attribute *attr, const char *buf, size_t count);
 
 /* Layout of the hardware Incoming Message Queue */
 struct hw_imq {
@@ -242,6 +245,9 @@ struct ocb {
 	 */
 	struct page *dq_page;
 	dma_addr_t dq_dma;
+	unsigned long dq_size;
+	unsigned long dq_big_addr;
+	char dq_big_cnf[64];
 
 	/* These are used to emulate the combined DQ from later firmware
 	 * on the SNS PCI-X card and SNS PCIe card.
@@ -307,7 +313,8 @@ static struct ocb_board_desc boards[] = {
 		.bars = { 4096, 32768, 16777216 },
 		.reset_errcnt = 1,
 		.sysfs.attrs = (struct attribute **) (struct device_attribute *[]){
-			SNSOCB_DEVICE_ATTR("irq_coalescing", 0644, snsocb_sysfs_show, snsocb_sysfs_store),
+			SNSOCB_DEVICE_ATTR("irq_coalescing", 0644, snsocb_sysfs_show_irq_coallesce, snsocb_sysfs_store_irq_coallesce),
+			SNSOCB_DEVICE_ATTR("dma_big_mem", 0644, snsocb_sysfs_show_dma_big_mem, snsocb_sysfs_store_dma_big_mem),
 			NULL,
 		},
 	},
@@ -857,10 +864,11 @@ static void snsocb_reset(struct ocb *ocb)
 		/* This board uses an unified DQ, or we're using the LVDS
 		 * so directly map it onto the buffer the user maps.
 		 */
+		unsigned long addr = (ocb->dq_big_addr ? virt_to_bus(phys_to_virt(ocb->dq_big_addr)) : ocb->dq_dma);
 		ocb->emulate_dq = 0;
-		iowrite32(ocb->dq_dma, ioaddr + REG_DQ_ADDR);
-		iowrite32(ocb->dq_dma >> 32, ioaddr + REG_DQ_ADDRHI);
-		iowrite32(OCB_DQ_SIZE - 1, ioaddr + REG_DQ_MAX_OFFSET);
+		iowrite32(addr & 0xFFFFFFFF, ioaddr + REG_DQ_ADDR);
+		iowrite32((addr >> 32) & 0xFFFFFFFF, ioaddr + REG_DQ_ADDRHI);
+		iowrite32(ocb->dq_size - 1, ioaddr + REG_DQ_MAX_OFFSET);
 	}
 
 	/* Clear queue offset indexes */
@@ -952,6 +960,21 @@ static void snsocb_free_queue(struct device *dev, struct page *page,
 	__free_pages(page, order);
 }
 
+static void snsocb_alloc_big_queue(struct ocb *ocb, unsigned long phys_addr, unsigned long size)
+{
+	ocb->dq_size = size & PAGE_MASK;
+	ocb->dq_big_addr = phys_addr;
+}
+
+static void snsocb_free_big_queue(struct ocb *ocb)
+{
+	if (ocb->dq_size > OCB_DQ_SIZE) {
+		ocb->dq_big_addr = 0;
+		// Revert to the kmalloc-ed page memory
+		ocb->dq_size = OCB_DQ_SIZE;
+	}
+}
+
 static int snsocb_vm_fault(struct vm_area_struct *vma, struct vm_fault *vmf)
 {
 	struct ocb *ocb = vma->vm_private_data;
@@ -963,7 +986,7 @@ static int snsocb_vm_fault(struct vm_area_struct *vma, struct vm_fault *vmf)
 
 	page = ocb->dq_page;
 	offset = (unsigned long) vmf->virtual_address - vma->vm_start;
-	if (offset >= OCB_DQ_SIZE)
+	if (offset >= ocb->dq_size)
 		return VM_FAULT_SIGBUS;
 
 	offset >>= PAGE_SHIFT;
@@ -982,7 +1005,7 @@ static int snsocb_mmap(struct file *file, struct vm_area_struct *vma)
 {
 	struct ocb *ocb = file->private_data;
 	unsigned long size = vma->vm_end - vma->vm_start;
-	unsigned long addr;
+	unsigned long pfn;
 
 	switch (vma->vm_pgoff) {
 	case OCB_MMAP_BAR0:
@@ -992,21 +1015,24 @@ static int snsocb_mmap(struct file *file, struct vm_area_struct *vma)
 			return -ENOSYS;
 		if (size != ocb->board->bars[vma->vm_pgoff])
 			return -EINVAL;
-		addr = pci_resource_start(ocb->pdev, vma->vm_pgoff);
+		pfn = pci_resource_start(ocb->pdev, vma->vm_pgoff) >> PAGE_SHIFT;
 		vma->vm_page_prot = pgprot_noncached(vma->vm_page_prot);
 		vma->vm_flags |= VM_IO;
-		return remap_pfn_range(vma, vma->vm_start, addr >> PAGE_SHIFT, size, vma->vm_page_prot);
+		break;
 	case OCB_MMAP_RX_DMA:
-		if (size != OCB_DQ_SIZE)
+		if (size != ocb->dq_size)
 			return -EINVAL;
-		vma->vm_ops = &snsocb_vm_ops;
-		vma->vm_file = file;
-		vma->vm_private_data = ocb;
+		if (ocb->dq_big_addr)
+			pfn = virt_to_phys(bus_to_virt(ocb->dq_big_addr)) >> PAGE_SHIFT;
+		else
+			pfn = page_to_pfn(ocb->dq_page);
 		vma->vm_flags |= VM_IO | VM_DONTEXPAND;
-		return 0;
+		break;
+	default:
+		return -EINVAL;
 	}
 
-	return -EINVAL;
+	return remap_pfn_range(vma, vma->vm_start, pfn, size, vma->vm_page_prot);
 }
 
 static unsigned int snsocb_poll(struct file *file,
@@ -1055,8 +1081,8 @@ static ssize_t snsocb_read(struct file *file, char __user *buf,
 		info.firmware_date = ocb->firmware_date;
 		info.fpga_serial = ocb->fpga_serial;
 		info.status = __snsocb_status(ocb);
-		info.dq_used = (OCB_DQ_SIZE + ocb->dq_prod - ocb->dq_cons) % OCB_DQ_SIZE;
-		info.dq_size = OCB_DQ_SIZE;
+		info.dq_used = (ocb->dq_size + ocb->dq_prod - ocb->dq_cons) % ocb->dq_size;
+		info.dq_size = ocb->dq_size;
 		info.bars[0] = ocb->board->bars[0];
 		info.bars[1] = ocb->board->bars[1];
 		info.bars[2] = ocb->board->bars[2];
@@ -1094,7 +1120,7 @@ static ssize_t snsocb_write(struct file *file, const char __user *buf,
 		/* We only deal with packets that are multiples of 4 bytes */
 		val = ALIGN(val, 4);
 
-		if (!val || val >= OCB_DQ_SIZE)
+		if (!val || val >= ocb->dq_size)
 			return -EOVERFLOW;
 
 		/* Validate that the new consumer index is within the range
@@ -1104,9 +1130,9 @@ static ssize_t snsocb_write(struct file *file, const char __user *buf,
 		val += ocb->dq_cons;
 		prod = ocb->dq_prod;
 		if (ocb->dq_prod < ocb->dq_cons)
-			prod += OCB_DQ_SIZE;
+			prod += ocb->dq_size;
 		if (val > ocb->dq_cons && val <= prod) {
-			ocb->dq_cons = val % OCB_DQ_SIZE;
+			ocb->dq_cons = val % ocb->dq_size;
 			if (!ocb->emulate_dq) {
 				iowrite32(ocb->dq_cons,
 					  ocb->ioaddr + REG_DQ_CONS_INDEX);
@@ -1240,29 +1266,88 @@ static void snsocb_free(struct device *dev)
 	kfree(ocb);
 }
 
-static ssize_t snsocb_sysfs_show(struct device *dev, struct device_attribute *attr, char *buf)
+static ssize_t snsocb_sysfs_show_irq_coallesce(struct device *dev, struct device_attribute *attr, char *buf)
 {
 	struct ocb *ocb = dev_get_drvdata(dev);
-	if (strncmp(attr->attr.name, "irq_coalescing", strlen("irq_coalescing")) == 0) {
-		u32 val = ioread32(ocb->ioaddr + REG_IRQ_CNTL) & 0xFFFF;
-		return scnprintf(buf, PAGE_SIZE, "%u\n", val);
-	}
-	return 0;
+	u32 val = ioread32(ocb->ioaddr + REG_IRQ_CNTL) & 0xFFFF;
+	return scnprintf(buf, PAGE_SIZE, "%u\n", val);
 }
 
-static ssize_t snsocb_sysfs_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t count)
+static ssize_t snsocb_sysfs_store_irq_coallesce(struct device *dev, struct device_attribute *attr, const char *buf, size_t count)
 {
 	struct ocb *ocb = dev_get_drvdata(dev);
-	if (strncmp(attr->attr.name, "irq_coalescing", strlen("irq_coalescing")) == 0) {
-		u32 val;
-		if (sscanf(buf, "%u", &val) == 1) {
-			val &= 0xFFFF;
-			if (val > 0) val |= OCB_COALESCING_ENABLE;
-			iowrite32(val, ocb->ioaddr + REG_IRQ_CNTL);
-		}
+	u32 val;
+	if (sscanf(buf, "%u", &val) == 1) {
+		val &= 0xFFFF;
+		if (val > 0) val |= OCB_COALESCING_ENABLE;
+		iowrite32(val, ocb->ioaddr + REG_IRQ_CNTL);
 		return count;
 	}
-	return 0;
+	return -EINVAL;
+}
+
+static ssize_t snsocb_sysfs_show_dma_big_mem(struct device *dev, struct device_attribute *attr, char *buf)
+{
+	struct ocb *ocb = dev_get_drvdata(dev);
+	int ret = 0;
+
+	spin_lock_irq(&ocb->lock);
+	ret = scnprintf(buf, PAGE_SIZE, "%s\n", ocb->dq_big_cnf);
+	spin_unlock_irq(&ocb->lock);
+
+	return ret;
+}
+
+static ssize_t snsocb_sysfs_store_dma_big_mem(struct device *dev, struct device_attribute *attr, const char *buf, size_t count)
+{
+	struct ocb *ocb = dev_get_drvdata(dev);
+	int err = 0;
+	unsigned long size, offset;
+	char size_mod, offset_mod;
+
+	if (sscanf(buf, "%lu%c$%lu%c", &size, &size_mod, &offset, &offset_mod) < 3)
+		return -EINVAL;
+	// Verify size parameter
+	if (size_mod != 'M')
+		return -EINVAL;
+	size *= 1024*1024; // size_mod == 'M'
+	if (size & (size - 1)) // must be power of two
+		return -EFAULT;
+	if (size <= OCB_DQ_SIZE)
+		return -ENOMEM;
+	// Verify offset parameter
+	if (offset_mod != 'M' && offset_mod != 'G') {
+		if (offset_mod != 0)
+			return -EINVAL;
+		if (offset != (offset & PAGE_MASK))
+			return -EFAULT;
+	}
+        if (offset_mod == 'M')
+                offset *= 1024*1024;
+        else if (offset_mod == 'G')
+                offset *= 1024*1024*1024;
+	// size and offset are now page aligned
+
+	spin_lock_irq(&ocb->lock);
+	if (ocb->in_use) {
+		err = -EBUSY;
+	} else {
+		ocb->in_use = true;
+	}
+	spin_unlock_irq(&ocb->lock);
+
+	if (err)
+		return err;
+
+	snsocb_free_big_queue(ocb);
+	snsocb_alloc_big_queue(ocb, offset, size);
+
+	spin_lock_irq(&ocb->lock);
+	strncpy(ocb->dq_big_cnf, buf, sizeof(ocb->dq_big_cnf));
+	ocb->in_use = false;
+	spin_unlock_irq(&ocb->lock);
+
+	return count;
 }
 
 static struct file_operations snsocb_fops = {
@@ -1352,6 +1437,7 @@ static int __devexit snsocb_probe(struct pci_dev *pdev,
 	ocb->cdev.owner = THIS_MODULE;
 	ocb->pdev = pdev;
 	ocb->minor = minor;
+	strncpy(ocb->dq_big_cnf, "0$0", sizeof(ocb->dq_big_cnf));
 
 	dev_set_name(&ocb->dev, "snsocb%d", minor);
 	ocb->dev.devt = snsocb_basedev + minor;
@@ -1417,6 +1503,8 @@ static int __devexit snsocb_probe(struct pci_dev *pdev,
 		goto error_dev;
 	}
 
+	// Start with small DMA buffer, change through sysfs later
+	ocb->dq_size = OCB_DQ_SIZE;
 	if (snsocb_alloc_queue(dev, &ocb->dq_page, &ocb->dq_dma, OCB_DQ_SIZE)) {
 		dev_err(dev, "unable to allocate data queue, aborting");
 		goto error_dev;
@@ -1525,6 +1613,7 @@ static void __devexit snsocb_remove(struct pci_dev *pdev)
 	iowrite32(0, ocb->ioaddr + REG_IRQ_ENABLE);
 	iowrite32(OCB_CONF_RESET, ocb->ioaddr + REG_CONFIG);
 
+	snsocb_free_big_queue(ocb);
 	snsocb_free_queue(dev, ocb->dq_page, ocb->dq_dma, OCB_DQ_SIZE);
 	snsocb_free_queue(dev, ocb->hwcq_page, ocb->hwcq_dma, OCB_CQ_SIZE);
 	snsocb_free_queue(dev, ocb->hwimq_page, ocb->hwimq_dma, OCB_IMQ_SIZE);
