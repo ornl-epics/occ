@@ -30,4 +30,7 @@ install:
 load:
 	insmod ./sns-ocb.ko
 
+unload:
+	rmmod sns-ocb
+
 endif

@@ -780,9 +780,11 @@ static irqreturn_t snsocb_interrupt(int irq, void *data)
 
 	if (intr_status & OCB_IRQ_DMA_STALL) {
 		snsocb_stalled(ocb, OCB_DMA_STALLED);
+		dev_err_ratelimited(&ocb->dev, "Detected DMA stall flag");
 		goto out;
 	} else if (intr_status & OCB_IRQ_FIFO_OVERFLOW) {
 		snsocb_stalled(ocb, OCB_FIFO_OVERFLOW);
+		dev_err_ratelimited(&ocb->dev, "Detected FIFO overflow flag");
 		goto out;
 	}
 
@@ -833,6 +835,14 @@ static void snsocb_reset(struct ocb *ocb)
 		 */
 		tasklet_kill(&ocb->rxtask);
 	}
+
+	/* Disable the DMA first and give it some time to settle down.
+	 * PCIe cards are not happy being reset while DMA is in progress.
+	 * Especially with high throughputs the likelyhood of hitting it
+	 * just right is high.
+	 */
+	iowrite32(0, ioaddr + REG_CONFIG);
+	msleep(1); // no busy waiting here
 
 	if (ocb->board->reset_errcnt)
 		iowrite32(OCB_CONF_RESET | OCB_CONF_ERRORS_RESET, ioaddr + REG_CONFIG);
@@ -1067,6 +1077,7 @@ static ssize_t snsocb_read(struct file *file, char __user *buf,
 {
 	struct ocb *ocb = file->private_data;
 	struct ocb_status info;
+	ssize_t ret = 0;
 
 	switch (*pos) {
 	case OCB_CMD_GET_STATUS:
@@ -1074,21 +1085,28 @@ static ssize_t snsocb_read(struct file *file, char __user *buf,
 			return -EINVAL;
 
 		spin_lock_irq(&ocb->lock);
-		info.ocb_ver = OCB_VER;
-		info.board_type = ocb->board->type;
-		info.hardware_ver = (ocb->board->type == BOARD_SNS_PCIE ? ((ocb->version >> 16) & 0xFFFF) : 0);
-		info.firmware_ver = (ocb->board->type == BOARD_SNS_PCIE ? (ocb->version & 0xFFFF) : ocb->version);
-		info.firmware_date = ocb->firmware_date;
-		info.fpga_serial = ocb->fpga_serial;
-		info.status = __snsocb_status(ocb);
-		info.dq_used = (ocb->dq_size + ocb->dq_prod - ocb->dq_cons) % ocb->dq_size;
-		info.dq_size = ocb->dq_size;
-		info.bars[0] = ocb->board->bars[0];
-		info.bars[1] = ocb->board->bars[1];
-		info.bars[2] = ocb->board->bars[2];
-		if (!ocb->reset_in_progress)
-			ocb->reset_occurred = false;
+		if (ocb->reset_in_progress) {
+			ret = -ECONNRESET;
+		} else {
+			info.ocb_ver = OCB_VER;
+			info.board_type = ocb->board->type;
+			info.hardware_ver = (ocb->board->type == BOARD_SNS_PCIE ? ((ocb->version >> 16) & 0xFFFF) : 0);
+			info.firmware_ver = (ocb->board->type == BOARD_SNS_PCIE ? (ocb->version & 0xFFFF) : ocb->version);
+			info.firmware_date = ocb->firmware_date;
+			info.fpga_serial = ocb->fpga_serial;
+			info.status = __snsocb_status(ocb);
+			info.dq_used = (ocb->dq_size + ocb->dq_prod - ocb->dq_cons) % ocb->dq_size;
+			info.dq_size = ocb->dq_size;
+			info.bars[0] = ocb->board->bars[0];
+			info.bars[1] = ocb->board->bars[1];
+			info.bars[2] = ocb->board->bars[2];
+			if (!ocb->reset_in_progress)
+				ocb->reset_occurred = false;
+		}
 		spin_unlock_irq(&ocb->lock);
+
+		if (ret != 0)
+			return ret;
 
 		if (copy_to_user(buf, &info, sizeof(info)))
 			return -EFAULT;
@@ -1108,6 +1126,7 @@ static ssize_t snsocb_write(struct file *file, const char __user *buf,
 {
 	struct ocb *ocb = file->private_data;
 	u32 val, prod;
+	ssize_t ret = 0;
 
 	switch (*pos) {
 	case OCB_CMD_ADVANCE_DQ:
@@ -1127,22 +1146,27 @@ static ssize_t snsocb_write(struct file *file, const char __user *buf,
 		 * of valid data.
 		 */
 		spin_lock_irq(&ocb->lock);
-		val += ocb->dq_cons;
-		prod = ocb->dq_prod;
-		if (ocb->dq_prod < ocb->dq_cons)
-			prod += ocb->dq_size;
-		if (val > ocb->dq_cons && val <= prod) {
-			ocb->dq_cons = val % ocb->dq_size;
-			if (!ocb->emulate_dq) {
-				iowrite32(ocb->dq_cons,
-					  ocb->ioaddr + REG_DQ_CONS_INDEX);
+		if (ocb->reset_in_progress) {
+			ret = -ECONNRESET;
+		} else {
+			val += ocb->dq_cons;
+			prod = ocb->dq_prod;
+			if (ocb->dq_prod < ocb->dq_cons)
+				prod += ocb->dq_size;
+			if (val > ocb->dq_cons && val <= prod) {
+				ocb->dq_cons = val % ocb->dq_size;
+				if (!ocb->emulate_dq) {
+					iowrite32(ocb->dq_cons,
+						  ocb->ioaddr + REG_DQ_CONS_INDEX);
+				}
+			} else {
+				ret = -EOVERFLOW;
 			}
-		} else
-			val = ~0;
+		}
 		spin_unlock_irq(&ocb->lock);
 
-		if (val == ~0)
-			return -EOVERFLOW;
+		if (ret != 0)
+			return ret;
 		break;
 	case OCB_CMD_RESET:
 		if (count != sizeof(u32))
@@ -1155,15 +1179,22 @@ static ssize_t snsocb_write(struct file *file, const char __user *buf,
 			return -EINVAL;
 
 		spin_lock_irq(&ocb->lock);
-		ocb->use_optical = !!val;
-		if (ocb->use_optical) {
-			ocb->conf |= OCB_CONF_SELECT_OPTICAL;
-			ocb->conf |= OCB_CONF_OPTICAL_ENABLE;
+		if (ocb->reset_in_progress) {
+			ret = -ECONNRESET;
 		} else {
-			ocb->conf &= ~OCB_CONF_SELECT_OPTICAL;
-			ocb->conf &= ~OCB_CONF_OPTICAL_ENABLE;
+			ocb->use_optical = !!val;
+			if (ocb->use_optical) {
+				ocb->conf |= OCB_CONF_SELECT_OPTICAL;
+				ocb->conf |= OCB_CONF_OPTICAL_ENABLE;
+			} else {
+				ocb->conf &= ~OCB_CONF_SELECT_OPTICAL;
+				ocb->conf &= ~OCB_CONF_OPTICAL_ENABLE;
+			}
 		}
 		spin_unlock_irq(&ocb->lock);
+
+		if (ret != 0)
+			return ret;
 
 		snsocb_reset(ocb);
 		break;
@@ -1178,12 +1209,20 @@ static ssize_t snsocb_write(struct file *file, const char __user *buf,
 			return -EFAULT;
 
 		spin_lock_irq(&ocb->lock);
-		if (val)
-			ocb->conf |= OCB_CONF_RX_ENABLE;
-		else
-			ocb->conf &= ~OCB_CONF_RX_ENABLE;
-		val = ocb->conf;
+		if (ocb->reset_in_progress) {
+			ret = -ECONNRESET;
+		} else {
+			if (val)
+				ocb->conf |= OCB_CONF_RX_ENABLE;
+			else
+				ocb->conf &= ~OCB_CONF_RX_ENABLE;
+			val = ocb->conf;
+		}
 		spin_unlock_irq(&ocb->lock);
+
+		if (ret != 0)
+			return ret;
+
 		iowrite32(val, ocb->ioaddr + REG_CONFIG);
 		ioread32(ocb->ioaddr + REG_CONFIG); // post write
 
@@ -1196,12 +1235,20 @@ static ssize_t snsocb_write(struct file *file, const char __user *buf,
 			return -EFAULT;
 
 		spin_lock_irq(&ocb->lock);
-		if (val)
-			ocb->conf |= OCB_CONF_ERR_PKTS_ENABLE;
-		else
-			ocb->conf &= ~OCB_CONF_ERR_PKTS_ENABLE;
-		val = ocb->conf;
+		if (ocb->reset_in_progress) {
+			ret = -ECONNRESET;
+		} else {
+			if (val)
+				ocb->conf |= OCB_CONF_ERR_PKTS_ENABLE;
+			else
+				ocb->conf &= ~OCB_CONF_ERR_PKTS_ENABLE;
+			val = ocb->conf;
+		}
 		spin_unlock_irq(&ocb->lock);
+
+		if (ret != 0)
+			return ret;
+
 		iowrite32(val, ocb->ioaddr + REG_CONFIG);
 		ioread32(ocb->ioaddr + REG_CONFIG); // post write
 
