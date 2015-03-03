@@ -1,4 +1,4 @@
-SUBDIRS = driver lib tools
+SUBDIRS = driver lib libpy tools
 
 .PHONY: subdirs $(SUBDIRS)
 
