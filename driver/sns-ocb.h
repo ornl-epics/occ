@@ -92,6 +92,7 @@ struct ocb_status {
     u32 status;
     u32 dq_size;			// Size of RX DMA data cyclic-queue in bytes
     u32 dq_used;			// Used space
+    u32 rx_rate;			// Receive (optic side) data rate in B/s calculated by hw
     u32 bars[3];			// Sizes of BAR regions used for mmap
 };
 

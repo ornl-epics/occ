@@ -119,6 +119,7 @@ do {									\
 #define REG_ERROR_CRC_COUNTER				0x0180 // CRC errors counter (PCIe only)
 #define REG_ERROR_LENGTH_COUNTER			0x0184 // Frame length errors counter (PCIe only)
 #define REG_ERROR_FRAME_COUNTER				0x0188 // Frame errors counter (PCIe only)
+#define REG_RX_RATE     				0x018C     // Receive rate calculated every second
 #define REG_COMM_ERR					0x0240
 #define REG_LOST_PACKETS				0x0244		/* 16 bit register */
 
@@ -372,6 +373,13 @@ static u32 __snsocb_status(struct ocb *ocb)
 	}
 
 	return status;
+}
+
+static u32 __snsocb_rxrate(struct ocb *ocb)
+{
+	if (ocb->board->type == BOARD_SNS_PCIE)
+		return ioread32(ocb->ioaddr + REG_RX_RATE);
+	return 0;
 }
 
 static u32 __snsocb_tx_room(struct ocb *ocb)
@@ -1097,6 +1105,7 @@ static ssize_t snsocb_read(struct file *file, char __user *buf,
 			info.status = __snsocb_status(ocb);
 			info.dq_used = (ocb->dq_size + ocb->dq_prod - ocb->dq_cons) % ocb->dq_size;
 			info.dq_size = ocb->dq_size;
+			info.rx_rate = __snsocb_rxrate(ocb);
 			info.bars[0] = ocb->board->bars[0];
 			info.bars[1] = ocb->board->bars[1];
 			info.bars[2] = ocb->board->bars[2];

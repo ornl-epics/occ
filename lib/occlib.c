@@ -215,6 +215,7 @@ int occ_status(struct occ_handle *handle, occ_status_t *status, bool fast_status
 
     status->dma_size = handle->dma_buf_len;
     status->dma_used = info.dq_used;
+    status->rx_rate = info.rx_rate;
     status->board = (info.board_type == BOARD_SNS_PCIE ? OCC_BOARD_PCIE : OCC_BOARD_PCIX);
     status->stalled = (info.status & OCB_DMA_STALLED);
     status->overflowed = (info.status & OCB_FIFO_OVERFLOW);
