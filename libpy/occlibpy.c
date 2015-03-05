@@ -219,6 +219,7 @@ static PyObject *py_occ_status(OccObject *self, PyObject *args, PyObject *keywds
     PyDict_SetItem(sdict, PyString_FromString("firmware_date"), PyInt_FromLong(status.firmware_date));
     PyDict_SetItem(sdict, PyString_FromString("dma_size"), PyInt_FromLong(status.dma_size));
     PyDict_SetItem(sdict, PyString_FromString("dma_used"), PyInt_FromLong(status.dma_used));
+    PyDict_SetItem(sdict, PyString_FromString("rx_rate"), PyInt_FromLong(status.rx_rate));
     PyDict_SetItem(sdict, PyString_FromString("stalled"), PyBool_FromLong(status.stalled));
     PyDict_SetItem(sdict, PyString_FromString("overflowed"), PyBool_FromLong(status.overflowed));
 
