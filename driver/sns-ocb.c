@@ -892,7 +892,7 @@ static void snsocb_reset(struct ocb *ocb)
 		/* This board uses an unified DQ, or we're using the LVDS
 		 * so directly map it onto the buffer the user maps.
 		 */
-		unsigned long addr = (ocb->dq_big_addr ? virt_to_bus(phys_to_virt(ocb->dq_big_addr)) : ocb->dq_dma);
+		u64 addr = (ocb->dq_big_addr ? virt_to_bus(phys_to_virt(ocb->dq_big_addr)) : ocb->dq_dma);
 		ocb->emulate_dq = 0;
 		iowrite32(addr & 0xFFFFFFFF, ioaddr + REG_DQ_ADDR);
 		iowrite32((addr >> 32) & 0xFFFFFFFF, ioaddr + REG_DQ_ADDRHI);
