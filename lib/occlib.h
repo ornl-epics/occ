@@ -134,11 +134,50 @@ typedef struct {
 int occ_open(const char *devfile, occ_interface_type type, struct occ_handle **handle);
 
 /**
+ * Open a debug connection to OCC driver and return a handle for it.
+ *
+ * Debug connection is limited to following functions:
+ * - occ_status()
+ * - occ_reset()
+ * - occ_io_read()
+ * - occ_io_write()
+ * - occ_close()
+ * Calling any other function of this API with debug connection will return
+ * -EINVAL.
+ *
+ * Debug connection can be used alongside regular connection and is meant for
+ * debugging OCC board. OCC functionality can be tempered when read_only flag
+ * is 0. This will impact sending and receiving data on the regular connection
+ * if one present.
+ *
+ * Beside the limited set of functions that debug connection supports, there's
+ * another important difference. When opened, regular connection automatically
+ * resets OCC board and internal variables. This will impact any connection
+ * that is opened at a time. Debug connection doesn't do that when opened.
+ * This is needed for transparent opening of debug connection alongside
+ * regular connection for monitoring purposes. It also allows to inspect OCC
+ * board registers after a regular connection has closed.
+ *
+ * \param[in] devfile Full path to the device file for selected OCC board.
+ * \param[in] type Device type, either LVDS or optical.
+ * \param[out] handle Handle to be used with the rest of the API interfaces.
+ * \note occlib_sim doesn't support this function and always returns -EINVAL.
+ * \retval 0 on success
+ * \retval -ENOENT No such device.
+ * \retval -ENOMSG Driver/library version mismatch.
+ * \retval -ENODATA Could not verify connection with driver.
+ * \retval -ENOMEM Not enough memory.
+ * \retval -X Other POSIX errno values.
+ */
+int occ_open_debug(const char *devfile, occ_interface_type type, struct occ_handle **handle);
+
+/**
  * Close the connection to OCC driver and release handle.
  *
  * After this function returns the handle is no longer valid and can no
  * longer be used for communication with the driver. Function may not return
- * success but will still release the handle.
+ * success but will still release the handle. DMA gets disabled but OCC board
+ * is not reset.
  *
  * \param[in] handle OCC API handle to be released.
  * \return 0 on success, negative errno on error.

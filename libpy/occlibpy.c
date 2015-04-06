@@ -57,6 +57,34 @@ static PyObject *py_occ_open(PyObject *self, PyObject *args, PyObject *keywds) {
     return (PyObject *)occObj;
 }
 
+PyDoc_STRVAR(py_occ_open_debug__doc__,
+"open_debug(device) -> OccObject\n\n"
+"Open debug connection to OCC driver.\n\n"
+"device parameter must point to a valid OCC device file path,\n"
+"ie. /dev/snsocb0.\n"
+"Raise an occ.error when failed to open connection.");
+static PyObject *py_occ_open_debug(PyObject *self, PyObject *args, PyObject *keywds) {
+    const char *path;
+    int ret;
+
+    static char *kwlist[] = {"device", NULL};
+
+    if (!PyArg_ParseTupleAndKeywords(args, keywds, "s", kwlist, &path))
+        return NULL;
+
+    OccObject *occObj = PyObject_New(OccObject, &Occ_Type);
+    if (occObj == NULL)
+        return NULL;
+
+    ret = occ_open_debug(path, OCC_INTERFACE_OPTICAL, &occObj->occ);
+    if (ret != 0) {
+        PyObject_Del(occObj);
+        return NULL;
+    }
+
+    return (PyObject *)occObj;
+}
+
 PyDoc_STRVAR(py_occ_close__doc__,
 "close() -> None\n\n"
 "Close the connection to OCC driver.\n\n"
@@ -471,6 +499,7 @@ static PyTypeObject Occ_Type = {
 
 static PyMethodDef Occlib_Methods[] = {
     { "open",  (PyCFunction)py_occ_open, METH_VARARGS | METH_KEYWORDS, py_occ_open__doc__},
+    { "open_debug",  (PyCFunction)py_occ_open_debug, METH_VARARGS | METH_KEYWORDS, py_occ_open_debug__doc__},
     {NULL, NULL, 0, NULL}
 };
 

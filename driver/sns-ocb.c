@@ -275,6 +275,15 @@ struct ocb {
 	struct ocb_board_desc *board;
 };
 
+/**
+ * Context for single file open operations, from when the file is opened
+ * until it's closed.
+ */
+struct file_ctx {
+	struct ocb *ocb;
+	bool debug_mode;
+};
+
 static const char *snsocb_name[] = {
 	[BOARD_SNS_PCIX] = "SNS PCI-X",
 	[BOARD_SNS_PCIE] = "SNS PCIe",
@@ -515,7 +524,8 @@ out:
 
 static ssize_t snsocb_rx(struct file *file, char __user *buf, size_t count)
 {
-	struct ocb *ocb = file->private_data;
+	struct file_ctx *file_ctx = file->private_data;
+	struct ocb *ocb = file_ctx->ocb;
 	DEFINE_WAIT(wait);
 	int ret = 0;
 	u32 info[2];
@@ -995,7 +1005,8 @@ static void snsocb_free_big_queue(struct ocb *ocb)
 
 static int snsocb_vm_fault(struct vm_area_struct *vma, struct vm_fault *vmf)
 {
-	struct ocb *ocb = vma->vm_private_data;
+	struct file_ctx *file_ctx = vma->vm_private_data;
+	struct ocb *ocb = file_ctx->ocb;
 	unsigned long offset;
 	struct page *page;
 
@@ -1021,7 +1032,8 @@ static const struct vm_operations_struct snsocb_vm_ops = {
 
 static int snsocb_mmap(struct file *file, struct vm_area_struct *vma)
 {
-	struct ocb *ocb = file->private_data;
+	struct file_ctx *file_ctx = file->private_data;
+	struct ocb *ocb = file_ctx->ocb;
 	unsigned long size = vma->vm_end - vma->vm_start;
 	unsigned long pfn;
 
@@ -1056,9 +1068,14 @@ static int snsocb_mmap(struct file *file, struct vm_area_struct *vma)
 static unsigned int snsocb_poll(struct file *file,
 				struct poll_table_struct *wait)
 {
-	struct ocb *ocb = file->private_data;
+	struct file_ctx *file_ctx = file->private_data;
+	struct ocb *ocb = file_ctx->ocb;
 	unsigned int mask = 0;
 	unsigned long flags;
+
+	/* Debug connection doesn't support poll */
+	if (file_ctx->debug_mode)
+		return -EINVAL;
 
 	poll_wait(file, &ocb->rx_wq, wait);
 	poll_wait(file, &ocb->tx_wq, wait);
@@ -1083,9 +1100,14 @@ static unsigned int snsocb_poll(struct file *file,
 static ssize_t snsocb_read(struct file *file, char __user *buf,
 			   size_t count, loff_t *pos)
 {
-	struct ocb *ocb = file->private_data;
+	struct file_ctx *file_ctx = file->private_data;
+	struct ocb *ocb = file_ctx->ocb;
 	struct ocb_status info;
 	ssize_t ret = 0;
+
+	/* Debug connection is limited to reset only when in read-write mode */
+	if (file_ctx->debug_mode && *pos != OCB_CMD_GET_STATUS)
+		return -EPERM;
 
 	switch (*pos) {
 	case OCB_CMD_GET_STATUS:
@@ -1133,9 +1155,14 @@ static ssize_t snsocb_read(struct file *file, char __user *buf,
 static ssize_t snsocb_write(struct file *file, const char __user *buf,
 			    size_t count, loff_t *pos)
 {
-	struct ocb *ocb = file->private_data;
+	struct file_ctx *file_ctx = file->private_data;
+	struct ocb *ocb = file_ctx->ocb;
 	u32 val, prod;
 	ssize_t ret = 0;
+
+	/* Debug connection is limited to reset only */
+	if (file_ctx->debug_mode && *pos != OCB_CMD_RESET)
+		return -EINVAL;
 
 	switch (*pos) {
 	case OCB_CMD_ADVANCE_DQ:
@@ -1273,6 +1300,23 @@ static int snsocb_open(struct inode *inode, struct file *file)
 {
 	struct ocb *ocb = container_of(inode->i_cdev, struct ocb, cdev);
 	int err = 0;
+	struct file_ctx *file_ctx;
+
+	file->private_data = NULL;
+
+	file_ctx = kmalloc(sizeof(struct file_ctx), GFP_KERNEL);
+	if (!file_ctx)
+		return -ENOMEM;
+
+	memset(file_ctx, 0, sizeof(struct file_ctx));
+	file_ctx->ocb = ocb;
+	file_ctx->debug_mode = ((file->f_flags & O_EXCL) ? false : true);
+
+	file->private_data = file_ctx;
+
+	/* Debug connection is limited but not exclusive */
+	if (file_ctx->debug_mode)
+		return 0;
 
 	/* We only allow one process at a time to have us open. */
 	spin_lock_irq(&ocb->lock);
@@ -1285,7 +1329,6 @@ static int snsocb_open(struct inode *inode, struct file *file)
 	if (err)
 		return err;
 
-	file->private_data = ocb;
 	ocb->conf = 0;
 	if (ocb->use_optical) {
 		ocb->conf |= OCB_CONF_SELECT_OPTICAL;
@@ -1299,19 +1342,25 @@ static int snsocb_open(struct inode *inode, struct file *file)
 
 static int snsocb_release(struct inode *inode, struct file *file)
 {
-	struct ocb *ocb = file->private_data;
+	struct file_ctx *file_ctx = file->private_data;
 
-	/* As we're disabling the interrupts, the tasklet_kill() in
-	 * snsocb_reset() will ensure we don't leave our rxtask
-	 * running.
-	 */
-	ocb->conf = OCB_CONF_RESET;
-	ocb->irqs = 0;
-	snsocb_reset(ocb);
+	if (file_ctx) {
+		if (!file_ctx->debug_mode) {
+			struct ocb *ocb = file_ctx->ocb;
+			void __iomem *ioaddr = ocb->ioaddr;
 
-	spin_lock_irq(&ocb->lock);
-	ocb->in_use = false;
-	spin_unlock_irq(&ocb->lock);
+			/* Disable DMA only, no need to send more data since noone is listening */
+			iowrite32(0, ioaddr + REG_CONFIG);
+
+			spin_lock_irq(&ocb->lock);
+			ocb->in_use = false;
+			spin_unlock_irq(&ocb->lock);
+		}
+
+		file_ctx->ocb = NULL;
+		kfree(file_ctx);
+	}
+
 	return 0;
 }
 
