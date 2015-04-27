@@ -73,26 +73,35 @@ struct occ_packet_header {
 };
 #pragma pack(pop)
 
+int _occ_open_common(const char *devfile, occ_interface_type type, int flags, struct occ_handle **handle) {
+
+    *handle = malloc(sizeof(struct occ_handle));
+    if (*handle == NULL)
+        return -ENOMEM;
+
+    memset(*handle, 0, sizeof(struct occ_handle));
+    (*handle)->magic = OCC_HANDLE_MAGIC;
+    (*handle)->dma_buf = MAP_FAILED;
+
+    (*handle)->fd = open(devfile, flags);
+    if ((*handle)->fd == -1) {
+        int ret = -errno;
+        free(*handle);
+        *handle = NULL;
+        return ret;
+    }
+
+    return 0;
+}
+
 int occ_open(const char *devfile, occ_interface_type type, struct occ_handle **handle) {
     int ret = 0;
     struct ocb_status info;
 
     do {
-        *handle = malloc(sizeof(struct occ_handle));
-        if (*handle == NULL) {
-            ret = -ENOMEM;
+        ret = _occ_open_common(devfile, type, O_EXCL | O_RDWR, handle);
+        if (ret != 0)
             break;
-        }
-
-        memset(*handle, 0, sizeof(struct occ_handle));
-        (*handle)->magic = OCC_HANDLE_MAGIC;
-        (*handle)->dma_buf = MAP_FAILED;
-
-        (*handle)->fd = open(devfile, O_RDWR);
-        if ((*handle)->fd == -1) {
-            ret = -errno;
-            break;
-        }
 
         ret = pread((*handle)->fd, &info, sizeof(info), OCB_CMD_GET_STATUS);
         if (ret != sizeof(info)) {
@@ -151,6 +160,10 @@ int occ_open(const char *devfile, occ_interface_type type, struct occ_handle **h
     }
 
     return ret;
+}
+
+int occ_open_debug(const char *devfile, occ_interface_type type, struct occ_handle **handle) {
+    return _occ_open_common(devfile, type, O_RDWR, handle);
 }
 
 int occ_close(struct occ_handle *handle) {
