@@ -118,7 +118,7 @@ int main(int argc, char **argv) {
 
         if ((header.info & 0x80000085) == 0x80000085)       fprintf(outfd, ";RTDL(cmd);0;%u.%09u\n",    buf[0], buf[1]);
         else if ((header.info & 0x200000FF) == 0x200000FF)  fprintf(outfd, ";RTDL(data);0;%u.%09u\n",   buf[0], buf[1]);
-        else if ((header.info & 0x80000084) == 0x80000084)  fprintf(outfd, ";TSYNC;0;0\n");
+        else if ((header.info & 0x80000084) == 0x80000084)  fprintf(outfd, ";TSYNC;0;%u.%09u\n", buf[0], buf[1]);
         else if (header.info & 0x80000000)                  fprintf(outfd, ";CMD(0x%.02X);0;%u.%09u\n", header.info & 0xFF, 0, 0);
         else if ((header.info & 0xC) == 0xC)                fprintf(outfd, ";NEUTRON;%u;%u.%09u\n",     subpacket_id, buf[0], buf[1]);
         else if ((header.info & 0xC) == 0x4)                fprintf(outfd, ";NEUTRON;%u;missing RTDL\n",subpacket_id);
