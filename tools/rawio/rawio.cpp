@@ -111,8 +111,8 @@ int main(int argc, char **argv) {
             fprintf(stderr, "ERROR: cannot read BAR%d at offset 0x%08X - %s\n", bar, offset, strerror(-ret));
         } else {
             printf("%s BAR%d dword data:\n", device_file, bar);
-            for (int i = 0; i < ret; i++) {
-                printf("0x%08X: 0x%08X\n", offset + 4*i, data[i]);
+            for (int i = 0; i < ret; i+=4) {
+                printf("0x%08X: 0x%08X 0x%08X 0x%08X 0x%08X\n", offset + 4*i, data[i], data[i+1], data[i+2], data[i+3]);
             }
         }
     }
