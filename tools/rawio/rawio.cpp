@@ -15,6 +15,7 @@ static void usage(const char *progname) {
     printf("  -b, --bar                Select device PCI BAR\n");
     printf("  -o, --offset             Offset to the base address\n");
     printf("  -l, --length             Number of dwords to read/write (defaults to 1)\n");
+    printf("  -f, --force              Run even if there's another program connected to device\n");
     printf("\n");
 }
 
@@ -26,6 +27,7 @@ int main(int argc, char **argv) {
     uint32_t offset = -1;
     uint32_t length = 1;
     uint32_t write_value = 0;
+    bool force = false;
 
     for (int i = 1; i < argc; i++) {
         const char *key = argv[i];
@@ -60,10 +62,13 @@ int main(int argc, char **argv) {
                 break;
             offset = strtol(argv[++i], NULL, 0);
         }
-        if (strncmp(key, "-l", 2) == 0 || strncmp(key, "--length", 7) == 0) {
+        if (strncmp(key, "-l", 2) == 0 || strncmp(key, "--length", 8) == 0) {
             if ((i + 1) >= argc)
                 break;
             length = strtol(argv[++i], NULL, 0);
+        }
+        if (strncmp(key, "-f", 2) == 0 || strncmp(key, "--force", 7) == 0) {
+            force = true;
         }
     }
     if (device_file == NULL || bar == (uint8_t)-1 || offset == (uint32_t)-1) {
@@ -75,8 +80,14 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    if (occ_open(device_file, OCC_INTERFACE_OPTICAL, &occ) != 0) {
-        fprintf(stderr, "ERROR: cannot initialize OCC interface\n");
+    int ret = 0;
+    if (force) {
+        ret = occ_open_debug(device_file, OCC_INTERFACE_OPTICAL, &occ);
+    } else {
+        ret = occ_open(device_file, OCC_INTERFACE_OPTICAL, &occ);
+    }
+    if (ret != 0) {
+        fprintf(stderr, "ERROR: cannot initialize OCC interface (%s)\n", strerror(-ret));
         return 3;
     }
 
@@ -101,7 +112,7 @@ int main(int argc, char **argv) {
         } else {
             printf("%s BAR%d dword data:\n", device_file, bar);
             for (int i = 0; i < ret; i++) {
-                printf("0x%08X: 0x%08X\n", offset, data[i]);
+                printf("0x%08X: 0x%08X\n", offset + 4*i, data[i]);
             }
         }
     }
