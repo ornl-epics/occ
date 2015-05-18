@@ -3,12 +3,16 @@ CFLAGS=-Wall -I../driver -fPIC
 #CFLAGS+=-DTX_DUMP_PATH="/tmp/occ_tx.dump"
 LDFLAGS=-shared -Wl,-soname,lib$(LIBNAME).so
 SRCS=occlib.c i2c.c
-SIMSRCS=occlib_sim.c
+PIPESRCS=occlib_pipe.c
+SOCKSRCS=occlib_socket.c
 HDRS=occlib.h occlib_hw.h
+LIBHWNAME=occ_hw
 LIBNAME=occ
-LIBSIMNAME=occ_sim
+LIBPIPENAME=occ_pipe
 OBJS=$(SRCS:.c=.o)
-SIMOBJS=$(SIMSRCS:.c=.o)
+PIPEOBJS=$(PIPESRCS:.c=.o)
+SOCKOBJS=$(SOCKSRCS:.c=.o)
+LIBSOCKNAME=occ_socket
 
 .PHONY: all debug simulator common clean doc
 
@@ -18,31 +22,39 @@ all: shared
 debug: CFLAGS+=-ggdb -g
 debug: shared
 
-static: lib$(LIBNAME).a lib$(LIBSIMNAME).a
+static: lib$(LIBHWNAME).a lib$(LIBPIPENAME).a lib$(LIBSOCKNAME).a
 
-shared: lib$(LIBNAME).so lib$(LIBSIMNAME).so
+shared: lib$(LIBHWNAME).so lib$(LIBPIPENAME).so lib$(LIBSOCKNAME).so
 
 occlib.o: occlib.c $(HDRS)
 
 # This is tricky. Rules will be compiled before evaluated. When evaluated,
 # OBJS might be different based on the simulator rule which makes this rule
 # work.
-lib$(LIBNAME).a: $(OBJS)
+lib$(LIBHWNAME).a: $(OBJS)
 	$(AR) rcs $@ $(OBJS)
-lib$(LIBNAME).so: $(OBJS)
+lib$(LIBHWNAME).so: $(OBJS)
 	$(CC) $(LDFLAGS) -o $@ $(OBJS)
+	ln -sf lib$(LIBHWNAME).so lib$(LIBNAME).so
 
-lib$(LIBSIMNAME).a: $(SIMOBJS)
-	$(AR) rcs $@ $(OBJS)
-lib$(LIBSIMNAME).so: $(SIMOBJS)
-	$(CC) $(LDFLAGS) -o $@ $(SIMOBJS)
+lib$(LIBPIPENAME).a: $(PIPEOBJS)
+	$(AR) rcs $@ $(PIPEOBJS)
+lib$(LIBPIPENAME).so: $(PIPEOBJS)
+	$(CC) $(LDFLAGS) -o $@ $(PIPEOBJS)
+
+lib$(LIBSOCKNAME).a: $(SOCKOBJS)
+	$(AR) rcs $@ $(SOCKOBJS)
+lib$(LIBSOCKNAME).so: $(SOCKOBJS)
+	$(CC) $(LDFLAGS) -o $@ $(SOCKOBJS)
 
 clean:
-	rm -fR $(OBJS) $(SIMOBJS) lib*.so lib*.a doc/
+	rm -fR $(OBJS) $(PIPEOBJS) $(SOCKOBJS) lib*.so lib*.a doc/
 
 doc: $(HDRS) occlib.doxygen
 	doxygen occlib.doxygen
 
-simulator: all
-	mv lib$(LIBNAME).so lib$(LIBNAME)_hw.so
-	ln -s lib$(LIBSIMNAME).so lib$(LIBNAME).so
+pipe: all
+	ln -sf lib$(LIBPIPENAME).so lib$(LIBNAME).so
+
+socket: all
+	ln -sf lib$(LIBSOCKNAME).so lib$(LIBNAME).so

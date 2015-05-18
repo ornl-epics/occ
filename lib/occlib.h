@@ -30,16 +30,18 @@ struct occ_handle;
  */
 typedef enum {
     OCC_INTERFACE_LVDS,
-    OCC_INTERFACE_OPTICAL
+    OCC_INTERFACE_OPTICAL,
+    OCC_INTERFACE_SOCKET,
+    OCC_INTERFACE_PIPE,
 } occ_interface_type;
 
 /**
  * OCC board types.
  */
 typedef enum {
+    OCC_BOARD_NONE = 0,
     OCC_BOARD_PCIX = 1,
     OCC_BOARD_PCIE = 2,
-    OCC_BOARD_SIMULATOR = 15,
 } occ_board_type;
 
 /**

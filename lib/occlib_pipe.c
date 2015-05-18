@@ -66,10 +66,12 @@ int occ_open(const char *pipe_names, occ_interface_type type, struct occ_handle 
     char rxpath[PATH_MAX], txpath[PATH_MAX];
     char *saveptr;
 
+    if (type != OCC_INTERFACE_PIPE)
+        return -EINVAL;
+
     *handle = malloc(sizeof(struct occ_handle));
-    if (*handle == NULL) {
+    if (*handle == NULL)
         return -ENOMEM;
-    }
 
     memset(*handle, 0, sizeof(struct occ_handle));
     (*handle)->magic = OCC_HANDLE_MAGIC;
@@ -140,8 +142,8 @@ int occ_status(struct occ_handle *handle, occ_status_t *status, bool fast_status
         return -EINVAL;
 
     status->dma_size = 0;
-    status->board = OCC_BOARD_SIMULATOR;
-    status->interface = OCC_INTERFACE_OPTICAL;
+    status->board = OCC_BOARD_NONE;
+    status->interface = OCC_INTERFACE_PIPE;
     status->firmware_ver = 0x000F0001;
     status->optical_signal = OCC_OPT_CONNECTED;
     status->rx_enabled = handle->rx_enabled;

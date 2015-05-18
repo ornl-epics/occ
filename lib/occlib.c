@@ -73,7 +73,7 @@ struct occ_packet_header {
 };
 #pragma pack(pop)
 
-int _occ_open_common(const char *devfile, occ_interface_type type, int flags, struct occ_handle **handle) {
+int _occ_open_common(const char *devfile, int flags, struct occ_handle **handle) {
 
     *handle = malloc(sizeof(struct occ_handle));
     if (*handle == NULL)
@@ -99,7 +99,12 @@ int occ_open(const char *devfile, occ_interface_type type, struct occ_handle **h
     struct ocb_status info;
 
     do {
-        ret = _occ_open_common(devfile, type, O_EXCL | O_RDWR, handle);
+        if (type != OCC_INTERFACE_OPTICAL || type != OCC_INTERFACE_LVDS) {
+            ret = -EINVAL;
+            break;
+        }
+
+        ret = _occ_open_common(devfile, O_EXCL | O_RDWR, handle);
         if (ret != 0)
             break;
 
@@ -163,7 +168,7 @@ int occ_open(const char *devfile, occ_interface_type type, struct occ_handle **h
 }
 
 int occ_open_debug(const char *devfile, occ_interface_type type, struct occ_handle **handle) {
-    return _occ_open_common(devfile, type, O_RDWR, handle);
+    return _occ_open_common(devfile, O_RDWR, handle);
 }
 
 int occ_close(struct occ_handle *handle) {
