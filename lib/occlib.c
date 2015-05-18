@@ -99,7 +99,7 @@ int occ_open(const char *devfile, occ_interface_type type, struct occ_handle **h
     struct ocb_status info;
 
     do {
-        if (type != OCC_INTERFACE_OPTICAL || type != OCC_INTERFACE_LVDS) {
+        if (type != OCC_INTERFACE_OPTICAL && type != OCC_INTERFACE_LVDS) {
             ret = -EINVAL;
             break;
         }
