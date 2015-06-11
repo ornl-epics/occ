@@ -230,8 +230,8 @@ static PyObject *py_occ_status(OccObject *self, PyObject *args, PyObject *keywds
         PyDict_SetItem(sdict, PyString_FromString("board_type"), PyString_FromString("PCIe"));
     else if (status.board == OCC_BOARD_PCIX)
         PyDict_SetItem(sdict, PyString_FromString("board_type"), PyString_FromString("PCI-X"));
-    else if (status.board == OCC_BOARD_SIMULATOR)
-        PyDict_SetItem(sdict, PyString_FromString("board_type"), PyString_FromString("simulator"));
+    else if (status.board == OCC_BOARD_NONE)
+        PyDict_SetItem(sdict, PyString_FromString("board_type"), PyString_FromString("none"));
     else
         PyDict_SetItem(sdict, PyString_FromString("board_type"), PyString_FromString("unknown"));
 
