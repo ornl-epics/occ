@@ -1073,10 +1073,6 @@ static unsigned int snsocb_poll(struct file *file,
 	unsigned int mask = 0;
 	unsigned long flags;
 
-	/* Debug connection doesn't support poll */
-	if (file_ctx->debug_mode)
-		return -EINVAL;
-
 	poll_wait(file, &ocb->rx_wq, wait);
 	poll_wait(file, &ocb->tx_wq, wait);
 
@@ -1104,10 +1100,6 @@ static ssize_t snsocb_read(struct file *file, char __user *buf,
 	struct ocb *ocb = file_ctx->ocb;
 	struct ocb_status info;
 	ssize_t ret = 0;
-
-	/* Debug connection is limited to reset only when in read-write mode */
-	if (file_ctx->debug_mode && *pos != OCB_CMD_GET_STATUS)
-		return -EPERM;
 
 	switch (*pos) {
 	case OCB_CMD_GET_STATUS:
