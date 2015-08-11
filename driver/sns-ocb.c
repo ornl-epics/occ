@@ -344,7 +344,9 @@ static void __snsocb_stalled(struct ocb *ocb, int type)
 	 * Caller must hold ocb->lock.
 	 */
 	ocb->stalled = type;
-	iowrite32(ocb->conf & ~OCB_CONF_RX_ENABLE, ocb->ioaddr + REG_CONFIG);
+	// Must change ocb->conf otherwise RX might get re-enabled automatically in TX thread
+	ocb->conf &= ~OCB_CONF_RX_ENABLE;
+	iowrite32(ocb->conf, ocb->ioaddr + REG_CONFIG);
 	wake_up(&ocb->rx_wq);
 }
 
