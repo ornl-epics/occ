@@ -51,6 +51,7 @@ struct occ_handle {
     uint8_t use_optic;
     uint32_t last_count;                        //<! Number of bytes available returned by the last occ_data_wait()
     uint8_t rollover_buf[ROLLOVER_BUFFER_SIZE];
+    bool debug_mode;
 
 #ifdef TX_DUMP_PATH
     int tx_dump_fd;
@@ -107,6 +108,9 @@ int _occ_open_common(const char *devfile, int flags, struct occ_handle **handle)
             ret = -EPROTO;
             break;
         }
+
+        if (flags & O_EXCL)
+            (*handle)->debug_mode = true;
         return 0;
     } while (0);
 
@@ -252,7 +256,7 @@ int occ_status(struct occ_handle *handle, occ_status_t *status, bool fast_status
     if (pread(handle->fd, &info, sizeof(info), OCB_CMD_GET_STATUS) < 0)
         return -errno;
 
-    status->dma_size = handle->dma_buf_len;
+    status->dma_size = info.dq_size;
     status->dma_used = info.dq_used;
     status->rx_rate = info.rx_rate;
     status->board = (info.board_type == BOARD_SNS_PCIE ? OCC_BOARD_PCIE : OCC_BOARD_PCIX);
@@ -549,9 +553,11 @@ int occ_read(struct occ_handle *handle, void *data, size_t count, uint32_t timeo
         count = avail;
     memcpy(data, address, count);
 
-    ret = occ_data_ack(handle, count);
-    if (ret != 0)
-        return ret;
+    if (handle->debug_mode == false) {
+        ret = occ_data_ack(handle, count);
+        if (ret != 0)
+            return ret;
+    }
 
     return count;
 }

@@ -156,13 +156,15 @@ int occ_open(const char *devfile, occ_interface_type type, struct occ_handle **h
  * - occ_reset()
  * - occ_io_read()
  * - occ_io_write()
+ * - occ_read() - limited
+ * - occ_data_wait()
  * - occ_close()
  * Calling any other function of this API with debug connection will return
  * -EINVAL.
  *
  * Debug connection can be used alongside regular connection and is meant for
- * debugging OCC board. OCC functionality can be tempered when read_only flag
- * is 0. This will impact sending and receiving data on the regular connection
+ * debugging OCC board. As writing register values through debug connection
+ * is allowed, it may impact sending and receiving data on the regular connection
  * if one present.
  *
  * Beside the limited set of functions that debug connection supports, there's
@@ -346,6 +348,10 @@ int occ_data_ack(struct occ_handle *handle, size_t count);
  * Its syntax is similar to POSIX read() function. At a cost of copying
  * data, it's a convinience function which most developers will be more
  * familiar with rather than occ_data_wait()/occ_data_ack().
+ *
+ * In debug mode memory can be read but it will not advance consumer index.
+ * It means that same starting address is returned every time unless there's
+ * another connection that is able to consume data.
  *
  * \param[in] handle Valid OCC API handle.
  * \param[out] data Copy data from DMA buffer into this buffer.

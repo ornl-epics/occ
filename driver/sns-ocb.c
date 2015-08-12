@@ -346,7 +346,9 @@ static void __snsocb_stalled(struct ocb *ocb, int type)
 	 * Caller must hold ocb->lock.
 	 */
 	ocb->stalled = type;
-	iowrite32(ocb->conf & ~OCB_CONF_RX_ENABLE, ocb->ioaddr + REG_CONFIG);
+	// Must change ocb->conf otherwise RX might get re-enabled automatically in TX thread
+	ocb->conf &= ~OCB_CONF_RX_ENABLE;
+	iowrite32(ocb->conf, ocb->ioaddr + REG_CONFIG);
 	wake_up(&ocb->rx_wq);
 }
 
@@ -1075,10 +1077,6 @@ static unsigned int snsocb_poll(struct file *file,
 	unsigned int mask = 0;
 	unsigned long flags;
 
-	/* Debug connection doesn't support poll */
-	if (file_ctx->debug_mode)
-		return -EINVAL;
-
 	poll_wait(file, &ocb->rx_wq, wait);
 	poll_wait(file, &ocb->tx_wq, wait);
 
@@ -1107,10 +1105,6 @@ static ssize_t snsocb_read(struct file *file, char __user *buf,
 	struct ocb_status info;
 	struct ocb_version ver;
 	ssize_t ret = 0;
-
-	/* Debug connection is limited to reset only when in read-write mode */
-	if (file_ctx->debug_mode && *pos != OCB_CMD_GET_STATUS)
-		return -EPERM;
 
 	switch (*pos) {
 	case OCB_CMD_GET_STATUS:
