@@ -99,6 +99,18 @@ typedef struct {
 } occ_status_t;
 
 /**
+ * Return OCC library version.
+ *
+ * Returns version of the library, not the kernel driver. But the library
+ * version must match driver's version in order to work together. The check is
+ * enforced by occ_open().
+ *
+ * \param[out] major OCC library number.
+ * \param[out] minor OCC library number.
+ */
+void occ_version(unsigned *major, unsigned *minor);
+
+/**
  * Open a connection to OCC driver and return a handle for it.
  *
  * An opened connection is required for communication with the driver. It
@@ -131,6 +143,7 @@ typedef struct {
  * \retval -ENOMSG Driver/library version mismatch.
  * \retval -ENODATA Could not verify connection with driver.
  * \retval -ENOMEM Not enough memory.
+ * \retval -EPROTO Driver version mismatch
  * \retval -X Other POSIX errno values.
  */
 int occ_open(const char *devfile, occ_interface_type type, struct occ_handle **handle);

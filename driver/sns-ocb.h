@@ -6,6 +6,16 @@ typedef uint32_t u32;
 typedef uint64_t u64;
 #endif
 
+/**
+ * OCC major version number, changed when new big new features or reworks.
+ */
+#define OCB_VER_MAJ 1
+
+/**
+ * OCC minor version, changed when interface changes.
+ */
+#define OCB_VER_MIN 4
+
 /* The user should read an appropriate amount of data from the device for
  * the command being requested. Commands are indicated by the offset read.
  *
@@ -21,6 +31,7 @@ typedef uint64_t u64;
  */
 #define OCB_CMD_RX			1
 #define OCB_CMD_GET_STATUS		2
+#define OCB_CMD_VERSION			3
 
 /* Status flags returned in status member of ocb_status struct */
 #define OCB_OPTICAL_FAULT			(1 << 9)
@@ -94,6 +105,11 @@ struct ocb_status {
     u32 dq_used;			// Used space
     u32 rx_rate;			// Receive (optic side) data rate in B/s calculated by hw
     u32 bars[3];			// Sizes of BAR regions used for mmap
+};
+
+struct ocb_version {
+    u32 major;				// Major driver version
+    u32 minor;				// Minor version
 };
 
 #endif /* __SNS_DAS_H */

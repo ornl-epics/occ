@@ -73,7 +73,14 @@ struct occ_packet_header {
 };
 #pragma pack(pop)
 
+void occ_version(unsigned *major, unsigned *minor) {
+    *major = OCB_VER_MAJ;
+    *minor = OCB_VER_MIN;
+}
+
 int _occ_open_common(const char *devfile, int flags, struct occ_handle **handle) {
+    int ret;
+    struct ocb_version ver;
 
     *handle = malloc(sizeof(struct occ_handle));
     if (*handle == NULL)
@@ -83,15 +90,29 @@ int _occ_open_common(const char *devfile, int flags, struct occ_handle **handle)
     (*handle)->magic = OCC_HANDLE_MAGIC;
     (*handle)->dma_buf = MAP_FAILED;
 
-    (*handle)->fd = open(devfile, flags);
-    if ((*handle)->fd == -1) {
-        int ret = -errno;
-        free(*handle);
-        *handle = NULL;
-        return ret;
-    }
+    do {
+        (*handle)->fd = open(devfile, flags);
+        if ((*handle)->fd == -1) {
+            ret = -errno;
+            break;
+        }
 
-    return 0;
+        ret = pread((*handle)->fd, &ver, sizeof(ver), OCB_CMD_VERSION);
+        if (ret == -1 && errno != EINVAL) {
+            ret = -errno;
+            break;
+        }
+
+        if (ret != sizeof(ver) || ver.major != OCB_VER_MAJ || ver.minor != OCB_VER_MIN) {
+            ret = -EPROTO;
+            break;
+        }
+        return 0;
+    } while (0);
+
+    free(*handle);
+    *handle = NULL;
+    return ret;
 }
 
 int occ_open(const char *devfile, occ_interface_type type, struct occ_handle **handle) {

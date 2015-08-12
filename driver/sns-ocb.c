@@ -20,6 +20,8 @@
 #include <linux/version.h>
 #include "sns-ocb.h"
 
+#define OCB_VER_STR __stringify(OCB_VER_MAJ) "." __stringify(OCB_VER_MIN)
+
 /* Newer kernels provide these, but not the RHEL6 kernels...
  */
 #ifndef dev_err_ratelimited
@@ -1103,6 +1105,7 @@ static ssize_t snsocb_read(struct file *file, char __user *buf,
 	struct file_ctx *file_ctx = file->private_data;
 	struct ocb *ocb = file_ctx->ocb;
 	struct ocb_status info;
+	struct ocb_version ver;
 	ssize_t ret = 0;
 
 	/* Debug connection is limited to reset only when in read-write mode */
@@ -1144,6 +1147,14 @@ static ssize_t snsocb_read(struct file *file, char __user *buf,
 		break;
 	case OCB_CMD_RX:
 		count = snsocb_rx(file, buf, count);
+		break;
+	case OCB_CMD_VERSION:
+		ver.major = OCB_VER_MAJ;
+		ver.minor = OCB_VER_MIN;
+		if (count != sizeof(ver))
+			return -EINVAL;
+		if (copy_to_user(buf, &ver, sizeof(ver)))
+			return -EFAULT;
 		break;
 	default:
 		return -EINVAL;
@@ -1764,6 +1775,8 @@ static int __init snsocb_init(void)
 	if (err)
 		goto error_chrdev;
 
+	printk("SNS OCB driver ver %s loaded\n", OCB_VER_STR);
+
 	return 0;
 
 error_chrdev:
@@ -1785,6 +1798,6 @@ module_init(snsocb_init);
 module_exit(snsocb_exit);
 
 MODULE_AUTHOR("David Dillow <dillowda@ornl.gov>");
-MODULE_VERSION("0.01");
+MODULE_VERSION(OCB_VER_STR);
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("SNS Optical Communication Board for Neutron Detectors");

@@ -29,6 +29,20 @@ typedef struct {
 // Forward declaration
 static PyTypeObject Occ_Type;
 
+PyDoc_STRVAR(py_occ_version__doc__,
+"version() -> OCC library version\n\n"
+"Return OCC library version.");
+static PyObject *py_occ_version(PyObject *self, PyObject *args, PyObject *keywds) {
+    unsigned major, minor;
+    PyObject *rdict = PyDict_New();
+
+    occ_version(&major, &minor);
+    PyDict_SetItem(rdict, PyString_FromString("major"), PyInt_FromLong(major));
+    PyDict_SetItem(rdict, PyString_FromString("minor"), PyInt_FromLong(minor));
+
+    return rdict;
+}
+
 PyDoc_STRVAR(py_occ_open__doc__,
 "open(device) -> OccObject\n\n"
 "Open connection to OCC driver.\n\n"
@@ -498,6 +512,7 @@ static PyTypeObject Occ_Type = {
 };
 
 static PyMethodDef Occlib_Methods[] = {
+    { "version", (PyCFunction)py_occ_version, 0, py_occ_version__doc__},
     { "open",  (PyCFunction)py_occ_open, METH_VARARGS | METH_KEYWORDS, py_occ_open__doc__},
     { "open_debug",  (PyCFunction)py_occ_open_debug, METH_VARARGS | METH_KEYWORDS, py_occ_open_debug__doc__},
     {NULL, NULL, 0, NULL}

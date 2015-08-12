@@ -97,6 +97,7 @@ int main(int argc, char **argv) {
     struct occ_handle *occ;
     uint64_t rxbytes;
     int outfd;
+    int ret;
 
     for (int i = 1; i < argc; i++) {
         string key(argv[i]);
@@ -131,13 +132,13 @@ int main(int argc, char **argv) {
         }
     }
 
-    if (occ_open(devfile, OCC_INTERFACE_OPTICAL, &occ) != 0) {
-        cerr << "ERROR: cannot initialize OCC interface" << endl;
+    if ((ret = occ_open(devfile, OCC_INTERFACE_OPTICAL, &occ)) != 0) {
+        cerr << "ERROR: cannot initialize OCC interface (" << strerror(-ret) << ")" << endl;
         return 3;
     }
 
-    if (occ_enable_rx(occ, 1) != 0) {
-        cerr << "ERROR: cannot enable RX on OCC interface" << endl;
+    if ((ret = occ_enable_rx(occ, 1)) != 0) {
+        cerr << "ERROR: cannot enable RX on OCC interface (" << strerror(-ret) << ")" << endl;
         return 3;
     }
 

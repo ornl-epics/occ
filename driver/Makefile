@@ -6,10 +6,9 @@ else
 # Invoke Kbuild
 #
 KDIR ?= /lib/modules/`uname -r`/build
-VER = $(shell pwd | awk -F'/' '{print $$(NF-1)}' | egrep "[0-9]+-[0-9]+" | sed -e 's/\(.*\)/-\1/')
-ifeq ($(VER),)
-VER = -current
-endif
+VER_MAJ := $(shell grep OCB_VER_MAJ sns-ocb.h | awk '{print $$3}')
+VER_MIN := $(shell grep OCB_VER_MIN sns-ocb.h | awk '{print $$3}')
+VER = $(join -,$(join $(VER_MAJ), $(join .,$(VER_MIN))))
 TARGETDIR = /lib/modules/`uname -r`/extra
 
 default:
