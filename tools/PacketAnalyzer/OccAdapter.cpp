@@ -10,7 +10,8 @@ using namespace std;
 
 OccAdapter::OccAdapter(const string &devfile) :
     m_occ(NULL),
-    m_pcie_generator_rate(0)
+    m_pcie_generator_rate(0),
+    m_pcie_generator_pkt_size(1024)
 {
     int ret = occ_open(devfile.c_str(), OCC_INTERFACE_OPTICAL, &m_occ);
     if (ret != 0)
@@ -42,11 +43,11 @@ void OccAdapter::reset(bool rx_enable)
         throw runtime_error("Failed to enable data reception");
 
     if (m_pcie_generator_rate != 0)
-        enablePcieGenerator(m_pcie_generator_rate);
+        enablePcieGenerator(m_pcie_generator_rate, m_pcie_generator_pkt_size);
 
 }
 
-void OccAdapter::enablePcieGenerator(uint32_t rate)
+void OccAdapter::enablePcieGenerator(uint32_t rate, uint16_t pkt_size)
 {
     const uint8_t bar0             = 0;
     const uint32_t config_reg      = 0x4;
@@ -60,8 +61,8 @@ void OccAdapter::enablePcieGenerator(uint32_t rate)
 
     if (rate != 0.0) {
         val = 0;
-        val |= (0x400 << 0);    // Starting packet size is 1024 dwords (=4K)
-        val |= (0x400 << 16);   // Create fixed-sized packets
+        val |= (pkt_size << 0); // Starting packet size
+        val |= (pkt_size << 16);// Create fixed-sized packets
         val |= (0x3 << 28);     // Force neutron-data
         if (occ_io_write(m_occ, bar0, hw_pktsim_reg1, &val, 1) != 1)
             throw runtime_error("Failed to write generated packet configuration");
@@ -82,6 +83,7 @@ void OccAdapter::enablePcieGenerator(uint32_t rate)
         throw runtime_error("Failed to write packet generation configuration");
 
     m_pcie_generator_rate = rate;
+    m_pcie_generator_pkt_size = pkt_size;
 }
 
 string OccAdapter::occErrorString(int error)

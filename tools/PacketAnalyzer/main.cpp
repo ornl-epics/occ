@@ -34,6 +34,9 @@ static void usage(const char *progname) {
     cout << "                           Don't save if not specified" << endl;
     cout << "  -e, --pcie-gen-rate RATE Enable the onboard PCIe FPGA data generator with" << endl;
     cout << "                           selected neutron data rate (multiples of 122,189 Hz)" << endl;
+    cout << "  -s, --pcie-gen-size SIZE Specify FPGA data generator packet payload size." << endl;
+    cout << "                           Unit is dword, number of 2 means 8 bytes of payload or" << endl;
+    cout << "                           24+8=32 bytes for complete packet. Default is 1024." << endl;
     cout << "  -n, --no-analyze         Don't analyze packets, only consume them" << endl;
     cout << "  -c, --dmadump            Enable DMA memory dump in case of an error" << endl;
     cout << endl;
@@ -45,6 +48,7 @@ int main(int argc, char **argv)
     const char *dumpfile = "";
     struct sigaction sigact;
     uint32_t pcie_generator_rate = 0;
+    uint32_t pcie_generator_pkt_size = 1024;
     bool no_analyze = false;
     bool dmadump = false;
 
@@ -77,6 +81,11 @@ int main(int argc, char **argv)
                 return false;
             pcie_generator_rate = ::strtoul(argv[++i], NULL, 10);
         }
+        if (key == "-s" || key == "--pcie-gen-size") {
+            if ((i + 1) >= argc)
+                return false;
+            pcie_generator_pkt_size = ::strtoul(argv[++i], NULL, 10);
+        }
         if (key == "-n" || key == "--no-analyze") {
             no_analyze = true;
         }
@@ -95,7 +104,7 @@ int main(int argc, char **argv)
         AnalyzeOutput analyzer(devfile, dumpfile, dmadump);
         ao = &analyzer;
         if (pcie_generator_rate != 0)
-            analyzer.enablePcieGenerator(pcie_generator_rate);
+            analyzer.enablePcieGenerator(pcie_generator_rate, pcie_generator_pkt_size);
         analyzer.process(no_analyze);
     } catch (exception &e) {
         if (!shutdown)
