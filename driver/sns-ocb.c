@@ -173,6 +173,8 @@ static ssize_t snsocb_sysfs_show_irq_coallesce(struct device *dev, struct device
 static ssize_t snsocb_sysfs_store_irq_coallesce(struct device *dev, struct device_attribute *attr, const char *buf, size_t count);
 static ssize_t snsocb_sysfs_show_dma_big_mem(struct device *dev, struct device_attribute *attr, char *buf);
 static ssize_t snsocb_sysfs_store_dma_big_mem(struct device *dev, struct device_attribute *attr, const char *buf, size_t count);
+static ssize_t snsocb_sysfs_show_serial_number(struct device *dev, struct device_attribute *attr, char *buf);
+static ssize_t snsocb_sysfs_show_firmware_date(struct device *dev, struct device_attribute *attr, char *buf);
 
 /* Layout of the hardware Incoming Message Queue */
 struct hw_imq {
@@ -327,6 +329,8 @@ static struct ocb_board_desc boards[] = {
 		.sysfs.attrs = (struct attribute **) (struct device_attribute *[]){
 			SNSOCB_DEVICE_ATTR("irq_coalescing", 0644, snsocb_sysfs_show_irq_coallesce, snsocb_sysfs_store_irq_coallesce),
 			SNSOCB_DEVICE_ATTR("dma_big_mem", 0644, snsocb_sysfs_show_dma_big_mem, snsocb_sysfs_store_dma_big_mem),
+			SNSOCB_DEVICE_ATTR("serial_number", 0444, snsocb_sysfs_show_serial_number, NULL),
+			SNSOCB_DEVICE_ATTR("firmware_date", 0444, snsocb_sysfs_show_firmware_date, NULL),
 			NULL,
 		},
 	},
@@ -1458,6 +1462,30 @@ static ssize_t snsocb_sysfs_store_dma_big_mem(struct device *dev, struct device_
 	spin_unlock_irq(&ocb->lock);
 
 	return count;
+}
+
+static ssize_t snsocb_sysfs_show_serial_number(struct device *dev, struct device_attribute *attr, char *buf)
+{
+	struct ocb *ocb = dev_get_drvdata(dev);
+	int ret = 0;
+
+	spin_lock_irq(&ocb->lock);
+	ret = scnprintf(buf, PAGE_SIZE, "%016llX\n", ocb->fpga_serial);
+	spin_unlock_irq(&ocb->lock);
+
+	return ret;
+}
+
+static ssize_t snsocb_sysfs_show_firmware_date(struct device *dev, struct device_attribute *attr, char *buf)
+{
+	struct ocb *ocb = dev_get_drvdata(dev);
+	int ret = 0;
+
+	spin_lock_irq(&ocb->lock);
+	ret = scnprintf(buf, PAGE_SIZE, "%02X/%02X/%04X\n", ocb->firmware_date >> 24, ocb->firmware_date >> 16 & 0xFF, ocb->firmware_date & 0xFFFF);
+	spin_unlock_irq(&ocb->lock);
+
+	return ret;
 }
 
 static struct file_operations snsocb_fops = {
