@@ -6,9 +6,7 @@
  *
  * This app could be extended to support other Micron StrataFlash devices
  * and sizes, but was not designed specifically with more general purposes in
- * mind.  If this code is extended in the future, it is suggested to use
- * the READ_CFI command in occ_flash_init() to read the flash geometry info
- * dynamically (flash geometry is statically defined herein).
+ * mind.
  *
  * It would also be recommended to apply a class hierarchy in which a Micron
  * Strata Flash programmer class could descend from a more general flash 
@@ -16,11 +14,12 @@
  * mechanism implemented in flash_read()/flash_write().
  *
  * Note: the concept of "section" is a logical construction of the developer.
- * A section is defined to mean 16MB, or two partitions of the 512Mbit flash.
- * It is appropriate because the typical programming file for the initial
- * use case is 11MB, so we desire to erase and program a "section".  The
- * underlying flash interface as defined in the header is made more generic,
- * accepting word addresses to flash, instead of mythical "sections".
+ * We divide the device into 4 sections.  On 512Mbit flash, each section is
+ * therefore 16MB.  This is an appropriate choice because the typical 
+ * programming file for the initial use case is 11MB, so we desire to erase and 
+ * program a "section".  The underlying flash interface as defined in the header
+ * is made more generic, accepting word addresses to flash, instead of mythical
+ * "sections".
  *
  * Note: To simplify callers, most functions are designed to return void, and
  * throw exceptions to indicate critical errors.
@@ -29,6 +28,10 @@
  * syntax.  Static entities are documented herein.
  *
  * Greg Guyotte <guyottegs@ornl.gov>
+ *
+ * 10/16/2015: READ CFI support extended to collect flash geometry.  This allows
+ * support for a wider range of Micron devices, including the MT28GU01GAAA1EGC,
+ * which is a 1Gb part that is now on the OCC.
  */
 
 #include <occlib_hw.h>
@@ -56,20 +59,18 @@ using namespace std;
 #define DELAY_1000_MS (1000)
 #define DELAY_100_MS  (100)
 #define PROGRESS_BAR_WIDTH (30)
+#define BYTES_PER_WORD (2)
+#define NUM_PARTITIONS (8)
 
-/*
- * StrataFlash Parameters
- * The flash is word addressed, each word being 2 bytes long
- */
-#define BYTES_PER_WORD                    (2)
-#define FLASH_SIZE_BYTES                  (64*1024*1024)
-#define SECTION_SIZE_BYTES                (16*1024*1024)
-#define BLOCK_SIZE_BYTES                  (256*1024)
-#define FLASH_SIZE_WORDS                  (FLASH_SIZE_BYTES / BYTES_PER_WORD)
-#define SECTION_SIZE_WORDS                (SECTION_SIZE_BYTES / BYTES_PER_WORD)
-#define PARTITION_SIZE_WORDS              (SECTION_SIZE_WORDS / 2)
-#define BLOCK_SIZE_WORDS                  (BLOCK_SIZE_BYTES / BYTES_PER_WORD)
-#define BUFFERED_PGM_SZ                   (1024)
+/* Global flash geometry data */
+uint32_t gbl_flash_size_bytes;
+uint32_t gbl_flash_size_words;
+uint32_t gbl_section_size_bytes;
+uint32_t gbl_block_size_bytes;
+uint32_t gbl_section_size_words;
+uint32_t gbl_partition_size_words;
+uint32_t gbl_block_size_words;
+uint32_t gbl_buffered_pgm_sz;
 
 /* StrataFlash Command Set */
 #define PGM_READ_CFG_REG_SETUP            (0x0060)
@@ -382,7 +383,7 @@ void occ_flash_read(occ_handle *occ, uint8_t bar, uint32_t flash_addr,
     cout << endl << "Reading flash at addr 0x" <<hex<<flash_addr << ":" << endl;
  
     for (word_index=0; word_index < num_words; word_index++) {
-        if ((flash_addr+word_index % PARTITION_SIZE_WORDS) == 0) {
+        if ((flash_addr+word_index % gbl_partition_size_words) == 0) {
             /* put flash in Read Array mode at each partition boundary */
             flash_write(occ, bar, flash_addr+word_index, READ_ARRAY);
         }
@@ -431,7 +432,7 @@ void occ_flash_erase(occ_handle *occ, uint8_t bar, uint32_t flash_addr,
 
     /* flash memory is erased by blocks */
     for (block=0; block<num_blocks; block++) {
-        current_flash_addr = (block*BLOCK_SIZE_WORDS) + flash_addr;
+        current_flash_addr = (block*gbl_block_size_words) + flash_addr;
 
         /* setup and confirm the ERASE command */
         flash_write(occ, bar, current_flash_addr, BLOCK_ERASE_SETUP);
@@ -444,7 +445,7 @@ void occ_flash_erase(occ_handle *occ, uint8_t bar, uint32_t flash_addr,
             throw std::runtime_error("Block erase error");
 
         loadbar(block+1, num_blocks, PROGRESS_BAR_WIDTH, 
-                (block+1)*BLOCK_SIZE_BYTES);
+                (block+1)*gbl_block_size_bytes);
     }
     cout << endl << "Erased " << num_blocks << " blocks." << endl << endl;
 }
@@ -453,14 +454,14 @@ void occ_flash_write(occ_handle *occ, uint8_t bar, uint32_t flash_addr,
         const char *file) {
     uint32_t erase_blocks, status_reg, file_len, byte_index, bytes_written=0,
         chunk_count=0, chunk_index=0, flash_data;
-    unsigned char write_data[BUFFERED_PGM_SZ];
+    unsigned char write_data[gbl_buffered_pgm_sz];
     ifstream myfile;
 
     /* input addresses should be aligned to the buffer size, for optimal
      * performance, and to assure that a buffer write never crosses a 
      * block boundary
      */
-    if (flash_addr % BUFFERED_PGM_SZ)
+    if (flash_addr % gbl_buffered_pgm_sz)
         throw std::invalid_argument("Flash addr not aligned to buffer size");
 
     /* get length of file and # of 1KB chunks to program (for progress bar) */
@@ -468,17 +469,17 @@ void occ_flash_write(occ_handle *occ, uint8_t bar, uint32_t flash_addr,
     myfile.seekg(0, myfile.end);
     file_len = myfile.tellg();
     myfile.seekg(0, myfile.beg);
-    chunk_count = (file_len/BUFFERED_PGM_SZ) + !!(file_len%BUFFERED_PGM_SZ);
+    chunk_count = (file_len/gbl_buffered_pgm_sz) + !!(file_len%gbl_buffered_pgm_sz);
       
     /* it is required to erase flash prior to writing */
-    erase_blocks = (file_len/BLOCK_SIZE_BYTES) + !!(file_len%BLOCK_SIZE_BYTES);
+    erase_blocks = (file_len/gbl_block_size_bytes) + !!(file_len%gbl_block_size_bytes);
     occ_flash_erase(occ, bar, flash_addr, erase_blocks);
 
     cout << "Programming flash at addr 0x" << hex << flash_addr << ":" << endl;
 
     for (chunk_index=0; chunk_index < chunk_count; chunk_index++) {
         /* flash must be programmed in small chunks, limit of flash device */
-        myfile.read((char *)write_data, BUFFERED_PGM_SZ);
+        myfile.read((char *)write_data, gbl_buffered_pgm_sz);
 
         /* write setup command to flash for buffered programming */
         flash_write(occ, bar, flash_addr, BUFFERED_PGM_SETUP);
@@ -547,15 +548,49 @@ void occ_flash_block_unprotect(occ_handle *occ, uint8_t bar,
  * such as block size, device size, etc, directly from the flash
  */
 void occ_flash_init(occ_handle *occ, uint8_t bar) {
-    uint32_t cfi[5], block, flash_addr, status_reg;
+    uint32_t cfi[5], block, flash_addr, status_reg, device_size_bits=0,
+        write_buffer_bits=0, num_erase_regions=0, erase_block_size_lsb=0,
+        erase_block_size_msb=0;
     
-    for (block=0; block<(FLASH_SIZE_BYTES/BLOCK_SIZE_BYTES); block++) {
-        flash_addr = (block * BLOCK_SIZE_WORDS);
+    /* clear status register and send READ_CFI command for address 0 */
+    flash_write(occ, bar, 0, CLEAR_STS_REG);
+    flash_write(occ, bar, 0, READ_CFI);
+
+    /*
+     * Init StrataFlash Geometry Parameters from CFI output.
+     * The flash is word addressed, each word being 2 bytes long.
+     * For programming purposes, we arbitrarily divide the device into
+     * 4 sections.
+     */ 
+    flash_read(occ, bar, 0x27, &device_size_bits);
+    flash_read(occ, bar, 0x2A, &write_buffer_bits);
+    flash_read(occ, bar, 0x2C, &num_erase_regions);
+    flash_read(occ, bar, 0x2F, &erase_block_size_lsb);
+    flash_read(occ, bar, 0x30, &erase_block_size_msb);
+
+    cout << "Flash geometry from CFI:" << endl;
+    cout << "  device size bits = " << device_size_bits << endl;
+    cout << "  write buffer bits = " << write_buffer_bits << endl;
+    cout << "  num erase regions = " << num_erase_regions << endl;
+    cout << "  erase block size LSB = " << erase_block_size_lsb << endl;
+    cout << "  erase block size MSB = " << erase_block_size_msb << endl;
+
+    gbl_flash_size_bytes = (1 << device_size_bits);
+    gbl_flash_size_words = gbl_flash_size_bytes / BYTES_PER_WORD;
+    gbl_section_size_bytes = gbl_flash_size_bytes / 4;
+    gbl_block_size_bytes = 256 * ((erase_block_size_msb << 8) | (erase_block_size_lsb));
+    gbl_section_size_words = gbl_section_size_bytes / BYTES_PER_WORD;
+    gbl_partition_size_words = gbl_flash_size_words / NUM_PARTITIONS;
+    gbl_block_size_words = gbl_block_size_bytes / BYTES_PER_WORD; 
+    gbl_buffered_pgm_sz = (1 << write_buffer_bits);
+
+    for (block=0; block<(gbl_flash_size_bytes/gbl_block_size_bytes); block++) {
+        flash_addr = (block * gbl_block_size_words);
         /* clear status register */
         flash_write(occ, bar, flash_addr, CLEAR_STS_REG);
         
         /* at partition boundaries, check the CFI data */
-        if ((flash_addr % PARTITION_SIZE_WORDS) == 0) {
+        if ((flash_addr % gbl_partition_size_words) == 0) {
             flash_write(occ, bar, flash_addr, READ_CFI);
 
             memset(cfi, 0, 5 * sizeof(uint32_t));
@@ -661,7 +696,7 @@ int main(int argc, char **argv) {
 
         occ_flash_init(occ, bar);
  
-        flash_addr = section * SECTION_SIZE_WORDS;
+        flash_addr = section * gbl_section_size_words;
 
         switch (command) {
             case CMD_WRITE:    
@@ -669,7 +704,7 @@ int main(int argc, char **argv) {
                 break;
             case CMD_READ:
                 occ_flash_read(occ, bar, flash_addr, input_file, 
-                        SECTION_SIZE_WORDS);
+                        gbl_section_size_words);
                 break;
             case CMD_VERIFY:
                 occ_flash_verify(occ, bar, flash_addr, input_file);
@@ -677,7 +712,7 @@ int main(int argc, char **argv) {
             case CMD_ERASE:
                 /* in this program we erase an entire "section" */
                 occ_flash_erase(occ, bar, flash_addr, 
-                        SECTION_SIZE_BYTES/BLOCK_SIZE_BYTES);
+                        gbl_section_size_bytes/gbl_block_size_bytes);
                 break;
             case CMD_PROGRAM:
                 /* use some formatted output to delineate the two steps */
