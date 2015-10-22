@@ -424,7 +424,7 @@ static PyObject *py_occ_io_write(OccObject *self, PyObject *args, PyObject *keyw
         return NULL;
     }
 
-    ret = occ_io_read(self->occ, bar, offset, &value, 1);
+    ret = occ_io_write(self->occ, bar, offset, &value, 1);
     if (ret < 0) {
         PyErr_SetString(OccError, strerror(-1 * ret));
         return NULL;
