@@ -544,9 +544,6 @@ void occ_flash_block_unprotect(occ_handle *occ, uint8_t bar,
         throw std::runtime_error("Could not unlock block");
 }
 
-/* NOTE: this function could be extended to retrieve device parameters
- * such as block size, device size, etc, directly from the flash
- */
 void occ_flash_init(occ_handle *occ, uint8_t bar) {
     uint32_t cfi[5], block, flash_addr, status_reg, device_size_bits=0,
         write_buffer_bits=0, num_erase_regions=0, erase_block_size_lsb=0,
