@@ -438,7 +438,7 @@ int occ_data_wait(struct occ_handle *handle, void **address, size_t *count, uint
         return -EINVAL;
 
     // Block until some data is available
-    do {
+    while (1) {
         if (timeout > 0) {
             struct pollfd pollfd;
             pollfd.fd = handle->fd;
@@ -469,7 +469,9 @@ int occ_data_wait(struct occ_handle *handle, void **address, size_t *count, uint
                 return -EOVERFLOW;
             continue;
         }
-    } while (0);
+
+        break;
+    }
 
     // There are a couple of assumptions here that we take for granted.
     // * Producer index is always 4-byte aligned
