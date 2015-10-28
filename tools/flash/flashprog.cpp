@@ -383,7 +383,7 @@ void occ_flash_read(occ_handle *occ, uint8_t bar, uint32_t flash_addr,
     cout << endl << "Reading flash at addr 0x" <<hex<<flash_addr << ":" << endl;
  
     for (word_index=0; word_index < num_words; word_index++) {
-        if ((flash_addr+word_index % gbl_partition_size_words) == 0) {
+        if (((flash_addr+word_index) % gbl_partition_size_words) == 0) {
             /* put flash in Read Array mode at each partition boundary */
             flash_write(occ, bar, flash_addr+word_index, READ_ARRAY);
         }
@@ -507,7 +507,7 @@ void occ_flash_write(occ_handle *occ, uint8_t bar, uint32_t flash_addr,
             throw std::runtime_error("Flash write error");
 
         flash_addr += (byte_index/2);
-        loadbar(chunk_index+1, chunk_count, 30, bytes_written);
+        loadbar(chunk_index+1, chunk_count, PROGRESS_BAR_WIDTH, bytes_written);
     }
 
     cout << endl << "Flash programming complete." << endl << endl;
