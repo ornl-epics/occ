@@ -182,7 +182,7 @@ static size_t _occ_data_align(size_t size) {
     return (size + 3) & ~3;
 }
 
-static int check_client(struct occ_handle *handle) {
+static int check_client(struct occ_handle *handle, uint32_t timeout) {
     if (handle->client_socket < 0) {
         struct pollfd fds;
         struct sockaddr client;
@@ -191,8 +191,8 @@ static int check_client(struct occ_handle *handle) {
         fds.events = POLLIN;
         fds.revents = 0;
 
-        // Non-blocking check
-        if (poll(&fds, 1, 0) == 0 || fds.revents != POLLIN)
+        // Non-blocking check if timeout==0
+        if (poll(&fds, 1, timeout) == 0 || fds.revents != POLLIN)
             return -ENOTCONN;
 
         // There should be client waiting now - accept() won't block
@@ -209,7 +209,7 @@ int occ_send(struct occ_handle *handle, const void *data, size_t count) {
     if (handle == NULL || handle->magic != OCC_HANDLE_MAGIC || _occ_data_align(count) != count)
         return -EINVAL;
 
-    if (check_client(handle) != 0)
+    if (check_client(handle, 0) != 0)
         return -ENOTCONN;
 
     int ret = write(handle->client_socket, data, count);
@@ -224,18 +224,18 @@ int occ_send(struct occ_handle *handle, const void *data, size_t count) {
 static int wait_for_ready_read(struct occ_handle *handle, uint32_t timeout) {
 
     struct pollfd pollfd;
-    uint32_t timeout_remain = timeout;
     int ret;
 
-    while (!handle->rx_enabled || check_client(handle) != 0) {
-        if (timeout > 0 && timeout_remain-- == 0)
-            return -ETIME;
-        usleep(1000);
-    }
+    if (check_client(handle, timeout) != 0)
+        return -ETIME;
 
+    if (!handle->rx_enabled)
+        return -ETIME;
+
+    // Pretend we didn't wait for client - might wait longer the first time client connects
     pollfd.fd = handle->client_socket;
     pollfd.events = POLLIN;
-    ret = poll(&pollfd, 1, timeout > 0 ? timeout_remain : -1);
+    ret = poll(&pollfd, 1, timeout > 0 ? timeout : -1);
     if (ret == -1)
         return -errno;
     else if (ret == 0)
@@ -280,7 +280,6 @@ int occ_data_ack(struct occ_handle *handle, size_t count) {
         count = handle->buffer_len;
 
     // Move not consumed data from the end of the buffer to the front, no effect if count == buffer_len
-//fprintf(stderr, "memmove(%d)\n", handle->buffer_len - count);
     memmove(handle->buffer, &handle->buffer[count], handle->buffer_len - count);
 
     handle->buffer_len -= count;
