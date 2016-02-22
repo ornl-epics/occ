@@ -541,9 +541,9 @@ static ssize_t snsocb_rx(struct file *file, char __user *buf, size_t count)
 	if (count != sizeof(info))
 		return -EINVAL;
 
+	spin_lock_irq(&ocb->lock);
 	for (;;) {
 		prepare_to_wait(&ocb->rx_wq, &wait, TASK_INTERRUPTIBLE);
-		spin_lock_irq(&ocb->lock);
 		if (ocb->reset_in_progress) {
 			ret = -ECONNRESET;
 			break;
@@ -552,19 +552,18 @@ static ssize_t snsocb_rx(struct file *file, char __user *buf, size_t count)
 			break;
 		if (ocb->dq_prod != ocb->dq_cons)
 			break;
-		spin_unlock_irq(&ocb->lock);
 
 		if (file->f_flags & O_NONBLOCK) {
 			ret = -EAGAIN;
-			spin_lock_irq(&ocb->lock);
 			break;
 		}
 		if (signal_pending(current)) {
 			ret = -ERESTARTSYS;
-			spin_lock_irq(&ocb->lock);
 			break;
 		}
+		spin_unlock_irq(&ocb->lock);
 		schedule();
+		spin_lock_irq(&ocb->lock);
 	}
 	finish_wait(&ocb->rx_wq, &wait);
 
