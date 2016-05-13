@@ -14,7 +14,7 @@ typedef uint64_t u64;
 /**
  * OCC minor version, changed when interface changes.
  */
-#define OCB_VER_MIN 5
+#define OCB_VER_MIN 6
 
 /* The user should read an appropriate amount of data from the device for
  * the command being requested. Commands are indicated by the offset read.

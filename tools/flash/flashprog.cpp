@@ -379,6 +379,12 @@ void occ_flash_read(occ_handle *occ, uint8_t bar, uint32_t flash_addr,
     };
 
     read_file.open(file, ios::binary);
+    if (!read_file.is_open()) {
+        stringstream err;
+        err << "Failed to open file " << file << " for reading";
+        throw std::ios_base::failure(err.str());
+    }
+    read_file.exceptions(read_file.failbit | read_file.badbit);
 
     cout << endl << "Reading flash at addr 0x" <<hex<<flash_addr << ":" << endl;
  
@@ -405,13 +411,15 @@ void occ_flash_read(occ_handle *occ, uint8_t bar, uint32_t flash_addr,
 
 void occ_flash_verify(occ_handle *occ, uint8_t bar, uint32_t flash_addr, 
         const char *file) {
+    const char *tmpfile = tmpnam(NULL);
+
     cout << endl << "Reading input file " << file << "...";
     /* using memory mapped files for speed in verify */
     io::mapped_file_source f2(file);
     
     /* read contents of flash up to the size of the input file */
-    occ_flash_read(occ, bar, flash_addr, "tmp.bin", f2.size()/2);
-    io::mapped_file_source f1("tmp.bin");
+    occ_flash_read(occ, bar, flash_addr, tmpfile, f2.size()/2);
+    io::mapped_file_source f1(tmpfile);
 
     cout << "Comparing files..." << endl;
     if (f1.size() == f2.size()
@@ -420,7 +428,7 @@ void occ_flash_verify(occ_handle *occ, uint8_t bar, uint32_t flash_addr,
     else
         cout << "  The file contents differ from input file\n";
 
-    if (remove( "tmp.bin" ) != 0 )
+    if (remove(tmpfile) != 0 )
         throw std::runtime_error("Can't delete temporary verify file");
    }
 
@@ -466,6 +474,12 @@ void occ_flash_write(occ_handle *occ, uint8_t bar, uint32_t flash_addr,
 
     /* get length of file and # of 1KB chunks to program (for progress bar) */
     myfile.open(file, ios::in|ios::binary);
+    if (!myfile.is_open()) {
+        stringstream err;
+        err << "Failed to open file " << file << " for writing";
+        throw std::ios_base::failure(err.str());
+    }
+    myfile.exceptions(myfile.badbit);
     myfile.seekg(0, myfile.end);
     file_len = myfile.tellg();
     myfile.seekg(0, myfile.beg);
@@ -738,6 +752,10 @@ int main(int argc, char **argv) {
     }
     catch (std::runtime_error const& ex) {
         cout << ex.what() << endl;
+        return 2;
+    }
+    catch (std::ios_base::failure const& ex) {
+        cout << "ERROR: " << ex.what() << endl;
         return 2;
     }
     catch (...) {

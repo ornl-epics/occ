@@ -14,7 +14,9 @@
 #include <unistd.h>
 
 #define OCC_HANDLE_MAGIC        0x0cc0cc
-#define ROLLOVER_BUFFER_SIZE    (1800*8)      // Size of temporary buffer when DMA buffer rollover occurs
+#ifndef ROLLOVER_BUFFER_SIZE
+#define ROLLOVER_BUFFER_SIZE    8192          // Size of temporary buffer when DMA buffer rollover occurs, in bytes
+#endif
 
 #define OCC_PCIE_REG_ERR_CRC            0x180
 #define OCC_PCIE_REG_ERR_LENGTH         0x184

@@ -211,6 +211,18 @@ static PyObject *py_occ_enable_error_packets(OccObject *self, PyObject *args, Py
     return Py_None;
 }
 
+static uint32_t hex2dec(uint32_t n) {
+    int i;
+    uint32_t out = 0;
+    for (i = 0; i < 4; i++) {
+        uint8_t a = (n >> i*8) & 0xFF;
+        uint32_t div = a / 16;
+        uint32_t mod = a % 16;
+        out += pow(100,i)*(10*div + mod);
+    }
+    return out;
+}
+
 PyDoc_STRVAR(py_occ_status__doc__,
 "status([fast]) -> dictionary with status fields\n\n"
 "Return OCC board and driver status.\n\n"
@@ -221,6 +233,7 @@ static PyObject *py_occ_status(OccObject *self, PyObject *args, PyObject *keywds
     int fast = 0;
     occ_status_t status;
     PyObject *sdict;
+    char fw_date[16];
 
     static char *kwlist[] = {"fast", NULL};
 
@@ -256,9 +269,14 @@ static PyObject *py_occ_status(OccObject *self, PyObject *args, PyObject *keywds
     else
         PyDict_SetItem(sdict, PyString_FromString("interface"), PyString_FromString("optical"));
 
+    uint8_t month = hex2dec((status.firmware_date >> 24) & 0xFF);
+    uint8_t day =   hex2dec((status.firmware_date >> 16) & 0xFF);
+    uint16_t year = hex2dec((status.firmware_date      ) & 0xFFFF);
+    snprintf(fw_date, sizeof(fw_date), "%d/%d/%d", month, day, year);
+
     PyDict_SetItem(sdict, PyString_FromString("hardware_ver"), PyInt_FromLong(status.hardware_ver));
     PyDict_SetItem(sdict, PyString_FromString("firmware_ver"), PyInt_FromLong(status.firmware_ver));
-    PyDict_SetItem(sdict, PyString_FromString("firmware_date"), PyInt_FromLong(status.firmware_date));
+    PyDict_SetItem(sdict, PyString_FromString("firmware_date"), PyString_FromString(fw_date));
     PyDict_SetItem(sdict, PyString_FromString("dma_size"), PyInt_FromLong(status.dma_size));
     PyDict_SetItem(sdict, PyString_FromString("dma_used"), PyInt_FromLong(status.dma_used));
     PyDict_SetItem(sdict, PyString_FromString("rx_rate"), PyInt_FromLong(status.rx_rate));

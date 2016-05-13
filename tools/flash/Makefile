@@ -1,4 +1,5 @@
-OCCLIB=../../lib
+ROOT_DIR:=$(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
+OCCLIB=$(ROOT_DIR)/../../lib
 CPPFLAGS=-Wall -I$(OCCLIB) -std=c++0x
 LDFLAGS=-L$(OCCLIB) -locc -lrt -Wl,-rpath,$(OCCLIB) -lboost_iostreams
 SRCS=flashprog.cpp
