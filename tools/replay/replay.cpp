@@ -90,6 +90,8 @@ void process(int fd, float speed, bool meta) {
         // Now write the packet to stdout
         write(STDOUT_FILENO, buffer, 24+count);
     }
+
+    cerr << "process() done" << endl;
 }
 
 int main(int argc, char **argv) {
