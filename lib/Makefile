@@ -53,6 +53,9 @@ clean:
 doc: $(HDRS) occlib.doxygen
 	doxygen occlib.doxygen
 
+hw: all
+	ln -sf lib$(LIBHWNAME).so lib$(LIBNAME).so
+
 pipe: all
 	ln -sf lib$(LIBPIPENAME).so lib$(LIBNAME).so
 

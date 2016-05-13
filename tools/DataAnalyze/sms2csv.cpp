@@ -98,7 +98,7 @@ int main(int argc, char **argv) {
         uint16_t subpacket_cnt;
         uint16_t total_cnt;
 
-        if (header.length > sizeof(payload)) {
+        if (header.length > BUFFER_SIZE) {
             fprintf(stderr, "ERROR: packet exceeds internal buffer (%u > %u)\n", header.length, BUFFER_SIZE);
             ret = 1;
             break;
@@ -117,6 +117,7 @@ int main(int argc, char **argv) {
         if (header.type == 0x00000000)      fprintf(outfd, "DATA;%u;%u;%u;%u\n", source, total_cnt, subpacket_cnt, eop);
         else if (header.type == 0x00000100) fprintf(outfd, "RTDL\n");
         else if (header.type == 0x00000200) fprintf(outfd, "SOURCE LIST\n");
+	else if (header.type == 0x00000300) fprintf(outfd, "DATA MAPPED;%u;%u;%u;%u\n", source, total_cnt, subpacket_cnt, eop);
         else if (header.type == 0x00400900) fprintf(outfd, "HEARTBEAT\n");
         else                                fprintf(outfd, "UNSUPPORTED(0x%.08X)\n", header.type);
     }
