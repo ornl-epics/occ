@@ -808,31 +808,33 @@ static irqreturn_t snsocb_interrupt(int irq, void *data)
 	if (!intr_status)
 		return IRQ_NONE;
 
-	if (intr_status & OCB_IRQ_DMA_STALL) {
-		snsocb_stalled(ocb, OCB_DMA_STALLED);
-		dev_err_ratelimited(&ocb->dev, "Detected DMA stall flag");
-		goto out;
-	} else if (intr_status & OCB_IRQ_FIFO_OVERFLOW) {
-		snsocb_stalled(ocb, OCB_FIFO_OVERFLOW);
-		dev_err_ratelimited(&ocb->dev, "Detected FIFO overflow flag");
-		goto out;
-	}
-
-	if (ocb->emulate_dq) {
-		if (snsocb_saveimqs(ocb))
-			snsocb_stalled(ocb, OCB_DMA_STALLED);
-		else
-			tasklet_hi_schedule(&ocb->rxtask);
-	} else {
-		spin_lock(&ocb->lock);
-		ocb->dq_prod = ioread32(ocb->ioaddr + REG_DQ_PROD_INDEX);
-		wake_up(&ocb->rx_wq);
-		spin_unlock(&ocb->lock);
-	}
-
-out:
 	intr_status &= ~OCB_IRQ_ENABLE;
 	iowrite32(intr_status, ocb->ioaddr + REG_IRQ_STATUS);
+	ioread32(ocb->ioaddr + REG_IRQ_STATUS); // iowrte32() is posted, make sure it gets to the board
+
+	if (likely(intr_status & OCB_IRQ_RX_DONE)) {
+		if (unlikely(ocb->emulate_dq)) {
+			if (snsocb_saveimqs(ocb))
+				snsocb_stalled(ocb, OCB_DMA_STALLED);
+			else
+				tasklet_hi_schedule(&ocb->rxtask);
+		} else {
+			spin_lock(&ocb->lock);
+			ocb->dq_prod = ioread32(ocb->ioaddr + REG_DQ_PROD_INDEX);
+			wake_up(&ocb->rx_wq);
+			spin_unlock(&ocb->lock);
+		}
+	}
+	if (unlikely(intr_status & OCB_IRQ_DMA_STALL)) {
+		snsocb_stalled(ocb, OCB_DMA_STALLED);
+		dev_err_ratelimited(&ocb->dev, "Detected DMA stall flag");
+	}
+	if (unlikely(intr_status & OCB_IRQ_FIFO_OVERFLOW)) {
+		if (!(intr_status & OCB_IRQ_DMA_STALL))
+			snsocb_stalled(ocb, OCB_FIFO_OVERFLOW);
+		dev_err_ratelimited(&ocb->dev, "Detected FIFO overflow flag");
+	}
+
 	return IRQ_HANDLED;
 }
 
