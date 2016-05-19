@@ -65,6 +65,7 @@ static PyObject *py_occ_open(PyObject *self, PyObject *args, PyObject *keywds) {
     ret = occ_open(path, OCC_INTERFACE_OPTICAL, &occObj->occ);
     if (ret != 0) {
         PyObject_Del(occObj);
+        PyErr_SetString(PyExc_RuntimeError, strerror(-1 * ret));
         return NULL;
     }
 
@@ -93,6 +94,7 @@ static PyObject *py_occ_open_debug(PyObject *self, PyObject *args, PyObject *key
     ret = occ_open_debug(path, OCC_INTERFACE_OPTICAL, &occObj->occ);
     if (ret != 0) {
         PyObject_Del(occObj);
+        PyErr_SetString(PyExc_RuntimeError, strerror(-1 * ret));
         return NULL;
     }
 
