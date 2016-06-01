@@ -25,8 +25,8 @@ static void usage(const char *progname) {
     cout << endl;
     cout << "Options:" << endl;
     cout << "  -m, --meta          Use meta data packets for time reference rather than neutrons" << endl;
-    cout << "  -s, --speed SPEED   Fast forward by dividing the time by this number" << endl;
-    cout << "                      Default is 1, use 0 for as fast as possible" << endl;
+    cout << "  -s, --speed SPEED   Select replay speed based on the timestamps in data packet." << endl;
+    cout << "                      1 means real time, 0.5 will go twice slower and 3 will go three times faster." << endl;
     cout << endl;
 }
 
