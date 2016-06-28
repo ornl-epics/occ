@@ -6,19 +6,12 @@ CFLAGS=-Wall -I../driver -fPIC
 # DSP before v6.3 allows configurable max packet size.
 #CFLAGS+=-DROLLOVER_BUFFER_SIZE=65536
 LDFLAGS=-shared -Wl,-soname,lib$(LIBNAME).so
-SRCS=occlib.c i2c.c
-PIPESRCS=occlib_pipe.c
-SOCKSRCS=occlib_socket.c
-HDRS=occlib.h occlib_hw.h
-LIBHWNAME=occ_hw
+SRCS=occlib.c i2c.c occlib_drv.c occlib_sock.c
+HDRS=occlib.h occlib_hw.h occlib_drv.h occlib_sock.h
 LIBNAME=occ
-LIBPIPENAME=occ_pipe
 OBJS=$(SRCS:.c=.o)
-PIPEOBJS=$(PIPESRCS:.c=.o)
-SOCKOBJS=$(SOCKSRCS:.c=.o)
-LIBSOCKNAME=occ_socket
 
-.PHONY: all debug simulator common clean doc
+.PHONY: all debug clean doc shared static
 
 all: CFLAGS+=-O2
 all: shared
@@ -26,42 +19,18 @@ all: shared
 debug: CFLAGS+=-ggdb -g
 debug: shared
 
-static: lib$(LIBHWNAME).a lib$(LIBPIPENAME).a lib$(LIBSOCKNAME).a
+static: lib$(LIBNAME).a
 
-shared: lib$(LIBHWNAME).so lib$(LIBPIPENAME).so lib$(LIBSOCKNAME).so
+shared: lib$(LIBNAME).so
 
-occlib.o: occlib.c $(HDRS)
+%.o: %.cpp $(HDRS)
+	$(CC) -c $(CFLAGS) $< -o $@
 
-# This is tricky. Rules will be compiled before evaluated. When evaluated,
-# OBJS might be different based on the simulator rule which makes this rule
-# work.
-lib$(LIBHWNAME).a: $(OBJS)
-	$(AR) rcs $@ $(OBJS)
-lib$(LIBHWNAME).so: $(OBJS)
-	$(CC) $(LDFLAGS) -o $@ $(OBJS)
-	ln -sf lib$(LIBHWNAME).so lib$(LIBNAME).so
-
-lib$(LIBPIPENAME).a: $(PIPEOBJS)
-	$(AR) rcs $@ $(PIPEOBJS)
-lib$(LIBPIPENAME).so: $(PIPEOBJS)
-	$(CC) $(LDFLAGS) -o $@ $(PIPEOBJS)
-
-lib$(LIBSOCKNAME).a: $(SOCKOBJS)
-	$(AR) rcs $@ $(SOCKOBJS)
-lib$(LIBSOCKNAME).so: $(SOCKOBJS)
-	$(CC) $(LDFLAGS) -o $@ $(SOCKOBJS)
+lib$(LIBNAME).so: $(OBJS)
+	$(CC) $(LDFLAGS) $(OBJS) -o $@
 
 clean:
-	rm -fR $(OBJS) $(PIPEOBJS) $(SOCKOBJS) lib*.so lib*.a doc/
+	rm -fR $(OBJS) $(PIPEOBJS) $(SOCKOBJS) lib$(LIBNAME).so lib$(LIBNAME).a doc/
 
 doc: $(HDRS) occlib.doxygen
 	doxygen occlib.doxygen
-
-hw: all
-	ln -sf lib$(LIBHWNAME).so lib$(LIBNAME).so
-
-pipe: all
-	ln -sf lib$(LIBPIPENAME).so lib$(LIBNAME).so
-
-socket: all
-	ln -sf lib$(LIBSOCKNAME).so lib$(LIBNAME).so

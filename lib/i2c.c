@@ -1,5 +1,5 @@
 #include "i2c.h"
-#include "occlib_hw.h"
+#include "occlib_drv.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -36,7 +36,7 @@ static void Outport32(struct occ_handle *occ, uint32_t offset, uint32_t data)
         uint32_t occ_data[1];
         occ_data[0] = data;
         //printf("occ_data = %x \n", occ_data[0]);
-	int ret = occ_io_write(occ, pcie_bar, offset, occ_data, 1);
+	int ret = occdrv_io_write(occ, pcie_bar, offset, occ_data, 1);
     if (ret < 0) {
         fprintf(stderr, "ERROR: cannot read BAR%d at offset 0x%08X - %s\n", pcie_bar, offset, strerror(-ret));
     } else {
@@ -56,7 +56,7 @@ unsigned long Inport32(struct occ_handle *occ, uint32_t offset)
 {
   uint32_t data[4];
 
-  int ret = occ_io_read(occ, pcie_bar, offset, data, 1);
+  int ret = occdrv_io_read(occ, pcie_bar, offset, data, 1);
   if (ret < 0) {
       fprintf(stderr, "ERROR: cannot read BAR%d at offset 0x%08X - %s\n", pcie_bar, offset, strerror(-ret));
 	  return(0xFFFFFFFF);

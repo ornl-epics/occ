@@ -32,7 +32,6 @@ typedef enum {
     OCC_INTERFACE_LVDS,
     OCC_INTERFACE_OPTICAL,
     OCC_INTERFACE_SOCKET,
-    OCC_INTERFACE_PIPE,
 } occ_interface_type;
 
 /**

@@ -90,7 +90,7 @@ static int open_socket(const char *address) {
     return sock;
 }
 
-int occ_open(const char *address, occ_interface_type type, struct occ_handle **handle) {
+int occsock_open(const char *address, occ_interface_type type, struct occ_handle **handle) {
 
     if (type != OCC_INTERFACE_SOCKET)
         return -EINVAL;
@@ -114,7 +114,11 @@ int occ_open(const char *address, occ_interface_type type, struct occ_handle **h
     return 0;
 }
 
-int occ_close(struct occ_handle *handle) {
+int occsock_open_debug(const char *address, occ_interface_type type, struct occ_handle **handle) {
+    return occsock_open(address, type, handle);
+}
+
+int occsock_close(struct occ_handle *handle) {
 
     if (handle != NULL && handle->magic == OCC_HANDLE_MAGIC) {
         (void)close(handle->listen_socket);
@@ -127,7 +131,7 @@ int occ_close(struct occ_handle *handle) {
     return 0;
 }
 
-int occ_enable_rx(struct occ_handle *handle, bool enable) {
+int occsock_enable_rx(struct occ_handle *handle, bool enable) {
 
     if (handle == NULL || handle->magic != OCC_HANDLE_MAGIC)
         return -EINVAL;
@@ -137,7 +141,7 @@ int occ_enable_rx(struct occ_handle *handle, bool enable) {
     return 0;
 }
 
-int occ_enable_error_packets(struct occ_handle *handle, bool enable) {
+int occsock_enable_error_packets(struct occ_handle *handle, bool enable) {
 
     if (handle == NULL || handle->magic != OCC_HANDLE_MAGIC)
         return -EINVAL;
@@ -145,7 +149,7 @@ int occ_enable_error_packets(struct occ_handle *handle, bool enable) {
     return 0;
 }
 
-int occ_status(struct occ_handle *handle, occ_status_t *status, bool fast_status) {
+int occsock_status(struct occ_handle *handle, occ_status_t *status, bool fast_status) {
 
     if (handle == NULL || handle->magic != OCC_HANDLE_MAGIC || status == NULL)
         return -EINVAL;
@@ -162,7 +166,7 @@ int occ_status(struct occ_handle *handle, occ_status_t *status, bool fast_status
     return 0;
 }
 
-int occ_reset(struct occ_handle *handle) {
+int occsock_reset(struct occ_handle *handle) {
 
     if (handle == NULL || handle->magic != OCC_HANDLE_MAGIC)
         return -EINVAL;
@@ -178,7 +182,7 @@ int occ_reset(struct occ_handle *handle) {
     return 0;
 }
 
-static size_t _occ_data_align(size_t size) {
+static size_t _occsock_data_align(size_t size) {
     return (size + 3) & ~3;
 }
 
@@ -205,8 +209,8 @@ static int check_client(struct occ_handle *handle, uint32_t timeout) {
     return 0;
 }
 
-int occ_send(struct occ_handle *handle, const void *data, size_t count) {
-    if (handle == NULL || handle->magic != OCC_HANDLE_MAGIC || _occ_data_align(count) != count)
+int occsock_send(struct occ_handle *handle, const void *data, size_t count) {
+    if (handle == NULL || handle->magic != OCC_HANDLE_MAGIC || _occsock_data_align(count) != count)
         return -EINVAL;
 
     if (check_client(handle, 0) != 0)
@@ -246,7 +250,7 @@ static int wait_for_ready_read(struct occ_handle *handle, uint32_t timeout) {
     return 0;
 }
 
-int occ_data_wait(struct occ_handle *handle, void **address, size_t *count, uint32_t timeout) {
+int occsock_data_wait(struct occ_handle *handle, void **address, size_t *count, uint32_t timeout) {
     int ret;
 
     if (handle == NULL || handle->magic != OCC_HANDLE_MAGIC)
@@ -271,9 +275,9 @@ int occ_data_wait(struct occ_handle *handle, void **address, size_t *count, uint
     return 0;
 }
 
-int occ_data_ack(struct occ_handle *handle, size_t count) {
+int occsock_data_ack(struct occ_handle *handle, size_t count) {
 
-    if (handle == NULL || handle->magic != OCC_HANDLE_MAGIC || _occ_data_align(count) != count)
+    if (handle == NULL || handle->magic != OCC_HANDLE_MAGIC || _occsock_data_align(count) != count)
         return -EINVAL;
 
     if (count > handle->buffer_len)
@@ -286,7 +290,7 @@ int occ_data_ack(struct occ_handle *handle, size_t count) {
     return 0;
 }
 
-int occ_read(struct occ_handle *handle, void *data, size_t count, uint32_t timeout) {
+int occsock_read(struct occ_handle *handle, void *data, size_t count, uint32_t timeout) {
     int ret;
 
     ret = wait_for_ready_read(handle, timeout);
@@ -300,7 +304,7 @@ int occ_read(struct occ_handle *handle, void *data, size_t count, uint32_t timeo
     return ret;
 }
 
-int occ_io_read(struct occ_handle *handle, uint8_t bar, uint32_t offset, uint32_t *data, uint32_t count) {
+int occsock_io_read(struct occ_handle *handle, uint8_t bar, uint32_t offset, uint32_t *data, uint32_t count) {
 
     if (handle == NULL || handle->magic != OCC_HANDLE_MAGIC || offset % 4 != 0)
         return -EINVAL;
@@ -308,7 +312,7 @@ int occ_io_read(struct occ_handle *handle, uint8_t bar, uint32_t offset, uint32_
     return -ENOSYS;
 }
 
-int occ_io_write(struct occ_handle *handle, uint8_t bar, uint32_t offset, const uint32_t *data, uint32_t count) {
+int occsock_io_write(struct occ_handle *handle, uint8_t bar, uint32_t offset, const uint32_t *data, uint32_t count) {
 
     if (handle == NULL || handle->magic != OCC_HANDLE_MAGIC || offset % 4 != 0)
         return -EINVAL;

@@ -52,17 +52,22 @@ PyDoc_STRVAR(py_occ_open__doc__,
 static PyObject *py_occ_open(PyObject *self, PyObject *args, PyObject *keywds) {
     const char *path;
     int ret;
+    const char *iface_str = "driver";
+    occ_interface_type iface = OCC_INTERFACE_OPTICAL;
 
-    static char *kwlist[] = {"device", NULL};
+    static char *kwlist[] = {"device", "type", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, keywds, "s", kwlist, &path))
+    if (!PyArg_ParseTupleAndKeywords(args, keywds, "s|s", kwlist, &path, &iface_str))
         return NULL;
 
     OccObject *occObj = PyObject_New(OccObject, &Occ_Type);
     if (occObj == NULL)
         return NULL;
 
-    ret = occ_open(path, OCC_INTERFACE_OPTICAL, &occObj->occ);
+    if (strncmp(iface_str, "socket", 6) == 0)
+        iface = OCC_INTERFACE_SOCKET;
+
+    ret = occ_open(path, iface, &occObj->occ);
     if (ret != 0) {
         PyObject_Del(occObj);
         PyErr_SetString(PyExc_RuntimeError, strerror(-1 * ret));
@@ -81,17 +86,22 @@ PyDoc_STRVAR(py_occ_open_debug__doc__,
 static PyObject *py_occ_open_debug(PyObject *self, PyObject *args, PyObject *keywds) {
     const char *path;
     int ret;
+    const char *iface_str = "driver";
+    occ_interface_type iface = OCC_INTERFACE_OPTICAL;
 
-    static char *kwlist[] = {"device", NULL};
+    static char *kwlist[] = {"device", "type", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, keywds, "s", kwlist, &path))
+    if (!PyArg_ParseTupleAndKeywords(args, keywds, "s|s", kwlist, &path, &iface_str))
         return NULL;
 
     OccObject *occObj = PyObject_New(OccObject, &Occ_Type);
     if (occObj == NULL)
         return NULL;
 
-    ret = occ_open_debug(path, OCC_INTERFACE_OPTICAL, &occObj->occ);
+    if (strncmp(iface_str, "socket", 6) == 0)
+        iface = OCC_INTERFACE_SOCKET;
+
+    ret = occ_open_debug(path, iface, &occObj->occ);
     if (ret != 0) {
         PyObject_Del(occObj);
         PyErr_SetString(PyExc_RuntimeError, strerror(-1 * ret));
@@ -268,8 +278,10 @@ static PyObject *py_occ_status(OccObject *self, PyObject *args, PyObject *keywds
         PyDict_SetItem(sdict, PyString_FromString("interface"), PyString_FromString("optical"));
     else if (status.interface == OCC_INTERFACE_LVDS)
         PyDict_SetItem(sdict, PyString_FromString("interface"), PyString_FromString("LVDS"));
+    else if (status.interface == OCC_INTERFACE_SOCKET)
+        PyDict_SetItem(sdict, PyString_FromString("interface"), PyString_FromString("socket"));
     else
-        PyDict_SetItem(sdict, PyString_FromString("interface"), PyString_FromString("optical"));
+        PyDict_SetItem(sdict, PyString_FromString("interface"), PyString_FromString("unknown"));
 
     uint8_t month = hex2dec((status.firmware_date >> 24) & 0xFF);
     uint8_t day =   hex2dec((status.firmware_date >> 16) & 0xFF);
