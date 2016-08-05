@@ -13,8 +13,8 @@
 #include <fcntl.h>
 #include <string.h>
 
-#define OCC_MAX_PACKET_SIZE 1800
-#define TX_MAX_SIZE         1800        // Maximum packet size in bytes to be send over OCC
+#define OCC_MAX_PACKET_SIZE 38000
+#define TX_MAX_SIZE         38000        // Maximum packet size in bytes to be send over OCC
 #define RX_BUF_SIZE         1800        // Size in bytes of the receive buffer e
 #define OCC_SOURCE          0x1         // Id to used as source field in outgoing messages
 #define OCC_DESTINATION     0x2         // Id to used as destination field in outgoing messages
@@ -65,6 +65,9 @@ struct transmit_status {
         n_bytes(0)
     {}
 };
+
+static unsigned long bytesSent = 0;
+static unsigned long bytesReceived = 0;
 
 #pragma pack(push)
 #pragma pack(4)
@@ -302,6 +305,10 @@ static void *send_to_occ(void *arg) {
 #endif
 
         status->n_bytes += packet_size;
+        bytesSent += packet_size;
+
+        cout << "Sent: " << status->n_bytes << " bytes ";
+        cout << "Received: " << bytesReceived << " bytes\r";
 
         ratelimit(ctx->send_rate, status->n_bytes, &starttime);
     }
@@ -422,6 +429,7 @@ void *receive_from_occ(void *arg) {
 
             remain -= packet_len1;
             data += packet_len1;
+            bytesReceived += packet_len1;
         }
         // Adjust to the actual processed data for acknowledgement
         datalen -= remain;
