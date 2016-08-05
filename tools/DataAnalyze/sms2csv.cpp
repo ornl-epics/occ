@@ -13,12 +13,8 @@
 #define BUFFER_SIZE     (10*1024*1024)  // What's the SMS upper limit? Not documented
 
 static void usage(const char *progname) {
-    printf("Usage: %s [OPTION]\n", progname);
+    printf("Usage: %s [input file] [output file]\n", progname);
     printf("Convert SMS input stream into a CSV output\n");
-    printf("\n");
-    printf("Options:\n");
-    printf("  -i, --input-file FILE   Full path to file to be read or - for stdin\n");
-    printf("  -o, --output-file FILE  Full path fo file to be writen to or - for stdout\n");
     printf("\n");
     printf("Example output: %s < sms_stream.raw\n", progname);
     printf("ID;Timestamp;Length;Type;Source;Total count;Sub count;EOP\n");
@@ -43,9 +39,8 @@ struct sms_header {
 };
 
 int main(int argc, char **argv) {
-    const char *infile = NULL;
-    const char *outfile = NULL;
-    FILE *infd, *outfd;
+    FILE *infd = stdin;
+    FILE *outfd = stdout;
     uint32_t packet_id = 0;
     uint32_t *payload = new uint32_t[BUFFER_SIZE/4];
     int ret = 0;
@@ -58,34 +53,22 @@ int main(int argc, char **argv) {
             usage(argv[0]);
             return 1;
         }
-        if (strncmp(key, "-i", 2) == 0 || strncmp(key, "--input-file", 12) == 0) {
-            if ((i + 1) >= argc)
-                break;
-            infile = argv[++i];
-        }
-        if (strncmp(key, "-o", 2) == 0 || strncmp(key, "--output-file", 13) == 0) {
-            if ((i + 1) >= argc)
-                break;
-            outfile = argv[++i];
-        }
-    }
-    if (infile == NULL || std::string(infile) == "-") {
-        infd = stdin;
-    } else {
-        infd = fopen(infile, "r");
-        if (infd == NULL) {
-            std::cerr << "ERROR: cannot open input file" << std::endl;
+        else if (key[0] == '-') {
+            std::cerr << "ERROR: unsupported switch '" << key << "'" << std::endl;
             return 3;
         }
-    }
-
-    if (outfile == NULL || std::string(outfile) == "-") {
-        outfd = stdout;
-    } else {
-        outfd = fopen(outfile, "w+");
-        if (outfd == NULL) {
-            std::cerr << "ERROR: cannot open output file" << std::endl;
-            return 3;
+        else if (infd == stdin) {
+            infd = fopen(argv[i], "r");
+            if (infd == NULL) {
+                std::cerr << "ERROR: cannot open input file" << std::endl;
+                return 3;
+            }
+        } else if (outfd == stdout) {
+            outfd = fopen(argv[i], "w+");
+            if (outfd == NULL) {
+                std::cerr << "ERROR: cannot open output file" << std::endl;
+                return 3;
+            }
         }
     }
 
