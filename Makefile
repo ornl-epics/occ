@@ -8,3 +8,4 @@ $(SUBDIRS):
 	$(MAKE) -C $@
 
 tools: lib
+
