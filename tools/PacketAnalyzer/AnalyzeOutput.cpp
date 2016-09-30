@@ -12,7 +12,7 @@
 
 using namespace std;
 
-#define MAX_EVENTS_PER_PACKET               1800
+#define MAX_EVENTS_PER_PACKET               1800U
 #define PRINT_RATELIMIT                     1e9 // define how often to print metrics [in ns]
 
 AnalyzeOutput::AnalyzeOutput(const string &devfile, const string &dumpfile, bool dmadump) :
@@ -126,7 +126,7 @@ void AnalyzeOutput::dumpPacket(const LabPacket * const packet, uint32_t errorOff
        << std::endl;
 
     if (packet->isDataRtdl()) {
-        for (uint32_t i = 0; i < min(100UL, packet->payload_length / sizeof(uint32_t)); i++) {
+        for (uint32_t i = 0; i < min(100U, (unsigned)(packet->payload_length / sizeof(uint32_t))); i++) {
             ss << i << " " << SS_HEX(packet->data[i]);
             if (errorOffset == i)
                 ss << " *** MISMATCH";
@@ -163,7 +163,7 @@ void AnalyzeOutput::dumpPacket(const LabPacket * const packet, uint32_t errorOff
         }
     } else {
         const DasNeutronEvent *event = reinterpret_cast<const DasNeutronEvent *>(packet->data);
-        for (uint32_t i = 0; i < min((unsigned long)MAX_EVENTS_PER_PACKET, packet->payload_length/sizeof(DasNeutronEvent)); i++, event++) {
+        for (uint32_t i = 0; i < min(MAX_EVENTS_PER_PACKET, (unsigned)(packet->payload_length/sizeof(DasNeutronEvent))); i++, event++) {
             ss << i << " tof " << SS_HEX(event->tof) << " pix " << SS_HEX(event->pixelid);
         }
     }
