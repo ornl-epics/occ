@@ -1,4 +1,4 @@
-SUBDIRS = DataAnalyze dump flash loopback PacketAnalyzer rawio
+SUBDIRS = dump flash loopback PacketAnalyzer rawio
 
 .PHONY: subdirs $(SUBDIRS)
 
