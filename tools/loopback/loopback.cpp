@@ -95,7 +95,7 @@ static void usage(const char *progname) {
     cout << "  -s, --packet-size SIZE   Size of each sent packet (defaults to 0, random size)" << endl;
     cout << "  -l, --data-length LENGTH Approximate amount of data to read from input file (defaults to 0, all data)" << endl;
     cout << "  -c, --capture-file FILE  Capture all data as sent to OCC to a file, useful for inspection or replay" << endl;
-    cout << "  -r, --raw-mode           Tread data from input file as valid OCC packets, don't split into packets or add OCC headers" << endl;
+    cout << "  -r, --raw-mode           Read and save data as is, assuming it's already encapsulated into DAS packets" << endl;
     cout << endl;
 }
 
@@ -368,15 +368,6 @@ void *receive_from_occ(void *arg) {
             status->error = "cannot read from OCC device";
             break;
         }
-#ifdef TRACE
-        if (datalen > 10000) {
-          status->error = "bad datalen";
-          cout << "(receive_from) bad datalen =>" << datalen << endl;
-          cout << "(receive_from) offset =>" << offset << endl;
-          memcpy(&outbuf[offset], data, datalen);
-          offset += datalen;
-        }
-#endif
 
 #ifdef TRACE1
         cout << hex;
