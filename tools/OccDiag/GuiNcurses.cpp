@@ -45,7 +45,7 @@ GuiNcurses::~GuiNcurses()
 {
     endwin();
 
-    // TODO: add title line + runtime, move to main.cpp
+    printf("%s\n", getBriefStatus().c_str());
     std::vector<std::string> lines = m_winStats.generateReport();
     for (size_t i=0; i<lines.size(); i++) {
         printf("%s\n", lines[i].c_str());
@@ -133,17 +133,18 @@ std::string GuiNcurses::getBriefStatus()
     m_occAdapter.getDmaInfo(&dmaAddr, dmaSize);
     try {
         m_occAdapter.getOccStatus(dmaUsed, stalled, overflow);
+
+        if (dmaSize != 0) dmaSize /= 1048576;
+        if (dmaUsed != 0) dmaUsed /= 1048576;
+        snprintf(buffer, sizeof(buffer), "-[DMA usage: %u/%u MB]", (unsigned)dmaUsed, (unsigned)dmaSize);
+        str += buffer;
+
+        snprintf(buffer, sizeof(buffer), "-[Status: %s]", (stalled ? "stalled" : (overflow ? "overflow" : "OK")));
+        str += buffer;
+
     } catch (std::runtime_error &e) {
-        // TODO:
+        str += " [No OCC info obtained]";
     }
-    if (dmaSize != 0) dmaSize /= 1048576;
-    if (dmaUsed != 0) dmaUsed /= 1048576;
-    snprintf(buffer, sizeof(buffer), "-[DMA usage: %u/%u MB]", (unsigned)dmaUsed, (unsigned)dmaSize);
-    str += buffer;
-
-    snprintf(buffer, sizeof(buffer), "-[Status: %s]", (stalled ? "stalled" : (overflow ? "overflow" : "OK")));
-    str += buffer;
-
     return str.substr(0, 78);
 }
 
@@ -173,7 +174,9 @@ void GuiNcurses::toggleRx(bool enable)
         try {
             if (enable) {
                 log("Resetting OCC to clear potential partial packet from previous disable");
+                m_winStats.clear();
                 m_occAdapter.reset();
+                LabPacket::resetRamp();
                 m_runtime = 0.0;
             }
 
@@ -239,6 +242,8 @@ void GuiNcurses::resetOcc()
         if (m_rxEnabled)
             m_occAdapter.toggleRx(true);
         m_runtime = 0.0;
+        LabPacket::resetRamp();
+        m_winStats.clear();
         log("OCC reset");
     } catch (std::runtime_error &e) {
         log("ERROR: %s", e.what());
@@ -269,6 +274,7 @@ void GuiNcurses::input()
             m_winHelp.hide();
             m_winConsole.redraw(true);
             m_winData.redraw(true);
+            m_winRegisters.redraw(true);
         } else {
             m_winHelp.show();
         }

@@ -25,7 +25,14 @@ class LabPacket : public DasPacket
          */
         bool verify(Type &type, uint32_t &errorOffset) const;
 
+        /**
+         * Reset ramp counter.
+         */
+        static void resetRamp();
+
     private:
+        static uint32_t lastRampValue;
+
         bool verifyRtdl(uint32_t &errorOffset) const;
         bool verifyMeta(uint32_t &errorOffset) const;
         bool verifyNeutrons(uint32_t &errorOffset) const;

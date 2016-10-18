@@ -5,6 +5,8 @@
 #define SPECIAL_PIXEL_BIT   0x40000000  // pixel ids above this require special handling
 #define EVENT_TOF_MAX       2000000 // <=1s/5Hz, in 100ns units
 
+uint32_t LabPacket::lastRampValue = (uint32_t)-1;
+
 bool LabPacket::verify(LabPacket::Type &type, uint32_t &errorOffset) const
 {
     if (isRtdl()) {
@@ -22,13 +24,11 @@ bool LabPacket::verify(LabPacket::Type &type, uint32_t &errorOffset) const
         type = TYPE_METADATA;
         return verifyMeta(errorOffset);
     } else if (isNeutronData()) {
-        if ((info & 0xFC) == 0x2C) {
-            type = TYPE_RAMP;
-            return verifyRamp(errorOffset);
-        } else {
-            type = TYPE_NEUTRONS;
-            return verifyNeutrons(errorOffset);
-        }
+        type = TYPE_NEUTRONS;
+        return verifyNeutrons(errorOffset);
+    } else if ((info & 0xFC) == 0x2C) {
+        type = TYPE_RAMP;
+        return verifyRamp(errorOffset);
     }
     type = TYPE_UNKNOWN;
     return true;
@@ -136,32 +136,38 @@ bool LabPacket::verifyNeutrons(uint32_t &errorOffset) const
 
 bool LabPacket::verifyRamp(uint32_t &errorOffset) const
 {
-    uint32_t size;
-    const DasPacket::Event *event = reinterpret_cast<const DasPacket::Event *>(getData(&size));
-    uint32_t nevents = size / (sizeof(DasPacket::Event)/4);
-    static uint32_t lastValue = (uint32_t)-1;
+    const DasPacket::Event *event = reinterpret_cast<const DasPacket::Event *>(payload);
+    uint32_t nevents = payload_length / sizeof(DasPacket::Event);
 
-    if (lastValue == (uint32_t)-1)
-        lastValue = event->tof;
+    if ((payload_length % sizeof(DasPacket::Event)) != 0) {
+        errorOffset = offsetof(DasPacket, payload_length)/4;
+        return false;
+    }
 
-    for (uint32_t i = 0; i < nevents; i++, event++) {
-        if (event->tof != lastValue) {
-            errorOffset = i;
-            lastValue = -1;
+    if (lastRampValue == (uint32_t)-1)
+        lastRampValue = event->tof;
+
+    errorOffset = offsetof(DasPacket, payload)/4;
+    for (uint32_t i = 0; i < nevents; i++) {
+        if (event->tof != lastRampValue) {
+            errorOffset += 2*i;
+            lastRampValue = -1;
             return false;
         } else {
-            lastValue++;
-            lastValue &= 0xFFFFFFF;
+            lastRampValue++;
+            lastRampValue &= 0xFFFFFFF;
         }
 
-        if (event->pixelid != lastValue) {
-            errorOffset = i;
-            lastValue = -1;
+        if (event->pixelid != lastRampValue) {
+            errorOffset += 2*i+1;
+            lastRampValue = -1;
             return false;
         } else {
-            lastValue++;
-            lastValue &= 0xFFFFFFF;
+            lastRampValue++;
+            lastRampValue &= 0xFFFFFFF;
         }
+
+        event++;
     }
 
     return true;
@@ -175,4 +181,9 @@ bool LabPacket::verifyTsync(uint32_t &errorOffset) const
 bool LabPacket::verifyCmd(uint32_t &errorOffset) const
 {
     return true;
+}
+
+void LabPacket::resetRamp()
+{
+    LabPacket::lastRampValue = (uint32_t)-1;
 }

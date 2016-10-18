@@ -10,7 +10,6 @@
 class WinHelp : public Window {
     private:
         bool m_stopOnBad;
-        uint32_t m_rampGenRate;
     public:
         WinHelp();
 
@@ -24,6 +23,9 @@ class WinHelp : public Window {
          */
         void redraw(bool frame=false);
 
+        /**
+         * Reflect changes setting in for stop-on-bad text.
+         */
         void setStopOnBad(bool enable) {
             m_stopOnBad = enable;
         };

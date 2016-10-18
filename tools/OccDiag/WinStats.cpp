@@ -100,3 +100,10 @@ void WinStats::update(const OccAdapter::AnalyzeStats &stats)
         m_totalStats[i].throughput = stats.bytes[i] / period;
     }
 }
+
+void WinStats::clear()
+{
+    for (auto it=m_totalStats.begin(); it!=m_totalStats.end(); it++) {
+        it->clear();
+    }
+}

@@ -32,11 +32,6 @@ class OccAdapter {
         void reset();
 
         /**
-         * Enable internal ramp generator on PCIe boards.
-         */
-        void enablePcieGenerator(uint32_t rate, uint16_t pkt_size);
-
-        /**
          * Enable or disable RX in OCC FPGA.
          */
         void toggleRx(bool enable);

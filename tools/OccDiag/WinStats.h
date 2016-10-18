@@ -18,11 +18,16 @@ class WinStats : public Window {
                 double rate;
                 double throughput;
                 AnalyzeStats()
-                    : good(0)
-                    , bad(0)
-                    , rate(0.0)
-                    , throughput(0.0)
-                {}
+                {
+                    clear();
+                }
+                void clear()
+                {
+                    good = 0;
+                    bad = 0;
+                    rate = 0.0;
+                    throughput = 0.0;
+                }
             };
 
     private:
@@ -60,6 +65,11 @@ class WinStats : public Window {
          * @param[in] stats Gathered statistics since last time this function was called.
          */
         void update(const OccAdapter::AnalyzeStats &stats);
+
+        /**
+         * Reset counters to 0.
+         */
+        void clear();
 
 };
 
