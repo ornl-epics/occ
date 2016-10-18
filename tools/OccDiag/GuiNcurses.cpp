@@ -63,10 +63,11 @@ void GuiNcurses::run()
         struct timespec t1, t2;
         double loopTime = 0.2; // GUI refresh rate
 
+        m_cachedStats.clear();
+        
         if (!m_rxEnabled || m_paused) {
             usleep(loopTime * 1e6);
         } else {
-            m_cachedStats.clear();
 
             clock_gettime(CLOCK_MONOTONIC, &t1);
             while (!Common::timeExpired(t1, loopTime)) {
@@ -238,7 +239,6 @@ void GuiNcurses::resetOcc()
             m_occAdapter.toggleRx(true);
         m_runtime = 0.0;
         LabPacket::resetRamp();
-        m_winStats.clear();
         log("OCC reset");
     } catch (std::runtime_error &e) {
         log("ERROR: %s", e.what());
@@ -289,6 +289,7 @@ void GuiNcurses::input()
     case 'r':
     case 'R':
         resetOcc();
+        m_winStats.clear();
         break;
     case 's':
     case 'S':
