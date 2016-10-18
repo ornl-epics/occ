@@ -24,9 +24,10 @@ void WinData::redraw(bool frame)
     if (m_addrError) {
         int line = 3 + (uint32_t)((const char *)m_addrError - (const char *)m_addrPacket) / (dwordsPerLine*sizeof(uint32_t));
         if (line > height) {
-            //addr = (const char *)m_addrError - (height-2)*dwordsPerLine*sizeof(uint32_t);
+            addr = (const char *)m_addrError - (height-2)*dwordsPerLine*sizeof(uint32_t);
         }
     }
+    addr = (const char *)addr + m_lineOffset*4*sizeof(uint32_t);
 
     const DasPacket *packet = (const DasPacket *)m_addrPacket;
     size_t packetLen = packet->length();
@@ -62,4 +63,5 @@ void WinData::setAddr(const void *addrBase, size_t size, const void *addrPacket,
     m_size = size;
     m_addrPacket = addrPacket;
     m_addrError = addrError;
+    m_lineOffset = 0;
 }

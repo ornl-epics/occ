@@ -24,6 +24,14 @@ class OccAdapter {
                 , bad(7)
                 , bytes(7)
             {}
+            void clear()
+            {
+                for (int i=0; i<7; i++) {
+                    good[i]  = 0;
+                    bad[i]   = 0;
+                    bytes[i] = 0;
+                }
+            }
         };
 
         OccAdapter(const std::string &devfile, const std::map<uint32_t, uint32_t> &initRegisters);

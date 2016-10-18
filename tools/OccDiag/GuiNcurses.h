@@ -20,6 +20,7 @@ class GuiNcurses {
         bool m_paused;
         bool m_rxEnabled;
         bool m_stopOnBad;
+        OccAdapter::AnalyzeStats m_cachedStats;
 
         WinHelp m_winHelp;
         WinConsole m_winConsole;
@@ -71,11 +72,6 @@ class GuiNcurses {
          * Log message
          */
         void log(const char *str, ...);
-
-        /**
-         * Update data window with memory to show, don't redraw or display.
-         */
-        void updateDataWin(const OccAdapter::AnalyzeStats &stats);
 
         /**
          * Update registers window with available register values.

@@ -12,6 +12,7 @@ class WinData : public Window {
         const void *m_addrPacket;
         const void *m_addrError;
         size_t m_size;
+        int m_lineOffset;
     public:
         WinData(int y);
 
@@ -21,6 +22,22 @@ class WinData : public Window {
         void redraw(bool frame=false);
 
         void setAddr(const void *addrBase, size_t size, const void *addrPacket, const void *addrError=0);
+
+        /**
+         * Move displayed data up for one line.
+         */
+        void moveUp()
+        {
+            m_lineOffset -= 1;
+        }
+
+        /**
+         * Move displayed data down for one line.
+         */
+        void moveDown()
+        {
+            m_lineOffset += 1;
+        }
 };
 
 #endif // WIN_DATA_H

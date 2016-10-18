@@ -24,8 +24,9 @@ GuiNcurses::GuiNcurses(const char *occDevice, const std::map<uint32_t, uint32_t>
 {
     initscr();
     noecho();
-    cbreak(); // Read keys without carrige return
+    cbreak(); // Line buffering disabled
     nodelay(stdscr, TRUE);
+    keypad(stdscr, TRUE);
     wgetch(stdscr); // Must initialize, otherwise the screen flickers
 
     if (has_colors() == TRUE) {
@@ -60,20 +61,18 @@ void GuiNcurses::run()
 
     while (!m_shutdown) {
         struct timespec t1, t2;
-        double loopTime = 0.5; // GUI refresh rate
-        OccAdapter::AnalyzeStats stats;
+        double loopTime = 0.2; // GUI refresh rate
 
         if (!m_rxEnabled || m_paused) {
             usleep(loopTime * 1e6);
         } else {
+            m_cachedStats.clear();
 
             clock_gettime(CLOCK_MONOTONIC, &t1);
             while (!Common::timeExpired(t1, loopTime)) {
                 try {
-                    m_occAdapter.process(stats, m_stopOnBad, loopTime);
-                    updateDataWin(stats);
+                    m_occAdapter.process(m_cachedStats, m_stopOnBad, loopTime);
                 } catch (std::bad_exception) {
-                    updateDataWin(stats);
                     if (m_stopOnBad) {
                         log("Encountered bad packet, pausing for inspection");
                         showDataWin();
@@ -82,7 +81,6 @@ void GuiNcurses::run()
                     break;
                 } catch (std::runtime_error &e) {
                     log("ERROR: %s", e.what());
-                    updateDataWin(stats);
                     showDataWin();
                     toggleRx(false);
                     break;
@@ -94,7 +92,7 @@ void GuiNcurses::run()
         }
 
         m_winStats.setFooter( getBriefStatus() );
-        m_winStats.update(stats);
+        m_winStats.update(m_cachedStats);
         m_winStats.redraw(true);
         input();
     }
@@ -148,20 +146,6 @@ std::string GuiNcurses::getBriefStatus()
     return str.substr(0, 78);
 }
 
-void GuiNcurses::updateDataWin(const OccAdapter::AnalyzeStats &stats)
-{
-    // Calculate DMA address, size and bad packet offsets
-    const void *dmaAddr;
-    size_t dmaSize;
-    m_occAdapter.getDmaInfo(&dmaAddr, dmaSize);
-    if (stats.lastPacketAddr < dmaAddr || stats.lastPacketAddr >= ((const char *)dmaAddr + dmaSize)) {
-        // Probably using boundary roll-over buffer
-        dmaAddr = stats.lastAddr;
-        dmaSize = stats.lastLen;
-    }
-    m_winData.setAddr(dmaAddr, dmaSize, stats.lastPacketAddr, stats.lastErrorAddr);
-}
-
 void GuiNcurses::shutdown()
 {
     m_shutdown = true;
@@ -207,6 +191,17 @@ void GuiNcurses::pause(bool pause_)
 
 void GuiNcurses::showDataWin()
 {
+    // Calculate DMA address, size and bad packet offsets
+    const void *dmaAddr;
+    size_t dmaSize;
+    m_occAdapter.getDmaInfo(&dmaAddr, dmaSize);
+    if (m_cachedStats.lastPacketAddr < dmaAddr || m_cachedStats.lastPacketAddr >= ((const char *)dmaAddr + dmaSize)) {
+        // Probably using boundary roll-over buffer
+        dmaAddr = m_cachedStats.lastAddr;
+        dmaSize = m_cachedStats.lastLen;
+    }
+    m_winData.setAddr(dmaAddr, dmaSize, m_cachedStats.lastPacketAddr, m_cachedStats.lastErrorAddr);
+
     m_winRegisters.hide();
     m_winConsole.hide();
     m_winData.show();
@@ -301,6 +296,16 @@ void GuiNcurses::input()
         break;
     case 't':
         log("testing");
+        break;
+    case KEY_UP:
+        m_winData.moveDown();
+        m_winData.redraw();
+        m_winHelp.redraw();
+        break;
+    case KEY_DOWN:
+        m_winData.moveUp();
+        m_winData.redraw();
+        m_winHelp.redraw();
         break;
     default:
         break;
