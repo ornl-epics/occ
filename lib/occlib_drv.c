@@ -435,6 +435,9 @@ int occdrv_data_wait(struct occ_handle *handle, void **address, size_t *count, u
     if (handle == NULL || handle->magic != OCC_HANDLE_MAGIC)
         return -EINVAL;
 
+    *address = handle->dma_buf;
+    *count = 0;
+
     // Block until some data is available
     while (1) {
         if (timeout > 0) {

@@ -228,6 +228,11 @@ int occ_reset(struct occ_handle *handle);
  * receive data handler first and only then enable data reception to prevent
  * exhausting the limited DMA buffer before the thread could be even started.
  *
+ * When using this functionality dynamically, disabling RX might occur in the
+ * middle of FPGA processing incoming packet and only copy part of the packet.
+ * Application needs to be able to handle partial packet or use reset() prior
+ * to re-enabling RX to clear DMA buffer.
+ *
  * \param[in] handle Valid OCC API handle.
  * \param[in] enable Enable the RX when non-zero, disable otherwise.
  * \retval 0 on success

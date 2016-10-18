@@ -256,6 +256,9 @@ int occsock_data_wait(struct occ_handle *handle, void **address, size_t *count, 
     if (handle == NULL || handle->magic != OCC_HANDLE_MAGIC)
         return -EINVAL;
 
+    *address = handle->buffer;
+    *count = 0;
+
     ret = wait_for_ready_read(handle, timeout);
     if (ret != 0)
         return ret;
