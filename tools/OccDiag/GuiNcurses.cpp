@@ -23,11 +23,6 @@ GuiNcurses::GuiNcurses(const char *occDevice, const std::map<uint32_t, uint32_t>
     , m_winStats(0, 9)
 {
     initscr();
-    noecho();
-    cbreak(); // Line buffering disabled
-    nodelay(stdscr, TRUE);
-    keypad(stdscr, TRUE);
-    wgetch(stdscr); // Must initialize, otherwise the screen flickers
 
     if (has_colors() == TRUE) {
         start_color();
@@ -35,8 +30,16 @@ GuiNcurses::GuiNcurses(const char *occDevice, const std::map<uint32_t, uint32_t>
         init_pair(TEXT_COLOR_RED,     COLOR_RED,     COLOR_BLACK);
         init_pair(TEXT_COLOR_CYAN,    COLOR_CYAN,    COLOR_BLACK);
         init_pair(TEXT_COLOR_YELLOW,  COLOR_YELLOW,  COLOR_BLACK);
+
+        wbkgd(stdscr, COLOR_PAIR(TEXT_COLOR_WHITE));
     }
 
+    noecho();
+    cbreak(); // Line buffering disabled
+    nodelay(stdscr, TRUE);
+    keypad(stdscr, TRUE);
+    wgetch(stdscr); // Must initialize, otherwise the screen flickers
+    
     log("PacketAnalyzer started");
     m_winStats.show();
     m_winConsole.show();
@@ -64,7 +67,7 @@ void GuiNcurses::run()
         double loopTime = 0.2; // GUI refresh rate
 
         m_cachedStats.clear();
-        
+
         if (!m_rxEnabled || m_paused) {
             usleep(loopTime * 1e6);
         } else {
