@@ -8,7 +8,7 @@ def main():
     parser.add_argument("device", help="Device file name, eg. /dev/snsocb1", default="/dev/snsocb0")
     args = parser.parse_args()
 
-    o = occ.open(args.device)
+    o = occ.open_debug(args.device)
     status = o.status()
     for k,v in status.iteritems():
         print "{0}: {1}".format(k, v)

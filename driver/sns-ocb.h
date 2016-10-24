@@ -14,7 +14,12 @@ typedef uint64_t u64;
 /**
  * OCC minor version, changed when interface changes.
  */
-#define OCB_VER_MIN 6
+#define OCB_VER_MIN 7
+
+/**
+ * OCC build version, not enforced to the client.
+ */
+#define OCB_VER_BUILD 1
 
 /* The user should read an appropriate amount of data from the device for
  * the command being requested. Commands are indicated by the offset read.
@@ -29,9 +34,10 @@ typedef uint64_t u64;
  * gives information about the driver and current status of the hardware.
  * Check the struct ocb_status for details.
  */
-#define OCB_CMD_RX			1
-#define OCB_CMD_GET_STATUS		2
-#define OCB_CMD_VERSION			3
+#define OCB_CMD_RX                  1
+#define OCB_CMD_VERSION             2
+#define OCB_CMD_GET_STATUS          3
+#define OCB_CMD_GET_CACHED_STATUS   4
 
 /* Status flags returned in status member of ocb_status struct */
 #define OCB_OPTICAL_FAULT			(1 << 9)
@@ -105,6 +111,12 @@ struct ocb_status {
     u32 dq_used;			// Used space
     u32 rx_rate;			// Receive (optic side) data rate in B/s calculated by hw
     u32 bars[3];			// Sizes of BAR regions used for mmap
+    u32 err_crc;            // CRC error counter
+    u32 err_length;         // Length error counter
+    u32 err_frame;          // Frame error counter
+    u32 fpga_temp;          // FPGA temperature raw value, conv: ((503.975/4096.0) * (X / 16.0) ) - 273.15 C
+    u32 fpga_core_volt;     // FPGA core voltage raw value, conv: ((3.0/4096.0) * (X/16)) V
+    u32 fpga_aux_volt;      // FPGA aug voltage raw value, conv: ((3.0/4096.0) * (X/16)) V
 };
 
 struct ocb_version {

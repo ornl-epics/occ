@@ -257,7 +257,7 @@ static PyObject *py_occ_status(OccObject *self, PyObject *args, PyObject *keywds
         return NULL;
     }
 
-    ret = occ_status(self->occ, &status, fast != 0);
+    ret = occ_status(self->occ, &status, fast > 0 ? OCC_STATUS_FAST : OCC_STATUS_FULL);
     if (ret < 0) {
         PyErr_SetString(OccError, strerror(-1 * ret));
         return NULL;

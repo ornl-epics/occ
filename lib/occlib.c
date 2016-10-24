@@ -29,7 +29,7 @@ struct occ_handle {
         int (*close)(struct occ_handle *handle);
         int (*enable_rx)(struct occ_handle *handle, bool enable);
         int (*enable_error_packets)(struct occ_handle *handle, bool enable);
-        int (*status)(struct occ_handle *handle, occ_status_t *status, bool fast_status);
+        int (*status)(struct occ_handle *handle, occ_status_t *status, occ_status_type type);
         int (*reset)(struct occ_handle *handle);
         int (*send)(struct occ_handle *handle, const void *data, size_t count);
         int (*data_wait)(struct occ_handle *handle, void **address, size_t *count, uint32_t timeout);
@@ -141,11 +141,11 @@ int occ_enable_error_packets(struct occ_handle *handle, bool enable) {
     return handle->ops.enable_error_packets(handle->impl_ctx, enable);
 }
 
-int occ_status(struct occ_handle *handle, occ_status_t *status, bool fast_status) {
+int occ_status(struct occ_handle *handle, occ_status_t *status, occ_status_type type) {
     if (handle == NULL || handle->magic != OCC_HANDLE_MAGIC || status == NULL)
         return -EINVAL;
 
-    return handle->ops.status(handle->impl_ctx, status, fast_status);
+    return handle->ops.status(handle->impl_ctx, status, type);
 }
 
 int occ_reset(struct occ_handle *handle) {

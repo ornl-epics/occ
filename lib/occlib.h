@@ -64,6 +64,15 @@ typedef enum {
 } occ_sfp_type;
 
 /**
+ * Amount of status information obtained.
+ */
+typedef enum {
+    OCC_STATUS_FULL     = 0, //!< All fields in occ_status_t populated
+    OCC_STATUS_FAST     = 1, //!< Skip I2C fields
+    OCC_STATUS_CACHED   = 2, //!< Don't ask hw for anything, return only what's immediately available
+} occ_status_type;
+
+/**
  * Structure describing OCC board and driver information.
  */
 typedef struct {
@@ -264,10 +273,11 @@ int occ_enable_error_packets(struct occ_handle *handle, bool enable);
  *
  * \param[in] handle Valid OCC API handle.
  * \param[out] status Pointer to a structure where status information is put.
- * \param[in] fast_status If true, limit update to frequently used status vars.
+ * \param[in] occ_status_type Select the amount information to obtain, drives
+ *            time needed to return.
  * \return 0 on success, negative errno on error.
  */
-int occ_status(struct occ_handle *handle, occ_status_t *status, bool fast_status);
+int occ_status(struct occ_handle *handle, occ_status_t *status, occ_status_type type);
 
 /**
  * Send arbitrary data to OCC link.

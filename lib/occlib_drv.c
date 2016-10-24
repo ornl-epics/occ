@@ -19,12 +19,6 @@
 #define ROLLOVER_BUFFER_SIZE    8192          // Size of temporary buffer when DMA buffer rollover occurs, in bytes
 #endif
 
-#define OCC_PCIE_REG_ERR_CRC            0x180
-#define OCC_PCIE_REG_ERR_LENGTH         0x184
-#define OCC_PCIE_REG_ERR_FRAME          0x188
-#define OCC_PCIE_REG_FPGA_TEMP          0x310
-#define OCC_PCIE_REG_FPGA_CORE_VOLT     0x314
-#define OCC_PCIE_REG_FPGA_AUX_VOLT      0x318
 #define OCC_PCIE_I2C_ADDR0              0xA0
 #define OCC_PCIE_I2C_SFP_TYPE           8
 #define OCC_PCIE_I2C_SFP_PARTNO_START   40
@@ -244,14 +238,14 @@ int occdrv_enable_error_packets(struct occ_handle *handle, bool enable) {
     return 0;
 }
 
-int occdrv_status(struct occ_handle *handle, occ_status_t *status, bool fast_status) {
+int occdrv_status(struct occ_handle *handle, occ_status_t *status, occ_status_type type) {
     struct ocb_status info;
     int ret;
 
     if (handle == NULL || handle->magic != OCC_HANDLE_MAGIC || status == NULL)
         return -EINVAL;
 
-    if (pread(handle->fd, &info, sizeof(info), OCB_CMD_GET_STATUS) < 0)
+    if (pread(handle->fd, &info, sizeof(info), type == OCC_STATUS_CACHED ? OCB_CMD_GET_CACHED_STATUS : OCB_CMD_GET_STATUS) < 0)
         return -errno;
 
     status->dma_size = info.dq_size;
@@ -267,123 +261,82 @@ int occdrv_status(struct occ_handle *handle, occ_status_t *status, bool fast_sta
     status->fpga_serial_number = info.fpga_serial;
     status->rx_enabled = (info.status & OCB_RX_ENABLED);
     status->err_packets_enabled = (info.status & OCB_RX_ERR_PKTS_ENABLED);
+    status->fpga_temp = ( (503.975/65536.0) * info.fpga_temp ) - 273.15;
+    status->fpga_core_volt = (3.0/65536.0) * info.fpga_core_volt;
+    status->fpga_aux_volt = (3.0/65536.0) * info.fpga_aux_volt;
     if (!(info.status & OCB_OPTICAL_PRESENT))    status->optical_signal = OCC_OPT_NO_SFP;
     else if (info.status & OCB_OPTICAL_FAULT)    status->optical_signal = OCC_OPT_LASER_FAULT;
     else if (info.status & OCB_OPTICAL_NOSIGNAL) status->optical_signal = OCC_OPT_NO_CABLE;
     else                                         status->optical_signal = OCC_OPT_CONNECTED;
 
     ret = 0;
-    while (status->board == BOARD_SNS_PCIE) {
-        uint32_t valInt;
+    while (status->board == BOARD_SNS_PCIE && type == OCC_STATUS_FULL && status->optical_signal != OCC_OPT_NO_SFP) {
         word valWord;
+        int i;
 
-        // Get CRC error counter
-        ret = occdrv_io_read(handle, 0, OCC_PCIE_REG_ERR_CRC, &valInt, 1);
-        if (ret != 1)
-            break;
-        status->err_crc = valInt;
+        // Set global error, will override at end if all goes well
+        ret = -EIO;
 
-        // Get length error counter
-        ret = occdrv_io_read(handle, 0, OCC_PCIE_REG_ERR_LENGTH, &valInt, 1);
-        if (ret != 1)
-            break;
-        status->err_length = valInt;
-
-        // Get frame error counter
-        ret = occdrv_io_read(handle, 0, OCC_PCIE_REG_ERR_FRAME, &valInt, 1);
-        if (ret != 1)
-            break;
-        status->err_frame = valInt;
-
-        if (fast_status == false) {
-            // Get FPGA temperature
-            ret = occdrv_io_read(handle, 0, OCC_PCIE_REG_FPGA_TEMP, &valInt, 1);
-            if (ret != 1)
-                break;
-            status->fpga_temp = ( (503.975/4096.0) * ((float)valInt / 16.0) ) - 273.15;
-
-            // Get FPGA core voltage
-            ret = occdrv_io_read(handle, 0, OCC_PCIE_REG_FPGA_CORE_VOLT, &valInt, 1);
-            if (ret != 1)
-                break;
-            status->fpga_core_volt = ( (3.0/4096.0) * ((float)valInt/16) );
-
-            // Get FPGA aux voltage
-            ret = occdrv_io_read(handle, 0, OCC_PCIE_REG_FPGA_AUX_VOLT, &valInt, 1);
-            if (ret != 1)
-                break;
-            status->fpga_aux_volt = ( (3.0/4096.0) * ((float)valInt/16) );
-
-            // Set global error, will override at end if all goes well
-            ret = -EIO;
-
-            // No need to query transceiver info if we know it's not there
-            if (status->optical_signal != OCC_OPT_NO_SFP) {
-                int i;
-
-                // Get SFP serial number - multiple addresses with 1 ASCII char per address
-                memset(status->sfp_serial_number, 0, sizeof(status->sfp_serial_number));
-                for (i = OCC_PCIE_I2C_SFP_SERNO_START; i <= OCC_PCIE_I2C_SFP_SERNO_END; i += 2) {
-                    int j = i - OCC_PCIE_I2C_SFP_SERNO_START;
-                    if (Read_I2C_Bus(handle, OCC_PCIE_I2C_ADDR0, i, &valWord) == 1 &&
-                        j < (sizeof(status->sfp_serial_number) - 1)) {
-                        status->sfp_serial_number[j]   = (valWord & 0xFF00) >> 8;
-                        status->sfp_serial_number[j+1] = (valWord & 0xFF);
-                    }
-                }
-
-                // Get SFP part number - multiple addresses with 1 ASCII char per address
-                memset(status->sfp_part_number, 0, sizeof(status->sfp_part_number));
-                for (i = OCC_PCIE_I2C_SFP_PARTNO_START; i <= OCC_PCIE_I2C_SFP_PARTNO_END; i += 2) {
-                    int j = i - OCC_PCIE_I2C_SFP_PARTNO_START;
-                    if (Read_I2C_Bus(handle, OCC_PCIE_I2C_ADDR0, i, &valWord) == 1 &&
-                        j < (sizeof(status->sfp_part_number) - 1)) {
-                        status->sfp_part_number[j]   = (valWord & 0xFF00) >> 8;
-                        status->sfp_part_number[j+1] = (valWord & 0xFF);
-                    }
-                }
-
-                // Get SFP type
-                if (Read_I2C_Bus(handle, OCC_PCIE_I2C_ADDR0, OCC_PCIE_I2C_SFP_TYPE, &valWord) != 1)
-                    break;
-                if ((valWord & 0xF) == 0x1)
-                    status->sfp_type = OCC_SFP_MODE_SINGLE;
-                else if ((valWord & 0xF) == 0xC)
-                    status->sfp_type = OCC_SFP_MODE_MULTI;
-                else
-                    status->sfp_type = OCC_SFP_MODE_UNKNOWN;
-
-                // Get SFP temperature
-                if (Read_I2C_Bus(handle, OCC_PCIE_I2C_ADDR2, OCC_PCIE_I2C_SFP_TEMP, &valWord) != 1)
-                    break;
-                status->sfp_temp = (float)valWord / 256.0;
-
-                // Get SFP RX In Power
-                if (Read_I2C_Bus(handle, OCC_PCIE_I2C_ADDR2, OCC_PCIE_I2C_SFP_RX_POWER, &valWord) != 1)
-                    break;
-                status->sfp_rx_power = 0.1 * valWord;
-
-                // Get SFP TX Power
-                if (Read_I2C_Bus(handle, OCC_PCIE_I2C_ADDR2, OCC_PCIE_I2C_SFP_TX_POWER, &valWord) != 1)
-                    break;
-                status->sfp_tx_power = 0.1 * valWord;
-
-                // Get SFP Vcc Power
-                if (Read_I2C_Bus(handle, OCC_PCIE_I2C_ADDR2, OCC_PCIE_I2C_SFP_VCC_POWER, &valWord) != 1)
-                    break;
-                status->sfp_vcc_power = 0.0001 * valWord;
-
-                // Get SFP Tx Bias Current
-                if (Read_I2C_Bus(handle, OCC_PCIE_I2C_ADDR2, OCC_PCIE_I2C_SFP_TX_BIAS_CUR, &valWord) != 1)
-                    break;
-                status->sfp_tx_bias_cur = 2.0 * valWord;
+        // Get SFP serial number - multiple addresses with 1 ASCII char per address
+        memset(status->sfp_serial_number, 0, sizeof(status->sfp_serial_number));
+        for (i = OCC_PCIE_I2C_SFP_SERNO_START; i <= OCC_PCIE_I2C_SFP_SERNO_END; i += 2) {
+            int j = i - OCC_PCIE_I2C_SFP_SERNO_START;
+            if (Read_I2C_Bus(handle, OCC_PCIE_I2C_ADDR0, i, &valWord) == 1 &&
+                j < (sizeof(status->sfp_serial_number) - 1)) {
+                status->sfp_serial_number[j]   = (valWord & 0xFF00) >> 8;
+                status->sfp_serial_number[j+1] = (valWord & 0xFF);
             }
-
         }
+
+        // Get SFP part number - multiple addresses with 1 ASCII char per address
+        memset(status->sfp_part_number, 0, sizeof(status->sfp_part_number));
+        for (i = OCC_PCIE_I2C_SFP_PARTNO_START; i <= OCC_PCIE_I2C_SFP_PARTNO_END; i += 2) {
+            int j = i - OCC_PCIE_I2C_SFP_PARTNO_START;
+            if (Read_I2C_Bus(handle, OCC_PCIE_I2C_ADDR0, i, &valWord) == 1 &&
+                j < (sizeof(status->sfp_part_number) - 1)) {
+                status->sfp_part_number[j]   = (valWord & 0xFF00) >> 8;
+                status->sfp_part_number[j+1] = (valWord & 0xFF);
+            }
+        }
+
+        // Get SFP type
+        if (Read_I2C_Bus(handle, OCC_PCIE_I2C_ADDR0, OCC_PCIE_I2C_SFP_TYPE, &valWord) != 1)
+            break;
+        if ((valWord & 0xF) == 0x1)
+            status->sfp_type = OCC_SFP_MODE_SINGLE;
+        else if ((valWord & 0xF) == 0xC)
+            status->sfp_type = OCC_SFP_MODE_MULTI;
+        else
+            status->sfp_type = OCC_SFP_MODE_UNKNOWN;
+
+        // Get SFP temperature
+        if (Read_I2C_Bus(handle, OCC_PCIE_I2C_ADDR2, OCC_PCIE_I2C_SFP_TEMP, &valWord) != 1)
+            break;
+        status->sfp_temp = (float)valWord / 256.0;
+
+        // Get SFP RX In Power
+        if (Read_I2C_Bus(handle, OCC_PCIE_I2C_ADDR2, OCC_PCIE_I2C_SFP_RX_POWER, &valWord) != 1)
+            break;
+        status->sfp_rx_power = 0.1 * valWord;
+
+        // Get SFP TX Power
+        if (Read_I2C_Bus(handle, OCC_PCIE_I2C_ADDR2, OCC_PCIE_I2C_SFP_TX_POWER, &valWord) != 1)
+            break;
+        status->sfp_tx_power = 0.1 * valWord;
+
+        // Get SFP Vcc Power
+        if (Read_I2C_Bus(handle, OCC_PCIE_I2C_ADDR2, OCC_PCIE_I2C_SFP_VCC_POWER, &valWord) != 1)
+            break;
+        status->sfp_vcc_power = 0.0001 * valWord;
+
+        // Get SFP Tx Bias Current
+        if (Read_I2C_Bus(handle, OCC_PCIE_I2C_ADDR2, OCC_PCIE_I2C_SFP_TX_BIAS_CUR, &valWord) != 1)
+            break;
+        status->sfp_tx_bias_cur = 2.0 * valWord;
 
         ret = 0;
         break;
-    } while (0);
+    }
 
     return ret;
 }

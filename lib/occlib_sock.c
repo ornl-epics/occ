@@ -149,7 +149,7 @@ int occsock_enable_error_packets(struct occ_handle *handle, bool enable) {
     return 0;
 }
 
-int occsock_status(struct occ_handle *handle, occ_status_t *status, bool fast_status) {
+int occsock_status(struct occ_handle *handle, occ_status_t *status, occ_status_type type) {
 
     if (handle == NULL || handle->magic != OCC_HANDLE_MAGIC || status == NULL)
         return -EINVAL;

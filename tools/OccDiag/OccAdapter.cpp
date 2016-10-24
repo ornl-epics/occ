@@ -17,7 +17,7 @@ OccAdapter::OccAdapter(const std::string &devfile, const std::map<uint32_t, uint
     if ((ret = occ_open(devfile.c_str(), OCC_INTERFACE_OPTICAL, &m_occ)) != 0)
         throw std::runtime_error("Failed to open OCC device - " + occErrorString(ret));
 
-    if ((ret = occ_status(m_occ, &status, true)) != 0)
+    if ((ret = occ_status(m_occ, &status, OCC_STATUS_FAST)) != 0)
         throw std::runtime_error("Failed to initialize OCC status");
 
     // OCC is reset when connection is opened, the first read of data should
@@ -148,7 +148,7 @@ void OccAdapter::getOccStatus(size_t &used, bool &stalled, bool &overflowed)
     occ_status_t status;
     int ret;
 
-    if ((ret = occ_status(m_occ, &status, true)) != 0)
+    if ((ret = occ_status(m_occ, &status, OCC_STATUS_CACHED)) != 0)
         throw std::runtime_error("Can't get OCC status - " + occErrorString(ret));
 
     used = status.dma_used;

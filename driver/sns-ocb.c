@@ -20,7 +20,7 @@
 #include <linux/version.h>
 #include "sns-ocb.h"
 
-#define OCB_VER_STR __stringify(OCB_VER_MAJ) "." __stringify(OCB_VER_MIN)
+#define OCB_VER_STR __stringify(OCB_VER_MAJ) "." __stringify(OCB_VER_MIN) "." __stringify(OCB_VER_BUILD)
 
 /* Newer kernels provide these, but not the RHEL6 kernels...
  */
@@ -90,40 +90,43 @@ do {									\
 #define REG_CONFIG					0x0004
 #define		OCB_CONF_TX_ENABLE			0x00000001
 #define		OCB_CONF_RX_ENABLE			0x00000002
-#define		OCB_CONF_SELECT_OPTICAL			0x00000008
-#define		OCB_CONF_OPTICAL_ENABLE			0x00000010
-#define		OCB_CONF_ERR_PKTS_ENABLE		0x00040000 // Turn detected errors into error packets
-#define		OCB_CONF_ERRORS_RESET			0x04000000 // Clear detected error counters
+#define		OCB_CONF_SELECT_OPTICAL		0x00000008
+#define		OCB_CONF_OPTICAL_ENABLE		0x00000010
+#define		OCB_CONF_ERR_PKTS_ENABLE	0x00040000 // Turn detected errors into error packets
+#define		OCB_CONF_ERRORS_RESET		0x04000000 // Clear detected error counters
 #define		OCB_CONF_RESET				0x80000000
-#define REG_STATUS					0x0008
+#define REG_STATUS						0x0008
 #define		OCB_STATUS_TX_DONE			0x00000001
 #define		OCB_STATUS_RX_LVDS			0x00000002
-#define		OCB_STATUS_BUFFER_FULL			0x00000004
-#define		OCB_STATUS_OPTICAL_PRESENT		0x00000008
-#define		OCB_STATUS_OPTICAL_NOSIGNAL		0x00000010
-#define		OCB_STATUS_OPTICAL_FAULT		0x00000020
+#define		OCB_STATUS_BUFFER_FULL		0x00000004
+#define		OCB_STATUS_OPTICAL_PRESENT	0x00000008
+#define		OCB_STATUS_OPTICAL_NOSIGNAL	0x00000010
+#define		OCB_STATUS_OPTICAL_FAULT	0x00000020
 #define		OCB_STATUS_TX_IDLE			0x00000040
-#define		OCB_STATUS_RX_OPTICAL			0x00000100
+#define		OCB_STATUS_RX_OPTICAL		0x00000100
 #define REG_MODULE_MASK					0x0010
 #define REG_MODULE_ID					0x0014
 #define REG_SERNO_LO 					0x0018
 #define REG_SERNO_HI 					0x001C
 #define REG_IRQ_STATUS					0x00c0
 #define		OCB_IRQ_DMA_STALL			0x00000002
-#define		OCB_IRQ_FIFO_OVERFLOW			0x00000004
+#define		OCB_IRQ_FIFO_OVERFLOW		0x00000004
 #define		OCB_IRQ_RX_DONE				0x00000010
 #define		OCB_IRQ_ENABLE				0x80000000
 #define REG_IRQ_ENABLE					0x00c4
 #define REG_IRQ_CNTL					0x00c8
-#define		OCB_COALESCING_ENABLE			0x80000000
+#define		OCB_COALESCING_ENABLE		0x80000000
 #define		OCB_EOP_ENABLE				0x40000000
 #define REG_FIRMWARE_DATE				0x0100
-#define REG_ERROR_CRC_COUNTER				0x0180 // CRC errors counter (PCIe only)
-#define REG_ERROR_LENGTH_COUNTER			0x0184 // Frame length errors counter (PCIe only)
-#define REG_ERROR_FRAME_COUNTER				0x0188 // Frame errors counter (PCIe only)
+#define REG_ERROR_CRC_COUNTER			0x0180 // CRC errors counter (PCIe only)
+#define REG_ERROR_LENGTH_COUNTER		0x0184 // Frame length errors counter (PCIe only)
+#define REG_ERROR_FRAME_COUNTER			0x0188 // Frame errors counter (PCIe only)
 #define REG_RX_RATE     				0x018C     // Receive rate calculated every second
 #define REG_COMM_ERR					0x0240
 #define REG_LOST_PACKETS				0x0244		/* 16 bit register */
+#define REG_FPGA_TEMP					0x0310 // FPGA temperature, PCIe specific
+#define REG_FPGA_CORE_VOLT				0x0314 // FPGA core voltage, PCIe specific
+#define REG_FPGA_AUX_VOLT				0x0318 // FPGA aux voltage, PCIe specific
 
 /* Inbound message queue (RX, split RX from older firmware, GE card) */
 #define REG_IMQ_ADDR		0x0058
@@ -371,7 +374,7 @@ static void snsocb_stalled(struct ocb *ocb, int type)
 	spin_unlock_irqrestore(&ocb->lock, flags);
 }
 
-static u32 __snsocb_status(struct ocb *ocb)
+static u32 __snsocb_status(struct ocb *ocb, u8 optical)
 {
 	/* Caller must hold ocb->lock */
 	u32 hw_status, status = 0;
@@ -386,13 +389,15 @@ static u32 __snsocb_status(struct ocb *ocb)
 	if (ocb->conf & OCB_CONF_ERR_PKTS_ENABLE)
 		status |= OCB_RX_ERR_PKTS_ENABLED;
 
-	hw_status = ioread32(ocb->ioaddr + REG_STATUS);
-	if (hw_status & OCB_STATUS_OPTICAL_PRESENT) {
-		status |= OCB_OPTICAL_PRESENT;
-		if (hw_status & OCB_STATUS_OPTICAL_NOSIGNAL)
-			status |= OCB_OPTICAL_NOSIGNAL;
-		if (hw_status & OCB_STATUS_OPTICAL_FAULT)
-			status |= OCB_OPTICAL_FAULT;
+	if (optical) {
+		hw_status = ioread32(ocb->ioaddr + REG_STATUS);
+		if (hw_status & OCB_STATUS_OPTICAL_PRESENT) {
+			status |= OCB_OPTICAL_PRESENT;
+			if (hw_status & OCB_STATUS_OPTICAL_NOSIGNAL)
+				status |= OCB_OPTICAL_NOSIGNAL;
+			if (hw_status & OCB_STATUS_OPTICAL_FAULT)
+				status |= OCB_OPTICAL_FAULT;
+		}
 	}
 
 	return status;
@@ -403,6 +408,28 @@ static u32 __snsocb_rxrate(struct ocb *ocb)
 	if (ocb->board->type == BOARD_SNS_PCIE)
 		return ioread32(ocb->ioaddr + REG_RX_RATE);
 	return 0;
+}
+
+static void __snsocb_errcounters(struct ocb *ocb, u32 *err_crc, u32 *err_length, u32 *err_frame)
+{
+	if (ocb->board->type == BOARD_SNS_PCIE) {
+		*err_crc = ioread32(ocb->ioaddr + REG_ERROR_CRC_COUNTER);
+		*err_length = ioread32(ocb->ioaddr + REG_ERROR_LENGTH_COUNTER);
+		*err_frame = ioread32(ocb->ioaddr + REG_ERROR_FRAME_COUNTER);
+	} else {
+		*err_crc = *err_length = *err_frame = 0;
+	}
+}
+
+static void __snsocb_fpgainfo(struct ocb *ocb, u32 *fpga_temp, u32 *fpga_core_volt, u32 *fpga_aux_volt)
+{
+	if (ocb->board->type == BOARD_SNS_PCIE) {
+		*fpga_temp = ioread32(ocb->ioaddr + REG_FPGA_TEMP);
+		*fpga_core_volt = ioread32(ocb->ioaddr + REG_FPGA_CORE_VOLT);
+		*fpga_aux_volt = ioread32(ocb->ioaddr + REG_FPGA_AUX_VOLT);
+	} else {
+		*fpga_temp = *fpga_core_volt = *fpga_aux_volt = 0;
+	}
 }
 
 static u32 __snsocb_tx_room(struct ocb *ocb)
@@ -574,7 +601,7 @@ static ssize_t snsocb_rx(struct file *file, char __user *buf, size_t count)
 	finish_wait(&ocb->rx_wq, &wait);
 
 	info[0] = ocb->dq_prod;
-	info[1] = __snsocb_status(ocb);
+	info[1] = __snsocb_status(ocb, 1);
 	if (ocb->dq_prod != ocb->dq_cons)
 		info[1] |= OCB_RX_MSG;
 
@@ -1124,6 +1151,7 @@ static ssize_t snsocb_read(struct file *file, char __user *buf,
 
 	switch (*pos) {
 	case OCB_CMD_GET_STATUS:
+	case OCB_CMD_GET_CACHED_STATUS:
 		if (count != sizeof(struct ocb_status))
 			return -EINVAL;
 
@@ -1137,15 +1165,24 @@ static ssize_t snsocb_read(struct file *file, char __user *buf,
 			info.firmware_ver = (ocb->board->type == BOARD_SNS_PCIE ? (ocb->version & 0xFFFF) : ocb->version);
 			info.firmware_date = ocb->firmware_date;
 			info.fpga_serial = ocb->fpga_serial;
-			info.status = __snsocb_status(ocb);
 			info.dq_used = (ocb->dq_size + ocb->dq_prod - ocb->dq_cons) % ocb->dq_size;
 			info.dq_size = ocb->dq_size;
-			info.rx_rate = __snsocb_rxrate(ocb);
 			info.bars[0] = ocb->board->bars[0];
 			info.bars[1] = ocb->board->bars[1];
 			info.bars[2] = ocb->board->bars[2];
 			if (!ocb->reset_in_progress)
 				ocb->reset_occurred = false;
+			if (*pos == OCB_CMD_GET_CACHED_STATUS) {
+				info.status = __snsocb_status(ocb, 0);
+				info.rx_rate = 0;
+				info.err_crc = info.err_length = info.err_frame = 0;
+				info.fpga_temp = info.fpga_core_volt = info.fpga_aux_volt = 0;
+			} else {
+				info.status = __snsocb_status(ocb, 1);
+				info.rx_rate = __snsocb_rxrate(ocb);
+				__snsocb_errcounters(ocb, &info.err_crc, &info.err_length, &info.err_frame);
+				__snsocb_fpgainfo(ocb, &info.fpga_temp, &info.fpga_core_volt, &info.fpga_aux_volt);
+			}
 		}
 		spin_unlock_irq(&ocb->lock);
 

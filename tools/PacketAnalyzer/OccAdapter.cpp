@@ -28,7 +28,7 @@ bool OccAdapter::isPcie()
 {
     occ_status_t status;
 
-    if (occ_status(m_occ, &status, true) != 0)
+    if (occ_status(m_occ, &status, OCC_STATUS_FAST) != 0)
         throw runtime_error("Failed to read OCC status");
 
     return (status.board == OCC_BOARD_PCIE);
@@ -97,7 +97,7 @@ uint32_t OccAdapter::getDmaSize()
 {
     occ_status_t status;
 
-    if (occ_status(m_occ, &status, true) == 0)
+    if (occ_status(m_occ, &status, OCC_STATUS_FAST) == 0)
         return status.dma_size;
     return 0;
 }
