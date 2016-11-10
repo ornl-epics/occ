@@ -171,6 +171,13 @@ do {									\
 #define SW_IMQ_RING_SIZE	4096
 #define IMQ_TYPE_COMMAND	0x80000000
 
+/* Interrupt types supported
+ * Matches PCI_IRQ_(LEGACY|MSI|MSIX) macros in kernel 4.8.
+ */
+#define OCB_IRQ_LEGACY		(1 << 0) /* allow legacy interrupts */
+#define OCB_IRQ_MSI		(1 << 1) /* allow MSI interrupts */
+#define OCB_IRQ_MSIX		(1 << 2) /* allow MSI-X interrupts */
+
 /* Forward declaration of functions used in the structs */
 static ssize_t snsocb_sysfs_show_irq_coallesce(struct device *dev, struct device_attribute *attr, char *buf);
 static ssize_t snsocb_sysfs_store_irq_coallesce(struct device *dev, struct device_attribute *attr, const char *buf, size_t count);
@@ -207,6 +214,7 @@ struct ocb_board_desc {
 	u32 bars[3];
 	u32 reset_errcnt;	// Does board have support for resetting error counters?
 	u8 late_rx_enable;  // Does board support late RX enable?
+	u8 interrupts;      // Supported interrupt types, see OCB_IRQ_*
 	struct attribute_group sysfs;
 };
 
@@ -247,6 +255,7 @@ struct ocb {
 	bool in_use;
 	bool use_optical;
 	int minor;
+	unsigned int msi_enabled;
 
 	/* The user DQ ring; For LVDS or unified DQ ring firmware, we point
 	 * the OCC's DMA engine directly at the memory, otherwise, we'll
@@ -307,6 +316,7 @@ static struct ocb_board_desc boards[] = {
 		.bars = { 1048576, 1048576 },
 		.reset_errcnt = 0,
 		.late_rx_enable = 0,
+		.interrupts = OCB_IRQ_LEGACY,
 	},
 	{
 		.type = BOARD_SNS_PCIX,
@@ -316,6 +326,7 @@ static struct ocb_board_desc boards[] = {
 		.bars = { 1048576, 1048576 },
 		.reset_errcnt = 0,
 		.late_rx_enable = 0,
+		.interrupts = OCB_IRQ_LEGACY,
 	},
 	{
 		.type = BOARD_SNS_PCIE,
@@ -325,6 +336,7 @@ static struct ocb_board_desc boards[] = {
 		.bars = { 4096, 32768, 16777216 },
 		.reset_errcnt = 1,
 		.late_rx_enable = 1,
+		.interrupts = OCB_IRQ_LEGACY,
 	},
 	{
 		.type = BOARD_SNS_PCIE,
@@ -334,6 +346,24 @@ static struct ocb_board_desc boards[] = {
 		.bars = { 4096, 32768, 16777216 },
 		.reset_errcnt = 1,
 		.late_rx_enable = 1,
+		.interrupts = OCB_IRQ_LEGACY,
+		.sysfs.attrs = (struct attribute **) (struct device_attribute *[]){
+			SNSOCB_DEVICE_ATTR("irq_coalescing", 0644, snsocb_sysfs_show_irq_coallesce, snsocb_sysfs_store_irq_coallesce),
+			SNSOCB_DEVICE_ATTR("dma_big_mem", 0644, snsocb_sysfs_show_dma_big_mem, snsocb_sysfs_store_dma_big_mem),
+			SNSOCB_DEVICE_ATTR("serial_number", 0444, snsocb_sysfs_show_serial_number, NULL),
+			SNSOCB_DEVICE_ATTR("firmware_date", 0444, snsocb_sysfs_show_firmware_date, NULL),
+			NULL,
+		},
+	},
+	{
+		.type = BOARD_SNS_PCIE,
+		.version = (u32 []){ 0x000b0002, 0 },
+		.tx_fifo_len = 32768,
+		.unified_que = 1,
+		.bars = { 4096, 32768, 16777216 },
+		.reset_errcnt = 1,
+		.late_rx_enable = 1,
+		.interrupts = OCB_IRQ_LEGACY | OCB_IRQ_MSI,
 		.sysfs.attrs = (struct attribute **) (struct device_attribute *[]){
 			SNSOCB_DEVICE_ATTR("irq_coalescing", 0644, snsocb_sysfs_show_irq_coallesce, snsocb_sysfs_store_irq_coallesce),
 			SNSOCB_DEVICE_ATTR("dma_big_mem", 0644, snsocb_sysfs_show_dma_big_mem, snsocb_sysfs_store_dma_big_mem),
@@ -833,9 +863,26 @@ static irqreturn_t snsocb_interrupt(int irq, void *data)
 	u32 intr_status;
 
 	intr_status = ioread32(ocb->ioaddr + REG_IRQ_STATUS);
-	if (!intr_status)
+	if (!intr_status) {
+#ifdef CONFIG_PCI_MSI
+		if (ocb->msi_enabled) {
+			/* With MSI, there is no sharing of interrupts, so this is our
+			* interrupt. Why the device did not announce it through register?
+			* Anyway, we must let kernel ack it or spurious interrupts will
+			* occur.
+			*/
+			return IRQ_HANDLED;
+		}
+#endif
 		return IRQ_NONE;
+	}
 
+	/* Clearing interrupt to minimize the time to clear OCC. There's a potential
+	 * race condition when OCC asserts new legacy level interrupt. We tell the
+	 * kernel we've handled the first interrupt but by the time kernel responds
+	 * the line might be asserted again and the kernel will silently ignore it.
+	 * Consider puttint a while() loop around this code.
+	 */
 	intr_status &= ~OCB_IRQ_ENABLE;
 	iowrite32(intr_status, ocb->ioaddr + REG_IRQ_STATUS);
 	ioread32(ocb->ioaddr + REG_IRQ_STATUS); // iowrte32() is posted, make sure it gets to the board
@@ -1699,7 +1746,20 @@ static int __devexit snsocb_probe(struct pci_dev *pdev,
 			dev_err(dev, "unable to create sysfs entries");
 			goto error_dev;
 		}
-        }
+	}
+
+	ocb->msi_enabled = 0;
+#ifdef CONFIG_PCI_MSI
+	if (ocb->board->interrupts & OCB_IRQ_MSI) {
+		if (pci_find_capability(pdev, PCI_CAP_ID_MSI) == 0) {
+			dev_err(dev, "device does not support MSI interrupts, falling back to legacy");
+		} else if (pci_enable_msi(pdev) != 0) {
+			dev_err(dev, "MSI init failed");
+		} else {
+			ocb->msi_enabled = 1;
+		}
+	}
+#endif
 
 	err = request_irq(pdev->irq, snsocb_interrupt, IRQF_SHARED, KBUILD_MODNAME, ocb);
 	if (err) {
@@ -1775,10 +1835,13 @@ static int __devexit snsocb_probe(struct pci_dev *pdev,
 
 	dev_set_drvdata(dev, ocb);
 
-	dev_info(dev, "snsocb%d: %s OCB version %08x, datecode %08x\n",
+	dev_info(dev, "snsocb%d: %s OCB version %08x, datecode %08x (%s IRQ: %u)\n",
 		 minor, snsocb_name[board_id],
 		 ocb->version,
-		 ocb->firmware_date);
+		 ocb->firmware_date,
+		 ocb->msi_enabled ? "MSI" : "legacy",
+		 pdev->irq
+	);
 
 	return 0;
 
@@ -1816,6 +1879,11 @@ static void __devexit snsocb_remove(struct pci_dev *pdev)
 	ioread32(ocb->ioaddr + REG_IRQ_ENABLE); // Make sure device got the iowrite32()
 
 	free_irq(pdev->irq, ocb);
+#ifdef CONFIG_PCI_MSI
+	if (ocb->msi_enabled != 0)
+		pci_disable_msi(pdev);
+#endif
+
 	device_del(&ocb->dev);
 	cdev_del(&ocb->cdev);
 
