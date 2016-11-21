@@ -19,11 +19,12 @@ void WinRegisters::redraw(bool frame)
     int x = 1;
     int y = 1;
     for (auto it=m_registers.begin(); it!=m_registers.end(); it++) {
-        mvwprintw(m_window, x%height, y, "0x%04X: 0x%08X ", it->first, it->second);
-        if (++x > height) {
+        if (x > height) {
             y += 20;
             x = 1;
         }
+        mvwprintw(m_window, x%(height+1), y, "0x%04X: 0x%08X ", it->first, it->second);
+        x++;
     }
 
     Window::redraw(frame);
