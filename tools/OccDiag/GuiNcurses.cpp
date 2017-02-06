@@ -8,14 +8,20 @@
 #include <stdexcept>
 #include <ncurses.h>
 #include <cstring>
+#include <cinttypes>
 
-GuiNcurses::GuiNcurses(const char *occDevice, const std::map<uint32_t, uint32_t> &initRegisters)
+#define log_ratelimit(period, ...) logRateLimit(__LINE__, period, __VA_ARGS__)
+
+GuiNcurses::GuiNcurses(const char *occDevice, const std::map<uint32_t, uint32_t> &initRegisters, uint32_t statsInt)
     : m_occAdapter(occDevice, initRegisters)
     , m_runtime(0.0)
     , m_shutdown(false)
     , m_paused(false)
     , m_rxEnabled(false)
     , m_stopOnBad(false)
+    , m_occOverflowed(false)
+    , m_occStalled(false)
+    , m_statsLogInt(statsInt > 0 ? statsInt : -60)
 
     , m_winConsole(9)
     , m_winData(9)
@@ -39,10 +45,12 @@ GuiNcurses::GuiNcurses(const char *occDevice, const std::map<uint32_t, uint32_t>
     nodelay(stdscr, TRUE);
     keypad(stdscr, TRUE);
     wgetch(stdscr); // Must initialize, otherwise the screen flickers
-    
+
     log("PacketAnalyzer started");
     m_winStats.show();
     m_winConsole.show();
+
+    m_winHelp.setStatsLogInt(m_statsLogInt);
 }
 
 GuiNcurses::~GuiNcurses()
@@ -144,8 +152,26 @@ std::string GuiNcurses::getBriefStatus()
         snprintf(buffer, sizeof(buffer), "-[Status: %s]", (stalled ? "stalled" : (overflow ? "overflow" : "OK")));
         str += buffer;
 
+        if (overflow && !m_occOverflowed)
+            log("Detected OCC FIFO overflow");
+        if (stalled && !m_occStalled)
+            log("Detected OCC stall, DMA usage %u/%u MB", (unsigned)dmaUsed, (unsigned)dmaSize);
+        m_occStalled = stalled;
+        m_occOverflowed = overflow;
+
+        if (!stalled && !overflow && m_statsLogInt > 0) {
+            char logmsg[128];
+            WinStats::AnalyzeStats stats = m_winStats.getCombinedStats();
+            std::string rate = WinStats::formatRate(stats.throughput, "B/s");
+            snprintf(logmsg, sizeof(logmsg),
+                     "Stats: D=%uMB r=%s g=%" PRIu64 " b=%" PRIu64,
+                     (unsigned)dmaUsed, rate.c_str(), stats.good, stats.bad);
+            log_ratelimit(m_statsLogInt, logmsg);
+        }
+
     } catch (std::runtime_error &e) {
         str += " [No OCC info obtained]";
+        log_ratelimit(5, "Failed to read OCC status");
     }
     return str.substr(0, 78);
 }
@@ -281,6 +307,12 @@ void GuiNcurses::input()
     case 'I':
         showRegistersWin();
         break;
+    case 'l':
+    case 'L':
+        m_statsLogInt *= -1;
+        m_winHelp.setStatsLogInt(m_statsLogInt);
+        m_winHelp.redraw(true);
+        break;
     case 'p':
     case 'P':
         pause(!m_paused);
@@ -339,4 +371,18 @@ void GuiNcurses::log(const char *format, ...)
     va_end(arglist);
 
     m_winConsole.append(buffer);
+}
+
+void GuiNcurses::logRateLimit(uint32_t id, uint32_t period, const char *format, ...)
+{
+    auto it = m_logRateLimitCache.find(id);
+    time_t now = time(NULL);
+    if (it == m_logRateLimitCache.end() || (it->second + period) <= now) {
+        va_list arglist;
+        va_start(arglist, format);
+        log(format, arglist);
+        va_end(arglist);
+
+        m_logRateLimitCache[id] = now;
+    }
 }

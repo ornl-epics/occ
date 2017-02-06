@@ -32,6 +32,7 @@ class WinStats : public Window {
 
     private:
         std::vector<AnalyzeStats> m_totalStats;
+        AnalyzeStats m_combinedStats;
         struct timespec m_lastUpdate;
 
     public:
@@ -71,6 +72,10 @@ class WinStats : public Window {
          */
         void clear();
 
+        /**
+         * Retrieve good/bad packets stats.
+         */
+        AnalyzeStats getCombinedStats();
 };
 
 #endif // WIN_STATS_H

@@ -28,6 +28,10 @@ static void usage(const char *progname) {
     std::cout << "Options:" << std::endl;
     std::cout << "  -r <off> <val> On startup and on reset," << std::endl;
     std::cout << "                 set register at offset 'off' to value 'val'" << std::endl;
+    std::cout << "  -l <interval>  Enable periodic statistics reports, interval in seconds" << std::endl;
+    std::cout << std::endl;
+    std::cout << "Example: enable internal packet simulator with approx rate 0.5MB/s" << std::endl;
+    std::cout << "  "<< progname << " /dev/occ1 -r 0x380 0x3E000E00 -r 0x384 0xFF" << std::endl;
     std::cout << std::endl;
 }
 
@@ -49,6 +53,7 @@ int main(int argc, char **argv)
     const char *devfile = NULL;
     struct sigaction sigact;
     std::map<uint32_t, uint32_t> registers;
+    uint32_t statsInt = 0;
 
     sigact.sa_handler = &sighandler;
     sigact.sa_flags = 0;
@@ -66,8 +71,10 @@ int main(int argc, char **argv)
         }
         if (key == "-r") {
             uint32_t offset, value;
-            if ((i + 2) >= argc)
-                return false;
+            if ((i + 2) >= argc) {
+                usage(argv[0]);
+                return 1;
+            }
 
             if (std::string(argv[++i]).substr(0, 2) == "0x")
                 offset = ::strtoul(argv[i], NULL, 16);
@@ -78,6 +85,14 @@ int main(int argc, char **argv)
             else
                 value = ::strtoul(argv[i], NULL, 10);
             registers[offset] = value;
+        }
+        if (key == "-l") {
+            if ((i + 2) >= argc) {
+                usage(argv[0]);
+                return 1;
+            }
+
+            statsInt = ::strtoul(argv[++i], NULL, 10);
         }
         if (key[0] != '-') {
             devfile = argv[i];
@@ -106,7 +121,7 @@ int main(int argc, char **argv)
     }
 
     try {
-        analyzer = new GuiNcurses(devfile, registers);
+        analyzer = new GuiNcurses(devfile, registers, statsInt);
         analyzer->run();
         delete analyzer;
     } catch (std::exception &e) {

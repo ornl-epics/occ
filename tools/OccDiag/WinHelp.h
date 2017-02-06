@@ -10,6 +10,7 @@
 class WinHelp : public Window {
     private:
         bool m_stopOnBad;
+        int m_statsLogInt;
     public:
         WinHelp();
 
@@ -24,10 +25,17 @@ class WinHelp : public Window {
         void redraw(bool frame=false);
 
         /**
-         * Reflect changes setting in for stop-on-bad text.
+         * For on-screen display purposes only.
          */
         void setStopOnBad(bool enable) {
             m_stopOnBad = enable;
+        };
+
+        /**
+         * For on-screen display purposes only.
+         */
+        void setStatsLogInt(int interval) {
+            m_statsLogInt = interval;
         };
 
 };

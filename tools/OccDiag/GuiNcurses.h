@@ -9,6 +9,7 @@
 #include "WinStats.h"
 
 #include <stdint.h>
+#include <map>
 #include <time.h>
 #include <vector>
 
@@ -20,7 +21,11 @@ class GuiNcurses {
         bool m_paused;
         bool m_rxEnabled;
         bool m_stopOnBad;
+        bool m_occOverflowed;
+        bool m_occStalled;
+        int32_t m_statsLogInt;
         OccAdapter::AnalyzeStats m_cachedStats;
+        std::map<uint32_t, time_t> m_logRateLimitCache;
 
         WinHelp m_winHelp;
         WinConsole m_winConsole;
@@ -28,7 +33,7 @@ class GuiNcurses {
         WinRegisters m_winRegisters;
         WinStats m_winStats;
     public:
-        GuiNcurses(const char *occDevice, const std::map<uint32_t, uint32_t> &initRegisters);
+        GuiNcurses(const char *occDevice, const std::map<uint32_t, uint32_t> &initRegisters, uint32_t statsInt);
         ~GuiNcurses();
 
         void run();
@@ -72,6 +77,15 @@ class GuiNcurses {
          * Log message
          */
         void log(const char *str, ...);
+
+        /**
+         * Rate limited logging
+         *
+         * \param[in] id of the message, can be __LINE__
+         * \param[in] period to pass before logging another message with same id
+         * \param[in] format message and parameters
+         */
+        void logRateLimit(uint32_t id, uint32_t period, const char *format, ...);
 
         /**
          * Update registers window with available register values.

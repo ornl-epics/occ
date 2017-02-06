@@ -90,15 +90,23 @@ void WinStats::update(const OccAdapter::AnalyzeStats &stats)
     for (size_t i=0; i<stats.good.size(); i++) {
         m_totalStats[i].good += stats.good[i];
         m_totalStats[i].rate += stats.good[i];
+        m_combinedStats.good += stats.good[i];
+        m_combinedStats.rate += stats.good[i];
     }
     for (size_t i=0; i<stats.bad.size(); i++) {
         m_totalStats[i].bad  += stats.bad[i];
         m_totalStats[i].rate += stats.bad[i];
+        m_combinedStats.bad += stats.bad[i];
+        m_combinedStats.rate += stats.bad[i];
     }
+    uint64_t combinedBytes = 0;
     for (size_t i=0; i<m_totalStats.size(); i++) {
         m_totalStats[i].rate /= period;
         m_totalStats[i].throughput = stats.bytes[i] / period;
+        combinedBytes += stats.bytes[i];
     }
+    m_combinedStats.rate /= period;
+    m_combinedStats.throughput = combinedBytes / period;
 }
 
 void WinStats::clear()
@@ -106,4 +114,9 @@ void WinStats::clear()
     for (auto it=m_totalStats.begin(); it!=m_totalStats.end(); it++) {
         it->clear();
     }
+}
+
+WinStats::AnalyzeStats WinStats::getCombinedStats()
+{
+    return m_combinedStats;
 }
