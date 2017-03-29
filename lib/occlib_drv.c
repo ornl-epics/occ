@@ -275,6 +275,9 @@ int occdrv_status(struct occ_handle *handle, occ_status_t *status, occ_status_ty
     status->fpga_serial_number = info.fpga_serial;
     status->rx_enabled = (info.status & OCB_RX_ENABLED);
     status->err_packets_enabled = (info.status & OCB_RX_ERR_PKTS_ENABLED);
+    status->err_crc = info.err_crc;
+    status->err_frame = info.err_frame;
+    status->err_length = info.err_length;
     status->fpga_temp = ( (503.975/65536.0) * info.fpga_temp ) - 273.15;
     status->fpga_core_volt = (3.0/65536.0) * info.fpga_core_volt;
     status->fpga_aux_volt = (3.0/65536.0) * info.fpga_aux_volt;
