@@ -14,12 +14,12 @@ typedef uint64_t u64;
 /**
  * OCC minor version, changed when interface changes.
  */
-#define OCB_VER_MIN 7
+#define OCB_VER_MIN 8
 
 /**
  * OCC build version, not enforced to the client.
  */
-#define OCB_VER_BUILD 1
+#define OCB_VER_BUILD 0
 
 /* The user should read an appropriate amount of data from the device for
  * the command being requested. Commands are indicated by the offset read.
@@ -38,6 +38,7 @@ typedef uint64_t u64;
 #define OCB_CMD_VERSION             2
 #define OCB_CMD_GET_STATUS          3
 #define OCB_CMD_GET_CACHED_STATUS   4
+#define OCB_CMD_OLD_PKTS_EN         5
 
 /* Status flags returned in status member of ocb_status struct */
 #define OCB_OPTICAL_FAULT			(1 << 9)

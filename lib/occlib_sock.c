@@ -141,6 +141,11 @@ int occsock_enable_rx(struct occ_handle *handle, bool enable) {
     return 0;
 }
 
+int occsock_enable_old_packets(struct occ_handle *handle, bool enable) {
+
+    return 0;
+}
+
 int occsock_enable_error_packets(struct occ_handle *handle, bool enable) {
 
     if (handle == NULL || handle->magic != OCC_HANDLE_MAGIC)

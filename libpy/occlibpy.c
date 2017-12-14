@@ -187,6 +187,35 @@ static PyObject *py_occ_enable_rx(OccObject *self, PyObject *args, PyObject *key
     return Py_None;
 }
 
+PyDoc_STRVAR(py_occ_enable_old_packets__doc__,
+"enable_old_packets([enable=True]) -> None\n\n"
+"Enable or disable old SNS DAS packets.\n\n"
+"Old SNS DAS packets support is obsolete and has been replaced\n"
+"with generic OCC packet which is enabled by default.\n");
+static PyObject *py_occ_enable_old_packets(OccObject *self, PyObject *args, PyObject *keywds) {
+    int ret;
+    int enable = 1;
+
+    static char *kwlist[] = {"enable", NULL};
+
+    if (!PyArg_ParseTupleAndKeywords(args, keywds, "|i", kwlist, &enable))
+        return NULL;
+
+    if (self->occ == NULL) {
+        PyErr_SetString(OccError, "OCC connection closed");
+        return NULL;
+    }
+
+    ret = occ_enable_old_packets(self->occ, enable != 0);
+    if (ret < 0) {
+        PyErr_SetString(OccError, strerror(-1 * ret));
+        return NULL;
+    }
+
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
 PyDoc_STRVAR(py_occ_enable_error_packets__doc__,
 "enable_error_packets([enable=True]) -> None\n\n"
 "Enable or disable outputing error packets.\n\n"
@@ -470,6 +499,7 @@ static PyMethodDef Occ_Methods[] = {
     { "close",      (PyCFunction)py_occ_close,      METH_VARARGS, py_occ_close__doc__ },
     { "reset",      (PyCFunction)py_occ_reset,      METH_VARARGS, py_occ_reset__doc__ },
     { "enable_rx",  (PyCFunction)py_occ_enable_rx,  METH_VARARGS | METH_KEYWORDS, py_occ_enable_rx__doc__ },
+    { "enable_old_packets",  (PyCFunction)py_occ_enable_old_packets,  METH_VARARGS | METH_KEYWORDS, py_occ_enable_old_packets__doc__ },
     { "enable_error_packets", (PyCFunction)py_occ_enable_error_packets,  METH_VARARGS | METH_KEYWORDS, py_occ_enable_error_packets__doc__ },
     { "status",     (PyCFunction)py_occ_status,     METH_VARARGS | METH_KEYWORDS, py_occ_status__doc__ },
     { "send",       (PyCFunction)py_occ_send,       METH_VARARGS | METH_KEYWORDS, py_occ_send__doc__ },

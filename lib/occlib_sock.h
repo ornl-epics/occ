@@ -14,6 +14,7 @@ int occsock_open(const char *devfile, occ_interface_type type, struct occ_handle
 int occsock_open_debug(const char *devfile, occ_interface_type type, struct occ_handle **handle);
 int occsock_close(struct occ_handle *handle);
 int occsock_enable_rx(struct occ_handle *handle, bool enable);
+int occsock_enable_old_packets(struct occ_handle *handle, bool enable);
 int occsock_enable_error_packets(struct occ_handle *handle, bool enable);
 int occsock_status(struct occ_handle *handle, occ_status_t *status, occ_status_type type);
 int occsock_reset(struct occ_handle *handle);

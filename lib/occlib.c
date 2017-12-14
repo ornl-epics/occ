@@ -28,6 +28,7 @@ struct occ_handle {
         int (*open_debug)(const char *, occ_interface_type, struct occ_handle **);
         int (*close)(struct occ_handle *handle);
         int (*enable_rx)(struct occ_handle *handle, bool enable);
+        int (*enable_old_packets)(struct occ_handle *handle, bool enable);
         int (*enable_error_packets)(struct occ_handle *handle, bool enable);
         int (*status)(struct occ_handle *handle, occ_status_t *status, occ_status_type type);
         int (*reset)(struct occ_handle *handle);
@@ -58,6 +59,7 @@ static int _occ_open_common(const char *devfile, occ_interface_type type, struct
         (*handle)->ops.open_debug           = occdrv_open_debug;
         (*handle)->ops.close                = occdrv_close;
         (*handle)->ops.enable_rx            = occdrv_enable_rx;
+        (*handle)->ops.enable_old_packets   = occdrv_enable_old_packets;
         (*handle)->ops.enable_error_packets = occdrv_enable_error_packets;
         (*handle)->ops.status               = occdrv_status;
         (*handle)->ops.reset                = occdrv_reset;
@@ -72,6 +74,7 @@ static int _occ_open_common(const char *devfile, occ_interface_type type, struct
         (*handle)->ops.open_debug           = occsock_open_debug;
         (*handle)->ops.close                = occsock_close;
         (*handle)->ops.enable_rx            = occsock_enable_rx;
+        (*handle)->ops.enable_old_packets   = occsock_enable_old_packets;
         (*handle)->ops.enable_error_packets = occsock_enable_error_packets;
         (*handle)->ops.status               = occsock_status;
         (*handle)->ops.reset                = occsock_reset;
@@ -132,6 +135,13 @@ int occ_enable_rx(struct occ_handle *handle, bool enable) {
         return -EINVAL;
 
     return handle->ops.enable_rx(handle->impl_ctx, enable);
+}
+
+int occ_enable_old_packets(struct occ_handle *handle, bool enable) {
+    if (handle == NULL || handle->magic != OCC_HANDLE_MAGIC)
+        return -EINVAL;
+
+    return handle->ops.enable_old_packets(handle->impl_ctx, enable);
 }
 
 int occ_enable_error_packets(struct occ_handle *handle, bool enable) {

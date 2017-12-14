@@ -250,6 +250,16 @@ int occ_reset(struct occ_handle *handle);
 int occ_enable_rx(struct occ_handle *handle, bool enable);
 
 /**
+ * Enable old style SNS DAS packet.
+ *
+ * \param[in] handle Valid OCC API handle.
+ * \param[in] enable Enable flag.
+ * \retval 0 on success
+ * \retval -x Return negative errno value.
+ */
+int occ_enable_old_packets(struct occ_handle *handle, bool enable);
+
+/**
  * Enable outputing error packets
  *
  * OCC FPGA detects communication errors. It recognizes three groups of

@@ -240,6 +240,18 @@ int occdrv_enable_rx(struct occ_handle *handle, bool enable) {
     return 0;
 }
 
+int occdrv_enable_old_packets(struct occ_handle *handle, bool enable) {
+    uint32_t val = (enable ? 1 : 0);
+
+    if (handle == NULL || handle->magic != OCC_HANDLE_MAGIC)
+        return -EINVAL;
+
+    if (pwrite(handle->fd, &val, sizeof(val), OCB_CMD_OLD_PKTS_EN) < 0)
+        return -errno;
+
+    return 0;
+}
+
 int occdrv_enable_error_packets(struct occ_handle *handle, bool enable) {
     uint32_t val = (enable ? 1 : 0);
 
