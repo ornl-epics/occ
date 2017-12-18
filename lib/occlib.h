@@ -237,10 +237,12 @@ int occ_reset(struct occ_handle *handle);
  * receive data handler first and only then enable data reception to prevent
  * exhausting the limited DMA buffer before the thread could be even started.
  *
- * When using this functionality dynamically, disabling RX might occur in the
- * middle of FPGA processing incoming packet and only copy part of the packet.
- * Application needs to be able to handle partial packet or use reset() prior
- * to re-enabling RX to clear DMA buffer.
+ * Disabling RX can potentially interrupt currently transmitted packet resulting
+ * in half of packet being processed. It could also leave some data in internal
+ * buffer waiting to be transmitteed to DMA the next time RX gets enabled.
+ * To avoid corruption the next time RX is enabled, OCC library will issue
+ * OCC reset prior to enabling RX. Application should not expect the continuation of
+ * DMA addresses when RX gets enabled.
  *
  * \param[in] handle Valid OCC API handle.
  * \param[in] enable Enable the RX when non-zero, disable otherwise.
@@ -251,6 +253,9 @@ int occ_enable_rx(struct occ_handle *handle, bool enable);
 
 /**
  * Enable old style SNS DAS packet.
+ *
+ * Changing this parameter requires RX to be disabled. Library will
+ * automatically enforce this requirement.
  *
  * \param[in] handle Valid OCC API handle.
  * \param[in] enable Enable flag.

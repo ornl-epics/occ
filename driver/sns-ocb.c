@@ -93,7 +93,7 @@ do {									\
 #define		OCB_CONF_SELECT_OPTICAL		0x00000008
 #define		OCB_CONF_OPTICAL_ENABLE		0x00000010
 #define		OCB_CONF_ERR_PKTS_ENABLE	0x00040000 // Turn detected errors into error packets
-#define		OCB_CONF_OLD_PKTS_DISABLE	0x00080000 // Turn off support for old SNS DAS packets
+#define		OCB_CONF_OLD_PKTS_DISABLE	0x00080000 // Turn off support for old SNS DAS packets, added in firmware 12-18-2017
 #define		OCB_CONF_ERRORS_RESET		0x04000000 // Clear detected error counters
 #define		OCB_CONF_RESET				0x80000000
 #define REG_STATUS						0x0008
@@ -1483,7 +1483,8 @@ static int snsocb_open(struct inode *inode, struct file *file)
 	if (ocb->use_optical) {
 		ocb->conf |= OCB_CONF_SELECT_OPTICAL;
 		ocb->conf |= OCB_CONF_OPTICAL_ENABLE;
-		ocb->conf |= OCB_CONF_OLD_PKTS_DISABLE;
+		// TODO: Leave old packets enabled by default for now.
+		//ocb->conf |= OCB_CONF_OLD_PKTS_DISABLE;
 	}
 	ocb->irqs = OCB_IRQ_ENABLE | OCB_IRQ_RX_DONE | OCB_IRQ_DMA_STALL | OCB_IRQ_FIFO_OVERFLOW;
 	snsocb_reset(ocb);

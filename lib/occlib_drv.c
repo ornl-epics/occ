@@ -53,6 +53,7 @@ struct occ_handle {
     uint8_t *rollover_buf;
     uint32_t rollover_size;
     bool debug_mode;
+    bool rx_enabled;
 
 #ifdef TX_DUMP_PATH
     int tx_dump_fd;
@@ -234,22 +235,37 @@ int occdrv_enable_rx(struct occ_handle *handle, bool enable) {
     if (handle == NULL || handle->magic != OCC_HANDLE_MAGIC)
         return -EINVAL;
 
-    if (pwrite(handle->fd, &val, sizeof(val), OCB_CMD_RX_ENABLE) < 0)
-        return -errno;
+    if (enable != handle->rx_enabled) {
+
+        if (enable) {
+            int ret = occdrv_reset(handle);
+            if (ret != 0)
+                return ret;
+        }
+
+        if (pwrite(handle->fd, &val, sizeof(val), OCB_CMD_RX_ENABLE) < 0)
+            return -errno;
+
+        handle->rx_enabled = enable;
+    }
 
     return 0;
 }
 
 int occdrv_enable_old_packets(struct occ_handle *handle, bool enable) {
     uint32_t val = (enable ? 1 : 0);
+    int ret;
 
     if (handle == NULL || handle->magic != OCC_HANDLE_MAGIC)
         return -EINVAL;
 
+    if ((ret = occdrv_enable_rx(handle, false)) != 0)
+        return ret;
+
     if (pwrite(handle->fd, &val, sizeof(val), OCB_CMD_OLD_PKTS_EN) < 0)
         return -errno;
 
-    return 0;
+    return occdrv_enable_rx(handle, true);
 }
 
 int occdrv_enable_error_packets(struct occ_handle *handle, bool enable) {
