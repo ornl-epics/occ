@@ -15,10 +15,6 @@
 
 #define OCC_MAX_PACKET_SIZE 38000
 #define TX_MAX_SIZE         38000        // Maximum packet size in bytes to be send over OCC
-#define RX_BUF_SIZE         1800        // Size in bytes of the receive buffer e
-#define OCC_SOURCE          0x1         // Id to used as source field in outgoing messages
-#define OCC_DESTINATION     0x2         // Id to used as destination field in outgoing messages
-#define OCC_INFO            0x10000000  // Info field in outgoing messages
 
 using namespace std;
 
@@ -34,9 +30,9 @@ struct program_context {
     const char *output_file;
     const char *capture_file;
     unsigned long send_rate;
-    unsigned long packet_size;
-    unsigned long data_length;
+    unsigned long payload_size;
     bool raw_mode;
+    bool new_format;
     struct occ_handle *occ;
     list< vector<unsigned char> > queue;
     pthread_mutex_t queLock;
@@ -47,9 +43,9 @@ struct program_context {
         output_file(NULL),
         capture_file(NULL),
         send_rate(0),
-        packet_size(0),
-        data_length(0),
+        payload_size(3000),
         raw_mode(false),
+        new_format(false),
         occ(NULL)
     {
         pthread_mutex_init(&queLock, NULL);
@@ -68,16 +64,36 @@ struct transmit_status {
 
 static unsigned long bytesSent = 0;
 static unsigned long bytesReceived = 0;
+static unsigned long sequence = 0;
 
 #pragma pack(push)
 #pragma pack(4)
-struct occ_packet_header {
+struct das1_packet {
     uint32_t destination;       //<! Destination id
     uint32_t source;            //<! Sender id
     uint32_t info;              //<! field describing packet type and other info
     uint32_t payload_length;    //<! payload length
     uint32_t reserved1;
     uint32_t reserved2;
+};
+struct das2_packet {
+    struct __attribute__ ((__packed__)) {
+        uint8_t sequence;       //!< Packet sequence number, incremented by sender for each sent packet
+        uint8_t type;           //!< Packet type
+        bool priority:1;        //!< Flag to denote high priority handling, used by hardware to optimize interrupt handling
+        unsigned __reserved1:11;
+        unsigned version:4;     //<! Packet version
+    };
+    uint32_t length;            //!< Total number of bytes for this packet
+    struct __attribute__ ((__packed__)) {
+        uint8_t source;                 //!< Unique source id number
+        unsigned subpacket:4;           //!< Subpacket count
+        unsigned __data_rsv1:4;
+        uint8_t format;                 //!< Data format
+        unsigned __data_rsv2:8;
+    };
+    uint32_t timestamp_sec;             //!< Accelerator time (seconds) of event 39
+    uint32_t timestamp_nsec;            //!< Accelerator time (nano-seconds) of event 39
 };
 #pragma pack(pop)
 
@@ -90,12 +106,11 @@ static void usage(const char *progname) {
     cout << "Options:" << endl;
     cout << "  -d, --device-file FILE   Full path to OCC board device file" << endl;
     cout << "  -i, --input-file FILE    File with data to be sent through OCC (defaults to /dev/urandom)" << endl;
-    cout << "  -o, --output-file FILE   Where to store incoming data (don't save if not specified)" << endl;
-    cout << "  -t, --throughput BYTES/S Send data at this rate (defaults to 0, unlimited)" << endl;
-    cout << "  -s, --packet-size SIZE   Size of each sent packet (defaults to 0, random size)" << endl;
-    cout << "  -l, --data-length LENGTH Approximate amount of data to read from input file (defaults to 0, all data)" << endl;
-    cout << "  -c, --capture-file FILE  Capture all data as sent to OCC to a file, useful for inspection or replay" << endl;
-    cout << "  -r, --raw-mode           Read and save data as is, assuming it's already encapsulated into DAS packets" << endl;
+    cout << "  -o, --output-file FILE   File to save received data to (default none)" << endl;
+    cout << "  -t, --throughput BYTES/S Limit the sending throughput (defaults to 0, unlimited)" << endl;
+    cout << "  -s, --payload-size SIZE  Size of data in each sent packet (defaults to 3000)" << endl;
+    cout << "  -r, --raw-mode           Input file contains packetized data" << endl;
+    cout << "  -n, --new-format         Use DAS 2.0 packet format" << endl;
     cout << endl;
 }
 
@@ -134,21 +149,15 @@ bool parse_args(int argc, char **argv, struct program_context *ctx) {
             if ((i + 1) < argc)
                 ctx->send_rate = atoi(argv[++i]);
         }
-        if (key == "-s" || key == "--packet-size") {
+        if (key == "-s" || key == "--payload-size") {
             if ((i + 1) < argc)
-                ctx->packet_size = min(atoi(argv[++i]), TX_MAX_SIZE);
-        }
-        if (key == "-l" || key == "--data-length") {
-            if ((i + 1) < argc)
-                ctx->data_length = atoi(argv[++i]);
-        }
-        if (key == "-c" || key == "--capture-file") {
-            if ((i + 1) >= argc)
-                return false;
-            ctx->capture_file = argv[++i];
+                ctx->payload_size = min(atoi(argv[++i]), TX_MAX_SIZE);
         }
         if (key == "-r" || key == "--raw-mode") {
             ctx->raw_mode = true;
+        }
+        if (key == "-n" || key == "--new-format") {
+            ctx->new_format = true;
         }
     }
 
@@ -212,77 +221,71 @@ static void *send_to_occ(void *arg) {
     struct program_context *ctx = (struct program_context *)arg;
     ifstream infile(ctx->input_file, ios_base::binary); // don't try to use basic_ifstream<uint8_t> here unless providing a uint8_t specialization on your own
     struct timespec starttime = { 0, 0 };
-    ofstream capturefile;
 
     if (!infile) {
         status->error = "cannot open input file";
         return status;
     }
 
-    if (ctx->capture_file)
-        capturefile.open(ctx->capture_file, ios_base::binary);
-    else
-        capturefile.setstate(ios_base::eofbit);
+    char buffer[TX_MAX_SIZE + 24];
 
-    srand(time(NULL));
-
-    unsigned char buffer[TX_MAX_SIZE];
-    struct occ_packet_header *hdr = reinterpret_cast<struct occ_packet_header *>(buffer);
-    unsigned char *payload = buffer + sizeof(struct occ_packet_header);
-
-    // Static data, unless in raw mode which will overwrite the header anyway
-    hdr->destination = OCC_DESTINATION;
-    hdr->source = OCC_SOURCE;
-    hdr->info = OCC_INFO;
-    hdr->reserved1 = 0;
-    hdr->reserved2 = 0;
-
-    while (!shutdown && infile.good() && (ctx->data_length == 0 || status->n_bytes <= ctx->data_length)) {
-        unsigned long packet_size = ctx->packet_size;
+    while (!shutdown && infile.good()) {
 
         if (ctx->raw_mode) {
-            infile.read(reinterpret_cast<char *>(buffer), sizeof(struct occ_packet_header));
-            packet_size = sizeof(struct occ_packet_header) + hdr->payload_length;
-            // eof bit is set only after reading past end of file
-            if (infile.gcount() == 0)
+            size_t hdr_len = (ctx->new_format ? sizeof(struct das2_packet) : sizeof(das1_packet));
+            infile.read(buffer, sizeof(struct das2_packet));
+            if (infile.gcount() != (int)hdr_len) {
+                if (infile.gcount() > 0)
+                    cerr << "ERROR: Not enought header data in input file" << endl;
                 break;
+            }
         } else {
-            // Pick a random packet size in range [sizeof(hdr), TX_MAX_SIZE]
-            if (packet_size == 0)
-                packet_size = rand() % (TX_MAX_SIZE - sizeof(struct occ_packet_header)) + sizeof(struct occ_packet_header) + 1;
+            if (ctx->new_format) {
+                struct das2_packet *packet = reinterpret_cast<struct das2_packet *>(buffer);
+                struct timespec t;
+                clock_gettime(CLOCK_REALTIME, &t);
+                memset(packet, 0, sizeof(struct das2_packet));
+                packet->version = 1;
+                packet->sequence = sequence++;
+                packet->type = 7;
+                packet->length = sizeof(struct das2_packet) + __occ_align(ctx->payload_size);
+                packet->timestamp_sec = t.tv_sec;
+                packet->timestamp_nsec = t.tv_nsec;
+            } else {
+                struct das1_packet *packet = reinterpret_cast<struct das1_packet *>(buffer);
+                memset(packet, 0, sizeof(struct das1_packet));
+                packet->destination = 0x2;
+                packet->source = 0x1;
+                packet->info = 0x10000000;
+                packet->payload_length = __occ_align(ctx->payload_size);
+            }
+        }
 
-            // Align packet_size to 4 bytes
-            packet_size = __occ_align(packet_size);
+        unsigned long packet_size;
+        unsigned long payload_size = 0;
+        char *payload = 0;
+        if (ctx->new_format) {
+            struct das2_packet *packet = reinterpret_cast<struct das2_packet *>(buffer);
+            packet_size = packet->length;
+            payload_size = packet_size - sizeof(struct das2_packet);
+            payload = buffer + sizeof(struct das2_packet);
+        } else {
+            struct das1_packet *packet = reinterpret_cast<struct das1_packet *>(buffer);
+            payload_size = packet->payload_length;
+            packet_size = payload_size + sizeof(struct das1_packet);
+            payload = buffer + sizeof(struct das1_packet);
         }
 
         // Would use readsome(), but apparently is implementation specific and
         // with no standard behaviour on EOF. This loop might well run forever
         // on some implementations.
-        infile.read(reinterpret_cast<char *>(payload), packet_size - sizeof(struct occ_packet_header));
-
-        if (!ctx->raw_mode) {
-            hdr->payload_length = infile.gcount();
-
-            if (hdr->payload_length < (packet_size - sizeof(struct occ_packet_header))) {
-                uint32_t new_payload_length = __occ_align(hdr->payload_length);
-                fill_n(payload + hdr->payload_length, new_payload_length - hdr->payload_length, 0);
-                hdr->payload_length = new_payload_length;
-                packet_size = sizeof(struct occ_packet_header) + hdr->payload_length;
-                cout << "INFO: input packet not 4-byte aligned, padding with '\\0's" << endl;
-            }
-        }
+        infile.read(payload, payload_size);
 
         // Enqueue packet for comparing purposes
         vector<unsigned char> v(buffer, buffer+packet_size);
         pthread_mutex_lock(&ctx->queLock);
         ctx->queue.push_back(v);
         pthread_mutex_unlock(&ctx->queLock);
-
-        // Dump data before actual sending. In case the send fails we still know which packet caused it
-        if (capturefile.good()) {
-            capturefile.write(reinterpret_cast<const char *>(buffer), packet_size);
-            capturefile.flush();
-        }
 
 #ifdef TRACE
         cout << "occ_send(" << packet_size << ")" << endl;
@@ -312,8 +315,6 @@ static void *send_to_occ(void *arg) {
 
         ratelimit(ctx->send_rate, status->n_bytes, &starttime);
     }
-
-    capturefile.close();
 
     return status;
 }
@@ -387,9 +388,20 @@ void *receive_from_occ(void *arg) {
 #endif
         size_t remain = datalen;
         while (remain > 0) {
-            struct occ_packet_header *hdr = (struct occ_packet_header *)data;
-            unsigned char *payload = data + sizeof(struct occ_packet_header);
-            size_t packet_len = __occ_packet_align(sizeof(struct occ_packet_header) + (hdr->payload_length & 0xFFFF));
+            struct das2_packet *packet = reinterpret_cast<struct das2_packet *>(data);
+            unsigned char *payload;
+            size_t packet_len = 0;
+            size_t payload_len = 0;
+            if (ctx->new_format) {
+                payload = data + sizeof(struct das2_packet);
+                packet_len = packet->length;
+                payload_len = packet_len - sizeof(struct das2_packet);
+            } else {
+                struct das1_packet *hdr = (struct das1_packet *)data;
+                payload = data + sizeof(struct das1_packet);
+                payload_len = hdr->payload_length;
+                packet_len = sizeof(struct das1_packet) + payload_len;
+            }
             if (packet_len > OCC_MAX_PACKET_SIZE) {
                 // Acknowledge everything but skip processing the rest
                 cerr << "Bad packet based on length check (" << packet_len << ">1800), skipping... (" << hex << data << dec << endl;
@@ -403,14 +415,8 @@ void *receive_from_occ(void *arg) {
                 if (ctx->raw_mode)
                     outfile.write((const char *)(data), packet_len);
                 else
-                    outfile.write((const char *)(payload), hdr->payload_length & 0xFFFF);
+                    outfile.write((const char *)(payload), payload_len);
             }
-
-            uint32_t packet_len1 = packet_len;
-            if (hdr->payload_length & (0x1 << 31))
-                packet_len1 += 4;
-
-            hdr->payload_length &= 0xFFFF;
 
             if (!compareWithSent(ctx, data, packet_len)) {
                 status->error = "Received data mismatch";
@@ -418,9 +424,9 @@ void *receive_from_occ(void *arg) {
                 break;
             }
 
-            remain -= packet_len1;
-            data += packet_len1;
-            bytesReceived += packet_len1;
+            remain -= packet_len;
+            data += packet_len;
+            bytesReceived += packet_len;
         }
         // Adjust to the actual processed data for acknowledgement
         datalen -= remain;
@@ -430,8 +436,10 @@ void *receive_from_occ(void *arg) {
 #endif
         if (datalen > 0) {
 #ifdef TRACE
-            memcpy(&outbuf[offset], data1, datalen);
-            offset += datalen;
+            if ((offset + datalen) < sizeof(outbuf)) {
+                memcpy(&outbuf[offset], data1, datalen);
+                offset += datalen;
+            }
 #endif
             ret = occ_data_ack(ctx->occ, datalen);
             if (ret != 0) {
@@ -467,13 +475,19 @@ int main(int argc, char **argv) {
     }
 #ifdef TRACE
     memset(outbuf, '#', sizeof(outbuf));
-#endif    
+#endif
     if (occ_open(ctx.device_file, OCC_INTERFACE_OPTICAL, &ctx.occ) != 0) {
         cerr << "ERROR: cannot initialize OCC interface" << endl;
         return 3;
     }
 
+    if (occ_enable_old_packets(ctx.occ, ctx.new_format==0) != 0) {
+        cerr << "ERROR: cannot disable old DAS packets" << endl;
+        return 3;
+    }
+
     if (occ_enable_rx(ctx.occ, true) != 0) {
+        cerr << "ERROR: cannot enable RX" << endl;
         return 3;
     }
     usleep(1000);
