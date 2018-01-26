@@ -403,6 +403,7 @@ int occdrv_reset(struct occ_handle *handle) {
     // XXX verify the returned status?
 
     handle->dma_cons_off = 0;
+    handle->rx_enabled = false;
 
     return 0;
 }
