@@ -1,4 +1,4 @@
-OCCLIB=../../lib
+OCCLIB=$(abspath ../../lib)
 CPPFLAGS=-Wall -I$(OCCLIB) -std=c++0x -DBITFIELD_LSB_FIRST
 LDFLAGS=-L$(OCCLIB) -locc -Wl,-rpath,$(OCCLIB) -lcurses -lrt
 SRCS=$(wildcard *.cpp)
