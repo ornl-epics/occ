@@ -423,7 +423,7 @@ int occdrv_send(struct occ_handle *handle, const void *data, size_t count) {
     write(handle->tx_dump_fd, data, count);
 #endif
 
-    return 0;
+    return ret;
 }
 
 int occdrv_data_wait(struct occ_handle *handle, void **address, size_t *count, uint32_t timeout) {

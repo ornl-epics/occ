@@ -1,7 +1,9 @@
 # Project Specific Files
-occ_dump
+occdiag
+occ_proxy
 occ_rawio
 occ_loopback
+occ_flash
 tools/PacketAnalyzer/PacketAnalyzer
 test_files
 occ_flashprog
@@ -23,8 +25,9 @@ ned/nedApp/src/latex
 *~
 *\#
 
-# CodeBlocks project files
+# IDE project files
 *.layout
+*.tags*
 
 # Temporary files
 *.new

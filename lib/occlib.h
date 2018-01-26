@@ -299,7 +299,7 @@ int occ_status(struct occ_handle *handle, occ_status_t *status, occ_status_type 
  *
  * This interface does not enforce data format. In most cases only the OCC
  * commands data should be sent from this end. OCC data must be aligned to
- * 8 bytes and this function will make sure to align the non-aligned data
+ * 4 bytes and this function will make sure to align the non-aligned data
  * automatically.
  *
  * OCC boards do not provide DMA for sending data. Transfer rate of this
