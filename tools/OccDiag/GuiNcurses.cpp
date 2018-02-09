@@ -12,8 +12,8 @@
 
 #define log_ratelimit(period, ...) logRateLimit(__LINE__, period, __VA_ARGS__)
 
-GuiNcurses::GuiNcurses(const char *occDevice, const std::map<uint32_t, uint32_t> &initRegisters, uint32_t statsInt)
-    : m_occAdapter(occDevice, initRegisters)
+GuiNcurses::GuiNcurses(const char *occDevice, bool oldpkts, const std::map<uint32_t, uint32_t> &initRegisters, uint32_t statsInt)
+    : m_occAdapter(occDevice, oldpkts, initRegisters)
     , m_runtime(0.0)
     , m_shutdown(false)
     , m_paused(false)
@@ -97,6 +97,7 @@ void GuiNcurses::run()
                     toggleRx(false);
                     break;
                 }
+                int a = 1;
             }
 
             clock_gettime(CLOCK_MONOTONIC, &t2);
@@ -190,7 +191,7 @@ void GuiNcurses::toggleRx(bool enable)
                 log("Resetting OCC to clear potential partial packet from previous disable");
                 m_winStats.clear();
                 m_occAdapter.reset();
-                LabPacket::resetRamp();
+                //LabPacket::resetRamp();
                 m_runtime = 0.0;
             }
 
@@ -267,7 +268,7 @@ void GuiNcurses::resetOcc()
         if (m_rxEnabled)
             m_occAdapter.toggleRx(true);
         m_runtime = 0.0;
-        LabPacket::resetRamp();
+        //LabPacket::resetRamp();
         log("OCC reset");
     } catch (std::runtime_error &e) {
         log("ERROR: %s", e.what());

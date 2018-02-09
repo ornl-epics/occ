@@ -1,5 +1,5 @@
 #include "Common.h"
-#include "DasPacket.h"
+#include "LabPacket.h"
 #include "WinData.h"
 
 WinData::WinData(int y)
@@ -30,8 +30,8 @@ void WinData::redraw(bool frame)
         }
         addr = (const char *)addr + m_lineOffset*4*sizeof(uint32_t);
 
-        const DasPacket *packet = (const DasPacket *)m_addrPacket;
-        size_t packetLen = packet->length();
+        LabPacket packet(m_addrPacket);
+        size_t packetLen = packet.getLength();
         if (packetLen == 0)
             packetLen = m_size;
 

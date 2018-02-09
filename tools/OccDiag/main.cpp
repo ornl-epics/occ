@@ -23,12 +23,15 @@ static void sighandler(int signal) {
 
 static void usage(const char *progname) {
     std::cout << "Usage: " << progname << " [OPTIONS] <DEVICE>" << std::endl;
-    std::cout << "Analyze incoming DAS data. " << std::endl;
+    std::cout << "" << std::endl;
+    std::cout << "OCC diagnostics verifies and shows received optical packets." << std::endl;
     std::cout << std::endl;
     std::cout << "Options:" << std::endl;
-    std::cout << "  -r <off> <val> On startup and on reset," << std::endl;
-    std::cout << "                 set register at offset 'off' to value 'val'" << std::endl;
-    std::cout << "  -l <interval>  Enable periodic statistics reports, interval in seconds" << std::endl;
+    std::cout << "  -l <interval>   Periodically print statistics log, interval in seconds" << std::endl;
+    std::cout << "  -o              Enable DAS 1.0 style packets" << std::endl;
+    std::cout << "  -r <addr> <val> Set register value on startup and on reset." << std::endl;
+    std::cout << "  -t <rate>       Enable test pattern at specified rate MB/s " << std::endl;
+    std::cout << "                  (short for '-r 0x380 0x34000400 -r 0x384 <raw rate>')" << std::endl;
     std::cout << std::endl;
     std::cout << "Example: enable internal packet simulator with approx rate 0.5MB/s" << std::endl;
     std::cout << "  "<< progname << " /dev/occ1 -r 0x380 0x3E000E00 -r 0x384 0xFF" << std::endl;
@@ -54,6 +57,7 @@ int main(int argc, char **argv)
     struct sigaction sigact;
     std::map<uint32_t, uint32_t> registers;
     uint32_t statsInt = 0;
+    bool oldpkts = false;
 
     sigact.sa_handler = &sighandler;
     sigact.sa_flags = 0;
@@ -94,6 +98,19 @@ int main(int argc, char **argv)
 
             statsInt = ::strtoul(argv[++i], NULL, 10);
         }
+        if (key == "-o") {
+            oldpkts = true;
+        }
+        if (key == "-t") {
+            if ((i + 1) >= argc) {
+                usage(argv[0]);
+                return 1;
+            }
+
+            double testGenRate = std::max(0.1, ::strtod(argv[++i], NULL));
+            registers[0x380] = 0x34000400;
+            registers[0x384] = (uint32_t)(1000/testGenRate) & 0xFFF;
+        }
         if (key[0] != '-') {
             devfile = argv[i];
         }
@@ -121,7 +138,7 @@ int main(int argc, char **argv)
     }
 
     try {
-        analyzer = new GuiNcurses(devfile, registers, statsInt);
+        analyzer = new GuiNcurses(devfile, oldpkts, registers, statsInt);
         analyzer->run();
         delete analyzer;
     } catch (std::exception &e) {

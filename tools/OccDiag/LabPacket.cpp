@@ -2,39 +2,84 @@
 
 #include <cstddef>
 
-#define SPECIAL_PIXEL_BIT   0x40000000  // pixel ids above this require special handling
 #define EVENT_TOF_MAX       2000000 // <=1s/5Hz, in 100ns units
 
 uint32_t LabPacket::lastRampValue = (uint32_t)-1;
 
-bool LabPacket::verify(LabPacket::Type &type, uint32_t &errorOffset) const
+LabPacket::LabPacket(const void *data)
+: version(0)
 {
-    if (isRtdl()) {
-        type = TYPE_RTDL;
-        return verifyRtdl(errorOffset);
-    } else if (isCommand()) {
-        if (cmdinfo.command == CMD_TSYNC) {
-            type = TYPE_TSYNC;
-            return verifyTsync(errorOffset);
-        } else {
-            type = TYPE_COMMAND;
-            return verifyCmd(errorOffset);
-        }
-    } else if (isMetaData()) {
-        type = TYPE_METADATA;
-        return verifyMeta(errorOffset);
-    } else if (isNeutronData()) {
-        type = TYPE_NEUTRONS;
-        return verifyNeutrons(errorOffset);
-    } else if ((info & 0xFC) == 0x2C) {
-        type = TYPE_RAMP;
-        return verifyRamp(errorOffset);
+    struct Packet *p = reinterpret_cast<struct Packet *>(const_cast<void*>(data));
+    if (p->version == 1) {
+        version = 1;
+        packet = p;
+        dasPacket = 0;
+    } else {
+        version = 0;
+        dasPacket = reinterpret_cast<struct DasPacket *>(const_cast<void*>(data));
+        packet = 0;
     }
-    type = TYPE_UNKNOWN;
+}
+
+uint32_t LabPacket::getLength()
+{
+    if (packet)
+        return packet->length;
+    if (dasPacket)
+        return dasPacket->length();
+    return 0;
+}
+
+LabPacket::PacketType LabPacket::getType()
+{
+    if (packet)
+        return static_cast<LabPacket::PacketType>(packet->type);
+
+    if (dasPacket) {
+        if (dasPacket->isRtdl())
+            return LabPacket::TYPE_DAS_RTDL;
+        if (dasPacket->isCommand())
+            return LabPacket::TYPE_DAS_CMD;
+        if (dasPacket->isData())
+            return LabPacket::TYPE_DAS_DATA;
+    }
+    return LabPacket::TYPE_LEGACY;
+}
+
+bool LabPacket::verify(uint32_t &errorOffset)
+{
+    if (packet) {
+        if (packet->type == Packet::TYPE_DAS_RTDL)
+            return verifyRtdl(packet, errorOffset);
+    }
+    if (dasPacket) {
+        if (dasPacket->isRtdl()) {
+            return verifyRtdl(dasPacket, errorOffset);
+        } else if (dasPacket->isCommand()) {
+            return verifyCmd(dasPacket, errorOffset);
+        } else if (dasPacket->isMetaData()) {
+            return verifyMeta(dasPacket, errorOffset);
+        } else if (dasPacket->isNeutronData()) {
+            return verifyNeutrons(dasPacket, errorOffset);
+        } else if ((dasPacket->info & 0xFC) == 0x2C) {
+            return verifyRamp(dasPacket, errorOffset);
+        }
+    }
     return true;
 }
 
-bool LabPacket::verifyRtdl(uint32_t &errorOffset) const
+bool LabPacket::verifyRtdl(Packet *packet_, uint32_t &errorOffset)
+{
+    DasRtdlPacket *packet = reinterpret_cast<DasRtdlPacket *>(packet_);
+    if (packet->length != (sizeof(DasRtdlPacket) + packet->num_frames*4)) {
+        errorOffset = offsetof(Packet, length)/4;
+        return false;
+    }
+
+    return true;
+}
+
+bool LabPacket::verifyRtdl(DasPacket *packet, uint32_t &errorOffset)
 {
     // Frame numbers in upper 8 bits?
     static const uint32_t expected_payload[32] = {
@@ -44,13 +89,13 @@ bool LabPacket::verifyRtdl(uint32_t &errorOffset) const
         36,37,38,39,40,41, 1, 2
     };
 
-    if (getPayloadLength() != sizeof(expected_payload)) {
-        errorOffset = offsetof(DasPacket, payload);
+    if (packet->getPayloadLength() != sizeof(expected_payload)) {
+        errorOffset = offsetof(DasPacket, payload_length)/4;
         return false;
     }
 
     for (size_t i=6; 4*i < sizeof(expected_payload); i++) {
-        if (((payload[i] >> 24) & 0xFF) != expected_payload[i]) {
+        if (((packet->payload[i] >> 24) & 0xFF) != expected_payload[i]) {
             errorOffset = 6+i;
             return false;
         }
@@ -59,14 +104,54 @@ bool LabPacket::verifyRtdl(uint32_t &errorOffset) const
     return true;
 }
 
-bool LabPacket::verifyMeta(uint32_t &errorOffset) const
+bool LabPacket::verifyMeta(DasDataPacket *packet, uint32_t &errorOffset)
+{
+    struct Event {
+        uint32_t tof;
+        uint32_t pixelid;
+    };
+
+    uint32_t nevents;
+    const Event *event = packet->getEvents<Event>(nevents);
+
+    errorOffset = sizeof(DasDataPacket) / 4; // Ugly I know!
+
+    while (--nevents) {
+        switch (event->pixelid >> 28) {
+            case 0x6:
+            case 0x5:
+                break;
+            case 0x7:
+            case 0x4:
+                if ((event->pixelid & 0xFFFF) > 3)
+                    return false;
+                break;
+            case 0x3:
+            case 0x2:
+            case 0x1:
+            case 0x0:
+            default:
+                // Neutrons?
+                return false;
+        }
+
+        errorOffset += sizeof(Event)/4;
+        event++;
+    }
+
+    // No errors
+    errorOffset = 0;
+    return true;
+}
+
+bool LabPacket::verifyMeta(DasPacket *packet, uint32_t &errorOffset)
 {
     uint32_t size;
-    const DasPacket::Event *event = reinterpret_cast<const DasPacket::Event *>(getData(&size));
+    const DasPacket::Event *event = reinterpret_cast<const DasPacket::Event *>(packet->getData(&size));
     uint32_t nevents = size / (sizeof(DasPacket::Event)/4);
 
     // Skip checking for RTDL if it exists, start checking at actual neutrons
-    errorOffset = (sizeof(DasPacket) + (getPayload() - payload)) / 4;
+    errorOffset = (sizeof(DasPacket) + (packet->getPayload() - packet->payload)) / 4;
 
     if (size % (sizeof(DasPacket::Event)/4)) {
         errorOffset += nevents * sizeof(DasPacket::Event)/4;
@@ -74,24 +159,22 @@ bool LabPacket::verifyMeta(uint32_t &errorOffset) const
     }
 
     while (--nevents) {
-        if (event->pixelid & SPECIAL_PIXEL_BIT) {
-            switch (event->pixelid & ~0x1) {
-            case 0x40010000:
-            case 0x40020000:
-                if ((event->pixelid & 0x1) != 0x1) {
+        switch (event->pixelid >> 28) {
+            case 0x6:
+            case 0x5:
+                break;
+            case 0x7:
+            case 0x4:
+                if ((event->pixelid & 0xFFFF) > 3)
                     return false;
-                }
                 break;
-            case 0x70010000:
-            case 0x70020000:
-            case 0x70030000:
-                break;
+            case 0x3:
+            case 0x2:
+            case 0x1:
+            case 0x0:
             default:
+                // Neutrons?
                 return false;
-            }
-        } else if (event->pixelid < SPECIAL_PIXEL_BIT &&
-                   (event->tof > 0x32000 || ((event->pixelid & 0x3FFFFFFF) > 3023))) {
-            return false;
         }
 
         errorOffset += sizeof(DasPacket::Event)/4;
@@ -104,25 +187,57 @@ bool LabPacket::verifyMeta(uint32_t &errorOffset) const
     return true;
 }
 
-bool LabPacket::verifyNeutrons(uint32_t &errorOffset) const
+bool LabPacket::verifyNeutrons(DasDataPacket *packet, uint32_t &errorOffset)
+{
+    struct Event {
+        uint32_t tof;
+        uint32_t pixelid;
+    };
+
+    uint32_t nevents;
+    const Event *event = packet->getEvents<Event>(nevents);
+
+    errorOffset = sizeof(DasDataPacket)/4;
+
+    while (--nevents) {
+        if (event->tof > EVENT_TOF_MAX)
+            return false;
+
+        if ((event->pixelid >> 28) > 0x3)
+            return false;
+
+        errorOffset += sizeof(Event)/4;
+        event++;
+    }
+
+    // No errors
+    errorOffset = 0;
+    return true;
+}
+
+bool LabPacket::verifyNeutrons(DasPacket *packet, uint32_t &errorOffset)
 {
     uint32_t size;
-    const DasPacket::Event *event = reinterpret_cast<const DasPacket::Event *>(getData(&size));
+    const DasPacket::Event *event = reinterpret_cast<const DasPacket::Event *>(packet->getData(&size));
     uint32_t nevents = size / (sizeof(DasPacket::Event)/4);
 
     // Skip checking for RTDL if it exists, start checking at actual neutrons
-    errorOffset = (sizeof(DasPacket) + (getPayload() - payload)) / 4;
+    errorOffset = (sizeof(DasPacket) + (packet->getPayload() - packet->payload)) / 4;
 
     if (size % (sizeof(DasPacket::Event)/4)) {
         errorOffset += nevents * sizeof(DasPacket::Event)/4;
         return false;
     }
 
-    while (--nevents) {
+    while (nevents-- > 0) {
+        uint32_t tof = event->tof;
+        uint32_t pixel = event->pixelid;
+        
         if (event->tof > EVENT_TOF_MAX)
             return false;
 
-        // Pixel ID is arbitrary
+        if ((event->pixelid >> 28) > 0x3)
+            return false;
 
         errorOffset += sizeof(DasPacket::Event)/4;
         event++;
@@ -134,12 +249,12 @@ bool LabPacket::verifyNeutrons(uint32_t &errorOffset) const
     return true;
 }
 
-bool LabPacket::verifyRamp(uint32_t &errorOffset) const
+bool LabPacket::verifyRamp(DasPacket *packet, uint32_t &errorOffset)
 {
-    const DasPacket::Event *event = reinterpret_cast<const DasPacket::Event *>(payload);
-    uint32_t nevents = payload_length / sizeof(DasPacket::Event);
+    const DasPacket::Event *event = reinterpret_cast<const DasPacket::Event *>(packet->payload);
+    uint32_t nevents = packet->payload_length / sizeof(DasPacket::Event);
 
-    if ((payload_length % sizeof(DasPacket::Event)) != 0) {
+    if ((packet->payload_length % sizeof(DasPacket::Event)) != 0) {
         errorOffset = offsetof(DasPacket, payload_length)/4;
         return false;
     }
@@ -173,12 +288,7 @@ bool LabPacket::verifyRamp(uint32_t &errorOffset) const
     return true;
 }
 
-bool LabPacket::verifyTsync(uint32_t &errorOffset) const
-{
-    return (getPayloadLength() == 2*sizeof(uint32_t));
-}
-
-bool LabPacket::verifyCmd(uint32_t &errorOffset) const
+bool LabPacket::verifyCmd(DasPacket *packet, uint32_t &errorOffset)
 {
     return true;
 }

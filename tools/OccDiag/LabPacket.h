@@ -2,19 +2,34 @@
 #define LABPACKET_HPP
 
 #include "DasPacket.h"
+#include "Packet.h"
 
-class LabPacket : public DasPacket
+class LabPacket
 {
     public:
         typedef enum {
-            TYPE_UNKNOWN,
-            TYPE_COMMAND,
-            TYPE_METADATA,
-            TYPE_NEUTRONS,
-            TYPE_RAMP,
-            TYPE_RTDL,
-            TYPE_TSYNC,
-        } Type;
+            TYPE_LEGACY     = 0x0,
+            TYPE_ERROR      = 0x1,
+            TYPE_DAS_RTDL   = 0x6,
+            TYPE_DAS_DATA   = 0x7,
+            TYPE_DAS_CMD    = 0x8,
+            TYPE_ACC_TIME   = 0x10,
+        } PacketType;
+
+        /**
+         * Constructor parses raw data.
+         */
+        LabPacket(const void *data);
+
+        /**
+         * Return total packet length in bytes.
+         */
+        uint32_t getLength();
+
+        /**
+         * Return packet type.
+         */
+        PacketType getType();
 
         /**
          * Check the validity of packet and its data.
@@ -23,7 +38,7 @@ class LabPacket : public DasPacket
          * @param[out] type Packet type, returned regarless whether packet is good or bad, unless it's too damaged to resolve the type
          * @param[out] errorOffset dword (4 byte) offset of the error, starting from packet address
          */
-        bool verify(Type &type, uint32_t &errorOffset) const;
+        bool verify(uint32_t &errorOffset);
 
         /**
          * Reset ramp counter.
@@ -32,13 +47,18 @@ class LabPacket : public DasPacket
 
     private:
         static uint32_t lastRampValue;
+        unsigned version;
+        struct DasPacket *dasPacket;
+        struct Packet *packet;
 
-        bool verifyRtdl(uint32_t &errorOffset) const;
-        bool verifyMeta(uint32_t &errorOffset) const;
-        bool verifyNeutrons(uint32_t &errorOffset) const;
-        bool verifyRamp(uint32_t &errorOffset) const;
-        bool verifyTsync(uint32_t &errorOffset) const;
-        bool verifyCmd(uint32_t &errorOffset) const;
+        bool verifyRtdl(Packet *packet, uint32_t &errorOffset);
+        bool verifyRtdl(DasPacket *packet, uint32_t &errorOffset);
+        bool verifyMeta(DasPacket *packet, uint32_t &errorOffset);
+        bool verifyMeta(DasDataPacket *packet, uint32_t &errorOffset);
+        bool verifyNeutrons(DasPacket *packet, uint32_t &errorOffset);
+        bool verifyNeutrons(DasDataPacket *packet, uint32_t &errorOffset);
+        bool verifyRamp(DasPacket *packet, uint32_t &errorOffset);
+        bool verifyCmd(DasPacket *packet, uint32_t &errorOffset);
 };
 
 #endif // LABPACKET_HPP
