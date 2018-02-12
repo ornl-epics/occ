@@ -6,6 +6,12 @@
 
 uint32_t LabPacket::lastRampValue = (uint32_t)-1;
 
+// Replacement for C's offsetof - C++ pre-11 doesn't like offsetof on non-PODs
+template<typename T, typename U> size_t offsetOf(U T::*member)
+{
+    return (char*)&((T*)0->*member) - (char*)0;
+}
+
 LabPacket::LabPacket(const void *data)
 : version(0)
 {
@@ -90,7 +96,7 @@ bool LabPacket::verifyRtdl(DasPacket *packet, uint32_t &errorOffset)
     };
 
     if (packet->getPayloadLength() != sizeof(expected_payload)) {
-        errorOffset = offsetof(DasPacket, payload_length)/4;
+        errorOffset = offsetOf(&DasPacket::payload_length)/4;
         return false;
     }
 
@@ -112,7 +118,10 @@ bool LabPacket::verifyMeta(DasDataPacket *packet, uint32_t &errorOffset)
     };
 
     uint32_t nevents;
-    const Event *event = packet->getEvents<Event>(nevents);
+    // The next line doesn't compile on RHEL6 with g++ -std=c++0x
+    //const Event *event = packet->getEvents<Event>(nevents);
+    nevents = (packet->length - sizeof(DasDataPacket)) / sizeof(Event);
+    const Event *event = reinterpret_cast<Event *>(packet->events);
 
     errorOffset = sizeof(DasDataPacket) / 4; // Ugly I know!
 
@@ -195,7 +204,10 @@ bool LabPacket::verifyNeutrons(DasDataPacket *packet, uint32_t &errorOffset)
     };
 
     uint32_t nevents;
-    const Event *event = packet->getEvents<Event>(nevents);
+    // The next line doesn't compile on RHEL6 with g++ -std=c++0x
+    //const Event *event = packet->getEvents<Event>(nevents);
+    nevents = (packet->length - sizeof(DasDataPacket)) / sizeof(Event);
+    const Event *event = reinterpret_cast<Event *>(packet->events);
 
     errorOffset = sizeof(DasDataPacket)/4;
 
@@ -230,9 +242,6 @@ bool LabPacket::verifyNeutrons(DasPacket *packet, uint32_t &errorOffset)
     }
 
     while (nevents-- > 0) {
-        uint32_t tof = event->tof;
-        uint32_t pixel = event->pixelid;
-        
         if (event->tof > EVENT_TOF_MAX)
             return false;
 
@@ -255,14 +264,14 @@ bool LabPacket::verifyRamp(DasPacket *packet, uint32_t &errorOffset)
     uint32_t nevents = packet->payload_length / sizeof(DasPacket::Event);
 
     if ((packet->payload_length % sizeof(DasPacket::Event)) != 0) {
-        errorOffset = offsetof(DasPacket, payload_length)/4;
+        errorOffset = offsetOf(&DasPacket::payload_length)/4;
         return false;
     }
 
     if (lastRampValue == (uint32_t)-1)
         lastRampValue = event->tof;
 
-    errorOffset = offsetof(DasPacket, payload)/4;
+    errorOffset = offsetOf(&DasPacket::payload)/4;
     for (uint32_t i = 0; i < nevents; i++) {
         if (event->tof != lastRampValue) {
             errorOffset += 2*i;

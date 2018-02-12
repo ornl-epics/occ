@@ -4,6 +4,7 @@
 
 #include <cstring>
 #include <map>
+#include <sstream>
 
 #define __STDC_FORMAT_MACROS // Bring in PRIu64 like macros
 #include <inttypes.h>
@@ -80,7 +81,9 @@ std::vector<std::string> WinStats::generateReport()
         if (packetTypes.find(it->first) != packetTypes.end()) {
             name = packetTypes[it->first];
         } else {
-            name = "Pkt type " + std::to_string(it->first);
+            std::ostringstream ss;
+            ss << "Pkt type " << it->first;
+            name = ss.str();
         }
         lines.push_back( generateReportLine(name,  it->second) );
     }
