@@ -31,7 +31,7 @@ class WinStats : public Window {
             };
 
     private:
-        std::vector<AnalyzeStats> m_totalStats;
+        std::map<Packet::Type, AnalyzeStats> m_totalStats;
         AnalyzeStats m_combinedStats;
         struct timespec m_lastUpdate;
 
@@ -53,7 +53,7 @@ class WinStats : public Window {
         /**
          * Generate a single line of report, taking numbers from stats parameter.
          */
-        static std::string generateReportLine(const char *title, const AnalyzeStats &stats);
+        static std::string generateReportLine(const std::string &title, const AnalyzeStats &stats);
 
         /**
          * Generates 9 lines of packet statistics displaying numbers from m_stats.

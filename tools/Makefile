@@ -1,4 +1,4 @@
-SUBDIRS = dump flash loopback PacketAnalyzer rawio
+SUBDIRS = proxy flash loopback OccDiag rawio
 
 .PHONY: subdirs $(SUBDIRS)
 

@@ -1,8 +1,8 @@
-OCCLIB=../../lib
-CPPFLAGS=-Wall -I$(OCCLIB) -std=c++0x
-LDFLAGS=-L$(OCCLIB) -locc -Wl,-rpath,$(OCCLIB)
-SRCS=dump.cpp
-BIN=occ_dump
+OCCLIB=$(abspath ../../lib)
+CPPFLAGS=-Wall -I$(OCCLIB) -std=c++11
+LDFLAGS=-L$(OCCLIB) -locc -lrt -Wl,-rpath,$(OCCLIB)
+SRCS=proxy.cpp
+BIN=occ_proxy
 
 HDRS=
 OBJS=$(SRCS:.cpp=.o)
@@ -12,7 +12,7 @@ OBJS=$(SRCS:.cpp=.o)
 all: CPPFLAGS+=-O2 -DNDEBUG
 all: $(BIN)
 
-debug: CPPFLAGS+=-ggdb -g -DTRACE
+debug: CPPFLAGS+=-ggdb -g -O0 -DTRACE
 debug: $(BIN)
 
 $(BIN): $(OBJS)

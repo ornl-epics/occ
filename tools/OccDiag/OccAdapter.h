@@ -1,6 +1,8 @@
 #ifndef OCCADAPTER_HPP
 #define OCCADAPTER_HPP
 
+#include "Packet.h"
+
 #include <stdint.h>
 #include <string>
 #include <map>
@@ -12,29 +14,23 @@ struct occ_handle;
 class OccAdapter {
     public:
         struct AnalyzeStats {
-            std::vector<uint64_t> good;
-            std::vector<uint64_t> bad;
-            std::vector<uint64_t> bytes;
+            std::map<Packet::Type, uint64_t> good;
+            std::map<Packet::Type, uint64_t> bad;
+            std::map<Packet::Type, uint64_t> bytes;
             const void *lastAddr;
             const void *lastErrorAddr;
             const void *lastPacketAddr;
+            uint32_t lastPacketSize;
             size_t lastLen;
-            AnalyzeStats()
-                : good(7)
-                , bad(7)
-                , bytes(7)
-            {}
             void clear()
             {
-                for (int i=0; i<7; i++) {
-                    good[i]  = 0;
-                    bad[i]   = 0;
-                    bytes[i] = 0;
-                }
+                good.clear();
+                bad.clear();
+                bytes.clear();
             }
         };
 
-        OccAdapter(const std::string &devfile, const std::map<uint32_t, uint32_t> &initRegisters);
+        OccAdapter(const std::string &devfile, bool oldpkts, const std::map<uint32_t, uint32_t> &initRegisters);
         ~OccAdapter();
 
         void reset();

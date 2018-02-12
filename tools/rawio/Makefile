@@ -1,4 +1,4 @@
-OCCLIB=../../lib
+OCCLIB=$(abspath ../../lib)
 CPPFLAGS=-Wall -I$(OCCLIB) -std=c++0x
 LDFLAGS=-L$(OCCLIB) -locc -Wl,-rpath,$(OCCLIB)
 SRCS=rawio.cpp

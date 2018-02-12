@@ -33,7 +33,7 @@ class GuiNcurses {
         WinRegisters m_winRegisters;
         WinStats m_winStats;
     public:
-        GuiNcurses(const char *occDevice, const std::map<uint32_t, uint32_t> &initRegisters, uint32_t statsInt);
+        GuiNcurses(const char *occDevice, bool oldpkts, const std::map<uint32_t, uint32_t> &initRegisters, uint32_t statsInt);
         ~GuiNcurses();
 
         void run();

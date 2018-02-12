@@ -1,5 +1,6 @@
 #include "OccAdapter.h"
-#include "LabPacket.h"
+#include "Packet.h"
+#include "DasPacket.h"
 
 #include <errno.h>
 #include <cstring> // strerror
@@ -7,7 +8,7 @@
 #include <occlib_hw.h>
 #include <stdexcept>
 
-OccAdapter::OccAdapter(const std::string &devfile, const std::map<uint32_t, uint32_t> &initRegisters)
+OccAdapter::OccAdapter(const std::string &devfile, bool oldpkts, const std::map<uint32_t, uint32_t> &initRegisters)
     : m_occ(NULL)
     , m_initRegisters(initRegisters)
 {
@@ -16,6 +17,11 @@ OccAdapter::OccAdapter(const std::string &devfile, const std::map<uint32_t, uint
 
     if ((ret = occ_open(devfile.c_str(), OCC_INTERFACE_OPTICAL, &m_occ)) != 0)
         throw std::runtime_error("Failed to open OCC device - " + occErrorString(ret));
+
+    if ((ret = occ_enable_old_packets(m_occ, oldpkts)) != 0) {
+        std::string enable = (oldpkts?"enable":"disable");
+        throw std::runtime_error("Failed to " + enable + " old DAS packets - " + occErrorString(ret));
+    }
 
     if ((ret = occ_status(m_occ, &status, OCC_STATUS_FAST)) != 0)
         throw std::runtime_error("Failed to initialize OCC status");
@@ -80,29 +86,37 @@ void OccAdapter::process(OccAdapter::AnalyzeStats &stats, bool throwOnBad, doubl
     stats.lastLen = dataLen;
     stats.lastErrorAddr = 0;
     stats.lastPacketAddr = data;
-    while (dataLen >= sizeof(LabPacket)) {
-        LabPacket::Type type;
+    stats.lastPacketSize = 0;
+    while (dataLen >= sizeof(Packet)) {
+        bool good = false;
         uint32_t errorOffset;
-        const LabPacket *packet = reinterpret_cast<const LabPacket *>(data);
-        uint32_t packetLen = packet->length();
-
-        stats.lastPacketAddr = packet;
-
-        if (packetLen == 0) {
-            stats.lastErrorAddr = packet;
-            throw std::range_error("Packet size not aligned to 4 bytes");
+        uint32_t packetLen = 0;
+        Packet::Type type;
+        
+        try {
+            const Packet *packet = Packet::cast(static_cast<uint8_t*>(data), dataLen);
+            if (packet->version != 1) {
+                throw std::runtime_error("Not version 1");
+            }
+            good = packet->verify(errorOffset);
+            packetLen = packet->length;
+            type = packet->type;
+        } catch (std::runtime_error &e) {
+            const DasPacket *packet = DasPacket::cast(static_cast<uint8_t*>(data), dataLen);
+            good = true; // No checks on legacy packets
+            packetLen = sizeof(DasPacket) + packet->payload_length;
+            type = Packet::TYPE_LEGACY;
         }
-
-        // Maybe packet was split at the DMA memory boundary
-        if (packetLen > dataLen)
-            break;
-
-        if (packet->verify(type, errorOffset)) {
+        
+        stats.lastPacketAddr = data;
+        stats.lastPacketSize = packetLen;
+        
+        if (good) {
             stats.good[type]++;
         } else {
             stats.bad[type]++;
             if (throwOnBad) {
-                stats.lastErrorAddr = (char *)packet + 4*errorOffset;
+                stats.lastErrorAddr = (char *)data + 4*errorOffset;
                 throw std::bad_exception();
             }
         }
@@ -148,7 +162,7 @@ void OccAdapter::getOccStatus(size_t &used, bool &stalled, bool &overflowed)
     occ_status_t status;
     int ret;
 
-    if ((ret = occ_status(m_occ, &status, OCC_STATUS_CACHED)) != 0)
+    if ((ret = occ_status(m_occ, &status, OCC_STATUS_FAST)) != 0)
         throw std::runtime_error("Can't get OCC status - " + occErrorString(ret));
 
     used = status.dma_used;
