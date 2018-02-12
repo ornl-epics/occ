@@ -324,6 +324,7 @@ void GuiNcurses::input()
     case 'R':
         resetOcc();
         m_winStats.clear();
+        TestPacket::resetRamp();
         break;
     case 's':
     case 'S':

@@ -4,7 +4,6 @@
 
 #include <cstring>
 #include <map>
-#include <sstream>
 
 #define __STDC_FORMAT_MACROS // Bring in PRIu64 like macros
 #include <inttypes.h>
@@ -65,31 +64,10 @@ std::string WinStats::generateReportLine(const std::string &title, const WinStat
 std::vector<std::string> WinStats::generateReport()
 {
     std::vector<std::string> lines;
-
-    // Static map, populate the first time this functions is called
-    static std::map<Packet::Type, std::string> packetTypes;
-    if (packetTypes.empty()) {
-        packetTypes[Packet::TYPE_LEGACY]    = "DAS 1.0";
-        packetTypes[Packet::TYPE_TEST]      = "Test";
-        packetTypes[Packet::TYPE_ERROR]     = "Error";
-        packetTypes[Packet::TYPE_RTDL]      = "RTDL";
-        packetTypes[Packet::TYPE_DAS_DATA]  = "DAS data";
-        packetTypes[Packet::TYPE_DAS_CMD]   = "DAS cmd";
-        packetTypes[Packet::TYPE_ACC_TIME]  = "ACC timing";
-    }
-
     for (auto it = m_totalStats.begin(); it != m_totalStats.end(); it++) {
-        std::string name;
-        if (packetTypes.find(it->first) != packetTypes.end()) {
-            name = packetTypes[it->first];
-        } else {
-            std::ostringstream ss;
-            ss << "Pkt type " << it->first;
-            name = ss.str();
-        }
-        lines.push_back( generateReportLine(name,  it->second) );
+        auto line = generateReportLine(Packet::getTypeName(it->first), it->second);
+        lines.push_back(line);
     }
-
     return lines;
 }
 
@@ -131,9 +109,7 @@ void WinStats::update(const OccAdapter::AnalyzeStats &stats)
 
 void WinStats::clear()
 {
-    for (auto it=m_totalStats.begin(); it!=m_totalStats.end(); it++) {
-        it->second.clear();
-    }
+    m_totalStats.clear();
 }
 
 WinStats::AnalyzeStats WinStats::getCombinedStats()
