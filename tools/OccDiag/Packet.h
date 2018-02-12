@@ -62,6 +62,11 @@ class Packet {
          * Performs integrity check on packet, invokes derived functions if necessary.
          */
         bool verify(uint32_t &errorOffset) const;
+        
+        /**
+         * Return packet type name as string.
+         */
+        static std::string getTypeName(Packet::Type type);
 };
 
 /**
@@ -198,6 +203,7 @@ class DasCmdPacket : public Packet {
         uint32_t payload[0];            //!< Dynamic sized command payload, storage must be multiple of 4 bytes but actual payload can be multiple of 2
 
     public: /* Functions */
+        bool verify(uint32_t &errorOffset) const;
 };
 
 class TestPacket : public Packet {
@@ -221,6 +227,8 @@ class TestPacket : public Packet {
 
     public: /* Functions */
         bool verify(uint32_t &errorOffset) const;
+        
+        static void resetRamp();
 };
 
 #endif // PACKET_H

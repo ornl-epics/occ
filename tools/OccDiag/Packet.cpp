@@ -40,6 +40,23 @@ const Packet *Packet::cast(const uint8_t *data, size_t size) throw(std::runtime_
     return packet;
 }
 
+std::string Packet::getTypeName(Packet::Type type)
+{
+    std::ostringstream ss;
+
+    switch (type) {
+    case TYPE_LEGACY:   return "DAS 1.0";
+    case TYPE_TEST:     return "Test";
+    case TYPE_ERROR:    return "Error";
+    case TYPE_RTDL:     return "RTDL";
+    case TYPE_DAS_CMD:  return "DAS cmd";
+    case TYPE_DAS_DATA: return "DAS data";
+    default:
+        ss << "Pkt type " << type;
+        return ss.str();
+    }
+}
+
 bool Packet::verify(uint32_t &errorOffset) const
 {
     uint32_t minSize;
@@ -47,15 +64,26 @@ bool Packet::verify(uint32_t &errorOffset) const
     switch (this->type) {
     case TYPE_DAS_CMD:
         minSize = sizeof(DasCmdPacket);
+        if (!static_cast<const DasCmdPacket *>(this)->verify(errorOffset))
+            return false;
         break;
     case TYPE_DAS_DATA:
         minSize = sizeof(DasDataPacket);
+        if (!static_cast<const DasDataPacket *>(this)->verify(errorOffset))
+            return false;
         break;
     case TYPE_RTDL:
         minSize = sizeof(RtdlPacket);
+        if (!static_cast<const RtdlPacket *>(this)->verify(errorOffset))
+            return false;
         break;
     case TYPE_ERROR:
         minSize = sizeof(ErrorPacket);
+        break;
+    case TYPE_TEST:
+        minSize = sizeof(TestPacket);
+        if (!static_cast<const TestPacket *>(this)->verify(errorOffset))
+            return false;
         break;
     default:
         minSize = sizeof(Packet);
@@ -79,6 +107,15 @@ bool RtdlPacket::verify(uint32_t &errorOffset) const
 {
     if (this->length != (sizeof(RtdlPacket) + this->num_frames*4)) {
         errorOffset = offsetOf(&RtdlPacket::num_frames)/4;
+        return false;
+    }
+    return true;
+}
+
+bool DasCmdPacket::verify(uint32_t &errorOffset) const
+{
+    if (this->length > (sizeof(DasCmdPacket) + this->cmd_length - 6)) {
+        errorOffset = offsetOf(&DasCmdPacket::module_id)/4 - 1;
         return false;
     }
     return true;
@@ -117,6 +154,8 @@ bool DasDataPacket::verify(uint32_t &errorOffset) const
     return true;
 }
 
+static uint32_t g_lastRampValue = (uint32_t)-1;
+
 bool TestPacket::verify(uint32_t &errorOffset) const
 {
     struct Event {
@@ -124,35 +163,38 @@ bool TestPacket::verify(uint32_t &errorOffset) const
         uint32_t pixelid;
     };
     
-    static uint32_t lastRampValue = (uint32_t)-1;
-
     const Event *event = reinterpret_cast<const Event *>(this->payload);
     uint32_t nevents = data_len / sizeof(Event);
 
-    if (lastRampValue == (uint32_t)-1)
-        lastRampValue = event->tof;
+    if (g_lastRampValue == (uint32_t)-1)
+        g_lastRampValue = event->tof;
 
     for (uint32_t i = 0; i < nevents; i++) {
-        if (event->tof != lastRampValue) {
+        if (event->tof != g_lastRampValue) {
             errorOffset = offsetOf(&TestPacket::payload) + i*sizeof(Event);
-            lastRampValue = -1;
+            resetRamp();
             return false;
         } else {
-            lastRampValue++;
-            lastRampValue &= 0xFFFFFFF;
+            g_lastRampValue++;
+            g_lastRampValue &= 0xFFFFFFF;
         }
 
-        if (event->pixelid != lastRampValue) {
+        if (event->pixelid != g_lastRampValue) {
             errorOffset = offsetOf(&TestPacket::payload) + i*sizeof(Event) + 4;
-            lastRampValue = -1;
+            resetRamp();
             return false;
         } else {
-            lastRampValue++;
-            lastRampValue &= 0xFFFFFFF;
+            g_lastRampValue++;
+            g_lastRampValue &= 0xFFFFFFF;
         }
 
         event++;
     }
     
     return true;
+}
+
+void TestPacket::resetRamp()
+{
+    g_lastRampValue = (uint32_t)-1;
 }

@@ -69,7 +69,6 @@ typedef enum {
 typedef enum {
     OCC_STATUS_FULL     = 0, //!< All fields in occ_status_t populated
     OCC_STATUS_FAST     = 1, //!< Skip I2C fields
-    OCC_STATUS_CACHED   = 2, //!< Don't ask hw for anything, return only what's immediately available
 } occ_status_type;
 
 /**

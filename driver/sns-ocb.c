@@ -405,7 +405,7 @@ static void snsocb_stalled(struct ocb *ocb, int type)
 	spin_unlock_irqrestore(&ocb->lock, flags);
 }
 
-static u32 __snsocb_status(struct ocb *ocb, u8 optical)
+static u32 __snsocb_status(struct ocb *ocb)
 {
 	/* Caller must hold ocb->lock */
 	u32 hw_status, status = 0;
@@ -420,15 +420,13 @@ static u32 __snsocb_status(struct ocb *ocb, u8 optical)
 	if (ocb->conf & OCB_CONF_ERR_PKTS_ENABLE)
 		status |= OCB_RX_ERR_PKTS_ENABLED;
 
-	if (optical) {
-		hw_status = ioread32(ocb->ioaddr + REG_STATUS);
-		if (hw_status & OCB_STATUS_OPTICAL_PRESENT) {
-			status |= OCB_OPTICAL_PRESENT;
-			if (hw_status & OCB_STATUS_OPTICAL_NOSIGNAL)
-				status |= OCB_OPTICAL_NOSIGNAL;
-			if (hw_status & OCB_STATUS_OPTICAL_FAULT)
-				status |= OCB_OPTICAL_FAULT;
-		}
+	hw_status = ioread32(ocb->ioaddr + REG_STATUS);
+	if (hw_status & OCB_STATUS_OPTICAL_PRESENT) {
+		status |= OCB_OPTICAL_PRESENT;
+		if (hw_status & OCB_STATUS_OPTICAL_NOSIGNAL)
+			status |= OCB_OPTICAL_NOSIGNAL;
+		if (hw_status & OCB_STATUS_OPTICAL_FAULT)
+			status |= OCB_OPTICAL_FAULT;
 	}
 
 	return status;
@@ -632,7 +630,7 @@ static ssize_t snsocb_rx(struct file *file, char __user *buf, size_t count)
 	finish_wait(&ocb->rx_wq, &wait);
 
 	info[0] = ocb->dq_prod;
-	info[1] = __snsocb_status(ocb, 1);
+	info[1] = __snsocb_status(ocb);
 	if (ocb->dq_prod != ocb->dq_cons)
 		info[1] |= OCB_RX_MSG;
 
@@ -1199,7 +1197,6 @@ static ssize_t snsocb_read(struct file *file, char __user *buf,
 
 	switch (*pos) {
 	case OCB_CMD_GET_STATUS:
-	case OCB_CMD_GET_CACHED_STATUS:
 		if (count != sizeof(struct ocb_status))
 			return -EINVAL;
 
@@ -1218,19 +1215,11 @@ static ssize_t snsocb_read(struct file *file, char __user *buf,
 			info.bars[0] = ocb->board->bars[0];
 			info.bars[1] = ocb->board->bars[1];
 			info.bars[2] = ocb->board->bars[2];
-			if (!ocb->reset_in_progress)
-				ocb->reset_occurred = false;
-			if (*pos == OCB_CMD_GET_CACHED_STATUS) {
-				info.status = __snsocb_status(ocb, 0);
-				info.rx_rate = 0;
-				info.err_crc = info.err_length = info.err_frame = 0;
-				info.fpga_temp = info.fpga_core_volt = info.fpga_aux_volt = 0;
-			} else {
-				info.status = __snsocb_status(ocb, 1);
-				info.rx_rate = __snsocb_rxrate(ocb);
-				__snsocb_errcounters(ocb, &info.err_crc, &info.err_length, &info.err_frame);
-				__snsocb_fpgainfo(ocb, &info.fpga_temp, &info.fpga_core_volt, &info.fpga_aux_volt);
-			}
+			ocb->reset_occurred = ocb->reset_in_progress;
+			info.status = __snsocb_status(ocb);
+			info.rx_rate = __snsocb_rxrate(ocb);
+			__snsocb_errcounters(ocb, &info.err_crc, &info.err_length, &info.err_frame);
+			__snsocb_fpgainfo(ocb, &info.fpga_temp, &info.fpga_core_volt, &info.fpga_aux_volt);
 		}
 		spin_unlock_irq(&ocb->lock);
 
