@@ -97,7 +97,6 @@ void GuiNcurses::run()
                     toggleRx(false);
                     break;
                 }
-                int a = 1;
             }
 
             clock_gettime(CLOCK_MONOTONIC, &t2);
