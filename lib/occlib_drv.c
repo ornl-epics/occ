@@ -254,6 +254,7 @@ int occdrv_enable_rx(struct occ_handle *handle, bool enable) {
 
 int occdrv_enable_old_packets(struct occ_handle *handle, bool enable) {
     uint32_t val = (enable ? 1 : 0);
+    bool rx_enabled = handle->rx_enabled;
     int ret;
 
     if (handle == NULL || handle->magic != OCC_HANDLE_MAGIC)
@@ -265,7 +266,7 @@ int occdrv_enable_old_packets(struct occ_handle *handle, bool enable) {
     if (pwrite(handle->fd, &val, sizeof(val), OCB_CMD_OLD_PKTS_EN) < 0)
         return -errno;
 
-    return occdrv_enable_rx(handle, true);
+    return occdrv_enable_rx(handle, rx_enabled);
 }
 
 int occdrv_enable_error_packets(struct occ_handle *handle, bool enable) {
@@ -287,7 +288,7 @@ int occdrv_status(struct occ_handle *handle, occ_status_t *status, occ_status_ty
     if (handle == NULL || handle->magic != OCC_HANDLE_MAGIC || status == NULL)
         return -EINVAL;
 
-    if (pread(handle->fd, &info, sizeof(info), type == OCC_STATUS_CACHED ? OCB_CMD_GET_CACHED_STATUS : OCB_CMD_GET_STATUS) < 0)
+    if (pread(handle->fd, &info, sizeof(info), OCB_CMD_GET_STATUS) < 0)
         return -errno;
 
     status->dma_size = info.dq_size;
