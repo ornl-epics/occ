@@ -1,6 +1,5 @@
 #include "Common.h"
 #include "GuiNcurses.h"
-#include "LabPacket.h"
 
 #include <unistd.h>
 
@@ -230,7 +229,7 @@ void GuiNcurses::showDataWin()
         dmaAddr = m_cachedStats.lastAddr;
         dmaSize = m_cachedStats.lastLen;
     }
-    m_winData.setAddr(dmaAddr, dmaSize, m_cachedStats.lastPacketAddr, m_cachedStats.lastErrorAddr);
+    m_winData.setAddr(dmaAddr, dmaSize, m_cachedStats.lastPacketAddr, m_cachedStats.lastPacketSize, m_cachedStats.lastErrorAddr);
 
     m_winRegisters.hide();
     m_winConsole.hide();

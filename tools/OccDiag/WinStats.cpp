@@ -1,5 +1,5 @@
 #include "Common.h"
-#include "LabPacket.h"
+#include "Packet.h"
 #include "WinStats.h"
 
 #include <cstring>
@@ -67,13 +67,15 @@ std::vector<std::string> WinStats::generateReport()
     std::vector<std::string> lines;
 
     // Static map, populate the first time this functions is called
-    static std::map<LabPacket::PacketType, std::string> packetTypes;
+    static std::map<Packet::Type, std::string> packetTypes;
     if (packetTypes.empty()) {
-        packetTypes[LabPacket::TYPE_ERROR] = "Error";
-        packetTypes[LabPacket::TYPE_DAS_RTDL] = "DAS RTDL";
-        packetTypes[LabPacket::TYPE_DAS_DATA] = "DAS data";
-        packetTypes[LabPacket::TYPE_DAS_CMD] = "DAS cmd";
-        packetTypes[LabPacket::TYPE_ACC_TIME] = "ACC timing";
+        packetTypes[Packet::TYPE_LEGACY]    = "DAS 1.0";
+        packetTypes[Packet::TYPE_TEST]      = "Test";
+        packetTypes[Packet::TYPE_ERROR]     = "Error";
+        packetTypes[Packet::TYPE_RTDL]      = "RTDL";
+        packetTypes[Packet::TYPE_DAS_DATA]  = "DAS data";
+        packetTypes[Packet::TYPE_DAS_CMD]   = "DAS cmd";
+        packetTypes[Packet::TYPE_ACC_TIME]  = "ACC timing";
     }
 
     for (auto it = m_totalStats.begin(); it != m_totalStats.end(); it++) {

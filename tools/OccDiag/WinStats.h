@@ -31,7 +31,7 @@ class WinStats : public Window {
             };
 
     private:
-        std::map<LabPacket::PacketType, AnalyzeStats> m_totalStats;
+        std::map<Packet::Type, AnalyzeStats> m_totalStats;
         AnalyzeStats m_combinedStats;
         struct timespec m_lastUpdate;
 

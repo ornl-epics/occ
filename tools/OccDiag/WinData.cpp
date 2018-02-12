@@ -1,5 +1,4 @@
 #include "Common.h"
-#include "LabPacket.h"
 #include "WinData.h"
 
 WinData::WinData(int y)
@@ -30,11 +29,6 @@ void WinData::redraw(bool frame)
         }
         addr = (const char *)addr + m_lineOffset*4*sizeof(uint32_t);
 
-        LabPacket packet(m_addrPacket);
-        size_t packetLen = packet.getLength();
-        if (packetLen == 0)
-            packetLen = m_size;
-
         // Print memory address followed by 4 dwords in hex
         for (int i=0; i<height; i++) {
             uint8_t pos = 19;
@@ -44,7 +38,7 @@ void WinData::redraw(bool frame)
                 if (addr >= m_addrBase && addr < ((const char *)m_addrBase + m_size)) {
                     if (addr == m_addrError) {
                         mvwprintw_c(m_window, TEXT_COLOR_RED, i+1, pos, "0x%08X ", *(const uint32_t *)addr);
-                    } else if (addr >= m_addrPacket && addr < ((const char *)m_addrPacket + packetLen)) {
+                    } else if (addr >= m_addrPacket && addr < ((const char *)m_addrPacket + m_packetLen)) {
                         mvwprintw_c(m_window, TEXT_COLOR_YELLOW, i+1, pos, "0x%08X ", *(const uint32_t *)addr);
                     } else {
                         mvwprintw(m_window, i+1, pos, "0x%08X ", *(const uint32_t *)addr);
@@ -59,11 +53,12 @@ void WinData::redraw(bool frame)
     Window::redraw(frame);
 }
 
-void WinData::setAddr(const void *addrBase, size_t size, const void *addrPacket, const void *addrError)
+void WinData::setAddr(const void *addrBase, size_t size, const void *addrPacket, uint32_t packetLen, const void *addrError)
 {
     m_addrBase = addrBase;
     m_size = size;
     m_addrPacket = addrPacket;
+    m_packetLen = packetLen;
     m_addrError = addrError;
     m_lineOffset = 0;
 }

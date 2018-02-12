@@ -1,5 +1,6 @@
 #include "OccAdapter.h"
-#include "LabPacket.h"
+#include "Packet.h"
+#include "DasPacket.h"
 
 #include <errno.h>
 #include <cstring> // strerror
@@ -85,27 +86,41 @@ void OccAdapter::process(OccAdapter::AnalyzeStats &stats, bool throwOnBad, doubl
     stats.lastLen = dataLen;
     stats.lastErrorAddr = 0;
     stats.lastPacketAddr = data;
-    while (dataLen >= sizeof(LabPacket)) {
-        LabPacket packet(data);
+    stats.lastPacketSize = 0;
+    while (dataLen >= sizeof(Packet)) {
+        bool good = false;
         uint32_t errorOffset;
-        uint32_t packetLen = packet.getLength();
-
+        uint32_t packetLen = 0;
+        Packet::Type type;
+        
+        try {
+            const Packet *packet = Packet::cast(static_cast<uint8_t*>(data), dataLen);
+            if (packet->version != 1) {
+                throw std::runtime_error("Not version 1");
+            }
+            good = packet->verify(errorOffset);
+            packetLen = packet->length;
+            type = packet->type;
+        } catch (std::runtime_error &e) {
+            const DasPacket *packet = DasPacket::cast(static_cast<uint8_t*>(data), dataLen);
+            good = true; // No checks on legacy packets
+            packetLen = sizeof(DasPacket) + packet->payload_length;
+            type = Packet::TYPE_LEGACY;
+        }
+        
         stats.lastPacketAddr = data;
-
-        // Maybe packet was split at the DMA memory boundary
-        if (packet.getLength() > dataLen)
-            break;
-
-        if (packet.verify(errorOffset)) {
-            stats.good[packet.getType()]++;
+        stats.lastPacketSize = packetLen;
+        
+        if (good) {
+            stats.good[type]++;
         } else {
-            stats.bad[packet.getType()]++;
+            stats.bad[type]++;
             if (throwOnBad) {
                 stats.lastErrorAddr = (char *)data + 4*errorOffset;
                 throw std::bad_exception();
             }
         }
-        stats.bytes[packet.getType()] += packetLen;
+        stats.bytes[type] += packetLen;
 
         dataLen -= packetLen;
         data = ((char*)data + packetLen);
