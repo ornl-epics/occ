@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) 2018 Oak Ridge National Laboratory.
+ * All rights reserved.
+ * See file LICENSE that is included with this distribution.
+ */
+
 #ifndef I2C_H
 #define I2C_H
 

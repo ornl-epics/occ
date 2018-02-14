@@ -1,6 +1,12 @@
-/* sns-occ -- a Linux driver for the SNS PCI-X, PCIe, and GE OCC cards
+/*
+ * Copyright (c) 2018 Oak Ridge National Laboratory.
+ * All rights reserved.
+ * See file LICENSE that is included with this distribution.
+ *
+ * sns-occ -- a Linux driver for the SNS PCI-X, PCIe, and GE OCC cards
  *
  * Originally by David Dillow, December 2013
+ * Maintained by Klemen Vodopivec <vodopiveck@ornl.gov>
  */
 #include <linux/module.h>
 #include <linux/pci.h>

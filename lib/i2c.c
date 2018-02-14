@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) 2018 Oak Ridge National Laboratory.
+ * All rights reserved.
+ * See file LICENSE that is included with this distribution.
+ */
+
 #include "i2c.h"
 #include "occlib_drv.h"
 #include <stdlib.h>

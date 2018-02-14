@@ -1,4 +1,10 @@
-/**
+/*
+ * Copyright (c) 2018 Oak Ridge National Laboratory.
+ * All rights reserved.
+ * See file LICENSE that is included with this distribution.
+ *
+ * @author Klemen Vodopivec <vodopiveck@ornl.gov>
+ *
  * This is a wrapper for abstracting the implementation details into specific
  * files. It sets up C function pointers when the connection is opened and the
  * type is known. Rest of the functions are simply invoke the selected

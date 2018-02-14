@@ -1,4 +1,10 @@
-/**
+/*
+ * Copyright (c) 2018 Oak Ridge National Laboratory.
+ * All rights reserved.
+ * See file LICENSE that is included with this distribution.
+ *
+ * @author Klemen Vodopivec <vodopiveck@ornl.gov>
+ *
  * OCC API socket implementation.
  *
  * This is a replacement for real OCC library. It doesn't talk to OCC hardware

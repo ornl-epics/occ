@@ -1,3 +1,11 @@
+/*
+ * Copyright (c) 2018 Oak Ridge National Laboratory.
+ * All rights reserved.
+ * See file LICENSE that is included with this distribution.
+ *
+ * @author Klemen Vodopivec <vodopiveck@ornl.gov>
+ */
+
 #ifndef GUI_NCURSES_H
 #define GUI_NCURSES_H
 

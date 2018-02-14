@@ -1,4 +1,8 @@
-/**
+/*
+ * Copyright (c) 2018 Oak Ridge National Laboratory.
+ * All rights reserved.
+ * See file LICENSE that is included with this distribution.
+ *
  * [06/2014]
  *
  * Flash programming app specifically designed for Micron StrataFlash Embedded
