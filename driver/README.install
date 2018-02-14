@@ -1,4 +1,4 @@
-SNS OCB driver can be installed to system location to get loaded automatically
+SNS OCC driver can be installed to system location to get loaded automatically
 when system boots. Runing 'make install' will create following files:
 * /etc/snsocb/snsocb0-sample
 * /etc/udev/rules.d/95-snsocb.rules.sample

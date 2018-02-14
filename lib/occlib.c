@@ -11,7 +11,7 @@
 #include "occlib_drv.h"
 #include "occlib_sock.h"
 
-#include <sns-ocb.h> // For OCB_VER_* only
+#include <sns-occ.h> // For OCC_VER_* only
 
 #include <errno.h>
 #include <unistd.h>
@@ -43,8 +43,8 @@ struct occ_handle {
 };
 
 void occ_version(unsigned *major, unsigned *minor) {
-    *major = OCB_VER_MAJ;
-    *minor = OCB_VER_MIN;
+    *major = OCC_VER_MAJ;
+    *minor = OCC_VER_MIN;
 }
 
 static int _occ_open_common(const char *devfile, occ_interface_type type, struct occ_handle **handle) {
