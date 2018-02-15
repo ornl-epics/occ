@@ -27,8 +27,12 @@ const Packet *Packet::cast(const uint8_t *data, size_t size) throw(std::runtime_
     }
 
     const Packet *packet = reinterpret_cast<const Packet *>(data);
-    
-    if (packet->length != ALIGN_UP(packet->length, 4)) {
+
+    if (size < packet->length) {
+        throw std::runtime_error("Not enough data to describe packet");
+    }
+
+    if (ALIGN_UP(packet->length, 4) % 4 != 0) {
         throw std::runtime_error("Invalid packet length");
     }
 
