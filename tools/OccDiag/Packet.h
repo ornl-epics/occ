@@ -1,10 +1,9 @@
-/* PacketList.h
- *
- * Copyright (c) 2017 Oak Ridge National Laboratory.
+/*
+ * Copyright (c) 2018 Oak Ridge National Laboratory.
  * All rights reserved.
  * See file LICENSE that is included with this distribution.
  *
- * @author Klemen Vodopivec
+ * @author Klemen Vodopivec <vodopiveck@ornl.gov>
  */
 
 #ifndef PACKET_H

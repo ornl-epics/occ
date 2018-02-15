@@ -1,4 +1,10 @@
-/**
+/*
+ * Copyright (c) 2018 Oak Ridge National Laboratory.
+ * All rights reserved.
+ * See file LICENSE that is included with this distribution.
+ *
+ * @author Klemen Vodopivec <vodopiveck@ornl.gov>
+ *
  * OCC lib is an interface for the OCC boards.
  *
  * A Linux driver handles OCC boards and allows applications to communicate

@@ -1,7 +1,15 @@
+/*
+ * Copyright (c) 2018 Oak Ridge National Laboratory.
+ * All rights reserved.
+ * See file LICENSE that is included with this distribution.
+ *
+ * @author Klemen Vodopivec <vodopiveck@ornl.gov>
+ */
+
 #include "occlib_hw.h"
 #include "occlib_drv.h"
 #include "i2c.h"
-#include <sns-ocb.h>
+#include <sns-occ.h>
 #include <stdio.h>
 
 #include <errno.h>
@@ -78,7 +86,7 @@ struct occ_packet_header {
 
 int _occdrv_open_common(const char *devfile, int flags, struct occ_handle **handle) {
     int ret;
-    struct ocb_version ver;
+    struct occ_version ver;
 
     *handle = malloc(sizeof(struct occ_handle));
     if (*handle == NULL)
@@ -95,13 +103,13 @@ int _occdrv_open_common(const char *devfile, int flags, struct occ_handle **hand
             break;
         }
 
-        ret = pread((*handle)->fd, &ver, sizeof(ver), OCB_CMD_VERSION);
+        ret = pread((*handle)->fd, &ver, sizeof(ver), OCC_CMD_VERSION);
         if (ret == -1 && errno != EINVAL) {
             ret = -errno;
             break;
         }
 
-        if (ret != sizeof(ver) || ver.major != OCB_VER_MAJ || ver.minor != OCB_VER_MIN) {
+        if (ret != sizeof(ver) || ver.major != OCC_VER_MAJ || ver.minor != OCC_VER_MIN) {
             ret = -EPROTO;
             break;
         }
@@ -125,7 +133,7 @@ int _occdrv_open_common(const char *devfile, int flags, struct occ_handle **hand
 
 int occdrv_open(const char *devfile, occ_interface_type type, struct occ_handle **handle) {
     int ret = 0;
-    struct ocb_status info;
+    struct occ_status info;
 
     do {
         if (type != OCC_INTERFACE_OPTICAL && type != OCC_INTERFACE_LVDS) {
@@ -137,7 +145,7 @@ int occdrv_open(const char *devfile, occ_interface_type type, struct occ_handle 
         if (ret != 0)
             break;
 
-        ret = pread((*handle)->fd, &info, sizeof(info), OCB_CMD_GET_STATUS);
+        ret = pread((*handle)->fd, &info, sizeof(info), OCC_CMD_GET_STATUS);
         if (ret != sizeof(info)) {
             if (ret < 0)
                 ret = -errno;
@@ -145,7 +153,7 @@ int occdrv_open(const char *devfile, occ_interface_type type, struct occ_handle 
                 ret = -ENODATA;
             break;
         }
-        if (info.ocb_ver != OCB_VER) {
+        if (info.occ_ver != OCC_VER) {
             ret = -ENOMSG;
             break;
         }
@@ -243,7 +251,7 @@ int occdrv_enable_rx(struct occ_handle *handle, bool enable) {
                 return ret;
         }
 
-        if (pwrite(handle->fd, &val, sizeof(val), OCB_CMD_RX_ENABLE) < 0)
+        if (pwrite(handle->fd, &val, sizeof(val), OCC_CMD_RX_ENABLE) < 0)
             return -errno;
 
         handle->rx_enabled = enable;
@@ -263,7 +271,7 @@ int occdrv_enable_old_packets(struct occ_handle *handle, bool enable) {
     if ((ret = occdrv_enable_rx(handle, false)) != 0)
         return ret;
 
-    if (pwrite(handle->fd, &val, sizeof(val), OCB_CMD_OLD_PKTS_EN) < 0)
+    if (pwrite(handle->fd, &val, sizeof(val), OCC_CMD_OLD_PKTS_EN) < 0)
         return -errno;
 
     return occdrv_enable_rx(handle, rx_enabled);
@@ -275,44 +283,44 @@ int occdrv_enable_error_packets(struct occ_handle *handle, bool enable) {
     if (handle == NULL || handle->magic != OCC_HANDLE_MAGIC)
         return -EINVAL;
 
-    if (pwrite(handle->fd, &val, sizeof(val), OCB_CMD_ERR_PKTS_ENABLE) < 0)
+    if (pwrite(handle->fd, &val, sizeof(val), OCC_CMD_ERR_PKTS_ENABLE) < 0)
         return -errno;
 
     return 0;
 }
 
 int occdrv_status(struct occ_handle *handle, occ_status_t *status, occ_status_type type) {
-    struct ocb_status info;
+    struct occ_status info;
     int ret;
 
     if (handle == NULL || handle->magic != OCC_HANDLE_MAGIC || status == NULL)
         return -EINVAL;
 
-    if (pread(handle->fd, &info, sizeof(info), OCB_CMD_GET_STATUS) < 0)
+    if (pread(handle->fd, &info, sizeof(info), OCC_CMD_GET_STATUS) < 0)
         return -errno;
 
     status->dma_size = info.dq_size;
     status->dma_used = info.dq_used;
     status->rx_rate = info.rx_rate;
     status->board = (info.board_type == BOARD_SNS_PCIE ? OCC_BOARD_PCIE : OCC_BOARD_PCIX);
-    status->stalled = (info.status & OCB_DMA_STALLED);
-    status->overflowed = (info.status & OCB_FIFO_OVERFLOW);
+    status->stalled = (info.status & OCC_DMA_STALLED);
+    status->overflowed = (info.status & OCC_FIFO_OVERFLOW);
     status->interface = (handle->use_optic ? OCC_INTERFACE_OPTICAL : OCC_INTERFACE_LVDS);
     status->hardware_ver = info.hardware_ver;
     status->firmware_ver = info.firmware_ver;
     status->firmware_date = info.firmware_date;
     status->fpga_serial_number = info.fpga_serial;
-    status->rx_enabled = (info.status & OCB_RX_ENABLED);
-    status->err_packets_enabled = (info.status & OCB_RX_ERR_PKTS_ENABLED);
+    status->rx_enabled = (info.status & OCC_RX_ENABLED);
+    status->err_packets_enabled = (info.status & OCC_RX_ERR_PKTS_ENABLED);
     status->err_crc = info.err_crc;
     status->err_frame = info.err_frame;
     status->err_length = info.err_length;
     status->fpga_temp = ( (503.975/65536.0) * info.fpga_temp ) - 273.15;
     status->fpga_core_volt = (3.0/65536.0) * info.fpga_core_volt;
     status->fpga_aux_volt = (3.0/65536.0) * info.fpga_aux_volt;
-    if (!(info.status & OCB_OPTICAL_PRESENT))    status->optical_signal = OCC_OPT_NO_SFP;
-    else if (info.status & OCB_OPTICAL_FAULT)    status->optical_signal = OCC_OPT_LASER_FAULT;
-    else if (info.status & OCB_OPTICAL_NOSIGNAL) status->optical_signal = OCC_OPT_NO_CABLE;
+    if (!(info.status & OCC_OPTICAL_PRESENT))    status->optical_signal = OCC_OPT_NO_SFP;
+    else if (info.status & OCC_OPTICAL_FAULT)    status->optical_signal = OCC_OPT_LASER_FAULT;
+    else if (info.status & OCC_OPTICAL_NOSIGNAL) status->optical_signal = OCC_OPT_NO_CABLE;
     else                                         status->optical_signal = OCC_OPT_CONNECTED;
 
     ret = 0;
@@ -389,17 +397,17 @@ int occdrv_status(struct occ_handle *handle, occ_status_t *status, occ_status_ty
 
 int occdrv_reset(struct occ_handle *handle) {
     uint32_t interface;
-    struct ocb_status info;
+    struct occ_status info;
 
     if (handle == NULL || handle->magic != OCC_HANDLE_MAGIC)
         return -EINVAL;
 
-    interface = (handle->use_optic == 0) ? OCB_SELECT_LVDS : OCB_SELECT_OPTICAL;
-    if (pwrite(handle->fd, &interface, sizeof(interface), OCB_CMD_RESET) != sizeof(interface))
+    interface = (handle->use_optic == 0) ? OCC_SELECT_LVDS : OCC_SELECT_OPTICAL;
+    if (pwrite(handle->fd, &interface, sizeof(interface), OCC_CMD_RESET) != sizeof(interface))
         return -errno;
 
     // Read status to clear the reset-occurred flag
-    if (pread(handle->fd, &info, sizeof(info), OCB_CMD_GET_STATUS) < 0)
+    if (pread(handle->fd, &info, sizeof(info), OCC_CMD_GET_STATUS) < 0)
         return -errno;
     // XXX verify the returned status?
 
@@ -417,7 +425,7 @@ int occdrv_send(struct occ_handle *handle, const void *data, size_t count) {
     if (handle == NULL || handle->magic != OCC_HANDLE_MAGIC || _occdrv_data_align(count) != count)
         return -EINVAL;
 
-    int ret = pwrite(handle->fd, (const void *)data, count, OCB_CMD_TX);
+    int ret = pwrite(handle->fd, (const void *)data, count, OCC_CMD_TX);
     if (ret < 0)
         ret = -errno;
 
@@ -457,16 +465,16 @@ int occdrv_data_wait(struct occ_handle *handle, void **address, size_t *count, u
             // information about the error.
         }
 
-        ret = pread(handle->fd, info, sizeof(info), OCB_CMD_RX);
+        ret = pread(handle->fd, info, sizeof(info), OCC_CMD_RX);
         if (ret < 0)
             return -errno;
 
-        if (!(info[1] & OCB_RX_MSG)) {
-            if (info[1] & OCB_RESET_OCCURRED)
+        if (!(info[1] & OCC_RX_MSG)) {
+            if (info[1] & OCC_RESET_OCCURRED)
                 return -ECONNRESET;
-            if (info[1] & OCB_DMA_STALLED)
+            if (info[1] & OCC_DMA_STALLED)
                 return -ENOSPC;
-            if (info[1] & OCB_FIFO_OVERFLOW)
+            if (info[1] & OCC_FIFO_OVERFLOW)
                 return -EOVERFLOW;
             continue;
         }
@@ -578,7 +586,7 @@ int occdrv_data_ack(struct occ_handle *handle, size_t count) {
         count = handle->last_count;
 
     uint32_t length = count;
-    if (pwrite(handle->fd, &length, sizeof(length), OCB_CMD_ADVANCE_DQ) < 0)
+    if (pwrite(handle->fd, &length, sizeof(length), OCC_CMD_ADVANCE_DQ) < 0)
         return -errno;
 
     handle->dma_cons_off = (handle->dma_cons_off + count) % handle->dma_buf_len;
@@ -610,13 +618,13 @@ int occdrv_read(struct occ_handle *handle, void *data, size_t count, uint32_t ti
 static int _occdrv_map_bar(struct occ_handle *handle, uint8_t bar) {
 
     if (handle->bars[bar].addr == NULL) {
-        struct ocb_status info;
+        struct occ_status info;
 
         if (bar >= (sizeof(info.bars)/sizeof(info.bars[0]))) {
             return -ENOSYS;
         }
 
-        if (pread(handle->fd, &info, sizeof(info), OCB_CMD_GET_STATUS) != sizeof(info)) {
+        if (pread(handle->fd, &info, sizeof(info), OCC_CMD_GET_STATUS) != sizeof(info)) {
             return -errno;
         }
 

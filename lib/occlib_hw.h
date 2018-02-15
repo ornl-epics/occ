@@ -1,4 +1,10 @@
-/**
+/*
+ * Copyright (c) 2018 Oak Ridge National Laboratory.
+ * All rights reserved.
+ * See file LICENSE that is included with this distribution.
+ *
+ * @author Klemen Vodopivec <vodopiveck@ornl.gov>
+ *
  * OCC lib interfaces for direct hardware access.
  *
  * \warning interfaces provided by this file should be used with care.

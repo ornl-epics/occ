@@ -1,4 +1,10 @@
-/**
+/*
+ * Copyright (c) 2018 Oak Ridge National Laboratory.
+ * All rights reserved.
+ * See file LICENSE that is included with this distribution.
+ *
+ * @author Klemen Vodopivec <vodopiveck@ornl.gov>
+ *
  * This is a wrapper for abstracting the implementation details into specific
  * files. It sets up C function pointers when the connection is opened and the
  * type is known. Rest of the functions are simply invoke the selected
@@ -11,7 +17,7 @@
 #include "occlib_drv.h"
 #include "occlib_sock.h"
 
-#include <sns-ocb.h> // For OCB_VER_* only
+#include <sns-occ.h> // For OCC_VER_* only
 
 #include <errno.h>
 #include <unistd.h>
@@ -43,8 +49,8 @@ struct occ_handle {
 };
 
 void occ_version(unsigned *major, unsigned *minor) {
-    *major = OCB_VER_MAJ;
-    *minor = OCB_VER_MIN;
+    *major = OCC_VER_MAJ;
+    *minor = OCC_VER_MIN;
 }
 
 static int _occ_open_common(const char *devfile, occ_interface_type type, struct occ_handle **handle) {

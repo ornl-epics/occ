@@ -1,3 +1,11 @@
+/*
+ * Copyright (c) 2018 Oak Ridge National Laboratory.
+ * All rights reserved.
+ * See file LICENSE that is included with this distribution.
+ *
+ * @author Klemen Vodopivec <vodopiveck@ornl.gov>
+ */
+
 #include <occlib_hw.h>
 #include <stdio.h>
 #include <stdlib.h>

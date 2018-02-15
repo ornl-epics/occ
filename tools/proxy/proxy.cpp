@@ -13,6 +13,14 @@
  * sent to OCC. An option for listening on TCP socket was added.
  */
 
+/*
+ * Copyright (c) 2018 Oak Ridge National Laboratory.
+ * All rights reserved.
+ * See file LICENSE that is included with this distribution.
+ *
+ * @author Klemen Vodopivec <vodopiveck@ornl.gov>
+ */
+
 #include <occlib.h>
 
 #include <arpa/inet.h>
