@@ -52,7 +52,7 @@ static std::vector<std::string> findDevices()
     struct stat st;
     std::vector<std::string> devices;
     for (int i=0; i<20; i++) {
-        snprintf(buffer, sizeof(buffer), "/dev/snsocb%d", i);
+        snprintf(buffer, sizeof(buffer), "/dev/snsocc%d", i);
         if (stat(buffer, &st) == 0)
             devices.push_back(buffer);
     }

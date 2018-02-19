@@ -1,16 +1,16 @@
 occ_validation.py [-d <occ device> -r <repeat count> -hv]
 
 Options:
-  -d <occ device>    : Defaults to /dev/snsocb0
+  -d <occ device>    : Defaults to /dev/snsocc0
   -r <repeat count>  : Number of times to test each input file
   -h                 : Print help (this file)
   -v                 : Verbose mode (prints stdout from occ_loopback)
 
-This Python program is an automated validation test of the OCC card and 
+This Python program is an automated validation test of the OCC card and
 software, using occ_loopback.
 
 The validation program will run occ_loopback for each of the input binary files
-contained in the /validation_test_files directory, subject to certain filename 
+contained in the /validation_test_files directory, subject to certain filename
 conventions which must be followed, described below.
 
 FILENAME CONVENTIONS:

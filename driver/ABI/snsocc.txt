@@ -1,4 +1,4 @@
-What:		/sys/class/snsocb/<devname>/device/irq_balance
+What:		/sys/class/snsocc/<devname>/device/irq_balance
 Date:		August 2014
 Contact:	Klemen Vodopivec <vodopiveck@ornl.gov>
 Description:
@@ -12,7 +12,7 @@ Description:
 		number of packets configured or for the last subpacket,
 		whichever comes first. Command packets always interrupt.
 
-What:		/sys/class/snsocb/<devname>/device/dma_big_mem
+What:		/sys/class/snsocc/<devname>/device/dma_big_mem
 Date:		September 2014
 Contact:	Klemen Vodopivec <vodopiveck@ornl.gov>
 Description:
