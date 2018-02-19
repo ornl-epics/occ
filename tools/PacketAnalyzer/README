@@ -1,6 +1,0 @@
-This is a Windows counterpart of the PacketAnalyzer. It Analyzes laboratory-generated
-DAS packets. It will dump bad packets in the same format as Windows version does.
-While running, it will also print some statistics with 10Hz refresh rate.
-
-Sources can be compiled with simple `make' command. There's also Code::Blocks project
-that can be used for editing and compiling the same sources.
