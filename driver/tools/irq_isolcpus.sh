@@ -7,7 +7,7 @@
 # September 2014
 # Klemen Vodopivec <klemen.vodopivec@cosylab.com>
 
-DRIVER=sns_ocb # No '-' in driver name, replace '-' with '_'
+DRIVER=sns_occ # No '-' in driver name, replace '-' with '_'
 
 all_cpus=`lscpu | grep '^CPU(s):' | awk -F':' '{print $2}' | tr -d ' '`
 all_mask="0x`echo "obase=16; (2 ^ $all_cpus) - 1" | bc | tr A-F a-f`"

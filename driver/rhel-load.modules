@@ -1,2 +1,2 @@
 #!/bin/sh
-exec /sbin/modprobe sns-ocb >/dev/null 2>&1
+exec /sbin/modprobe sns-occ >/dev/null 2>&1

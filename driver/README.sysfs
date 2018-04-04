@@ -1,4 +1,4 @@
-The snsocb driver allows tweaking some device parameters through the /sysfs
+The snsocc driver allows tweaking some device parameters through the /sysfs
 depending on the device capabilities. This files describes how those parameters
 shall be changed.
 
@@ -28,8 +28,8 @@ case it helps to reduce number of interrupts as this reduces the effect
 on that FIFO.
 
 === Big (more than 4MB) DMA buffer ===
-By default snsocb driver provides 2MB DMA buffer. More than that can be
-configured after snsocb is loaded and before it's being used. It's only
+By default snsocc driver provides 2MB DMA buffer. More than that can be
+configured after snsocc is loaded and before it's being used. It's only
 supported on selected devices. The feature can be configured through
 dma_big_mem sysfs file. More details after big kernel allocation introduction.
 
@@ -38,11 +38,11 @@ Note: dma_big_mem file will only show in /sys if device supports this feature.
 Linux kernel can not allocate more than 10 pages of memory. Page size can be
 changed by recompiling the kernel but is not suggested. There's a CMA feature
 available in Linux 3.6+ which allows to reserve big chunk of memory at boot
-time and let drivers use it exclusively. On older kernels the snsocb driver
+time and let drivers use it exclusively. On older kernels the snsocc driver
 provides similar functionality.
 
 Next section deals with details how to configure kernel parameters as well as
-snsocb driver to use more than 4MB buffer.
+snsocc driver to use more than 4MB buffer.
 Reserve chunk of memory through kernel parameters at boot time. Check dmesg
 output to see available memory regions. Sample output on 32GB system could be:
 
@@ -70,8 +70,8 @@ or
 memmap=100M$1073741824
 
 Changes are applied after rebooting the system.
-With some memory reserved, we need to tell snsocb driver about it. There's
-a dma_big_mem file in sysfs, ie. /sys/class/snsocb/snsocb0/device/dma_big_mem.
+With some memory reserved, we need to tell snsocc driver about it. There's
+a dma_big_mem file in sysfs, ie. /sys/class/snsocc/snsocc0/device/dma_big_mem.
 When first reading contents of dma_big_mem file it will print 0$0 which means
 the device is using default size for DMA buffer. User can change that by writing
 to dma_big_mem file while device is not being used. The syntax is similar to

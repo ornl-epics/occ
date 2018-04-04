@@ -47,7 +47,7 @@ PyDoc_STRVAR(py_occ_open__doc__,
 "open(device) -> OccObject\n\n"
 "Open connection to OCC driver.\n\n"
 "device parameter must point to a valid OCC device file path,\n"
-"ie. /dev/snsocb0.\n"
+"ie. /dev/snsocc0.\n"
 "Raise an occ.error when failed to open connection.");
 static PyObject *py_occ_open(PyObject *self, PyObject *args, PyObject *keywds) {
     const char *path;
@@ -81,7 +81,7 @@ PyDoc_STRVAR(py_occ_open_debug__doc__,
 "open_debug(device) -> OccObject\n\n"
 "Open debug connection to OCC driver.\n\n"
 "device parameter must point to a valid OCC device file path,\n"
-"ie. /dev/snsocb0.\n"
+"ie. /dev/snsocc0.\n"
 "Raise an occ.error when failed to open connection.");
 static PyObject *py_occ_open_debug(PyObject *self, PyObject *args, PyObject *keywds) {
     const char *path;

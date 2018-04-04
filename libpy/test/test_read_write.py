@@ -1,7 +1,7 @@
 #!/bin/env python
 
 import occ
-o = occ.open("/dev/snsocb0")
+o = occ.open("/dev/snsocc0")
 o.enable_rx()
 
 f = open("/tmp/raw", "r")

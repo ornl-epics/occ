@@ -8,11 +8,11 @@ OBJS=$(SRCS:.cpp=.o)
 
 .PHONY: all debug common clean doc
 
-debug: CPPFLAGS+=-ggdb -g -DTRACE
-debug: $(BIN)
-
 all: CPPFLAGS+=-O2 -DNDEBUG
 all: $(BIN)
+
+debug: CPPFLAGS+=-ggdb -g -DTRACE
+debug: $(BIN)
 
 $(BIN): $(OBJS)
 	$(CXX) -o $@ $^ $(LDFLAGS)

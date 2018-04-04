@@ -5,7 +5,7 @@ import occ
 
 def main():
     parser = argparse.ArgumentParser(description="Print OCC status")
-    parser.add_argument("device", help="Device file name, eg. /dev/snsocb1", default="/dev/snsocb0")
+    parser.add_argument("device", help="Device file name, eg. /dev/snsocc1", default="/dev/snsocc0")
     args = parser.parse_args()
 
     o = occ.open_debug(args.device)
