@@ -27,6 +27,7 @@
 OccAdapter::OccAdapter(const std::string &devfile, bool oldpkts, const std::map<uint32_t, uint32_t> &initRegisters)
     : m_occ(NULL)
     , m_initRegisters(initRegisters)
+    , m_oldPkts(oldpkts)
 {
     int ret;
     occ_status_t status;
@@ -89,6 +90,7 @@ void OccAdapter::process(OccAdapter::AnalyzeStats &stats, bool throwOnBad, doubl
     void *data;
     size_t dataLen;
     uint32_t timeoutMsec = timeout * 1e3;
+    uint32_t nPackets = 0;
 
     if ((ret = occ_data_wait(m_occ, &data, &dataLen, timeoutMsec)) != 0) {
         stats.lastLen = 0;
@@ -110,18 +112,26 @@ void OccAdapter::process(OccAdapter::AnalyzeStats &stats, bool throwOnBad, doubl
         Packet::Type type;
         
         try {
-            const Packet *packet = Packet::cast(static_cast<uint8_t*>(data), dataLen);
-            if (packet->version != 1) {
-                throw std::runtime_error("Not version 1");
+            if (!m_oldPkts) {
+                const Packet *packet = Packet::cast(static_cast<uint8_t*>(data), dataLen);
+                if (packet->version != 1) {
+                    throw std::runtime_error("Not version 1");
+                }
+                good = packet->verify(errorOffset);
+                packetLen = packet->length;
+                type = packet->type;
+            } else {
+                const DasPacket *packet = DasPacket::cast(static_cast<uint8_t*>(data), dataLen);
+                good = true; // No checks on legacy packets
+                packetLen = sizeof(DasPacket) + packet->payload_length;
+                type = Packet::TYPE_LEGACY;
             }
-            good = packet->verify(errorOffset);
-            packetLen = packet->length;
-            type = packet->type;
+            nPackets++;
         } catch (std::runtime_error &e) {
-            const DasPacket *packet = DasPacket::cast(static_cast<uint8_t*>(data), dataLen);
-            good = true; // No checks on legacy packets
-            packetLen = sizeof(DasPacket) + packet->payload_length;
-            type = Packet::TYPE_LEGACY;
+            // Gracefully handle buffer roll-over case, but throw on real error
+            if (nPackets == 0)
+                throw;
+            break;
         }
         
         stats.lastPacketAddr = data;

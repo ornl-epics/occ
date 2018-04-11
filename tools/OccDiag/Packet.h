@@ -25,11 +25,11 @@ class Packet {
         typedef enum {
             TYPE_LEGACY     = 0x0,
             TYPE_ERROR      = 0x1,
+            TYPE_TEST       = 0x2,
             TYPE_RTDL       = 0x6,
             TYPE_DAS_DATA   = 0x7,
             TYPE_DAS_CMD    = 0x8,
             TYPE_ACC_TIME   = 0x10,
-            TYPE_TEST       = 0xFE,
             TYPE_OLD_RTDL   = 0xFF, // Software only, hopefully such packet doesn't get defined
         } Type;
 

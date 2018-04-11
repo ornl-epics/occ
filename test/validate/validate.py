@@ -5,7 +5,7 @@ import subprocess as sp
 
 prefix="    "
 verbose=False
-occ_device = "/dev/snsocb0"
+occ_device = "/dev/snsocc0"
 test_file_suffix = ".vlt"
 raw_file_marker = "raw"
 path = "loopback"
@@ -31,7 +31,7 @@ def process_args(argv):
   global verbose
   global occ_device
   global repeat_count
-  try: 
+  try:
     opts, args = getopt.getopt(argv, "hvd:r:")
   except getopt.GetoptError:
     usage()
@@ -57,18 +57,18 @@ def main(argv):
 
     if filename.endswith(test_file_suffix, 0, i):
       cmd_line = ['../../tools/loopback/loopback','-d',occ_device,'-i', path+"/"+filename]
- 
+
       # append -r flag if file is to treated as raw mode
       if filename.find(raw_file_marker, 0, i) != -1:
         cmd_line.append('-r')
- 
-      for index in range(repeat_count): 
+
+      for index in range(repeat_count):
         print ("%s" % filename),
         print '.' * (40-i),
-    
+
         p = sp.Popen(cmd_line, stdin=sp.PIPE, stdout=sp.PIPE, stderr=sp.PIPE)
         output = p.communicate()
-    
+
         if (p.returncode != 0):
           fail_count += 1
           print "error %d" % p.returncode
@@ -81,7 +81,7 @@ def main(argv):
           print "pass"
           if verbose:
             wrapped_print(output[0])
-  
+
   print ""
   print "%d passed, %d failed" % (pass_count, fail_count)
 

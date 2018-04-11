@@ -96,6 +96,7 @@ class OccAdapter {
     private:
         std::map<uint32_t, uint32_t> m_initRegisters;
         bool m_isPcie;
+        bool m_oldPkts;
 
         void *m_dmaAddr;
         size_t m_dmaSize;

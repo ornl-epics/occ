@@ -41,7 +41,12 @@ struct DasPacket
 
             const DasPacket *packet = reinterpret_cast<const DasPacket *>(data);
 
-            if (packet->payload_length != ALIGN_UP(packet->payload_length, 4)) {
+            uint32_t packetLen = sizeof(DasPacket) + packet->payload_length;
+            if (size < packetLen) {
+                throw std::runtime_error("Not enough data to describe packet");
+            }
+
+            if (ALIGN_UP(packet->payload_length, 4) % 4 != 0) {
                 throw std::runtime_error("Invalid packet length");
             }
 
