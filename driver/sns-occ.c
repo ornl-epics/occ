@@ -90,6 +90,14 @@ do {									\
 
 #define REG_VERSION		0x0000
 
+/* How many interrupt latency records to keep. The size affects allocation
+ * of 2 u32 arrays which are printed through sysfs interface. Since sysfs
+ * limits text size, not all entries may be displayed. Depending
+ * on the PAGE_SIZE value and the actual delay numbers lengths as string,
+ * about 200-500 entries will be printed.
+ */
+#define OCC_IRQ_LAT_BUF_SIZE	500
+
 /* Old versions of the firmware had more configuration options, but
  * these are all that are used in the version we support for this driver.
  */
@@ -171,6 +179,12 @@ do {									\
 #define REG_RX_PROD_INDEX	0x0a0
 #define REG_RX_LENGTH		0x0a4
 
+/* Timer counter registers */
+#define REG_TIME_COUNTER	0x0cc
+#define REG_TIME_IRQ_DQ		0x504
+#define REG_TIME_IRQ_DMA_STALL	0x508
+#define REG_TIME_IRQ_FIF_OVRFLW	0x50c
+
 /* For the split RX handling, we need to copy the IMQ out of the queue
  * quickly, as there are only 63 hardware entries available. We'll also
  * need to check the packet type to find the rest of the data.
@@ -192,6 +206,8 @@ static ssize_t snsocc_sysfs_show_dma_big_mem(struct device *dev, struct device_a
 static ssize_t snsocc_sysfs_store_dma_big_mem(struct device *dev, struct device_attribute *attr, const char *buf, size_t count);
 static ssize_t snsocc_sysfs_show_serial_number(struct device *dev, struct device_attribute *attr, char *buf);
 static ssize_t snsocc_sysfs_show_firmware_date(struct device *dev, struct device_attribute *attr, char *buf);
+static ssize_t snsocc_sysfs_show_irq_latency(struct device *dev, struct device_attribute *attr, char *buf);
+static ssize_t snsocc_sysfs_store_irq_latency(struct device *dev, struct device_attribute *attr, const char *buf, size_t count);
 
 /* Layout of the hardware Incoming Message Queue */
 struct hw_imq {
@@ -225,6 +241,16 @@ struct occ_board_desc {
 	struct attribute_group sysfs;
 };
 
+struct irq_latency {
+	u32 *isr_delay;
+	u32 *isr_proctime;
+	u32 size;
+	u32 end;
+	u32 abs_min;
+	u32 abs_max;
+	u8 capture;
+};
+
 struct occ {
 	void __iomem *ioaddr;
 	void __iomem *txfifo;
@@ -254,6 +280,7 @@ struct occ {
 	struct mutex tx_lock;
 	void *tx_buffer;
 	u32 tx_prod;
+	struct irq_latency irq_latency;
 
 	struct tasklet_struct rxtask;
 	struct device dev;
@@ -376,6 +403,7 @@ static struct occ_board_desc boards[] = {
 			SNSOCC_DEVICE_ATTR("dma_big_mem", 0644, snsocc_sysfs_show_dma_big_mem, snsocc_sysfs_store_dma_big_mem),
 			SNSOCC_DEVICE_ATTR("serial_number", 0444, snsocc_sysfs_show_serial_number, NULL),
 			SNSOCC_DEVICE_ATTR("firmware_date", 0444, snsocc_sysfs_show_firmware_date, NULL),
+			SNSOCC_DEVICE_ATTR("irq_latency", 0644, snsocc_sysfs_show_irq_latency, snsocc_sysfs_store_irq_latency),
 			NULL,
 		},
 	},
@@ -867,6 +895,13 @@ static irqreturn_t snsocc_interrupt(int irq, void *data)
 	struct occ *occ = data;
 	u32 intr_status;
 
+	u32 scheduled = 0;
+	u32 start = 0;
+	u8 irq_latency_capture = occ->irq_latency.capture;
+
+	if (irq_latency_capture)
+		start = ioread32(occ->ioaddr + REG_TIME_COUNTER);
+
 	intr_status = ioread32(occ->ioaddr + REG_IRQ_STATUS);
 	if (!intr_status) {
 #ifdef CONFIG_PCI_MSI
@@ -876,21 +911,31 @@ static irqreturn_t snsocc_interrupt(int irq, void *data)
 			* Anyway, we must let kernel ack it or spurious interrupts will
 			* occur.
 			*/
+			dev_err_ratelimited(&occ->dev, "Firmware did not assert interrupt");
 			return IRQ_HANDLED;
 		}
 #endif
 		return IRQ_NONE;
 	}
 
-	/* Clearing interrupt to minimize the time to clear OCC. There's a potential
-	 * race condition when OCC asserts new legacy level interrupt. We tell the
+	if (irq_latency_capture) {
+		if (intr_status & OCC_IRQ_RX_DONE)
+			scheduled = ioread32(occ->ioaddr + REG_TIME_IRQ_DQ);
+		else if (intr_status & OCC_IRQ_DMA_STALL)
+			scheduled = ioread32(occ->ioaddr + REG_TIME_IRQ_DMA_STALL);
+		else if (intr_status & OCC_IRQ_FIFO_OVERFLOW)
+			scheduled = ioread32(occ->ioaddr + REG_TIME_IRQ_FIF_OVRFLW);
+	}
+
+	/* Clearing interrupt to minimize propagation time to OCC. With non-MSI
+         * interrupts, there's a potential race condition when OCC asserts interrupt. We tell the
 	 * kernel we've handled the first interrupt but by the time kernel responds
 	 * the line might be asserted again and the kernel will silently ignore it.
-	 * Consider puttint a while() loop around this code.
+	 * Consider putting a while() loop around this code.
 	 */
 	intr_status &= ~OCC_IRQ_ENABLE;
 	iowrite32(intr_status, occ->ioaddr + REG_IRQ_STATUS);
-	ioread32(occ->ioaddr + REG_IRQ_STATUS); // iowrte32() is posted, make sure it gets to the board
+	ioread32(occ->ioaddr + REG_IRQ_STATUS); // iowrite32() is posted, make sure register gets to the board
 
 	if (likely(intr_status & OCC_IRQ_RX_DONE)) {
 		if (unlikely(occ->emulate_dq)) {
@@ -913,6 +958,20 @@ static irqreturn_t snsocc_interrupt(int irq, void *data)
 		if (!(intr_status & OCC_IRQ_DMA_STALL))
 			snsocc_stalled(occ, OCC_FIFO_OVERFLOW);
 		dev_err_ratelimited(&occ->dev, "Detected FIFO overflow flag");
+	}
+
+	if (scheduled != 0) {
+		u32 latency = start - scheduled;
+		u32 end = ioread32(occ->ioaddr + REG_TIME_COUNTER);
+
+		spin_lock(&occ->lock);
+		occ->irq_latency.abs_min = min(occ->irq_latency.abs_min, latency);
+		occ->irq_latency.abs_max = max(occ->irq_latency.abs_max, latency);
+
+		occ->irq_latency.end = (occ->irq_latency.end + 1) % occ->irq_latency.size;
+		occ->irq_latency.isr_delay[occ->irq_latency.end] = latency;
+		occ->irq_latency.isr_proctime[occ->irq_latency.end] = end - start;
+		spin_unlock(&occ->lock);
 	}
 
 	return IRQ_HANDLED;
@@ -1029,6 +1088,14 @@ static void snsocc_reset(struct occ *occ)
 		msleep(100);
 
 	spin_lock_irq(&occ->lock);
+	occ->irq_latency.capture = 0;
+	occ->irq_latency.abs_min = 0xFFFFFFFF;
+	occ->irq_latency.abs_max = 0;
+	occ->irq_latency.size = OCC_IRQ_LAT_BUF_SIZE;
+	occ->irq_latency.end = 0;
+	memset(occ->irq_latency.isr_delay, 0, sizeof(u32) * OCC_IRQ_LAT_BUF_SIZE);
+	memset(occ->irq_latency.isr_proctime, 0, sizeof(u32) * OCC_IRQ_LAT_BUF_SIZE);
+
 	occ->reset_in_progress = false;
 	occ->stalled = false;
 	spin_unlock_irq(&occ->lock);
@@ -1626,6 +1693,55 @@ static ssize_t snsocc_sysfs_show_firmware_date(struct device *dev, struct device
 	return ret;
 }
 
+static ssize_t snsocc_sysfs_show_irq_latency(struct device *dev, struct device_attribute *attr, char *buf)
+{
+	struct occ *occ = dev_get_drvdata(dev);
+	ssize_t len = 0;
+
+	spin_lock_irq(&occ->lock);
+	if (occ->irq_latency.capture) {
+		u32 i;
+		char line[32];
+
+		len = scnprintf(buf, PAGE_SIZE, "abs min=%u max=%u\n"
+	                                	"delay proctime\n",
+	                	occ->irq_latency.abs_min, occ->irq_latency.abs_max);
+		if (len < 0)
+			return len;
+
+		for (i=0; i<occ->irq_latency.size; i++) {
+			u32 offset = (i > occ->irq_latency.end ? occ->irq_latency.size : 0) + occ->irq_latency.end - i;
+			ssize_t r = scnprintf(line, sizeof(line), "%u %u\n",
+		                      	occ->irq_latency.isr_delay[offset],
+		                      	occ->irq_latency.isr_proctime[offset]);
+			if (r < 0)
+				return r;
+			if (r > (PAGE_SIZE - len))
+				break;
+			strncpy(&buf[len], line, r);
+			len += r;
+		}
+	}
+	spin_unlock_irq(&occ->lock);
+
+	return len;
+}
+
+static ssize_t snsocc_sysfs_store_irq_latency(struct device *dev, struct device_attribute *attr, const char *buf, size_t count)
+{
+	struct occ *occ = dev_get_drvdata(dev);
+	unsigned long enable;
+
+	if (sscanf(buf, "%lu", &enable) < 1)
+		return -EINVAL;
+
+	spin_lock_irq(&occ->lock);
+	occ->irq_latency.capture = (enable != 0);
+	spin_unlock_irq(&occ->lock);
+
+	return count;
+}
+
 static struct file_operations snsocc_fops = {
 	.owner	 = THIS_MODULE,
 	.open	 = snsocc_open,
@@ -1721,6 +1837,14 @@ static int __devexit snsocc_probe(struct pci_dev *pdev,
 	occ->dev.parent = dev;
 	occ->dev.release = snsocc_free;
 	device_initialize(&occ->dev);
+
+	memset(&occ->irq_latency, 0, sizeof(struct irq_latency));
+	occ->irq_latency.isr_delay = kmalloc(sizeof(u32) * OCC_IRQ_LAT_BUF_SIZE, GFP_KERNEL);
+	occ->irq_latency.isr_proctime = kmalloc(sizeof(u32) * OCC_IRQ_LAT_BUF_SIZE, GFP_KERNEL);
+	if (!occ->irq_latency.isr_delay || !occ->irq_latency.isr_proctime) {
+		dev_err(dev, "unable to allocate interrupt latency queues, aborting");
+		goto error_stat;
+	}
 
 	err = pci_set_dma_mask(pdev, DMA_BIT_MASK(64));
 	if (err) {
@@ -1885,6 +2009,11 @@ error_dev:
 	mutex_lock(&snsocc_devlock);
 	snsocc_devs[minor] = NULL;
 	mutex_unlock(&snsocc_devlock);
+error_stat:
+	if (occ->irq_latency.isr_delay)
+		kfree(occ->irq_latency.isr_delay);
+	if (occ->irq_latency.isr_proctime)
+		kfree(occ->irq_latency.isr_proctime);
 error:
 	return err;
 }
@@ -1918,6 +2047,9 @@ static void __devexit snsocc_remove(struct pci_dev *pdev)
 	snsocc_free_queue(dev, occ->hwdq_page, occ->hwdq_dma, OCC_DQ_SIZE);
 	kfree(occ->tx_buffer);
 	kfree(occ->imq);
+
+	kfree(occ->irq_latency.isr_delay);
+	kfree(occ->irq_latency.isr_proctime);
 
 	mutex_lock(&snsocc_devlock);
 	snsocc_devs[occ->minor] = NULL;

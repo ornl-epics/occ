@@ -90,3 +90,19 @@ how fast it can process data. OS scheduler and delays should also be taken into
 account. On non-RT Linux kernel scheduling delays as high as 15ms were
 observed. There are two rules that driver enforces: size must be power of two
 and offset must be page aligned (usually 4096 bytes).
+
+=== Measuring interrupt latency ===
+OCC firmware dated after 4/11/2018 allows to measure interrupt latency times
+by providing free-running counter register with 8ns resolution. Firmware also
+captures the counter value when it asserts the interrupt and saves it to a
+different register. In the ISR the driver reads both registers and stores the
+difference. Just before exiting ISR it reads the counter register again to
+calculate time spent in ISR. Last N measurements can be read from irq_latency
+sysfs file with the most recent measurement at the top.
+At the very top are the absolute minimum and maximum interrupt latencies since
+last time OCC was reset. Number of measurements printed (N) depends on sysfs
+buffer size which is Linux kernel compile time option, usually 4096 bytes.
+All numbers are in 8ns units.
+
+Feature is disabled by default for performance reasons. It can be enabled at
+any time by writing 1 to irq_latency file, 0 to disable.
