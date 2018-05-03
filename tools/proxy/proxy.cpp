@@ -352,7 +352,8 @@ class OccHandler {
             }
 
             m_buffer.reserve(BUFFER_SIZE);
-            m_fileIO->enableOldPackets();
+            if (oldPackets)
+                m_fileIO->enableOldPackets();
         }
 
         void transferFromOcc() {
