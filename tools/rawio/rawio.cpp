@@ -57,7 +57,7 @@ int main(int argc, char **argv) {
                 usage(argv[0]);
                 return 1;
             }
-            write_value = strtol(argv[++i], NULL, 0);
+            write_value = strtoul(argv[++i], NULL, 0);
             write = true;
         }
         if (strncmp(key, "-b", 2) == 0 || strncmp(key, "--bar", 5) == 0) {
@@ -68,12 +68,12 @@ int main(int argc, char **argv) {
         if (strncmp(key, "-o", 2) == 0 || strncmp(key, "--offset", 8) == 0) {
             if ((i + 1) >= argc)
                 break;
-            offset = strtol(argv[++i], NULL, 0);
+            offset = strtoul(argv[++i], NULL, 0);
         }
         if (strncmp(key, "-l", 2) == 0 || strncmp(key, "--length", 8) == 0) {
             if ((i + 1) >= argc)
                 break;
-            length = strtol(argv[++i], NULL, 0);
+            length = strtoul(argv[++i], NULL, 0);
         }
         if (strncmp(key, "-f", 2) == 0 || strncmp(key, "--force", 7) == 0) {
             force = true;
