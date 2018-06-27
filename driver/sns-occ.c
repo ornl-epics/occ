@@ -234,7 +234,6 @@ struct occ_board_desc {
 	u32 *version;
 	u32 tx_fifo_len;
 	u32 unified_que;
-	u32 bars[3];
 	u32 reset_errcnt;	// Does board have support for resetting error counters?
 	u8 late_rx_enable;  // Does board support late RX enable?
 	u8 interrupts;      // Supported interrupt types, see OCC_IRQ_*
@@ -274,6 +273,7 @@ struct occ {
 	u32 version;
 	u32 firmware_date;
 	u64 fpga_serial;
+	resource_size_t bars[3];
 
 	wait_queue_head_t tx_wq;
 	wait_queue_head_t rx_wq;
@@ -347,7 +347,6 @@ static struct occ_board_desc boards[] = {
 		.version = (u32 []){ 0x31121106, 0x31130603, 0 },
 		.tx_fifo_len = 8192,
 		.unified_que = 1,
-		.bars = { 1048576, 1048576 },
 		.reset_errcnt = 0,
 		.late_rx_enable = 0,
 		.interrupts = OCC_IRQ_LEGACY,
@@ -357,7 +356,6 @@ static struct occ_board_desc boards[] = {
 		.version = (u32 []){ 0x22100817, 0 },
 		.tx_fifo_len = 8192,
 		.unified_que = 0,
-		.bars = { 1048576, 1048576 },
 		.reset_errcnt = 0,
 		.late_rx_enable = 0,
 		.interrupts = OCC_IRQ_LEGACY,
@@ -367,7 +365,6 @@ static struct occ_board_desc boards[] = {
 		.version = (u32 []){ 0x000a0001, 0 },
 		.tx_fifo_len = 32768,
 		.unified_que = 1,
-		.bars = { 4096, 32768, 16777216 },
 		.reset_errcnt = 1,
 		.late_rx_enable = 1,
 		.interrupts = OCC_IRQ_LEGACY,
@@ -377,7 +374,6 @@ static struct occ_board_desc boards[] = {
 		.version = (u32 []){ 0x000b0001, 0 },
 		.tx_fifo_len = 32768,
 		.unified_que = 1,
-		.bars = { 4096, 32768, 16777216 },
 		.reset_errcnt = 1,
 		.late_rx_enable = 1,
 		.interrupts = OCC_IRQ_LEGACY,
@@ -394,7 +390,6 @@ static struct occ_board_desc boards[] = {
 		.version = (u32 []){ 0x000b0002, 0 },
 		.tx_fifo_len = 32768,
 		.unified_que = 1,
-		.bars = { 4096, 32768, 16777216 },
 		.reset_errcnt = 1,
 		.late_rx_enable = 1,
 		.interrupts = OCC_IRQ_LEGACY | OCC_IRQ_MSI,
@@ -1207,9 +1202,7 @@ static int snsocc_mmap(struct file *file, struct vm_area_struct *vma)
 	case OCC_MMAP_BAR0:
 	case OCC_MMAP_BAR1:
 	case OCC_MMAP_BAR2:
-		if (occ->board->bars[vma->vm_pgoff] == 0)
-			return -ENOSYS;
-		if (size != occ->board->bars[vma->vm_pgoff])
+		if (size != occ->bars[vma->vm_pgoff])
 			return -EINVAL;
 		pfn = pci_resource_start(occ->pdev, vma->vm_pgoff) >> PAGE_SHIFT;
 		vma->vm_page_prot = pgprot_noncached(vma->vm_page_prot);
@@ -1285,9 +1278,9 @@ static ssize_t snsocc_read(struct file *file, char __user *buf,
 			info.fpga_serial = occ->fpga_serial;
 			info.dq_used = (occ->dq_size + occ->dq_prod - occ->dq_cons) % occ->dq_size;
 			info.dq_size = occ->dq_size;
-			info.bars[0] = occ->board->bars[0];
-			info.bars[1] = occ->board->bars[1];
-			info.bars[2] = occ->board->bars[2];
+			info.bars[0] = occ->bars[0];
+			info.bars[1] = occ->bars[1];
+			info.bars[2] = occ->bars[2];
 			occ->reset_occurred = occ->reset_in_progress;
 			info.status = __snsocc_status(occ);
 			info.rx_rate = __snsocc_rxrate(occ);
@@ -1830,6 +1823,9 @@ static int __devexit snsocc_probe(struct pci_dev *pdev,
 	occ->pdev = pdev;
 	occ->minor = minor;
 	strncpy(occ->dq_big_cnf, "0$0", sizeof(occ->dq_big_cnf));
+	occ->bars[0] = pci_resource_len(pdev, 0);
+	occ->bars[1] = pci_resource_len(pdev, 1);
+	occ->bars[2] = pci_resource_len(pdev, 2);
 
 	dev_set_name(&occ->dev, "snsocc%d", minor);
 	occ->dev.devt = snsocc_basedev + minor;
