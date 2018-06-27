@@ -582,6 +582,9 @@ int occdrv_data_ack(struct occ_handle *handle, size_t count) {
     if (handle == NULL || handle->magic != OCC_HANDLE_MAGIC || _occdrv_data_align(count) != count)
         return -EINVAL;
 
+    if (count == 0)
+        return 0;
+
     if (count > handle->last_count)
         count = handle->last_count;
 

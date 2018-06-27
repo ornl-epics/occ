@@ -1333,10 +1333,13 @@ static ssize_t snsocc_write(struct file *file, const char __user *buf,
 		if (copy_from_user(&val, buf, sizeof(u32)))
 			return -EFAULT;
 
+		if (val == 0)
+			break;
+
 		/* We only deal with packets that are multiples of 4 bytes */
 		val = ALIGN(val, 4);
 
-		if (!val || val >= occ->dq_size)
+		if (val >= occ->dq_size)
 			return -EOVERFLOW;
 
 		/* Validate that the new consumer index is within the range
