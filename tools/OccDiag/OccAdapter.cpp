@@ -91,6 +91,7 @@ void OccAdapter::process(OccAdapter::AnalyzeStats &stats, bool throwOnBad, doubl
     size_t dataLen;
     uint32_t timeoutMsec = timeout * 1e3;
     uint32_t nPackets = 0;
+    bool sameAddr;
 
     if ((ret = occ_data_wait(m_occ, &data, &dataLen, timeoutMsec)) != 0) {
         stats.lastLen = 0;
@@ -100,6 +101,7 @@ void OccAdapter::process(OccAdapter::AnalyzeStats &stats, bool throwOnBad, doubl
         throw std::runtime_error("Can't receive data - " + occErrorString(ret));
     }
 
+    sameAddr = (data == stats.lastAddr);
     stats.lastAddr = data;
     stats.lastLen = dataLen;
     stats.lastErrorAddr = 0;
@@ -110,7 +112,7 @@ void OccAdapter::process(OccAdapter::AnalyzeStats &stats, bool throwOnBad, doubl
         uint32_t errorOffset;
         uint32_t packetLen = 0;
         Packet::Type type;
-        
+
         try {
             if (!m_oldPkts) {
                 const Packet *packet = Packet::cast(static_cast<uint8_t*>(data), dataLen);
@@ -129,14 +131,14 @@ void OccAdapter::process(OccAdapter::AnalyzeStats &stats, bool throwOnBad, doubl
             nPackets++;
         } catch (std::runtime_error &e) {
             // Gracefully handle buffer roll-over case, but throw on real error
-            if (nPackets == 0)
+            if (sameAddr)
                 throw;
             break;
         }
-        
+
         stats.lastPacketAddr = data;
         stats.lastPacketSize = packetLen;
-        
+
         if (good) {
             stats.good[type]++;
         } else {
