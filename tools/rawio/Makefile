@@ -1,6 +1,6 @@
 OCCLIB=$(abspath ../../lib)
 CPPFLAGS=-Wall -I$(OCCLIB) -std=c++0x
-LDFLAGS=-L$(OCCLIB) -locc -Wl,-rpath,$(OCCLIB)
+LDFLAGS=-L$(OCCLIB) -locc -lrt -Wl,-rpath,$(OCCLIB)
 SRCS=rawio.cpp
 BIN=occ_rawio
 
