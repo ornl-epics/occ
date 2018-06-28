@@ -20,6 +20,7 @@
 #include <sys/mman.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <time.h>
 #include <unistd.h>
 
 #define OCC_HANDLE_MAGIC        0x0cc0cc
@@ -436,9 +437,28 @@ int occdrv_send(struct occ_handle *handle, const void *data, size_t count) {
     return ret;
 }
 
+static bool _timeout_expired(uint32_t *timeout, struct timespec *t1, struct timespec *t2) {
+    if (t2->tv_sec < t1->tv_sec)
+        *timeout = 0;
+
+    if (*timeout > 0) {
+        if (t2->tv_nsec < t1->tv_nsec && t1->tv_sec == t2->tv_sec) {
+            *timeout = 0;
+        } else {
+            uint32_t diff = (1000 * (t2->tv_sec - t1->tv_sec)) + (t2->tv_nsec - t1->tv_nsec)/1000000;
+            if (diff < *timeout)
+                *timeout -= diff;
+            else
+                *timeout = 0;
+        }
+    }
+    return (*timeout == 0);
+}
+
 int occdrv_data_wait(struct occ_handle *handle, void **address, size_t *count, uint32_t timeout) {
     int ret;
     uint32_t info[2];
+    struct timespec t1,t2;
 
     if (handle == NULL || handle->magic != OCC_HANDLE_MAGIC)
         return -EINVAL;
@@ -452,6 +472,7 @@ int occdrv_data_wait(struct occ_handle *handle, void **address, size_t *count, u
             struct pollfd pollfd;
             pollfd.fd = handle->fd;
             pollfd.events = POLLIN;
+            clock_gettime(CLOCK_MONOTONIC, &t1);
             ret = poll(&pollfd, 1, timeout);
             if (ret < 0)
                 return -errno;
@@ -476,103 +497,116 @@ int occdrv_data_wait(struct occ_handle *handle, void **address, size_t *count, u
                 return -ENOSPC;
             if (info[1] & OCC_FIFO_OVERFLOW)
                 return -EOVERFLOW;
+            if (timeout > 0) {
+                clock_gettime(CLOCK_MONOTONIC, &t2);
+                if (_timeout_expired(&timeout, &t1, &t2))
+                    return -ETIME;
+            }
+            // No data in queue, wait for more
             continue;
         }
 
-        break;
-    }
+        // There are a couple of assumptions here that we take for granted.
+        // * Producer index is always 4-byte aligned
+        // * Producer index is always OCC packet aligned
 
-    // There are a couple of assumptions here that we take for granted.
-    // * Producer index is always 4-byte aligned
-    // * Producer index is always OCC packet aligned
-
-    uint32_t dma_prod_off = info[0];
-    if (dma_prod_off >= handle->dma_cons_off) {
-        *address = handle->dma_buf + handle->dma_cons_off;
-        *count = dma_prod_off - handle->dma_cons_off;
-    } else {
-        // This is the tricky part. Producer has rolled-over already and we need
-        // to figure out what to do next. If there's enough data to process, let
-        // application process it. But when we get closer to end of buffer and
-        // the last packet is likely split, we may prefer to use roll-over
-        // buffer instead. Too bad it's dynamic as the code gets more complicated.
-        uint32_t headlen = handle->dma_buf_len - handle->dma_cons_off;
-        bool use_rollover = false;
-
-        if (handle->dma_buf_len <= handle->dma_cons_off)
-            return -ERANGE;
-
-        if (handle->last_addr == handle->rollover_buf) {
-            use_rollover = true;
-        } else {
+        uint32_t dma_prod_off = info[0];
+        if (dma_prod_off >= handle->dma_cons_off) {
             *address = handle->dma_buf + handle->dma_cons_off;
-            *count = handle->dma_buf_len - handle->dma_cons_off;
+            *count = dma_prod_off - handle->dma_cons_off;
+        } else {
+            // This is the tricky part. Producer has rolled-over already and we need
+            // to figure out what to do next. If there's enough data to process, let
+            // application process it. But when we get closer to end of buffer and
+            // the last packet is likely split, we may prefer to use roll-over
+            // buffer instead. Too bad it's dynamic as the code gets more complicated.
+            uint32_t headlen = handle->dma_buf_len - handle->dma_cons_off;
+            bool use_rollover = false;
 
-            if (*address == handle->last_addr) {
-                // Client is telling us he can't process any data, probably
-                // packet is split
+            if (handle->dma_buf_len <= handle->dma_cons_off)
+                return -ERANGE;
+
+            if (handle->last_addr == handle->rollover_buf) {
                 use_rollover = true;
-            } else if ((void*)*address < (void*)(handle->last_addr + handle->last_count)) {
-                // Client did not use all of data the last time, let him use
-                // roll-over buffer if possible, otherwise he'll have to retry
-                // and we'll detect that
-                if (headlen < handle->rollover_size) {
+            } else {
+                *address = handle->dma_buf + handle->dma_cons_off;
+                *count = handle->dma_buf_len - handle->dma_cons_off;
+
+                if (*address == handle->last_addr) {
+                    // Client is telling us he can't process any data, probably
+                    // packet is split
+                    use_rollover = true;
+                } else if ((void*)*address < (void*)(handle->last_addr + handle->last_count)) {
+                    // Client did not use all of data the last time, let him use
+                    // roll-over buffer if possible, otherwise he'll have to retry
+                    // and we'll detect that
+                    if (headlen < handle->rollover_size) {
+                        use_rollover = true;
+                    }
+                } else if (headlen < handle->rollover_size*0.75) { // 0.75 seems good empirically determined value
                     use_rollover = true;
                 }
-            } else if (headlen < handle->rollover_size*0.75) { // 0.75 seems good empirically determined value
-                use_rollover = true;
+            }
+
+            if (use_rollover) {
+                uint32_t taillen = dma_prod_off;
+
+                // When we already tried to copy to roll-over buffer, it was likely
+                // too small. Try to extend and retry.
+                if (handle->last_addr == handle->rollover_buf) {
+                    uint32_t rollover_size = 2 * handle->rollover_size;
+                    if (rollover_size > MAX_ROLLOVER_SIZE)
+                        return -ENOMEM;
+
+                    void *buffer = malloc(rollover_size);
+                    if (buffer == NULL)
+                        return -ENOMEM;
+
+                    free(handle->rollover_buf);
+                    handle->rollover_buf = buffer;
+                    handle->rollover_size = rollover_size;
+                }
+
+                if (headlen > handle->rollover_size) {
+                    headlen = handle->rollover_size;
+                    taillen = 0;
+                } else {
+                    taillen = MIN(handle->rollover_size - headlen, dma_prod_off);
+                }
+                memcpy(handle->rollover_buf, handle->dma_buf + handle->dma_cons_off, headlen);
+                memcpy(&handle->rollover_buf[headlen], handle->dma_buf, taillen);
+                *address = handle->rollover_buf;
+                *count = headlen + taillen;
             }
         }
 
-        if (use_rollover) {
-            uint32_t taillen = dma_prod_off;
-
-            // When we already tried to copy to roll-over buffer, it was likely
-            // too small. Try to extend and retry.
-            if (handle->last_addr == handle->rollover_buf) {
-                uint32_t rollover_size = 2 * handle->rollover_size;
-                if (rollover_size > MAX_ROLLOVER_SIZE)
-                    return -ENOMEM;
-
-                void *buffer = malloc(rollover_size);
-                if (buffer == NULL)
-                    return -ENOMEM;
-
-                free(handle->rollover_buf);
-                handle->rollover_buf = buffer;
-                handle->rollover_size = rollover_size;
-            }
-
-            if (headlen > handle->rollover_size) {
-                headlen = handle->rollover_size;
-                taillen = 0;
-            } else {
-                taillen = MIN(handle->rollover_size - headlen, dma_prod_off);
-            }
-            memcpy(handle->rollover_buf, handle->dma_buf + handle->dma_cons_off, headlen);
-            memcpy(&handle->rollover_buf[headlen], handle->dma_buf, taillen);
-            *address = handle->rollover_buf;
-            *count = headlen + taillen;
+        if (_occdrv_data_align(*count) != *count) {
+            // Tough choice. We can't extend the count as the data might not be there yet.
+            // So we must shrink the count to previous 4-byte boundary.
+            *count = _occdrv_data_align(*count - 3);
         }
-    }
-
-    if (_occdrv_data_align(*count) != *count) {
-        // Tough choice. We can't extend the count as the data might not be there yet.
-        // So we must shrink the count to previous 4-byte boundary.
-        *count = _occdrv_data_align(*count - 3);
-    }
-    handle->last_count = *count;
-    handle->last_addr = *address;
+        handle->last_count = *count;
+        handle->last_addr = *address;
 
 #ifdef RX_DUMP_PATH
-    if (dma_prod_off >= handle->rx_dump_cons_off) {
-        write(handle->rx_dump_fd, handle->dma_buf + handle->rx_dump_cons_off, dma_prod_off - handle->rx_dump_cons_off);
-    } else {
-        write(handle->rx_dump_fd, handle->dma_buf + handle->rx_dump_cons_off, handle->dma_buf_len - handle->rx_dump_cons_off);
-        write(handle->rx_dump_fd, handle->dma_buf, dma_prod_off);
-    }
-    handle->rx_dump_cons_off = dma_prod_off;
+        if (dma_prod_off >= handle->rx_dump_cons_off) {
+            write(handle->rx_dump_fd, handle->dma_buf + handle->rx_dump_cons_off, dma_prod_off - handle->rx_dump_cons_off);
+        } else {
+            write(handle->rx_dump_fd, handle->dma_buf + handle->rx_dump_cons_off, handle->dma_buf_len - handle->rx_dump_cons_off);
+            write(handle->rx_dump_fd, handle->dma_buf, dma_prod_off);
+        }
+        handle->rx_dump_cons_off = dma_prod_off;
 #endif
+
+        if (*count != 0)
+            break;
+
+        if (timeout != 0) {
+            clock_gettime(CLOCK_MONOTONIC, &t2);
+            if (_timeout_expired(&timeout, &t1, &t2))
+                return -ETIME;
+        }
+    }
 
     return 0;
 }
