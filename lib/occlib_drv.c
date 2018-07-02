@@ -24,9 +24,7 @@
 #include <unistd.h>
 
 #define OCC_HANDLE_MAGIC        0x0cc0cc
-#define INIT_ROLLOVER_SIZE      8192    // DSP-T max packet size is 3600 bytes, so this should be a good starting
-                                        // point and avoid dynamic allocation in most cases.
-#define MAX_ROLLOVER_SIZE       131072  // Max PCIe OCC packet size is 65k while normal operation is much lower,
+#define ROLLOVER_BUF_SIZE       131072  // Max PCIe OCC packet size is 64k while normal operation is much lower,
                                         // we need at most 2 times the max packet
 
 #define OCC_PCIE_I2C_ADDR0              0xA0
@@ -118,12 +116,12 @@ int _occdrv_open_common(const char *devfile, int flags, struct occ_handle **hand
         if (flags & O_EXCL)
             (*handle)->debug_mode = true;
 
-        (*handle)->rollover_buf = malloc(INIT_ROLLOVER_SIZE);
+        (*handle)->rollover_buf = malloc(ROLLOVER_BUF_SIZE);
         if ((*handle)->rollover_buf == NULL) {
             ret = -ENOMEM;
             break;
         }
-        (*handle)->rollover_size = INIT_ROLLOVER_SIZE;
+        (*handle)->rollover_size = ROLLOVER_BUF_SIZE;
         return 0;
     } while (0);
 
@@ -459,6 +457,7 @@ int occdrv_data_wait(struct occ_handle *handle, void **address, size_t *count, u
     int ret;
     uint32_t info[2];
     struct timespec t1,t2;
+    void *last_addr = NULL;
 
     if (handle == NULL || handle->magic != OCC_HANDLE_MAGIC)
         return -EINVAL;
@@ -514,66 +513,26 @@ int occdrv_data_wait(struct occ_handle *handle, void **address, size_t *count, u
         if (dma_prod_off >= handle->dma_cons_off) {
             *address = handle->dma_buf + handle->dma_cons_off;
             *count = dma_prod_off - handle->dma_cons_off;
+            last_addr = *address;
         } else {
             // This is the tricky part. Producer has rolled-over already and we need
             // to figure out what to do next. If there's enough data to process, let
             // application process it. But when we get closer to end of buffer and
             // the last packet is likely split, we may prefer to use roll-over
             // buffer instead. Too bad it's dynamic as the code gets more complicated.
-            uint32_t headlen = handle->dma_buf_len - handle->dma_cons_off;
-            bool use_rollover = false;
-
             if (handle->dma_buf_len <= handle->dma_cons_off)
                 return -ERANGE;
 
-            if (handle->last_addr == handle->rollover_buf) {
-                use_rollover = true;
-            } else {
-                *address = handle->dma_buf + handle->dma_cons_off;
-                *count = handle->dma_buf_len - handle->dma_cons_off;
+            *address = handle->dma_buf + handle->dma_cons_off;
+            *count = handle->dma_buf_len - handle->dma_cons_off;
+            last_addr = *address;
 
-                if (*address == handle->last_addr) {
-                    // Client is telling us he can't process any data, probably
-                    // packet is split
-                    use_rollover = true;
-                } else if ((void*)*address < (void*)(handle->last_addr + handle->last_count)) {
-                    // Client did not use all of data the last time, let him use
-                    // roll-over buffer if possible, otherwise he'll have to retry
-                    // and we'll detect that
-                    if (headlen < handle->rollover_size) {
-                        use_rollover = true;
-                    }
-                } else if (headlen < handle->rollover_size*0.75) { // 0.75 seems good empirically determined value
-                    use_rollover = true;
-                }
-            }
+            // Client is telling us he can't process any data, probably packet is split.
+            if (handle->last_addr == *address && *count < handle->rollover_size) {
+                uint32_t headlen = *count;
+                uint32_t taillen = MIN(handle->rollover_size - *count, dma_prod_off);
 
-            if (use_rollover) {
-                uint32_t taillen = dma_prod_off;
-
-                // When we already tried to copy to roll-over buffer, it was likely
-                // too small. Try to extend and retry.
-                if (handle->last_addr == handle->rollover_buf) {
-                    uint32_t rollover_size = 2 * handle->rollover_size;
-                    if (rollover_size > MAX_ROLLOVER_SIZE)
-                        return -ENOMEM;
-
-                    void *buffer = malloc(rollover_size);
-                    if (buffer == NULL)
-                        return -ENOMEM;
-
-                    free(handle->rollover_buf);
-                    handle->rollover_buf = buffer;
-                    handle->rollover_size = rollover_size;
-                }
-
-                if (headlen > handle->rollover_size) {
-                    headlen = handle->rollover_size;
-                    taillen = 0;
-                } else {
-                    taillen = MIN(handle->rollover_size - headlen, dma_prod_off);
-                }
-                memcpy(handle->rollover_buf, handle->dma_buf + handle->dma_cons_off, headlen);
+                memcpy(handle->rollover_buf, *address, headlen);
                 memcpy(&handle->rollover_buf[headlen], handle->dma_buf, taillen);
                 *address = handle->rollover_buf;
                 *count = headlen + taillen;
@@ -585,18 +544,6 @@ int occdrv_data_wait(struct occ_handle *handle, void **address, size_t *count, u
             // So we must shrink the count to previous 4-byte boundary.
             *count = _occdrv_data_align(*count - 3);
         }
-        handle->last_count = *count;
-        handle->last_addr = *address;
-
-#ifdef RX_DUMP_PATH
-        if (dma_prod_off >= handle->rx_dump_cons_off) {
-            write(handle->rx_dump_fd, handle->dma_buf + handle->rx_dump_cons_off, dma_prod_off - handle->rx_dump_cons_off);
-        } else {
-            write(handle->rx_dump_fd, handle->dma_buf + handle->rx_dump_cons_off, handle->dma_buf_len - handle->rx_dump_cons_off);
-            write(handle->rx_dump_fd, handle->dma_buf, dma_prod_off);
-        }
-        handle->rx_dump_cons_off = dma_prod_off;
-#endif
 
         if (*count != 0)
             break;
@@ -607,6 +554,19 @@ int occdrv_data_wait(struct occ_handle *handle, void **address, size_t *count, u
                 return -ETIME;
         }
     }
+
+    handle->last_count = *count;
+    handle->last_addr = last_addr;
+
+#ifdef RX_DUMP_PATH
+    if (dma_prod_off >= handle->rx_dump_cons_off) {
+        write(handle->rx_dump_fd, handle->dma_buf + handle->rx_dump_cons_off, dma_prod_off - handle->rx_dump_cons_off);
+    } else {
+        write(handle->rx_dump_fd, handle->dma_buf + handle->rx_dump_cons_off, handle->dma_buf_len - handle->rx_dump_cons_off);
+        write(handle->rx_dump_fd, handle->dma_buf, dma_prod_off);
+    }
+    handle->rx_dump_cons_off = dma_prod_off;
+#endif
 
     return 0;
 }
