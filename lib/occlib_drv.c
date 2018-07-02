@@ -24,8 +24,9 @@
 #include <unistd.h>
 
 #define OCC_HANDLE_MAGIC        0x0cc0cc
-#define ROLLOVER_BUF_SIZE       131072  // Max PCIe OCC packet size is 64k while normal operation is much lower,
-                                        // we need at most 2 times the max packet
+#ifndef ROLLOVER_BUF_SIZE
+#    define ROLLOVER_BUF_SIZE   8192    // Depends on maximum packet size, we need at most 2 times max packet size
+#endif
 
 #define OCC_PCIE_I2C_ADDR0              0xA0
 #define OCC_PCIE_I2C_SFP_TYPE           8
