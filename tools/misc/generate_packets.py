@@ -9,7 +9,6 @@
 # @author Klemen Vodopivec
 # @date Nov 2018
 
-import argparse
 import os
 import struct
 import sys
@@ -43,16 +42,36 @@ def writeDAS(f, seq, length):
     f.write( struct.pack("<IIIII", hdr1, length, hdr3, timestamp_sec, timestamp_nsec) )
     f.write( os.urandom(nevents*8) )
 
-def main():
-    parser = argparse.ArgumentParser(description="Generate OCC packets and write them to file")
-    parser.add_argument("type", help="Packet type", choices=["DAS", "MPS"])
-    parser.add_argument("outfile", help="Output file")
-    parser.add_argument("-c", "--count", help="Number of packets to generate", type=int, default=100)
-    parser.add_argument("-s", "--size", help="Packet payload size in bytes, gets aligned to 4", type=lambda x: (int(x) + 3) // 4 * 4, default=2048)
-    parser.add_argument("-d", "--dest", help="Destination node for MPS packets", type=int, default=0x0)
-    parser.add_argument("-a", "--address", help="Address for MPS packets", type=int, default=0x0)
+def parseArgs():
+    try:
+        import argparse
+        parser = argparse.ArgumentParser(description="Generate OCC packets and write them to file")
+        parser.add_argument("type", help="Packet type", choices=["DAS", "MPS"])
+        parser.add_argument("outfile", help="Output file")
+        parser.add_argument("-c", "--count", help="Number of packets to generate", type=int, default=100)
+        parser.add_argument("-s", "--size", help="Packet payload size in bytes, gets aligned to 4", type=lambda x: (int(x) + 3) // 4 * 4, default=2048)
+        parser.add_argument("-d", "--dest", help="Destination node for MPS packets", type=int, default=0x0)
+        parser.add_argument("-a", "--address", help="Address for MPS packets", type=int, default=0x0)
+        return parser.parse_args(sys.argv[1:])
+    except:
+        # Python <2.7 workaround
+        import optparse
+        usage = "usage: %prog [options] TYPE OUTFILE"
+        parser = optparse.OptionParser(usage, description="Generate OCC packets and write them to file")
+        parser.add_option("-c", "--count", help="Number of packets to generate", type="int", default=100)
+        parser.add_option("-s", "--size", help="Packet payload size in bytes, gets aligned to 4", type="int", default=2048)
+        parser.add_option("-d", "--dest", help="Destination node for MPS packets", type="int", default=0x0)
+        parser.add_option("-a", "--address", help="Address for MPS packets", type="int", default=0x0)
+        options, args = parser.parse_args()
+        if len(args) != 2:
+            parser.error("incorrect number of arguments")
+        if args[0] not in [ "DAS", "MPS" ]:
+            parser.error("invalid type, valid options 'DAS' or 'MPS'")
+        options._update_loose( { 'type': args[0], 'outfile': args[1] } )
+        return options
 
-    args = parser.parse_args(sys.argv[1:])
+def main():
+    args = parseArgs()
     with open(args.outfile, "w") as f:
         for i in range(args.count):
             if args.type == "MPS":
