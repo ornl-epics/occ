@@ -1,5 +1,5 @@
 OCCLIB=$(abspath ../../lib)
-CPPFLAGS=-Wall -I$(OCCLIB) -std=c++11
+CPPFLAGS=-Wall -I$(OCCLIB) -std=c++0x
 LDFLAGS=-L$(OCCLIB) -locc -lrt -Wl,-rpath,$(OCCLIB)
 SRCS=proxy.cpp
 BIN=occ_proxy
