@@ -19,11 +19,17 @@
 #include <linux/mutex.h>
 #include <linux/spinlock.h>
 #include <linux/wait.h>
-#include <linux/sched.h>
 #include <linux/ratelimit.h>
 #include <linux/poll.h>
 #include <linux/delay.h>
 #include <linux/version.h>
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,11,0)
+#include <linux/sched/signal.h>
+#else
+#include <linux/sched.h>
+#endif
+
 #include "sns-occ.h"
 
 #define OCC_VER_STR __stringify(OCC_VER_MAJ) "." __stringify(OCC_VER_MIN) "." __stringify(OCC_VER_BUILD)
@@ -1119,8 +1125,8 @@ static int snsocc_alloc_queue(struct device *dev, struct page **page,
 	 * reference to the tail pages so they don't go away on unmap and
 	 * corrupt the page lists.
 	 */
-        for (i = 1; i < (1 << order); i++)
-                atomic_inc(&compound_head((*page) + i)->_count);
+	for (i = 1; i < (1 << order); i++)
+		get_page(compound_head((*page) + i));
 
 	/* Prevent information leaks to user-space */
 	memset(page_address(*page), 0, PAGE_SIZE * (1 << order));
@@ -1143,8 +1149,8 @@ static void snsocc_free_queue(struct device *dev, struct page *page,
 	dma_unmap_page(dev, dma, size, DMA_FROM_DEVICE);
 
 	/* Remove our inflated reference counts */
-        for (i = 1; i < (1 << order); i++)
-                atomic_dec(&compound_head((page) + i)->_count);
+	for (i = 1; i < (1 << order); i++)
+		put_page(compound_head((page) + i));
 
 	__free_pages(page, order);
 }
@@ -1164,9 +1170,17 @@ static void snsocc_free_big_queue(struct occ *occ)
 	}
 }
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,11,0)
+static int snsocc_vm_fault(struct vm_fault *vmf)
+#else
 static int snsocc_vm_fault(struct vm_area_struct *vma, struct vm_fault *vmf)
+#endif
 {
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,11,0)
+	struct file_ctx *file_ctx = vmf->vma->vm_private_data;
+#else
 	struct file_ctx *file_ctx = vma->vm_private_data;
+#endif
 	struct occ *occ = file_ctx->occ;
 	unsigned long offset;
 	struct page *page;
@@ -1175,8 +1189,7 @@ static int snsocc_vm_fault(struct vm_area_struct *vma, struct vm_fault *vmf)
 		return VM_FAULT_SIGBUS;
 
 	page = occ->dq_page;
-	offset = (unsigned long) vmf->virtual_address - vma->vm_start;
-	if (offset >= occ->dq_size)
+	if (vmf->pgoff >= (1 << get_order(occ->dq_size)))
 		return VM_FAULT_SIGBUS;
 
 	offset >>= PAGE_SHIFT;
@@ -2057,10 +2070,14 @@ static void __devexit snsocc_remove(struct pci_dev *pdev)
 	put_device(&occ->dev);
 }
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,8,0)
+static const struct pci_device_id snsocc_pci_table[] = {
+#else
 DEFINE_PCI_DEVICE_TABLE(snsocc_pci_table) = {
-	{ PCI_VDEVICE(XILINX, 0x1002), .driver_data = BOARD_SNS_PCIX },
-	{ PCI_DEVICE(0x1775, 0x1000), .driver_data = BOARD_GE_PCIE },
-	{ PCI_VDEVICE(XILINX, 0x7014), .driver_data = BOARD_SNS_PCIE },
+#endif
+	{ PCI_DEVICE(PCI_VENDOR_ID_XILINX, 0x1002), .driver_data = BOARD_SNS_PCIX },
+	{ PCI_DEVICE(0x1775,               0x1000), .driver_data = BOARD_GE_PCIE },
+	{ PCI_DEVICE(PCI_VENDOR_ID_XILINX, 0x7014), .driver_data = BOARD_SNS_PCIE },
 	{ 0, }
 };
 
