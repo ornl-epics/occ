@@ -108,10 +108,18 @@ static void sigHandler(int signal) {
 
 class FileIO {
     public:
-        int m_writeFile = fileno(stdout);
-        int m_readFile = fileno(stdin);
-        bool m_oldPackets = false;
-        bool m_eof = false;
+        int m_writeFile;
+        int m_readFile;
+        bool m_oldPackets;
+        bool m_eof;
+
+        FileIO()
+        : m_writeFile(fileno(stdout))
+        , m_readFile(fileno(stdin))
+        , m_oldPackets(false)
+        , m_eof(false)
+        {}
+
 
         virtual void handleError() {
             throw std::runtime_error("Can't recover from stdout/stdin error");
