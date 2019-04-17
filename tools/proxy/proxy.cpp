@@ -248,10 +248,11 @@ class FileIO {
 
 class TcpSocket : public FileIO {
     private:
-        int m_listenSock = -1;
+        int m_listenSock;
     public:
         TcpSocket() {
             m_readFile = m_writeFile = -1;
+            m_listenSock = -1;
         }
 
         void handleError() {
@@ -335,7 +336,7 @@ class TcpSocket : public FileIO {
 
 class OccHandler {
     private:
-        std::unique_ptr<struct occ_handle, decltype(&occ_close)> m_occ{nullptr, &occ_close};
+        std::unique_ptr<struct occ_handle, decltype(&occ_close)> m_occ;
         std::vector<char> m_buffer;
         static const size_t BUFFER_SIZE = 10 * 1024;
         bool m_oldPackets;
@@ -343,7 +344,8 @@ class OccHandler {
 
     public:
         OccHandler(const std::string &devFile, bool oldPackets, FileIO *fileIO)
-        : m_fileIO(fileIO)
+        : m_occ(NULL, &occ_close)
+        , m_fileIO(fileIO)
         {
             struct occ_handle *_occ;
             int ret;
