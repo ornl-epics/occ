@@ -699,7 +699,7 @@ int occdrv_report(struct occ_handle *handle, FILE *outfile) {
         FILE_WRITE("OCC registers:\n");
         for (i = 0; i <= last_reg; i += 4) {
             uint32_t reg;
-            if (occdrv_io_read(handle, 0, i, &reg, 4) < 0) {
+            if (occdrv_io_read(handle, 0, i, &reg, 1) < 0) {
                 FILE_WRITE("  0x%04X: read error\n", i);
             } else {
                 FILE_WRITE("  0x%04X: 0x%08X\n", i, reg);
