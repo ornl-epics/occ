@@ -21,6 +21,7 @@
 #include <stdbool.h>
 #include <stddef.h> // size_t
 #include <stdint.h> // uintX_t
+#include <stdio.h>  // FILE
 
 #ifdef __cplusplus
 extern "C" {
@@ -394,6 +395,19 @@ int occ_data_ack(struct occ_handle *handle, size_t count);
  * \return Negative errno on error, number of bytes read otherwise.
  */
 int occ_read(struct occ_handle *handle, void *data, size_t count, uint32_t timeout);
+
+/**
+ * Print available OCC information to file.
+ *
+ * Mostly used for debugging DMA data, can be called anytime.
+ * Information printed includes entire DMA buffer in hex, rollover buffer in hex,
+ * registers and more.
+ *
+ * \param[in] handle Valid OCC API handle.
+ * \param[in] outfile Opened file handler where to print all data.
+ * \return 0 on success, negative errno on error.
+ */
+int occ_report(struct occ_handle *handle, FILE *outfile);
 
 #ifdef __cplusplus
 }

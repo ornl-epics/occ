@@ -30,3 +30,4 @@ int occdrv_data_ack(struct occ_handle *handle, size_t count);
 int occdrv_read(struct occ_handle *handle, void *data, size_t count, uint32_t timeout);
 int occdrv_io_read(struct occ_handle *handle, uint8_t bar, uint32_t offset, uint32_t *data, uint32_t count);
 int occdrv_io_write(struct occ_handle *handle, uint8_t bar, uint32_t offset, const uint32_t *data, uint32_t count);
+int occdrv_report(struct occ_handle *handle, FILE *outfile);

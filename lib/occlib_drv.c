@@ -167,6 +167,7 @@ int occdrv_open(const char *devfile, occ_interface_type type, struct occ_handle 
             ret = -errno;
             break;
         }
+        (*handle)->last_addr = (*handle)->dma_buf;
 
         /* Reset the card to select our preferred interface */
         ret = occdrv_reset(*handle);
@@ -686,3 +687,58 @@ int occdrv_io_write(struct occ_handle *handle, uint8_t bar, uint32_t offset, con
 
     return count;
 }
+
+int occdrv_report(struct occ_handle *handle, FILE *outfile) {
+    int ret = 0;
+    unsigned last_reg = 0x318; // Last register address to print from BAR0, starts at 0
+    unsigned i;
+    do {
+        // Macros are evil. Although defined locally, FILE_WRITE becomes available to all code after this line.
+#       define FILE_WRITE(args...) if (fprintf(outfile, args) < 0) { ret = -errno; break; }
+
+        FILE_WRITE("OCC registers:\n");
+        for (i = 0; i <= last_reg; i += 4) {
+            uint32_t reg;
+            if (occdrv_io_read(handle, 0, i, &reg, 4) < 0) {
+                FILE_WRITE("  0x%04X: read error\n", i);
+            } else {
+                FILE_WRITE("  0x%04X: 0x%08X\n", i, reg);
+            }
+        }
+        FILE_WRITE("\n");
+        FILE_WRITE("Last data processed:\n");
+        if (handle->last_addr == handle->rollover_buf) {
+            FILE_WRITE("  rollover buffer\n");
+        } else {
+            uint32_t offset = (void*)handle->last_addr - handle->dma_buf;
+            FILE_WRITE("  DMA offset 0x%08X\n", offset);
+        }
+        FILE_WRITE("\n");
+        FILE_WRITE("DMA buffer:\n");
+        for (i = 0; i < handle->dma_buf_len; i+=4) {
+            if ((i%16) == 0) {
+                if (i > 0) {
+                    FILE_WRITE("\n  0x%08X:", i);
+                } else {
+                    FILE_WRITE("  0x%08X:", i);
+                }
+            }
+            FILE_WRITE(" 0x%08X", ((uint32_t*)handle->dma_buf)[i/4]);
+        }
+        FILE_WRITE("\n\n");
+        FILE_WRITE("Rollover buffer:\n");
+        for (i = 0; i < handle->rollover_size; i+=4) {
+            if ((i%16) == 0) {
+                if (i > 0) {
+                    FILE_WRITE("\n  0x%08X:", i);
+                } else {
+                    FILE_WRITE("  0x%08X:", i);
+                }
+            }
+            FILE_WRITE(" 0x%08X", ((uint32_t*)handle->rollover_buf)[i/4]);
+        }
+        FILE_WRITE("\n");
+    } while (0);
+    return ret;
+}
+
