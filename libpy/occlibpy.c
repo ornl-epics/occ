@@ -495,6 +495,49 @@ static PyObject *py_occ_io_write(OccObject *self, PyObject *args, PyObject *keyw
     return Py_None;
 }
 
+PyDoc_STRVAR(py_occ_report__doc__,
+"report(outfile) -> None\n\n"
+"Print available OCC information to file.\n\n");
+static PyObject *py_occ_report(OccObject *self, PyObject *args, PyObject *keywds) {
+    int ret;
+    PyObject *outfile;
+    int opened = 0;
+
+    static char *kwlist[] = {"outfile", NULL};
+
+    if (!PyArg_ParseTupleAndKeywords(args, keywds, "O", kwlist, &outfile))
+        return NULL;
+
+    if (!PyFile_Check(outfile)) {
+        if (!PyString_Check(outfile)) {
+            PyErr_SetString(OccError, "Outfile argument must be a valid opened file object or a path string");
+            return NULL;
+        }
+        outfile = PyFile_FromString(PyString_AsString(outfile), "w");
+        if (outfile == NULL)
+            return NULL;
+        opened = 1;
+    }
+
+    if (self->occ == NULL) {
+        PyErr_SetString(OccError, "OCC connection closed");
+        return NULL;
+    }
+
+    ret = occ_report(self->occ, PyFile_AsFile(outfile));
+
+    if (opened)
+        PyFile_DecUseCount((PyFileObject*)outfile);
+
+    if (ret < 0) {
+        PyErr_SetString(OccError, strerror(-1 * ret));
+        return NULL;
+    }
+
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
 static PyMethodDef Occ_Methods[] = {
     { "close",      (PyCFunction)py_occ_close,      METH_VARARGS, py_occ_close__doc__ },
     { "reset",      (PyCFunction)py_occ_reset,      METH_VARARGS, py_occ_reset__doc__ },
@@ -506,6 +549,7 @@ static PyMethodDef Occ_Methods[] = {
     { "read",       (PyCFunction)py_occ_read,       METH_VARARGS | METH_KEYWORDS, py_occ_read__doc__ },
     { "io_read",    (PyCFunction)py_occ_io_read,    METH_VARARGS | METH_KEYWORDS, py_occ_io_read__doc__ },
     { "io_write",   (PyCFunction)py_occ_io_write,   METH_VARARGS | METH_KEYWORDS, py_occ_io_write__doc__ },
+    { "report",     (PyCFunction)py_occ_report,     METH_VARARGS | METH_KEYWORDS, py_occ_report__doc__ },
     {NULL, NULL, 0, NULL}
 };
 

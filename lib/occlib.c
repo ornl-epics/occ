@@ -44,6 +44,7 @@ struct occ_handle {
         int (*read)(struct occ_handle *handle, void *data, size_t count, uint32_t timeout);
         int (*io_read)(struct occ_handle *handle, uint8_t bar, uint32_t offset, uint32_t *data, uint32_t count);
         int (*io_write)(struct occ_handle *handle, uint8_t bar, uint32_t offset, const uint32_t *data, uint32_t count);
+        int (*report)(struct occ_handle *handle, FILE *outfile);
     } ops;
     void *impl_ctx;
 };
@@ -75,6 +76,7 @@ static int _occ_open_common(const char *devfile, occ_interface_type type, struct
         (*handle)->ops.read                 = occdrv_read;
         (*handle)->ops.io_read              = occdrv_io_read;
         (*handle)->ops.io_write             = occdrv_io_write;
+        (*handle)->ops.report               = occdrv_report;
     } else if (type == OCC_INTERFACE_SOCKET) {
         (*handle)->ops.open                 = occsock_open;
         (*handle)->ops.open_debug           = occsock_open_debug;
@@ -211,4 +213,11 @@ int occ_io_write(struct occ_handle *handle, uint8_t bar, uint32_t offset, const 
         return -EINVAL;
 
     return handle->ops.io_write(handle->impl_ctx, bar, offset, data, count);
+}
+
+int occ_report(struct occ_handle *handle, FILE *outfile) {
+    if (handle == NULL || handle->magic != OCC_HANDLE_MAGIC)
+        return -EINVAL;
+
+    return handle->ops.report(handle->impl_ctx, outfile);
 }

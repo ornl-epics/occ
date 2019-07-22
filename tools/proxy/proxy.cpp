@@ -111,7 +111,7 @@ class FileIO {
         int m_writeFile;
         int m_readFile;
         bool m_oldPackets;
-	bool m_eof;
+        bool m_eof;
 
         FileIO()
         : m_writeFile(fileno(stdout))
@@ -119,6 +119,7 @@ class FileIO {
         , m_oldPackets(false)
         , m_eof(false)
         {}
+
 
         virtual void handleError() {
             throw std::runtime_error("Can't recover from stdout/stdin error");
@@ -128,9 +129,9 @@ class FileIO {
             m_oldPackets = true;
         }
 
-	virtual bool eof() {
+        virtual bool eof() {
             return m_eof;
-	}
+        }
 
         virtual void write(const char *data, size_t size) {
             while (size > 0) {
@@ -185,8 +186,8 @@ class FileIO {
                             if (ret == -1) {
                                 std::cerr << "Failed to read from file: " << strerror(errno) << std::endl;
                             } else {
-				m_eof = true;
-			    }
+                                m_eof = true;
+                            }
                             handleError();
                             return false;
                         }
@@ -273,9 +274,9 @@ class TcpSocket : public FileIO {
             }
         }
 
-	bool eof() {
-	    return false;
-	}
+        bool eof() {
+            return false;
+        }
 
         void listen(uint16_t port) {
             struct sockaddr_in address;
@@ -449,10 +450,10 @@ int main(int argc, char **argv) {
             }
         }
     } catch (std::runtime_error &e) {
-	if (!fileIO->eof()) {
+        if (!fileIO->eof()) {
             std::cerr << "ERROR: " << e.what() << std::endl;
             return 1;
-	}
+        }
     }
 
     return 0;
