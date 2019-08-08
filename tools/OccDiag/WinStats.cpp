@@ -118,6 +118,7 @@ void WinStats::update(const OccAdapter::AnalyzeStats &stats)
 void WinStats::clear()
 {
     m_totalStats.clear();
+    m_combinedStats.clear();
 }
 
 WinStats::AnalyzeStats WinStats::getCombinedStats()
