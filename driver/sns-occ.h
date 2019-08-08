@@ -25,7 +25,7 @@ typedef uint64_t u64;
 /**
  * OCC build version, not enforced to the client.
  */
-#define OCC_VER_BUILD 4
+#define OCC_VER_BUILD 5
 
 /* The user should read an appropriate amount of data from the device for
  * the command being requested. Commands are indicated by the offset read.
