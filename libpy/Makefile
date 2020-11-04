@@ -8,3 +8,6 @@ install: build
 
 build:
 	python setup.py build
+
+clean:
+	@echo "Nothing to be done for clean"
