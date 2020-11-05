@@ -298,8 +298,13 @@ static void *send_to_occ(void *arg) {
 #ifdef TRACE
         cout << "occ_send(" << packet_size << ")" << endl;
 #endif
-        if (occ_send(ctx->occ, buffer, packet_size) != 0)
+        if (occ_send(ctx->occ, buffer, packet_size) != 0) {
+            if (bytesSent)
+               status->n_bytes = bytesSent;
+            else
+               status->n_bytes = packet_size;
             break;
+	}
 
 #ifdef TRACE1
         cout << hex;
