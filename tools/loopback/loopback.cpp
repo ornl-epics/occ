@@ -244,7 +244,7 @@ static void *send_to_occ(void *arg) {
             infile.read(buffer, sizeof(struct das2_packet));
             if (infile.gcount() != (int)hdr_len) {
                 if (infile.gcount() > 0)
-                    cerr << "ERROR: Not enought header data in input file" << endl;
+                    cerr << "ERROR: Not enough header data in input file" << endl;
                 break;
             }
         } else {
