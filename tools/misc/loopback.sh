@@ -23,4 +23,4 @@ OCCPROXY=$(dirname $(realpath $0))/../proxy/occ_proxy
 mkdir -p data
 ./generate_packets.py -c $COUNT -s $SIZE $TYPE $TXFILE
 $OCCPROXY $OCCDEV < $TXFILE > $RXFILE
-diff -s $TXFILE $RXFILE
+diff $TXFILE $RXFILE
