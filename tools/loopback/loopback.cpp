@@ -257,7 +257,7 @@ static void *send_to_occ(void *arg) {
                 packet->sequence = sequence++;
                 packet->type = 7;
                 packet->length = sizeof(struct das2_packet) + __occ_align(ctx->payload_size);
-                packet->timestamp_sec = t.tv_sec;
+                packet->timestamp_sec = 0;
                 packet->timestamp_nsec = t.tv_nsec;
             } else {
                 struct das1_packet *packet = reinterpret_cast<struct das1_packet *>(buffer);
@@ -298,6 +298,18 @@ static void *send_to_occ(void *arg) {
 #ifdef TRACE
         cout << "occ_send(" << packet_size << ")" << endl;
 #endif
+#ifdef TRACE1
+        cout << hex;
+        for (size_t i = 0; i < packet_size; i++) {
+            cout << setw(2) << setfill('0') << uppercase << (int)(buffer[i] & 0xFF);
+            if (i % 4 == 3)
+                cout << endl;
+            else
+                cout << " ";
+        }
+        cout << dec << endl;
+#endif
+
         if (occ_send(ctx->occ, buffer, packet_size) != 0) {
             if (bytesSent)
                status->n_bytes = bytesSent;
@@ -305,20 +317,6 @@ static void *send_to_occ(void *arg) {
                status->n_bytes = packet_size;
             break;
 	}
-
-#ifdef TRACE1
-        cout << hex;
-        for (size_t i = 0; i < packet_size; i++) {
-            cout << setw(2) << setfill('0') << uppercase << (int)(buffer[i] & 0xFF);
-            if (i % 24 == 23)
-                cout << endl;
-            else if (i % 4 == 3)
-                cout << "  ";
-            else
-                cout << " ";
-        }
-        cout << dec << endl;
-#endif
 
         status->n_bytes += packet_size;
         bytesSent += packet_size;
@@ -348,6 +346,7 @@ bool compareWithSent(struct program_context *ctx, unsigned char *data, size_t da
     pthread_mutex_unlock(&ctx->queLock);
 
     return (sent == received);
+
 }
 
 /**
@@ -387,10 +386,8 @@ void *receive_from_occ(void *arg) {
         cout << hex;
         for (size_t i = 0; i < datalen; i++) {
             cout << setw(2) << setfill('0') << uppercase << (int)(data[i] & 0xFF);
-            if (i % 24 == 23)
+            if (i % 4 == 3)
                 cout << endl;
-            else if (i % 4 == 3)
-                cout << "  ";
             else
                 cout << " ";
         }
