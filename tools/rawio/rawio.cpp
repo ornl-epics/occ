@@ -80,6 +80,7 @@ int main(int argc, char **argv) {
         }
     }
     if (device_file == NULL || bar == (uint8_t)-1 || offset == (uint32_t)-1) {
+        printf("One of these required variables is missing: Device File, BAR or Offset.\n");
         usage(argv[0]);
         return 1;
     }

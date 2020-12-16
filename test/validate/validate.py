@@ -56,11 +56,11 @@ def main(argv):
     i = len(filename)
 
     if filename.endswith(test_file_suffix, 0, i):
-      cmd_line = ['../../tools/loopback/loopback','-d',occ_device,'-i', path+"/"+filename]
+      cmd_line = ['../../tools/loopback/occ_loopback','-d',occ_device,'-i', path+"/"+filename,'-n']
 
       # append -r flag if file is to treated as raw mode
-      if filename.find(raw_file_marker, 0, i) != -1:
-        cmd_line.append('-r')
+      # if filename.find(raw_file_marker, 0, i) != -1:
+        # cmd_line.append('-r')
 
       for index in range(repeat_count):
         print ("%s" % filename),
