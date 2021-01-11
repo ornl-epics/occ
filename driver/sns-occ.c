@@ -1170,7 +1170,9 @@ static void snsocc_free_big_queue(struct occ *occ)
 	}
 }
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,11,0)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,17,0)
+static vm_fault_t snsocc_vm_fault(struct vm_fault *vmf)
+#elif LINUX_VERSION_CODE >= KERNEL_VERSION(4,11,0)
 static int snsocc_vm_fault(struct vm_fault *vmf)
 #else
 static int snsocc_vm_fault(struct vm_area_struct *vma, struct vm_fault *vmf)
