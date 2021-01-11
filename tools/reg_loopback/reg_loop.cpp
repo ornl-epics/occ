@@ -23,7 +23,7 @@
 #include <string.h>
 
 #define OCC_MAX_PACKET_SIZE 38000
-#define MIN_PACKET_SIZE 24 // Size of MOD_ID+REG_STRT+CMD_LNGTH+BYTE_CNT 
+#define MIN_PACKET_SIZE 14 // Size of MOD_ID+REG_STRT+CMD_LNGTH+BYTE_CNT 
 
 using namespace std;
 
@@ -238,10 +238,10 @@ void read_version_packet(struct das_packet *packet, struct program_context *ctx)
     packet->cmd_type = 0x1;
 
     /* Setup Packet Header 4 */
-    packet->mod_id = 0x000013AB;
+    packet->mod_id = 0xA18DC077;
 
     /* Setup Packet Header 5 */
-    packet->mod_id_start = 0x7D8E0000;
+    packet->mod_id_start = 0xF8340000;
 }
 
 void read_packet(struct das_packet *packet, struct program_context *ctx) {
@@ -252,10 +252,10 @@ void read_packet(struct das_packet *packet, struct program_context *ctx) {
     packet->cmd_type = 0x1;
 
     /* Setup Packet Header 4 */
-    packet->mod_id = 0x000013AB;
+    packet->mod_id = 0xA18DC077;
 
     /* Setup Packet Header 5 */
-    packet->mod_id_start = 0x7D8E0004;
+    packet->mod_id_start = 0xF8340000;
 }
 
 void write_packet(struct das_packet *packet, struct program_context *ctx) {
@@ -266,10 +266,10 @@ void write_packet(struct das_packet *packet, struct program_context *ctx) {
     packet->cmd_type = 0x2;
 
     /* Setup Packet Header 4 */
-    packet->mod_id = 0x000013AB;
+    packet->mod_id = 0xA18DC077;
 
     /* Setup Packet Header 5 */
-    packet->mod_id_start = 0x7D8E0000;
+    packet->mod_id_start = 0xF8340000;
 }
 
 void dump_regs(struct das_packet *packet, struct program_context *ctx) {
