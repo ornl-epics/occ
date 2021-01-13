@@ -39,6 +39,7 @@ struct program_context {
     bool write;
     bool verbose;
     bool version;
+    bool query;
     int loops;
     int reg_data;
     unsigned long payload_size;
@@ -53,6 +54,7 @@ struct program_context {
         write(false),
         verbose(false),
         version(false),
+        query(false),
         loops(0),
 	reg_data(0),
         payload_size(0),
@@ -113,6 +115,7 @@ static void usage(const char *progname) {
     cout << "  -d, --device-file FILE      Required OCC board device filename" << endl;
     cout << "  --version                   Request firmware version/revision" << endl;
     cout << "  -v, --verbose               Print packet communication data" << endl;
+    cout << "  -q, --query                 Queries addresses that will respond" << endl;
     cout << "  -r, --read LOCATION         Read specified LOCATION." << endl;
     cout << "                              Limits: 0<LOCATION<127." << endl;
     cout << "  -w, --write LOCATION VALUE  Write VALUE to R/W reg at 64+LOCATION." << endl;
@@ -150,6 +153,10 @@ bool parse_args(int argc, char **argv, struct program_context *ctx) {
         }
 	if (key == "--verbose" || key == "-v") {
             ctx->verbose = true;
+        }
+	if (key == "--query" || key == "-q") {
+            ctx->query = true;
+            ctx->loops += 1;
         }
 	if (key == "--read" || key == "-r") {
             ctx->read = true;
@@ -228,6 +235,23 @@ void setup_packet(struct das_packet *packet, struct program_context *ctx) {
 
     /* Print the results at register offset */
     ctx->reg_data = 0;
+}
+
+void query_packet(struct das_packet *packet, struct program_context *ctx) {
+    /* Setup Packet Header 3 */
+    packet->rsp = true;
+    packet->ack = 1;
+    packet->verify_id = 0xa;
+    packet->cmd_type = 0x1;
+
+    /* Setup Packet Header 4 */
+    packet->mod_id = 0;
+
+    /* Setup Packet Header 5 */
+    packet->mod_id_start = 0;
+
+    /* Setup Packet Header 6, overrides default */
+    packet->reg_end_count = 0x0;
 }
 
 void read_version_packet(struct das_packet *packet, struct program_context *ctx) {
@@ -314,7 +338,9 @@ static void *send_to_occ(void *arg) {
     else if (ctx->read) {
         read_packet(packet, ctx);
         packet->reg_end_count |= ((ctx->read_reg * 4) << 16);
-	packet->length += 4; 
+        } 
+    else if (ctx->query) {
+        query_packet(packet, ctx);
         } 
     else {
         dump_regs(packet, ctx);
@@ -394,7 +420,7 @@ void *receive_from_occ(void *arg) {
         print_results("Recv: ", status->n_bytes, (char *)data);
     else {
         if (ctx->verbose)
-            print_results("Recv: ", sizeof(struct das_packet)+4, (char *)data);
+            print_results("Recv: ", sizeof(struct das_packet), (char *)data);
         if (ctx->version) {
             cout << "Version: " << hex;
             cout << setw(2) << setfill('0') << uppercase << (int)data[sizeof(struct das_packet)+3];
@@ -402,11 +428,13 @@ void *receive_from_occ(void *arg) {
             cout << setw(2) << setfill('0') << uppercase << (int)data[sizeof(struct das_packet)+2];
             cout << dec << endl;
             ctx->version = false;
+        } else if (ctx->query) {
+            print_results("Query: ", sizeof(struct das_packet), (char *)data);
+            ctx->query = false;
         } else if (ctx->write) {
             cout << "Wrote Reg: " << ctx->write_reg << ", Value: 0x" << hex;
             cout << setw(8) << setfill('0') << uppercase << ctx->value ;
             cout << dec << endl;
-            //cout << ", Value: 0x" << hex << ctx->value << dec << endl;
             ctx->write = false;
         } else if (ctx->read) {
             cout << "Read Reg:  ";
