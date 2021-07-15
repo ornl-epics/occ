@@ -1,0 +1,15 @@
+#!/bin/sh
+
+# Copy this file to /etc/snsocc for each expected device and name
+# it exactly like device name, ie. /etc/snsocc/snsocc1 for device
+# /dev/snsocc1. After changing the parameters carefully, remove
+# next line.
+exit 0
+
+[ "$ACTION" = "add" ] || exit 0
+
+# Remove leading /dev/
+DEVNAME=${DEVNAME:5}
+
+echo 40 > /sys/class/snsocc/$DEVNAME/device/irq_coalescing
+echo "32M\$1024M" > /sys/class/snsocc/$DEVNAME/device/dma_big_mem

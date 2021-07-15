@@ -1,0 +1,2 @@
+SUBSYSTEMS=="pci", DRIVERS=="snsocc", ATTRS{serial_number}=="0CC0CC0CC0CC0CCC", SYMLINK="occ1"
+KERNEL=="snsocc[0-9]*",	MODE="0666", RUN+="/etc/snsocc/$name"

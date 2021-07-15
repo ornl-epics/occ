@@ -1,0 +1,20 @@
+SNS OCC driver can be installed to system location to get loaded automatically
+when system boots. Runing 'make install' will create following files:
+* /etc/snsocc/snsocc0-sample
+* /etc/udev/rules.d/95-snsocc.rules.sample
+* /etc/sysconfig/modules/snsocc.modules
+* /lib/modules/`uname -r`/extra/sns-occ<VER>.ko
+* /lib/modules/`uname -r`/extra/sns-occ.ko
+
+/etc/udev/rules.d/95-snsocc.rules.sample file needs to be renamed to
+/etc/udev/rules.d/95-snsocc.rules in order to fix device files permissions
+every time driver is loaded. Furthermore the file can be changed to use
+persistent device names. By default driver creates /dev/snsoccX devices where X
+is the sequence numberi of found device. When cards are moved around they might
+get assigned differenti device names. Using udev rules it's possible to make a
+persistent alias name based on the serial number of the OCC FPGA.
+
+In order to permanently change device parameters, use /etc/snsocc/snsocc0.sample
+as a template and make a copy of it in /etc/snsocc directory following device
+name from /dev (not an alias name). Then modify the file and tweak any settings.
+Driver will use the file every time it loads.

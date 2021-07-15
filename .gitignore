@@ -1,0 +1,65 @@
+# Project Specific Files
+occdiag
+occ_proxy
+occ_rawio
+occ_loopback
+occ_flash
+tools/PacketAnalyzer/PacketAnalyzer
+test_files
+occ_flashprog
+tags
+cscope.files
+PacketAnalyzerDebug
+stress.*
+O.linux-x86_64/
+O.Common/
+occ2csv
+sms2csv
+
+# Doxygen files
+*.dox
+ned/nedApp/src/html
+ned/nedApp/src/latex
+
+# Backup files
+*~
+*\#
+
+# IDE project files
+*.layout
+*.tags*
+
+# Temporary files
+*.new
+*.diff
+*.tmp
+*.swp
+
+# Object files
+*.slo
+*.lo
+*.o
+*.ko
+*.obj
+*.elf
+
+# Libraries
+*.lib
+*.a
+*.lai
+*.la
+
+# Shared objects
+*.dll
+*.so
+*.so.*
+*.dylib
+
+# Executables
+*.exe
+*.out
+*.app
+*.i.*86
+*.x86_64
+*.hex
+*.bin

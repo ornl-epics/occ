@@ -1,0 +1,27 @@
+What:		/sys/class/snsocc/<devname>/device/irq_balance
+Date:		August 2014
+Contact:	Klemen Vodopivec <vodopiveck@ornl.gov>
+Description:
+		Tweak number of interrupts produced by the OCC board.
+
+		By default the OCC board interrupts for every OCC packet.
+		Handling the interrupt involves context switching that could
+		cause severe performance impact. By grouping several OCC
+		packets into one interrupt performance can be much improved.
+		When grouping is enabled, interrupt is asserted once per
+		number of packets configured or for the last subpacket,
+		whichever comes first. Command packets always interrupt.
+
+What:		/sys/class/snsocc/<devname>/device/dma_big_mem
+Date:		September 2014
+Contact:	Klemen Vodopivec <vodopiveck@ornl.gov>
+Description:
+		Use of boot-time reserved memory.
+
+		Support for >2MB DMA buffer is done by dedicating some memory to the
+		driver by reserving it at boot time using memmap= kernel parameter.
+		This file has similar syntax but it applies to specific device rather
+		than whole driver. File can be writen only when device is not in use.
+		Write <size>M$<offset>M to the file, for example 128M$1024M. The size
+		must be power of two and the offset must be memory page aligned. See
+		PAGE_SIZE on your system for exact value, usually 4096 bytes.
